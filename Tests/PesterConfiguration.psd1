@@ -16,8 +16,8 @@
     CodeCoverage = @{
         Enabled                 = $true
         Path                    = @(
-            '.\\Public\\*.ps1',
-            '.\\Private\\*.ps1'
+           '.\\BridgeWatcher\\Public\\*.ps1',
+            '.\\BridgeWatcher\\Private\\*.ps1'
         )
         OutputFormat            = 'JaCoCo'
         OutputPath              = 'coverage.xml'

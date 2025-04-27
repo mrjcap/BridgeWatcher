@@ -1,4 +1,4 @@
-Import-Module "$PSScriptRoot/../BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'New-PushoverPayload' {
