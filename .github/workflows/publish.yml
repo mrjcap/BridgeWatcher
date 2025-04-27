@@ -61,15 +61,25 @@ jobs:
             git log --pretty=format:"* %s" $PREV_TAG..HEAD > temp_changelog.txt
           fi
           echo "release_notes=$(cat temp_changelog.txt)" >> $GITHUB_ENV
-      - name: Commit Version
+      - name: Update CHANGELOG.md with release notes
+        run: |
+          VERSION="v${{ env.new_version }}"
+          DATE=$(date +'%Y-%m-%d')
+          # Φτιάξε το section που θα προσθέσεις
+          echo -e "## $VERSION - $DATE\n${{ env.release_notes }}\n" > NEW_CHANGELOG.md
+          # Αν υπάρχει ήδη CHANGELOG.md, πρόσθεσέ το μπροστά, αλλιώς φτιάξε καινούργιο
+          if [ -f CHANGELOG.md ]; then
+            cat CHANGELOG.md >> NEW_CHANGELOG.md
+          fi
+          mv NEW_CHANGELOG.md CHANGELOG.md    
+      - name: Commit Version and Changelog
         shell: bash
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add ./BridgeWatcher/BridgeWatcher.psd1
-          git commit -m "Bump version to ${{ env.new_version }}"
+          git add ./BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
+          git commit -m "Bump version to ${{ env.new_version }} and update CHANGELOG.md"
           git push origin main
-
       - name: Create Tag
         run: |
           TAG_NAME="v${{ env.new_version }}"  # Χρήση της αυξημένης έκδοσης για το tag
