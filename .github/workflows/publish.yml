@@ -50,6 +50,27 @@ jobs:
             Write-Host "Could not find version in .psd1 file."
             exit 1
           }
+      # Install Node.js for auto-changelog
+      - name: Set up Node.js for auto-changelog
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      # Install auto-changelog
+      - name: Install auto-changelog
+        run: npm install -g auto-changelog
+
+      # Generate Changelog
+      - name: Generate Changelog
+        run: auto-changelog --unreleased --output CHANGELOG.md
+
+      # Create Release using softprops/action-gh-release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Publish to PowerShell Gallery
       - name: Publish Module
         if: ${{ github.event_name == 'push' }}
