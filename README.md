@@ -25,32 +25,34 @@
 
 ---
 ## 🛠️ Προαπαιτήσεις
-📄 Προαπαιτούμενα για το PowerShell Module BridgeWatcher
-Πριν ξεκινήσεις τη χρήση του BridgeWatcher module, θα χρειαστείς τα παρακάτω:
 
-### Google Vision API Key:
+### 📄 **Προαπαιτούμενα για το PowerShell Module BridgeWatcher**
 
-  Για να χρησιμοποιήσεις τις δυνατότητες OCR (Οπτική Αναγνώριση Χαρακτήρων) του BridgeWatcher, απαιτείται Google Vision API Key.
+Πριν ξεκινήσεις τη χρήση του **BridgeWatcher** module, θα χρειαστείς τα παρακάτω:
 
-  Μπορείς να αποκτήσεις το API Key από το Google Cloud Console, αφού ενεργοποιήσεις το Vision API για το πρότζεκτ σου.
+1. **Google Vision API Key**:
+    
+    - Για να χρησιμοποιήσεις τις δυνατότητες OCR (Οπτική Αναγνώριση Χαρακτήρων) του **BridgeWatcher**, απαιτείται **Google Vision API Key**.
+    
+    - Μπορείς να αποκτήσεις το API Key από το [Google Cloud Console](https://console.cloud.google.com/), αφού ενεργοποιήσεις το Vision API για το πρότζεκτ σου.
 
-### Pushover API Key:
+2. **Pushover API Key**:
+    
+    - Για την αποστολή ειδοποιήσεων, χρειάζεσαι το **Pushover API Key**.
+    
+    - Μπορείς να αποκτήσεις το API Key από το [Pushover website](https://pushover.net/), αφού δημιουργήσεις έναν λογαριασμό.
 
-  Για την αποστολή ειδοποιήσεων, χρειάζεσαι το Pushover API Key.
+3. **Pushover User Key**:
+    
+    - Το **Pushover User Key** είναι απαραίτητο για να στέλνεις ειδοποιήσεις στον προσωπικό σου λογαριασμό.
+    
+    - Θα το βρεις στο [Pushover Dashboard](https://pushover.net/) αφού συνδεθείς με τον λογαριασμό σου.
 
-  Μπορείς να αποκτήσεις το API Key από το Pushover website, αφού δημιουργήσεις έναν λογαριασμό.
-
-###  Pushover User Key:
-
-  Το Pushover User Key είναι απαραίτητο για να στέλνεις ειδοποιήσεις στον προσωπικό σου λογαριασμό.
-
-  Θα το βρεις στο Pushover Dashboard αφού συνδεθείς με τον λογαριασμό σου.
-
-### Εφαρμογή Pushover στο κινητό (Android/iOS):
-
-  Για να λαμβάνεις ειδοποιήσεις στο κινητό σου, θα χρειαστεί να κατεβάσεις και να εγκαταστήσεις την εφαρμογή Pushover.
-
-  Η εφαρμογή είναι διαθέσιμη για Android και iOS. Μπορείς να τη βρεις στο Google Play Store ή στο Apple App Store.
+4. **Εφαρμογή Pushover στο κινητό (Android/iOS)**:
+    
+    - Για να λαμβάνεις ειδοποιήσεις στο κινητό σου, θα χρειαστεί να κατεβάσεις και να εγκαταστήσεις την εφαρμογή **Pushover**.
+    
+    - Η εφαρμογή είναι διαθέσιμη για **Android** και **iOS**. Μπορείς να τη βρεις στο [Google Play Store](https://play.google.com/store/apps/details?id=com.pushover.client) ή στο [Apple App Store](https://apps.apple.com/us/app/pushover/id506088175).
 
 ## 🛠️ Απαιτήσεις
 
@@ -67,7 +69,7 @@
 Install-Module -Name BridgeWatcher -Scope CurrentUser
 
 # Χειροκίνητη φόρτωση από τοπικό αποθετήριο:
-Import-Module ./src/BridgeWatcher.psd1 -Force
+Import-Module ./BridgeWatcher.psd1 -Force
 ```
 
 ---
