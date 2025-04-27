@@ -9,7 +9,6 @@
     PowerShellVersion = '5.1'
     RequiredModules      = @()
     RequiredAssemblies   = @()
-    FunctionsToExport    = @('*')
     CmdletsToExport      = @()
     VariablesToExport    = @()
     AliasesToExport      = @()
