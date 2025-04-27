@@ -63,7 +63,11 @@ jobs:
       # Generate Changelog
       - name: Generate Changelog
         run: auto-changelog --unreleased --output CHANGELOG.md
-
+      # Create a new tag for the release
+      - name: Create Tag
+        run: |
+          git tag v$(date +'%Y.%m.%d.%H%M%S')  # Generate a version tag based on the current date and time
+          git push origin v$(date +'%Y.%m.%d.%H%M%S')  # Push the tag to the repository
       # Create Release using softprops/action-gh-release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
