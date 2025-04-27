@@ -17,7 +17,12 @@ jobs:
       - name: Install Pester
         shell: pwsh
         run: Install-Module Pester -Force -Scope CurrentUser
-
+        
+      - name: Debug Module Path
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path ./ -Recurse
+          
       # Run Pester Tests
       - name: Run Tests
         shell: pwsh
