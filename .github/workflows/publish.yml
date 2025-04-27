@@ -10,21 +10,22 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repository
+      # 1. Checkout the repository
       - uses: actions/checkout@v3
 
-      # Install Pester for testing
+      # 2. Install Pester for testing
       - name: Install Pester
         shell: pwsh
         run: Install-Module Pester -Force -Scope CurrentUser
           
-      # Run Pester Tests
+      # 3. Run Pester Tests
       - name: Run Tests
         shell: pwsh
         run: |
           $res = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1) -Verbose
           if ($res.FailedCount -gt 0) { exit 1 }
-       # Bump the version automatically
+
+      # 4. Bump the version automatically
       - name: Bump Version
         shell: pwsh
         id: version_bump  # Αποθήκευση του output για χρήση αργότερα
@@ -48,41 +49,48 @@ jobs:
               Set-Content $psd1Path -Value $newContent
               Write-Host "Updated version to: $newVersion"
 
-              # Set the new version as output for later use
-              echo "::set-output name=new_version::$newVersion"  # Αποθήκευση της νέας έκδοσης
+              # Export the new version to the environment
+              echo "new_version=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
           } else {
               Write-Host "Could not find version in .psd1 file."
               exit 1
           }
-      # Install Node.js for auto-changelog
-      - name: Set up Node.js for auto-changelog
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14'
 
-      # Install auto-changelog
-      - name: Install auto-changelog
-        run: npm install -g auto-changelog
+      # 5. Generate Changelog dynamically
+      - name: Generate Release Notes
+        id: generate_changelog
+        run: |
+          # Use git log to generate release notes from commit messages
+          git log --pretty=format:"* %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD > temp_changelog.txt
+          echo "release_notes=$(cat temp_changelog.txt)" >> $GITHUB_ENV
 
-      # Generate Changelog
-      - name: Generate Changelog
-        run: auto-changelog --unreleased --output CHANGELOG.md
-      # Create a new tag for the release
+      # 6. Commit the updated files
+      - name: Commit Version
+        shell: bash
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add ./BridgeWatcher/BridgeWatcher.psd1
+          git commit -m "Bump version to ${{ env.new_version }}"
+          git push origin main
+
+      # 7. Create a new tag for the release
       - name: Create Tag
         run: |
-          TAG_NAME="v${{ steps.version_bump.outputs.new_version }}"  # Χρήση της αυξημένης έκδοσης για το tag
+          TAG_NAME="v${{ env.new_version }}"  # Χρήση της αυξημένης έκδοσης για το tag
           git tag $TAG_NAME  # Create the tag
           git push origin $TAG_NAME  # Push the tag to the repository
 
-      # Create GitHub Release
+      # 8. Create GitHub Release with Release Notes
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./CHANGELOG.md
-          tag_name: ${{ steps.version_bump.outputs.new_version }}  # Χρήση της αυξημένης έκδοσης για το release
+          body: ${{ env.release_notes }}  # Χρησιμοποιεί το changelog από το git log
+          tag_name: "v${{ env.new_version }}"  # Χρήση της αυξημένης έκδοσης για το release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Publish to PowerShell Gallery
+
+      # 9. Publish to PowerShell Gallery
       - name: Publish Module
         if: ${{ github.event_name == 'push' }}
         shell: pwsh
