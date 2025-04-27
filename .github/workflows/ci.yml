@@ -19,3 +19,9 @@ jobs:
         run: |
           $res = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1) -Verbose
           if ($res.FailedCount -gt 0) { exit 1 }
+      # Βήμα 4: Αποστολή του Coverage Report στο Codecov
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}  # Χρησιμοποιούμε το GitHub secret για το API token
+          files: ./coverage.xml  # Η διαδρομή του coverage report
