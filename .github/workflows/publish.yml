@@ -21,7 +21,7 @@ jobs:
       - name: Debug Module Path
         shell: pwsh
         run: |
-          Get-ChildItem -Path ./ -Recurse
+          Get-ChildItem -Path ./src -Recurse
           
       # Run Pester Tests
       - name: Run Tests
@@ -37,4 +37,4 @@ jobs:
         env:
           PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}
         run: |
-          pwd
+          Publish-Module -Path ./src -Repository PSGallery -NuGetApiKey $env:PSGalleryApiKey -Verbose
