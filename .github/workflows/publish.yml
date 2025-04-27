@@ -10,25 +10,20 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      # 1. Checkout the repository
       - uses: actions/checkout@v3
 
-      # 2. Install Pester for testing
       - name: Install Pester
         shell: pwsh
         run: Install-Module Pester -Force -Scope CurrentUser
-          
-      # 3. Run Pester Tests
       - name: Run Tests
         shell: pwsh
         run: |
           $res = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1) -Verbose
           if ($res.FailedCount -gt 0) { exit 1 }
 
-      # 4. Bump the version automatically
       - name: Bump Version
         shell: pwsh
-        id: version_bump  # Αποθήκευση του output για χρήση αργότερα
+        id: version_bump
         run: |
           # Get the current version from the .psd1 file
           $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
@@ -56,15 +51,16 @@ jobs:
               exit 1
           }
 
-      # 5. Generate Changelog dynamically
       - name: Generate Release Notes
         id: generate_changelog
         run: |
-          # Use git log to generate release notes from commit messages
-          git log --pretty=format:"* %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD > temp_changelog.txt
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            git log --pretty=format:"* %s" > temp_changelog.txt
+          else
+            git log --pretty=format:"* %s" $PREV_TAG..HEAD > temp_changelog.txt
+          fi
           echo "release_notes=$(cat temp_changelog.txt)" >> $GITHUB_ENV
-
-      # 6. Commit the updated files
       - name: Commit Version
         shell: bash
         run: |
@@ -74,23 +70,20 @@ jobs:
           git commit -m "Bump version to ${{ env.new_version }}"
           git push origin main
 
-      # 7. Create a new tag for the release
       - name: Create Tag
         run: |
           TAG_NAME="v${{ env.new_version }}"  # Χρήση της αυξημένης έκδοσης για το tag
           git tag $TAG_NAME  # Create the tag
           git push origin $TAG_NAME  # Push the tag to the repository
 
-      # 8. Create GitHub Release with Release Notes
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          body: ${{ env.release_notes }}  # Χρησιμοποιεί το changelog από το git log
-          tag_name: "v${{ env.new_version }}"  # Χρήση της αυξημένης έκδοσης για το release
+          body: ${{ env.release_notes }}
+          tag_name: "v${{ env.new_version }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 9. Publish to PowerShell Gallery
       - name: Publish Module
         if: ${{ github.event_name == 'push' }}
         shell: pwsh
