@@ -17,5 +17,5 @@ jobs:
       - name: Run Tests
         shell: pwsh
         run: |
-          $res = Invoke-Pester -Path ./BridgeWatcher.Tests.ps1 -Output Detailed -PassThru
+          $res = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1) -Verbose
           if ($res.FailedCount -gt 0) { exit 1 }
