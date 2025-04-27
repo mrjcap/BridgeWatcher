@@ -1,2 +1,89 @@
-# BridgeWatcher
-Το BridgeWatcher είναι ένα PowerShell module για την παρακολούθηση της κατάστασης γεφυρών χρησιμοποιώντας HTML scraping και OCR με το Google Vision API. Στέλνει ειδοποιήσεις μέσω Pushover και δημιουργεί JSON snapshots, επιτρέποντας τη συνεχόμενη παρακολούθηση των γεφυρών του Ισθμού σε πραγματικό χρόνο.
+# 🌉 BridgeWatcher: Έξυπνη Παρακολούθηση Γεφυρών Ισθμού
+
+[![CI Status](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PowerShell Gallery](https://img.shields.io/powershellgallery/v/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
+
+---
+
+## 📖 Περιγραφή
+
+Το **BridgeWatcher** αποτελεί μια εξελιγμένη και πλήρως αυτοματοποιημένη λύση PowerShell module, ειδικά σχεδιασμένη για την αξιόπιστη παρακολούθηση της επιχειρησιακής κατάστασης των γεφυρών Ποσειδωνίας και Ισθμίας στην Κόρινθο. Μέσω τεχνικών HTML scraping και οπτικής αναγνώρισης χαρακτήρων (OCR) με χρήση του Google Vision API, το σύστημα αναλύει πληροφορίες σε πραγματικό χρόνο, αποστέλλει κρίσιμες ειδοποιήσεις μέσω Pushover και αρχειοθετεί τα δεδομένα σε μορφή JSON για ιστορική αναφορά και αναλυτική αξιολόγηση.
+
+---
+
+## 💡 Χαρακτηριστικά
+
+- Αυτόματη και περιοδική ανάκτηση πληροφοριών από επίσημες πηγές.
+- Εφαρμογή προηγμένων τεχνικών OCR για εξαγωγή χρονικών δεδομένων.
+- Άμεση αποστολή προσαρμόσιμων ειδοποιήσεων μέσω Pushover API.
+- Δημιουργία και διαχείριση JSON snapshots για χρονική ανάλυση.
+- Ρύθμιση διαστημάτων παρακολούθησης μέσω παραμέτρων.
+- Ενσωμάτωση δοκιμαστικών ελέγχων με χρήση Pester v5.
+- Συμβατότητα με περιβάλλοντα CI/CD.
+
+---
+
+## 🛠️ Απαιτήσεις
+
+- Windows PowerShell 5.1 ή PowerShell 7+
+- Συμβατότητα με PowerShell Core
+- Καμία ανάγκη πρόσθετων modules ή βιβλιοθηκών
+
+---
+
+## 📦 Εγκατάσταση
+
+```powershell
+# Εγκατάσταση από PowerShell Gallery (όταν διατεθεί):
+Install-Module -Name BridgeWatcher -Scope CurrentUser
+
+# Χειροκίνητη φόρτωση από τοπικό αποθετήριο:
+Import-Module ./src/BridgeWatcher.psd1 -Force
+```
+
+---
+
+## 🚀 Παραδείγματα Χρήσης
+
+**Έναρξη Συνεχούς Παρακολούθησης:**
+```powershell
+Start-BridgeStatusMonitor -IntervalSeconds 600 -PoApiKey 'your-api-key' -PoUserKey 'your-user-key' -ApiKey 'your-google-vision-api-key' -OutputFile './BridgeStatusSnapshot.json'
+```
+
+
+**Ανάκτηση Τρέχουσας Κατάστασης:**
+```powershell
+Get-BridgeStatus -Verbose
+```
+
+---
+
+## 🧩 Εξαρτήσεις Module
+
+Το **BridgeWatcher** έχει αναπτυχθεί ως πλήρως αυτοδύναμο module:
+
+- Χρησιμοποιεί Pester 5 αποκλειστικά για testing.
+
+---
+
+## 📝 Άδειες και Συνεισφορές
+
+- Άδεια Χρήσης: [MIT License](https://opensource.org/licenses/MIT)
+- Δημιουργός: Γιάννης Καπλατζής
+- Επίσημο Repository: [https://github.com/mrjcap/BridgeWatcher](https://github.com/mrjcap/BridgeWatcher)
+
+Η κοινότητα καλωσορίζεται να συμβάλλει μέσω Pull Requests και αναφορών σφαλμάτων.
+
+---
+
+## 🗺️ Οδικός Χάρτης Εξέλιξης
+
+- [x] Πλήρης κάλυψη δοκιμών μέσω Pester
+- [x] Ενσωμάτωση CI με GitHub Actions
+- [ ] Ενσωμάτωση Codecov
+- [ ] Έκδοση στο PowerShell Gallery
+- [ ] Ανάπτυξη Live Dashboard
+- [ ] Υποστήριξη Πολλαπλών Γλωσσών
+
+---

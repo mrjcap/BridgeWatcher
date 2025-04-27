@@ -1,0 +1,21 @@
+name: PowerShell Module CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Pester
+        shell: pwsh
+        run: Install-Module Pester -Force -Scope CurrentUser
+      - name: Run Tests
+        shell: pwsh
+        run: |
+          $res = Invoke-Pester -Path ./BridgeWatcher.Tests.ps1 -Output Detailed -PassThru
+          if ($res.FailedCount -gt 0) { exit 1 }
