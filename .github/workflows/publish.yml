@@ -37,4 +37,5 @@ jobs:
         env:
           PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}
         run: |
-          Publish-Module -Path ./src/ -Repository PSGallery -NuGetApiKey $env:PSGalleryApiKey
+          pwd
+          Publish-Module -Path ./ -Repository PSGallery -NuGetApiKey $env:PSGalleryApiKey
