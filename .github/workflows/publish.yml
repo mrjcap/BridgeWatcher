@@ -17,11 +17,6 @@ jobs:
       - name: Install Pester
         shell: pwsh
         run: Install-Module Pester -Force -Scope CurrentUser
-        
-      - name: Debug Module Path
-        shell: pwsh
-        run: |
-          Get-ChildItem -Path ./src -Recurse
           
       # Run Pester Tests
       - name: Run Tests
@@ -29,7 +24,32 @@ jobs:
         run: |
           $res = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1) -Verbose
           if ($res.FailedCount -gt 0) { exit 1 }
+       # Bump the version automatically
+      - name: Bump Version
+        shell: pwsh
+        run: |
+          # Get the current version from the .psd1 file
+          $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
+          $content = Get-Content $psd1Path -Raw
 
+          # Extract current version using regex
+          if ($content -match 'ModuleVersion\s*=\s*\'(\d+\.\d+\.\d+)\'' ) {
+            $currentVersion = $matches[1]
+            Write-Host "Current version: $currentVersion"
+
+            # Increment the version number (patch bump)
+            $versionParts = $currentVersion -split '\.'
+            $versionParts[2] = [int]$versionParts[2] + 1  # Bumping the patch version
+            $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
+
+            # Update the ModuleVersion in the .psd1 file
+            $newContent = $content -replace "ModuleVersion\s*=\s*'$currentVersion'", "ModuleVersion = '$newVersion'"
+            Set-Content $psd1Path -Value $newContent
+            Write-Host "Updated version to: $newVersion"
+          } else {
+            Write-Host "Could not find version in .psd1 file."
+            exit 1
+          }
       # Publish to PowerShell Gallery
       - name: Publish Module
         if: ${{ github.event_name == 'push' }}
