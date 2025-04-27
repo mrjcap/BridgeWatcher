@@ -27,6 +27,7 @@ jobs:
        # Bump the version automatically
       - name: Bump Version
         shell: pwsh
+        id: version_bump  # Αποθήκευση του output για χρήση αργότερα
         run: |
           # Get the current version from the .psd1 file
           $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
@@ -34,21 +35,24 @@ jobs:
 
           # Extract current version using regex
           if ($content -match "ModuleVersion\s*=\s*'(\d+\.\d+\.\d+)'" ) {
-            $currentVersion = $matches[1]
-            Write-Host "Current version: $currentVersion"
+              $currentVersion = $matches[1]
+              Write-Host "Current version: $currentVersion"
 
-            # Increment the version number (patch bump)
-            $versionParts = $currentVersion -split '\.'
-            $versionParts[2] = [int]$versionParts[2] + 1  # Bumping the patch version
-            $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
+              # Increment the version number (patch bump)
+              $versionParts = $currentVersion -split '\.'
+              $versionParts[2] = [int]$versionParts[2] + 1  # Bumping the patch version
+              $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
 
-            # Update the ModuleVersion in the .psd1 file
-            $newContent = $content -replace "ModuleVersion\s*=\s*'$currentVersion'", "ModuleVersion = '$newVersion'"
-            Set-Content $psd1Path -Value $newContent
-            Write-Host "Updated version to: $newVersion"
+              # Update the ModuleVersion in the .psd1 file
+              $newContent = $content -replace "ModuleVersion\s*=\s*'$currentVersion'", "ModuleVersion = '$newVersion'"
+              Set-Content $psd1Path -Value $newContent
+              Write-Host "Updated version to: $newVersion"
+
+              # Set the new version as output for later use
+              echo "::set-output name=new_version::$newVersion"  # Αποθήκευση της νέας έκδοσης
           } else {
-            Write-Host "Could not find version in .psd1 file."
-            exit 1
+              Write-Host "Could not find version in .psd1 file."
+              exit 1
           }
       # Install Node.js for auto-changelog
       - name: Set up Node.js for auto-changelog
@@ -66,13 +70,16 @@ jobs:
       # Create a new tag for the release
       - name: Create Tag
         run: |
-          git tag v$(date +'%Y.%m.%d.%H%M%S')  # Generate a version tag based on the current date and time
-          git push origin v$(date +'%Y.%m.%d.%H%M%S')  # Push the tag to the repository
-      # Create Release using softprops/action-gh-release
+          TAG_NAME="v${{ steps.version_bump.outputs.new_version }}"  # Χρήση της αυξημένης έκδοσης για το tag
+          git tag $TAG_NAME  # Create the tag
+          git push origin $TAG_NAME  # Push the tag to the repository
+
+      # Create GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: ./CHANGELOG.md
+          tag_name: ${{ steps.version_bump.outputs.new_version }}  # Χρήση της αυξημένης έκδοσης για το release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Publish to PowerShell Gallery
