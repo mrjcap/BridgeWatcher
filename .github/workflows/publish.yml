@@ -1,53 +1,35 @@
-name: Publish to PowerShell Gallery
+name: PowerShell Module Publish
 
 on:
   push:
-    branches:
-      - main # Adjust this to the branch you want to trigger the action
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   publish:
-    runs-on: windows-latest # Use the Windows runner for PowerShell
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # Checkout the repository
+      - uses: actions/checkout@v3
 
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v2
-
+      # Install Pester for testing
       - name: Install Pester
-        run: |
-          Install-Module -Name Pester -RequiredVersion 5.4.2 -Force -SkipPublisherCheck
+        shell: pwsh
+        run: Install-Module Pester -Force -Scope CurrentUser
 
-      - name: Run Pester Tests
-        env:
-          TestPath: ./Tests/*.Tests.ps1
+      # Run Pester Tests
+      - name: Run Tests
+        shell: pwsh
         run: |
-          if (Test-Path -Path $env:TestPath) {
-            Invoke-Pester -Path $env:TestPath -EnableExit
-          } else {
-            Write-Warning "No tests found at $env:TestPath. Skipping tests."
-          }
+          $res = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1) -Verbose
+          if ($res.FailedCount -gt 0) { exit 1 }
 
-      - name: Publish module to PowerShell Gallery
+      # Publish to PowerShell Gallery
+      - name: Publish Module
+        if: ${{ github.event_name == 'push' }}
+        shell: pwsh
         env:
           PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}
-          ModulePath: ./src
         run: |
-          if (!$env:PSGalleryApiKey) {
-            Write-Error "PSGalleryApiKey is not set. Ensure it is added as a GitHub Secret."
-            exit 1
-          }
-
-          if (-Not (Test-Path -Path $env:ModulePath)) {
-            Write-Error "Module path $env:ModulePath does not exist. Check the workflow configuration."
-            exit 1
-          }
-
-          try {
-            Publish-Module -Name 'BridgeWatcher' -Path $env:ModulePath -NuGetApiKey $env:PSGalleryApiKey -Force
-          } catch {
-            Write-Error "Failed to publish the module: $_"
-            exit 1
-          }
+          Publish-Module -Path ./ -Repository PSGallery -NuGetApiKey $PSGalleryApiKey
