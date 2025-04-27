@@ -1,0 +1,33 @@
+name:Publish to PowerShell Gallery
+
+on:
+  push:
+    branches:
+      - main  # Μπορείς να το προσαρμόσεις στο branch που θέλεις να εκτελείται το action
+
+jobs:
+  publish:
+    runs-on: windows-latest  # Χρησιμοποιούμε το Windows runner για PowerShell
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup PowerShell
+      uses: actions/setup-powershell@v2
+
+    - name: Install Pester (for testing)
+      run: |
+        Install-Module -Name Pester -Force -SkipPublisherCheck
+
+    - name: Run Pester Tests (optional)
+      run: |
+        Invoke-Pester -Path .\Tests\*.Tests.ps1  # Αν έχεις tests στον φάκελο Tests/
+
+    - name: Publish module to PowerShell Gallery
+      env:
+        PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}  # Χρησιμοποιούμε το GitHub Secret για το API key
+      run: |
+        # Καθορίζουμε το API key για το PowerShell Gallery
+        $env:PSGalleryApiKey = "${{ secrets.PSGalleryApiKey }}"
+        Publish-Module -Name 'BridgeWatcher' -Path './src' -NuGetApiKey $env:PSGalleryApiKey -Force
