@@ -110,6 +110,6 @@ Get-BridgeStatus -Verbose
 - [x] Πλήρης κάλυψη δοκιμών μέσω Pester
 - [x] Ενσωμάτωση CI με GitHub Actions
 - [x] Έκδοση στο PowerShell Gallery
-- [ ] Ενσωμάτωση Codecov
+- [x] Ενσωμάτωση Codecov
 
 ---
