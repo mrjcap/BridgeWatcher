@@ -33,7 +33,7 @@ jobs:
           $content = Get-Content $psd1Path -Raw
 
           # Extract current version using regex
-          if ($content -match 'ModuleVersion\s*=\s*\'(\d+\.\d+\.\d+)\'' ) {
+          if ($content -match "ModuleVersion\s*=\s*'(\d+\.\d+\.\d+)'" ) {
             $currentVersion = $matches[1]
             Write-Host "Current version: $currentVersion"
 
