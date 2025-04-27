@@ -1,33 +1,53 @@
-name:Publish to PowerShell Gallery
+name: Publish to PowerShell Gallery
 
 on:
   push:
     branches:
-      - main  # Μπορείς να το προσαρμόσεις στο branch που θέλεις να εκτελείται το action
+      - main # Adjust this to the branch you want to trigger the action
 
 jobs:
   publish:
-    runs-on: windows-latest  # Χρησιμοποιούμε το Windows runner για PowerShell
+    runs-on: windows-latest # Use the Windows runner for PowerShell
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Setup PowerShell
-      uses: actions/setup-powershell@v2
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v2
 
-    - name: Install Pester (for testing)
-      run: |
-        Install-Module -Name Pester -Force -SkipPublisherCheck
+      - name: Install Pester
+        run: |
+          Install-Module -Name Pester -RequiredVersion 5.4.2 -Force -SkipPublisherCheck
 
-    - name: Run Pester Tests (optional)
-      run: |
-        Invoke-Pester -Path .\Tests\*.Tests.ps1  # Αν έχεις tests στον φάκελο Tests/
+      - name: Run Pester Tests
+        env:
+          TestPath: ./Tests/*.Tests.ps1
+        run: |
+          if (Test-Path -Path $env:TestPath) {
+            Invoke-Pester -Path $env:TestPath -EnableExit
+          } else {
+            Write-Warning "No tests found at $env:TestPath. Skipping tests."
+          }
 
-    - name: Publish module to PowerShell Gallery
-      env:
-        PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}  # Χρησιμοποιούμε το GitHub Secret για το API key
-      run: |
-        # Καθορίζουμε το API key για το PowerShell Gallery
-        $env:PSGalleryApiKey = "${{ secrets.PSGalleryApiKey }}"
-        Publish-Module -Name 'BridgeWatcher' -Path './src' -NuGetApiKey $env:PSGalleryApiKey -Force
+      - name: Publish module to PowerShell Gallery
+        env:
+          PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}
+          ModulePath: ./src
+        run: |
+          if (!$env:PSGalleryApiKey) {
+            Write-Error "PSGalleryApiKey is not set. Ensure it is added as a GitHub Secret."
+            exit 1
+          }
+
+          if (-Not (Test-Path -Path $env:ModulePath)) {
+            Write-Error "Module path $env:ModulePath does not exist. Check the workflow configuration."
+            exit 1
+          }
+
+          try {
+            Publish-Module -Name 'BridgeWatcher' -Path $env:ModulePath -NuGetApiKey $env:PSGalleryApiKey -Force
+          } catch {
+            Write-Error "Failed to publish the module: $_"
+            exit 1
+          }
