@@ -1,0 +1,63 @@
+name: PowerShell Lint, Docs
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - '**/*.ps1'
+      - '**/*.psm1'
+      - '**/*.psd1'
+      - '.github/workflows/powershell-docs.yml'
+  pull_request:
+    paths:
+      - '**/*.ps1'
+      - '**/*.psm1'
+      - '**/*.psd1'
+
+jobs:
+  lint-docs-pages:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install PowerShell modules (platyPS & PSScriptAnalyzer)
+        run: |
+          Install-Module platyPS -Scope CurrentUser -Force -AllowClobber
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber
+
+      - name: Run PSScriptAnalyzer
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning, Error
+          if ($results.Count -gt 0) {
+            $results | Format-Table
+            Write-Error "PSScriptAnalyzer found issues!"
+          }
+
+      - name: Generate/update documentation with platyPS
+        run: |
+          $psd1 = Get-ChildItem -Path . -Filter *.psd1 -Recurse | Select-Object -First 1
+          if (-not $psd1) {
+            Write-Error "No .psd1 file found! Cannot determine module name."
+            exit 1
+          }
+          $moduleName = [System.IO.Path]::GetFileNameWithoutExtension($psd1.Name)
+          $docsPath = 'docs'
+          if (!(Test-Path $docsPath)) { New-Item -ItemType Directory -Path $docsPath }
+          Import-Module $psd1.FullName -Force
+          if (Get-ChildItem $docsPath\*.md -ErrorAction SilentlyContinue) {
+            Update-MarkdownHelp -Path $docsPath -Force
+          } else {
+            New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force
+          }
+
+      - name: Commit docs
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: auto-generate PowerShell documentation"
+          branch: ${{ github.head_ref || github.ref_name }}
+          file_pattern: docs/*.md
