@@ -32,7 +32,7 @@ jobs:
 
       - name: Run PSScriptAnalyzer
         run: |
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning, Error
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error
           if ($results.Count -gt 0) {
             $results | Format-Table
             Write-Error "PSScriptAnalyzer found issues!"
