@@ -40,7 +40,7 @@ jobs:
 
       - name: Generate/update documentation with platyPS
         run: |
-          $psd1 = Get-ChildItem -Path . -Filter *.psd1 -Recurse | Where-Object { $_.FullName -notmatch 'config' } | | Select-Object -First 1
+          $psd1 = Get-ChildItem -Path . -Filter *.psd1 -Recurse | Where-Object { $_.FullName -notmatch 'config' } | Select-Object -First 1
           if (-not $psd1) {
             Write-Error "No .psd1 file found! Cannot determine module name."
             exit 1
