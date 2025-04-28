@@ -33,26 +33,17 @@ jobs:
         shell: pwsh
         id: version_bump
         run: |
-          # Get the current version from the .psd1 file
           $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
           $content = Get-Content $psd1Path -Raw
-
-          # Extract current version using regex
           if ($content -match "ModuleVersion\s*=\s*'(\d+\.\d+\.\d+)'" ) {
               $currentVersion = $matches[1]
               Write-Host "Current version: $currentVersion"
-
-              # Increment the version number (patch bump)
               $versionParts = $currentVersion -split '\.'
               $versionParts[2] = [int]$versionParts[2] + 1  # Bumping the patch version
               $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
-
-              # Update the ModuleVersion in the .psd1 file
               $newContent = $content -replace "ModuleVersion\s*=\s*'$currentVersion'", "ModuleVersion = '$newVersion'"
               Set-Content $psd1Path -Value $newContent
               Write-Host "Updated version to: $newVersion"
-
-              # Export the new version to the environment
               echo "new_version=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
           } else {
               Write-Host "Could not find version in .psd1 file."
@@ -73,26 +64,27 @@ jobs:
         run: |
           VERSION="v${{ env.new_version }}"
           DATE=$(date +'%Y-%m-%d')
-          # Φτιάξε το section που θα προσθέσεις
           echo -e "## $VERSION - $DATE\n${{ env.release_notes }}\n" > NEW_CHANGELOG.md
-          # Αν υπάρχει ήδη CHANGELOG.md, πρόσθεσέ το μπροστά, αλλιώς φτιάξε καινούργιο
           if [ -f CHANGELOG.md ]; then
             cat CHANGELOG.md >> NEW_CHANGELOG.md
           fi
-          mv NEW_CHANGELOG.md CHANGELOG.md    
+          mv NEW_CHANGELOG.md CHANGELOG.md   
       - name: Commit Version and Changelog
         shell: bash
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add ./BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
-          git commit -m "Bump version to ${{ env.new_version }} and update CHANGELOG.md"
-          git push origin main
+          git commit -m "Bump version to ${{ env.new_version }} and update CHANGELOG.md" || echo "No changes to commit"
+      - name: Pull and rebase before push
+        run: git pull --rebase origin main
+      - name: Push changes
+        run: git push origin main
       - name: Create Tag
         run: |
-          TAG_NAME="v${{ env.new_version }}"  # Χρήση της αυξημένης έκδοσης για το tag
-          git tag $TAG_NAME  # Create the tag
-          git push origin $TAG_NAME  # Push the tag to the repository
+          TAG_NAME="v${{ env.new_version }}"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
