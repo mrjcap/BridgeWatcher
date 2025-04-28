@@ -1,3 +1,6 @@
+## v1.0.8 - 2025-04-28
+* chore: Update powershell-docs.yml
+
 ## v1.0.7 - 2025-04-28
 * Update powershell-docs.yml
 
