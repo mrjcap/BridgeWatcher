@@ -65,7 +65,7 @@
 ## 📦 Εγκατάσταση
 
 ```powershell
-# Εγκατάσταση από PowerShell Gallery (όταν διατεθεί):
+# Εγκατάσταση από PowerShell Gallery:
 Install-Module -Name BridgeWatcher -Scope CurrentUser
 
 # Χειροκίνητη φόρτωση από τοπικό αποθετήριο:
@@ -80,7 +80,6 @@ Import-Module ./BridgeWatcher.psd1 -Force
 ```powershell
 Start-BridgeStatusMonitor -IntervalSeconds 600 -PoApiKey 'your-api-key' -PoUserKey 'your-user-key' -ApiKey 'your-google-vision-api-key' -OutputFile './BridgeStatusSnapshot.json'
 ```
-
 
 **Ανάκτηση Τρέχουσας Κατάστασης:**
 ```powershell
