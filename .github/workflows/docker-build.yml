@@ -1,5 +1,6 @@
 name: Build, Test and Push Docker image
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -49,6 +50,10 @@ jobs:
           sleep 5
       - name: Check container logs
         run: docker logs bridgewatcher-test
+      - name: Test output directory exists
+        run: docker exec bridgewatcher-test ls -l /run/output/
+      - name: Test process exists
+        run: docker exec bridgewatcher-test ps aux
       - name: Test output file exists
         run: docker exec bridgewatcher-test test -f /run/output/bridge_status.json
       - name: Show output file
