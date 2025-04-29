@@ -8,7 +8,7 @@ EXPOSE 8090
 WORKDIR /scripts
 COPY ./BridgeWatcher /scripts/modules/BridgeWatcher
 COPY Docker/entrypoint.sh /scripts/
-COPY Docker/run.ps1 /scripts/
+COPY run.ps1 /scripts/
 COPY Docker/.env /scripts/
 RUN chmod +x /scripts/entrypoint.sh
 ENTRYPOINT ["/scripts/entrypoint.sh"]
