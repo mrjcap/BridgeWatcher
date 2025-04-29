@@ -5,19 +5,6 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Ανέκδοτα]
-
-### Προστέθηκαν
-
-- Προστέθηκε `Dockerfile` για containerization του BridgeWatcher (`feat(docker): Προσθήκη Dockerfile για containerization`).
-- Προστέθηκε αρχείο περιβάλλοντος `.env` για παραμετροποίηση μεταβλητών (`feat(config): Προσθήκη αρχείου .env για παραμετροποίηση`).
-- Προστέθηκε το script `entrypoint.sh` ως entrypoint για τα Docker containers (`feat(docker): Προσθήκη entrypoint.sh για εκκίνηση container`).
-- Δημιουργήθηκε workflow `docker-build.yml` για αυτόματο build Docker images μέσω GitHub Actions (`ci(docker): Δημιουργία docker-build.yml workflow`).
-
-### Αλλαγές
-
-- Ενημερώθηκε το `run.ps1` ώστε να τρέχει εντός Docker container (`refactor(docker): Ενημέρωση run.ps1 για εκτέλεση σε container`).
-
 ---
 
 ## [1.0.15] - 2025-04-29
