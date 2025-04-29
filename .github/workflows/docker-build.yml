@@ -50,9 +50,9 @@ jobs:
       - name: Check container logs
         run: docker logs bridgewatcher-test
       - name: Test output file exists
-        run: docker exec bridgewatcher-test test -f /scripts/bridge_status.json
+        run: docker exec bridgewatcher-test test -f /run/output/bridge_status.json
       - name: Show output file
-        run: docker exec bridgewatcher-test cat /scripts/bridge_status.json
+        run: docker exec bridgewatcher-test cat /run/output/bridge_status.json
       - name: Stop test container
         if: always()
         run: docker stop bridgewatcher-test || true
