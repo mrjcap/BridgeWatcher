@@ -1,29 +1,8 @@
-## v1.0.15 - 2025-04-29
-* chore: Update docker-build.yml
-
-## v1.0.14 - 2025-04-29
-* chore: Update docker-build.yml
-
-## v1.0.13 - 2025-04-29
-* chore: Update docker-build.yml
-
-## v1.0.12 - 2025-04-29
-* chore: Update Dockerfile
-
-## v1.0.11 - 2025-04-29
-* chore: Update Dockerfile
-
-## v1.0.10 - 2025-04-29
-* chore: Update docker-build.yml
-
-## v1.0.9 - 2025-04-29
-* docs(changelog): Ενημέρωση CHANGELOG.md με προσθήκες Docker, entrypoint, .env, workflow και αλλαγή run.ps1
-
 # Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
-Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
+Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Ανέκδοτα]
@@ -38,6 +17,62 @@
 ### Αλλαγές
 
 - Ενημερώθηκε το `run.ps1` ώστε να τρέχει εντός Docker container (`refactor(docker): Ενημέρωση run.ps1 για εκτέλεση σε container`).
+
+---
+
+## [1.0.15] - 2025-04-29
+
+### Αλλαγές
+
+- Ενημερώθηκε το workflow `docker-build.yml`.
+
+---
+
+## [1.0.14] - 2025-04-29
+
+### Αλλαγές
+
+- Ενημερώθηκε το workflow `docker-build.yml`.
+
+---
+
+## [1.0.13] - 2025-04-29
+
+### Αλλαγές
+
+- Ενημερώθηκε το workflow `docker-build.yml`.
+
+---
+
+## [1.0.12] - 2025-04-29
+
+### Αλλαγές
+
+- Ενημερώθηκε το `Dockerfile`.
+
+---
+
+## [1.0.11] - 2025-04-29
+
+### Αλλαγές
+
+- Ενημερώθηκε το `Dockerfile`.
+
+---
+
+## [1.0.10] - 2025-04-29
+
+### Αλλαγές
+
+- Ενημερώθηκε το workflow `docker-build.yml`.
+
+---
+
+## [1.0.9] - 2025-04-29
+
+### Τεκμηρίωση
+
+- Ενημερώθηκε το CHANGELOG.md με προσθήκες Docker, entrypoint, .env, workflow και αλλαγή run.ps1.
 
 ---
 
