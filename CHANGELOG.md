@@ -1,3 +1,6 @@
+## v1.0.10 - 2025-04-29
+* chore: Update docker-build.yml
+
 ## v1.0.9 - 2025-04-29
 * docs(changelog): Ενημέρωση CHANGELOG.md με προσθήκες Docker, entrypoint, .env, workflow και αλλαγή run.ps1
 
