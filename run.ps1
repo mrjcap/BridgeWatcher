@@ -1,14 +1,21 @@
-Import-Module ".\src\BridgeWatcher.psm1" -Force -Verbose
-#$Credxmlpath    = ".\securePassword.credential"
-#$password       = Import-CliXml -Path $Credxmlpath
-#Unlock-SecretStore -Password $password
+Import-Module '/scripts/modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
+$API_KEY       = Get-Content '/run/secrets/API_KEY' -Raw
+$POAPI_KEY     = Get-Content '/run/secrets/POAPI_KEY' -Raw
+$POUSER_KEY    = Get-Content '/run/secrets/POUSER_KEY' -Raw
+if (-not $API_KEY -or
+    -not $POAPI_KEY -or
+    -not $POUSER_KEY) {
+    throw 'One or more secrets are missing or empty'
+}
+$OutDir    = $Env:BRIDGEWATCHER_OUT
+if ([string]::IsNullOrWhiteSpace($OutDir)) { $OutDir = '/tmp' }
 $startBridgeStatusMonitorSplat = @{
     IntervalSeconds    = 300
     MaxIterations      = 0
-    OutputFile         = ".\bridge_status.json"
-    ApiKey             = (Get-Secret -Name GoogleVisionAPI -AsPlainText)
-    PoApiKey           = (Get-Secret -Name PoApiKey -AsPlainText)
-    PoUserKey          = (Get-Secret -Name PoUserKey -AsPlainText)
+    OutputFile         = "$OutDir/bridge_status.json"
+    ApiKey             = $API_KEY
+    PoApiKey           = $POAPI_KEY
+    PoUserKey          = $POUSER_KEY
     Verbose            = $true
 }
 Start-BridgeStatusMonitor @startBridgeStatusMonitorSplat
