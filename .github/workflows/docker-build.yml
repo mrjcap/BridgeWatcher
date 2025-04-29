@@ -6,6 +6,11 @@ on:
       - main
     tags:
       - 'v*'
+    paths-ignore:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.github/workflows/publish.yml'
+      - '/tools/**'
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
