@@ -119,5 +119,6 @@ Get-BridgeStatus -Verbose
 - [x] Ενσωμάτωση CI με GitHub Actions
 - [x] Έκδοση στο PowerShell Gallery
 - [x] Ενσωμάτωση Codecov
+- [x] Docker Image
 
 ---
