@@ -1,3 +1,6 @@
+## v1.0.11 - 2025-04-29
+* chore: Update Dockerfile
+
 ## v1.0.10 - 2025-04-29
 * chore: Update docker-build.yml
 
