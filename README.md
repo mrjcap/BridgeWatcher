@@ -71,6 +71,7 @@ Import-Module ./BridgeWatcher.psd1 -Force
 
 ```powershell
 $startBridgeStatusMonitorSplat = @{
+    MaxIterations      = 0
     IntervalSeconds    = 600
     PoApiKey           = 'your-api-key'
     PoUserKey          = 'your-user-key'
