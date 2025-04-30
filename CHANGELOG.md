@@ -1,12 +1,17 @@
-## v1.0.17 - 2025-04-30
-* chore: Update docker-build.yml
-
 # Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## v1.0.17 - 2025-04-30
+
+### Αλλαγές
+
+- Ενημερώθηκε το workflow `docker-build.yml`.
+
+---
 
 ## v1.0.16 - 2025-04-29
 
