@@ -1,78 +1,62 @@
-# 🌉 BridgeWatcher: Έξυπνη Παρακολούθηση Γεφυρών Ισθμού
+# 🌉 BridgeWatcher: Προηγμένη Παρακολούθηση Γεφυρών Ισθμού
 
-
-[![CI Status](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml)
-[![Docker Build](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml)
-[![Powershell Docs](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml)
-[![Powershell Gallery](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml)
-![Codecov](https://codecov.io/gh/mrjcap/BridgeWatcher/branch/main/graph/badge.svg)
-[![PowerShell Gallery](https://img.shields.io/powershellgallery/v/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
-[![Gallery Downloads](https://img.shields.io/powershellgallery/dt/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-
+[![Κατάσταση CI](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml)
+[![Κατασκευή Docker](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml)
+[![Τεκμηρίωση PowerShell](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml)
+[![Δημοσίευση](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml)
+![Κάλυψη Κώδικα](https://codecov.io/gh/mrjcap/BridgeWatcher/branch/main/graph/badge.svg)
+[![Έκδοση PowerShell Gallery](https://img.shields.io/powershellgallery/v/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
+[![Λήψεις από Gallery](https://img.shields.io/powershellgallery/dt/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
+[![Άδεια: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
 ## 📖 Περιγραφή
 
-Το **BridgeWatcher** αποτελεί μια εξελιγμένη και πλήρως αυτοματοποιημένη λύση PowerShell module, ειδικά σχεδιασμένη για την αξιόπιστη παρακολούθηση της επιχειρησιακής κατάστασης των γεφυρών Ποσειδωνίας και Ισθμίας στην Κόρινθο. Μέσω τεχνικών HTML scraping και οπτικής αναγνώρισης χαρακτήρων (OCR) με χρήση του Google Vision API, το σύστημα αναλύει πληροφορίες σε πραγματικό χρόνο, αποστέλλει κρίσιμες ειδοποιήσεις μέσω Pushover και αρχειοθετεί τα δεδομένα σε μορφή JSON για ιστορική αναφορά και αναλυτική αξιολόγηση.
+Το **BridgeWatcher** αποτελεί ένα υψηλής εξειδίκευσης και πλήρως αυτοματοποιημένο PowerShell module, σχεδιασμένο με σκοπό την αξιόπιστη εποπτεία της λειτουργικής κατάστασης των γεφυρών Ποσειδωνίας και Ισθμίας στον Ισθμό της Κορίνθου. Με την αξιοποίηση τεχνικών HTML scraping και Οπτικής Αναγνώρισης Χαρακτήρων (OCR) μέσω του Google Vision API, το σύστημα διενεργεί σε βάθος ανάλυση δεδομένων σε πραγματικό χρόνο, αποστέλλει κρίσιμες ειδοποιήσεις μέσω της πλατφόρμας Pushover και διατηρεί ιστορικό καταγραφών σε μορφή JSON για εκ των υστέρων επεξεργασία και αξιολόγηση.
 
 ---
 
-## 💡 Χαρακτηριστικά
+## 💡 Δυνατότητες
 
-- Αυτόματη και περιοδική ανάκτηση πληροφοριών από επίσημες πηγές.
-- Εφαρμογή προηγμένων τεχνικών OCR για εξαγωγή χρονικών δεδομένων.
-- Άμεση αποστολή προσαρμόσιμων ειδοποιήσεων μέσω Pushover API.
-- Δημιουργία και διαχείριση JSON snapshots για χρονική ανάλυση.
-- Ρύθμιση διαστημάτων παρακολούθησης μέσω παραμέτρων.
-- Ενσωμάτωση δοκιμαστικών ελέγχων με χρήση Pester v5.
-- Συμβατότητα με περιβάλλοντα CI/CD.
+- Αυτοματοποιημένη και επαναλαμβανόμενη ανάκτηση δεδομένων από επίσημες διαδικτυακές πηγές
+- Χρήση εξελιγμένων αλγορίθμων OCR για ακριβή εξαγωγή χρονικών παραμέτρων
+- Στιγμιαία αποστολή προσαρμοσμένων ειδοποιήσεων μέσω Pushover API
+- Δημιουργία και διαχείριση χρονικών στιγμιοτύπων (JSON snapshots)
+- Ευέλικτος καθορισμός διαστημάτων παρακολούθησης μέσω παραμέτρων
+- Ενσωματωμένες δοκιμές μονάδων με χρήση Pester έκδοσης 5
+- Απόλυτη συμβατότητα με περιβάλλοντα συνεχούς ενσωμάτωσης (CI/CD)
 
 ---
-## 🛠️ Προαπαιτήσεις
 
-### 📄 **Προαπαιτούμενα για το PowerShell Module BridgeWatcher**
+## 🛠️ Προϋποθέσεις
 
-Πριν ξεκινήσεις τη χρήση του **BridgeWatcher** module, θα χρειαστείς τα παρακάτω:
+### 📄 **Απαραίτητες Παράμετροι για την εκτέλεση του BridgeWatcher**
 
-1. **Google Vision API Key**:
-    
-    - Για να χρησιμοποιήσεις τις δυνατότητες OCR (Οπτική Αναγνώριση Χαρακτήρων) του **BridgeWatcher**, απαιτείται **Google Vision API Key**.
-    
-    - Μπορείς να αποκτήσεις το API Key από το [Google Cloud Console](https://console.cloud.google.com/), αφού ενεργοποιήσεις το Vision API για το πρότζεκτ σου.
+Προτού ξεκινήσεις την αξιοποίηση του **BridgeWatcher**, βεβαιώσου ότι έχεις εξασφαλίσει τα ακόλουθα:
 
-2. **Pushover API Key**:
-    
-    - Για την αποστολή ειδοποιήσεων, χρειάζεσαι το **Pushover API Key**.
-    
-    - Μπορείς να αποκτήσεις το API Key από το [Pushover website](https://pushover.net/), αφού δημιουργήσεις έναν λογαριασμό.
+1. **Κλειδί API για Google Vision**
+   - Απαραίτητο για την ενεργοποίηση των OCR λειτουργιών.
+   - Απόκτησέ το μέσω του [Google Cloud Console](https://console.cloud.google.com/) ενεργοποιώντας το αντίστοιχο API.
 
-3. **Pushover User Key**:
-    
-    - Το **Pushover User Key** είναι απαραίτητο για να στέλνεις ειδοποιήσεις στον προσωπικό σου λογαριασμό.
-    
-    - Θα το βρεις στο [Pushover Dashboard](https://pushover.net/) αφού συνδεθείς με τον λογαριασμό σου.
+2. **Κλειδί Pushover API**
+   - Απαιτείται για την αποστολή ειδοποιήσεων προς την πλατφόρμα Pushover.
+   - Παρέχεται μέσω του [επίσημου ιστότοπου Pushover](https://pushover.net/).
 
-4. **Εφαρμογή Pushover στο κινητό (Android/iOS)**:
-    
-    - Για να λαμβάνεις ειδοποιήσεις στο κινητό σου, θα χρειαστεί να κατεβάσεις και να εγκαταστήσεις την εφαρμογή **Pushover**.
-    
-    - Η εφαρμογή είναι διαθέσιμη για **Android** και **iOS**. Μπορείς να τη βρεις στο [Google Play Store](https://play.google.com/store/apps/details?id=com.pushover.client) ή στο [Apple App Store](https://apps.apple.com/us/app/pushover/id506088175).
+3. **Κλειδί Χρήστη Pushover (User Key)**
+   - Απαραίτητο για την προσωποποιημένη αποστολή ειδοποιήσεων.
+   - Εντοπίζεται μέσω του [Pushover Dashboard](https://pushover.net/).
 
-## 🛠️ Απαιτήσεις
-
-- Windows PowerShell 5.1 ή PowerShell 7+
-- Συμβατότητα με PowerShell Core
-- Καμία ανάγκη πρόσθετων modules ή βιβλιοθηκών
+4. **Εγκατάσταση Pushover στο κινητό**
+   - Για την απρόσκοπτη λήψη ειδοποιήσεων, απαιτείται η εφαρμογή Pushover σε Android ή iOS.
+   - Διαθέσιμη στο [Google Play Store](https://play.google.com/store/apps/details?id=com.pushover.client) και στο [Apple App Store](https://apps.apple.com/us/app/pushover/id506088175).
 
 ---
 
 ## 📦 Εγκατάσταση
 
 ```powershell
-# Εγκατάσταση από PowerShell Gallery:
+# Εγκατάσταση μέσω PowerShell Gallery:
 Install-Module -Name BridgeWatcher -Scope CurrentUser
 
 # Χειροκίνητη φόρτωση από τοπικό αποθετήριο:
@@ -83,12 +67,22 @@ Import-Module ./BridgeWatcher.psd1 -Force
 
 ## 🚀 Παραδείγματα Χρήσης
 
-**Έναρξη Συνεχούς Παρακολούθησης:**
+**Εκκίνηση συνεχούς παρακολούθησης:**
+
 ```powershell
-Start-BridgeStatusMonitor -IntervalSeconds 600 -PoApiKey 'your-api-key' -PoUserKey 'your-user-key' -ApiKey 'your-google-vision-api-key' -OutputFile './BridgeStatusSnapshot.json'
+$startBridgeStatusMonitorSplat = @{
+    IntervalSeconds    = 600
+    PoApiKey           = 'your-api-key'
+    PoUserKey          = 'your-user-key'
+    ApiKey             = 'your-google-vision-api-key'
+    OutputFile         = './BridgeStatusSnapshot.json'
+}
+
+Start-BridgeStatusMonitor @startBridgeStatusMonitorSplat
 ```
 
-**Ανάκτηση Τρέχουσας Κατάστασης:**
+**Άμεση ανάκτηση τρέχουσας κατάστασης:**
+
 ```powershell
 Get-BridgeStatus -Verbose
 ```
@@ -97,28 +91,25 @@ Get-BridgeStatus -Verbose
 
 ## 🧩 Εξαρτήσεις Module
 
-Το **BridgeWatcher** έχει αναπτυχθεί ως πλήρως αυτοδύναμο module:
-
-- Χρησιμοποιεί Pester 5 αποκλειστικά για testing.
+Το **BridgeWatcher** έχει αναπτυχθεί ως αυτάρκες module χωρίς εξωτερικές εξαρτήσεις, με αποκλειστική χρήση του Pester v5 για τις δοκιμές.
 
 ---
 
-## 📝 Άδειες και Συνεισφορές
+## 📝 Άδεια Χρήσης & Συμμετοχή
 
-- Άδεια Χρήσης: [MIT License](https://opensource.org/licenses/MIT)
-- Δημιουργός: Γιάννης Καπλατζής
-- Επίσημο Repository: [https://github.com/mrjcap/BridgeWatcher](https://github.com/mrjcap/BridgeWatcher)
-
-Η κοινότητα καλωσορίζεται να συμβάλλει μέσω Pull Requests και αναφορών σφαλμάτων.
+- **Άδεια**: [MIT License](https://opensource.org/licenses/MIT)
+- **Συγγραφέας**: Γιάννης Καπλατζής
+- **Repository**: [GitHub: mrjcap/BridgeWatcher](https://github.com/mrjcap/BridgeWatcher)
+- Κάθε μορφή συνεισφοράς είναι ευπρόσδεκτη — είτε μέσω Pull Requests είτε μέσω αναφοράς ζητημάτων.
 
 ---
 
-## 🗺️ Οδικός Χάρτης Εξέλιξης
+## 🗺️ Οδικός Χάρτης Ανάπτυξης
 
-- [x] Πλήρης κάλυψη δοκιμών μέσω Pester
-- [x] Ενσωμάτωση CI με GitHub Actions
-- [x] Έκδοση στο PowerShell Gallery
-- [x] Ενσωμάτωση Codecov
-- [x] Docker Image
+- [x] Ολοκληρωμένη κάλυψη μέσω Pester tests
+- [x] Ενσωμάτωση GitHub Actions για CI
+- [x] Δημοσίευση στο PowerShell Gallery
+- [x] Υποστήριξη Codecov
+- [x] Δημιουργία Docker Image
 
 ---
