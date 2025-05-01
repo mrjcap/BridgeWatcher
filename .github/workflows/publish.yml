@@ -86,4 +86,19 @@ jobs:
         env:
           PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}
         run: |
-          Publish-Module -Path ./BridgeWatcher -Repository PSGallery -NuGetApiKey $env:PSGalleryApiKey -Verbose
+          if (!$env:PSGalleryApiKey) {
+            Write-Error "PSGalleryApiKey is not set. Ensure it is added as a GitHub Secret."
+            exit 1
+          }
+
+          if (-Not (Test-Path -Path $env:ModulePath)) {
+            Write-Error "Module path $env:ModulePath does not exist. Check the workflow configuration."
+            exit 1
+          }
+
+          try {
+            Publish-Module -Name 'BridgeWatcher' -Path $env:ModulePath -NuGetApiKey $env:PSGalleryApiKey -Force
+          } catch {
+            Write-Error "Failed to publish the module: $_"
+            exit 1
+          }
