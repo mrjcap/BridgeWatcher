@@ -17,13 +17,11 @@ on:
       - 'LICENSE'
       - '.github/workflows/publish.yml'
       - '/tools/**'
-
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - name: Install Pester
         shell: pwsh
         run: Install-Module Pester -Force -Scope CurrentUser
@@ -32,7 +30,6 @@ jobs:
         run: |
           $res = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1) -Verbose
           if ($res.FailedCount -gt 0) { exit 1 }
-
       - name: Bump Version
         shell: pwsh
         id: version_bump
@@ -53,26 +50,10 @@ jobs:
               Write-Host "Could not find version in .psd1 file."
               exit 1
           }
-
-      - name: Generate Release Notes
-        id: generate_changelog
+      - name: Update CHANGELOG.md
+        shell: pwsh
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -z "$PREV_TAG" ]; then
-            git log --pretty=format:"* %s" > temp_changelog.txt
-          else
-            git log --pretty=format:"* %s" $PREV_TAG..HEAD > temp_changelog.txt
-          fi
-          echo "release_notes=$(cat temp_changelog.txt)" >> $GITHUB_ENV
-      - name: Update CHANGELOG.md with release notes
-        run: |
-          VERSION="v${{ env.new_version }}"
-          DATE=$(date +'%Y-%m-%d')
-          echo -e "## $VERSION - $DATE\n${{ env.release_notes }}\n" > NEW_CHANGELOG.md
-          if [ -f CHANGELOG.md ]; then
-            cat CHANGELOG.md >> NEW_CHANGELOG.md
-          fi
-          mv NEW_CHANGELOG.md CHANGELOG.md   
+          & ./scripts/Update-ReleaseChangeLog.ps1 -Version "${{ env.new_version }}"
       - name: Commit Version and Changelog
         shell: bash
         run: |
@@ -89,7 +70,6 @@ jobs:
           TAG_NAME="v${{ env.new_version }}"
           git tag $TAG_NAME
           git push origin $TAG_NAME
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -97,7 +77,6 @@ jobs:
           tag_name: "v${{ env.new_version }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Publish Module
         if: ${{ github.event_name == 'push' }}
         shell: pwsh
