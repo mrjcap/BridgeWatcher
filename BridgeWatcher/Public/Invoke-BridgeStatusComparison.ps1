@@ -81,7 +81,7 @@ function Invoke-BridgeStatusComparison {
                     $writeBridgeStageSplat = @{
                         Level   = 'Verbose'
                         Stage   = 'Ανάλυση'
-                        Message = "Καμία ουσιαστική αλλαγή στο $($change.gefyraName)."
+                        Message = "Καμία ουσιαστική αλλαγή στην $($change.gefyraName)."
                     }
                     Write-BridgeStage @writeBridgeStageSplat
                     continue
