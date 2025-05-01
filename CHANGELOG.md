@@ -5,6 +5,24 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.20] - 2025-05-01
+
+### Προστέθηκαν
+
+- Προσθήκη συστήματος αυτόματης ενημέρωσης CHANGELOG στο /scripts/
+- Προστέθηκε try/catch στο test αποτυχίας API για Send-BridgePushoverRequest
+- Προστέθηκε mock της Send-BridgeNotification για έλεγχο ειδοποίησης τύπου Closed
+- Προστέθηκε υποστήριξη για structured exception handling στο Send-BridgePushoverRequest
+
+### Τεκμηρίωση
+
+- Ενημέρωση αρχείου CHANGELOG.md
+-  Αντικατάσταση inline changelog generation με script-based σύστημα στο publish.yml
+- Ενημέρωση αρχείου CHANGELOG.md
+- Bump version to 1.0.19 and update CHANGELOG.md
+- Ενημερώθηκε το αρχείο CHANGELOG.md
+- Ενημέρωση αρχείου CHANGELOG.md
+
 ## [v1.0.19] - 2025-05-01
 
 ### Προστέθηκαν
@@ -169,3 +187,4 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
