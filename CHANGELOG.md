@@ -5,6 +5,17 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.26] - 2025-05-01
+
+### Προστέθηκαν
+
+- Υποστήριξη εκδόσεων με χωρίς "v" στο Get-ReleaseNotes.ps1
+
+### Τεκμηρίωση
+
+- Bump version to 1.0.25 and update CHANGELOG.md
+- Ενημερώθηκε το regex ώστε να ταιριάζει σωστά τα sections τύπου ## [1.0.24] στο CHANGELOG.md
+
 ## [1.0.25] - 2025-05-01
 
 ### Προστέθηκαν
@@ -233,6 +244,7 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
 
 
