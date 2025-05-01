@@ -46,6 +46,7 @@
             Level      = 'Warning'
         }
         Write-BridgeLog @writeBridgeLogSplat
-        return $null
+        $errorRecord = [System.Management.Automation.ErrorRecord]::new($_.Exception,'PushoverSendFailure',[System.Management.Automation.ErrorCategory]::ConnectionError,$Payload)
+        throw $errorRecord
     }
 }
