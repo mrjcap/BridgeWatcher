@@ -46,12 +46,12 @@ function Start-BridgeStatusMonitor {
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey
     )
     begin {
-        $iteration = 0
-        $infiniteLoop = $MaxIterations -eq 0
-        $writeBridgeLogSplat = @{
-            Stage   = 'Ανάλυση'
-            Message = "Monitor started: Interval=$IntervalSeconds sec, MaxIterations=$MaxIterations"
-            Level   = 'Verbose'
+        $iteration              = 0
+        $infiniteLoop           = $MaxIterations -eq 0
+        $writeBridgeLogSplat    = @{
+            Stage      = 'Ανάλυση'
+            Message    = "Ξεκίνησε ο κύκλος παρακολούθησης: Διάστημα = $IntervalSeconds δευτ., Μέγιστες επαναλήψεις = $MaxIterations"
+            Level      = 'Verbose'
         }
         Write-BridgeLog @writeBridgeLogSplat
     }
@@ -59,12 +59,6 @@ function Start-BridgeStatusMonitor {
         while ($infiniteLoop -or $iteration -lt $MaxIterations) {
             try {
                 $iteration++
-                $writeBridgeLogSplat = @{
-                    Stage   = 'Ανάλυση'
-                    Message = "Monitor Iteration $iteration"
-                    Level   = 'Verbose'
-                }
-                Write-BridgeLog @writeBridgeLogSplat
                 $getBridgeStatusComparisonSplat = @{
                     OutputFile = $OutputFile
                     ApiKey     = $ApiKey
@@ -88,9 +82,9 @@ function Start-BridgeStatusMonitor {
             }
         }
         $writeBridgeLogSplat = @{
-            Stage   = 'Ανάλυση'
-            Message = "✅ Monitoring loop completed after $iteration iteration(s)."
-            Level   = 'Verbose'
+            Stage      = 'Ανάλυση'
+            Message    = "✅ Ο κύκλος παρακολούθησης ολοκληρώθηκε μετά από $iteration επανάληψη(εις)."
+            Level      = 'Verbose'
         }
         Write-BridgeLog @writeBridgeLogSplat
     }
