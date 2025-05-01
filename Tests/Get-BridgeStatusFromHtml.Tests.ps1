@@ -1,11 +1,11 @@
-Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Get-BridgeStatusFromHtml' {
         Context 'Debug branch' {
             It 'γράφει Write-Debug όταν δεν βρίσκει match για status' {
-                # Mock το Get-BridgeImages να επιστρέφει έστω μία εικόνα
-                Mock Get-BridgeImages { @(@{ src = 'not-matching.jpg' }) }
+                # Mock το Get-BridgeImage να επιστρέφει έστω μία εικόνα
+                Mock Get-BridgeImage { @(@{ src = 'not-matching.jpg' }) }
                 # Mock το Resolve-BridgeStatus να επιστρέφει $null (κανένα status δεν ταιριάζει)
                 Mock Resolve-BridgeStatus { $null }
                 # Mock το New-BridgeStatusObject για να μην εκτελεστεί ποτέ (θα μπει μόνο στο else)
@@ -22,8 +22,8 @@ InModuleScope 'BridgeWatcher' {
         }
         Context 'Όταν δεν βρίσκονται εικόνες' {
             It 'Πετάει σφάλμα BridgeImagesNotFound όταν δεν επιστρέφονται εικόνες' {
-                # Mock το Get-BridgeImages να επιστρέφει $null
-                Mock Get-BridgeImages { $null }
+                # Mock το Get-BridgeImage να επιστρέφει $null
+                Mock Get-BridgeImage { $null }
                 $html = '<html><body>no images</body></html>'
                 $timestamp = '2025-04-18T08:00:00'
                 { Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp } | Should -Throw -ErrorId 'BridgeImagesNotFound,Get-BridgeStatusFromHtml'

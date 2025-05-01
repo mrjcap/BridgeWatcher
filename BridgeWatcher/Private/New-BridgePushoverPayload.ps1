@@ -1,4 +1,4 @@
-function New-BridgePushoverPayload {
+﻿function New-BridgePushoverPayload {
     [CmdletBinding()]
     <#
     .SYNOPSIS

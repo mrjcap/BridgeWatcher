@@ -1,4 +1,4 @@
-function Resolve-BridgeStatus {
+﻿function Resolve-BridgeStatus {
     [CmdletBinding()]
     <#
     .SYNOPSIS

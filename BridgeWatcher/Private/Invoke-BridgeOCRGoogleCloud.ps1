@@ -1,4 +1,4 @@
-function Invoke-BridgeOCRGoogleCloud {
+﻿function Invoke-BridgeOCRGoogleCloud {
     [CmdletBinding()]
     <#
     .SYNOPSIS

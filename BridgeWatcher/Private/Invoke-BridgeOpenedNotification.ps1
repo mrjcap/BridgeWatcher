@@ -1,4 +1,4 @@
-function Invoke-BridgeOpenedNotification {
+﻿function Invoke-BridgeOpenedNotification {
     [CmdletBinding()]
     <#
     .SYNOPSIS

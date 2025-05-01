@@ -1,4 +1,4 @@
-function Get-BridgeNameFromUri {
+﻿function Get-BridgeNameFromUri {
     [CmdletBinding()]
     <#
     .SYNOPSIS

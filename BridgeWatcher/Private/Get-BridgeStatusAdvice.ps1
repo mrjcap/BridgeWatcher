@@ -1,4 +1,4 @@
-function Get-BridgeStatusAdvice {
+﻿function Get-BridgeStatusAdvice {
     [CmdletBinding()]
     <#
     .SYNOPSIS

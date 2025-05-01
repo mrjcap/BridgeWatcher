@@ -1,7 +1,7 @@
-Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
-    Describe 'Get-BridgeImages' {
+    Describe 'Get-BridgeImage' {
         Context 'Ισθμία' {
             It 'Επιστρέφει εικόνες από valid HTML block' {
                 $html = @'
@@ -19,13 +19,13 @@ InModuleScope 'BridgeWatcher' {
   </div>
 </div>
 '@
-                $result    = Get-BridgeImages -HtmlContent $html -Location 'isthmia'
+                $result    = Get-BridgeImage -HtmlContent $html -Location 'isthmia'
                 $result.Count | Should -Be 2
                 $result[0].src | Should -Match 'no-schedule'
             }
             It 'Επιστρέφει Exception αν δεν βρεθεί matching block' {
                 $html      = '<div>Κάτι άλλο</div>'
-                {Get-BridgeImages -HtmlContent $html -Location 'isthmia' } | Should -Throw "Δεν βρέθηκε block για τη θέση isthmia."
+                {Get-BridgeImage -HtmlContent $html -Location 'isthmia' } | Should -Throw "Δεν βρέθηκε block για τη θέση isthmia."
 
             }
         }

@@ -1,4 +1,4 @@
-function Get-BridgeHtml {
+﻿function Get-BridgeHtml {
     [CmdletBinding()]
     <#
     .SYNOPSIS

@@ -1,4 +1,4 @@
-# BridgeWatcher.psm1
+﻿# BridgeWatcher.psm1
 
 # region Public Functions
 . "$PSScriptRoot\Public\Get-BridgeStatus.ps1"
@@ -13,7 +13,7 @@
 . "$PSScriptRoot\Private\ConvertTo-BridgeTimeRange.ps1"
 . "$PSScriptRoot\Private\Export-BridgeStatusJson.ps1"
 . "$PSScriptRoot\Private\ConvertTo-BridgeClosedDuration.ps1"
-. "$PSScriptRoot\Private\Get-BridgeImages.ps1"
+. "$PSScriptRoot\Private\Get-BridgeImage.ps1"
 . "$PSScriptRoot\Private\Get-BridgeNameFromUri.ps1"
 . "$PSScriptRoot\Private\Get-BridgeStatusAdvice.ps1"
 . "$PSScriptRoot\Private\Get-BridgeStatusFromHtml.ps1"

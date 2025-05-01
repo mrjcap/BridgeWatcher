@@ -1,4 +1,4 @@
-function Start-BridgeStatusMonitor {
+﻿function Start-BridgeStatusMonitor {
     [CmdletBinding()]
     <#
     .SYNOPSIS

@@ -1,4 +1,4 @@
-function Invoke-BridgeStatusComparison {
+﻿function Invoke-BridgeStatusComparison {
     <#
     .SYNOPSIS
     Συγκρίνει δύο λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.

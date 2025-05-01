@@ -1,4 +1,4 @@
-function New-BridgeOCRRequestBody {
+﻿function New-BridgeOCRRequestBody {
     [CmdletBinding()]
     <#
     .SYNOPSIS

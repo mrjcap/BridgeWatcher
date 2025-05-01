@@ -1,4 +1,4 @@
-function ConvertTo-BridgeClosedDuration {
+﻿function ConvertTo-BridgeClosedDuration {
     [CmdletBinding()]
     <#
     .SYNOPSIS

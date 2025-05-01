@@ -1,4 +1,4 @@
-function New-BridgeStatusObject {
+﻿function New-BridgeStatusObject {
     [CmdletBinding()]
     <#
     .SYNOPSIS

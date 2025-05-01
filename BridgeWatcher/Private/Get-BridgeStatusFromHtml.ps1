@@ -1,4 +1,4 @@
-function Get-BridgeStatusFromHtml {
+﻿function Get-BridgeStatusFromHtml {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -54,7 +54,7 @@ function Get-BridgeStatusFromHtml {
             HtmlContent = $Html
             Location    = $location
         }
-        $bridgeImages = Get-BridgeImages @getBridgeImagesSplat
+        $bridgeImages = Get-BridgeImage @getBridgeImagesSplat
         if (-not $bridgeImages -or $bridgeImages.Count -eq 0) {
             $writeBridgeLogSplat = @{
                 Stage   = 'Σφάλμα'

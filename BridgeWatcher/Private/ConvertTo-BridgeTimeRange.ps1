@@ -1,4 +1,4 @@
-function ConvertTo-BridgeTimeRange {
+﻿function ConvertTo-BridgeTimeRange {
     [CmdletBinding()]
     <#
     .SYNOPSIS

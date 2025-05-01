@@ -1,11 +1,11 @@
-function Get-BridgeImages {
+﻿function Get-BridgeImage {
     [CmdletBinding()]
     <#
     .SYNOPSIS
     Εξάγει όλα τα links εικόνων από HTML περιεχόμενο.
 
     .DESCRIPTION
-    Η Get-BridgeImages αναλύει HTML δεδομένα και επιστρέφει αντικείμενα
+    Η Get-BridgeImage αναλύει HTML δεδομένα και επιστρέφει αντικείμενα
     με τα links εικόνων που σχετίζονται με την κατάσταση γέφυρας.
 
     .PARAMETER Html
@@ -15,7 +15,7 @@ function Get-BridgeImages {
     [pscustomobject[]] - Λίστα από αντικείμενα εικόνων.
 
     .EXAMPLE
-    Get-BridgeImages -Html $htmlContent
+    Get-BridgeImage -Html $htmlContent
 
     .NOTES
     Η ανάλυση βασίζεται σε regex για ανεύρεση εικόνων.

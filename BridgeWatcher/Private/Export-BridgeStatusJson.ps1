@@ -1,4 +1,4 @@
-function Export-BridgeStatusJson {
+﻿function Export-BridgeStatusJson {
     [CmdletBinding()]
     <#
     .SYNOPSIS

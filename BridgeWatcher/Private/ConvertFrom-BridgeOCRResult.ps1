@@ -1,4 +1,4 @@
-function ConvertFrom-BridgeOCRResult {
+﻿function ConvertFrom-BridgeOCRResult {
     [CmdletBinding()]
     <#
     .SYNOPSIS
