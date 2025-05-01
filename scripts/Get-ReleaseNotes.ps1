@@ -26,8 +26,8 @@ if (!(Test-Path $Path)) {
     throw "Το αρχείο $Path δεν βρέθηκε."
 }
 
-$changelog = Get-Content $Path -Raw
-$regex = "(## $Version[^\r\n]*\r?\n(?:.*?\r?\n)*?)(?=\r?\n## |\Z)"
+$changelog    = Get-Content $Path -Raw
+$regex        = "(## \[$Version\][^\r\n]*\r?\n(?:.*?\r?\n)*?)(?=\r?\n## |\Z)"
 if ($changelog -match $regex) {
     $matches[1].Trim()
 } else {
