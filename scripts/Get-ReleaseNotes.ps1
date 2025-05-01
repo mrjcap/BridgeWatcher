@@ -25,9 +25,10 @@ param(
 if (!(Test-Path $Path)) {
     throw "Το αρχείο $Path δεν βρέθηκε."
 }
+$normalizedVersion    = $Version -replace '^v', ''
 
 $changelog    = Get-Content $Path -Raw
-$regex        = "(## \[$Version\][^\r\n]*\r?\n(?:.*?\r?\n)*?)(?=\r?\n## |\Z)"
+$regex        = "(## \[$normalizedVersion\][^\r\n]*\r?\n(?:.*?\r?\n)*?)(?=\r?\n## |\Z)"
 if ($changelog -match $regex) {
     $matches[1].Trim()
 } else {
