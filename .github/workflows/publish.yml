@@ -88,12 +88,6 @@ jobs:
           body: ${{ env.release_notes }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        uses: softprops/action-gh-release@v1
-        with:
-          body: ${{ env.release_notes }}
-          tag_name: "v${{ env.new_version }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Module
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         shell: pwsh
