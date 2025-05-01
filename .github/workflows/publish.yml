@@ -1,6 +1,7 @@
 name: PowerShell Module Publish
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
     paths-ignore:
