@@ -5,6 +5,19 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.21] - 2025-05-01
+
+### Προστέθηκαν
+
+- Προσθήκη συστήματος αυτόματης ενημέρωσης CHANGELOG στο /scripts/
+
+### Τεκμηρίωση
+
+- Bump version to 1.0.20 and update CHANGELOG.md
+- Ενημέρωση αρχείου CHANGELOG.md
+-  Αντικατάσταση inline changelog generation με script-based σύστημα στο publish.yml
+- Ενημέρωση αρχείου CHANGELOG.md
+
 ## [1.0.20] - 2025-05-01
 
 ### Προστέθηκαν
@@ -187,4 +200,5 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
