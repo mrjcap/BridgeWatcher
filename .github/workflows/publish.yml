@@ -38,21 +38,7 @@ jobs:
         id: version_bump
         run: |
           $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
-          $content = Get-Content $psd1Path -Raw
-          if ($content -match "ModuleVersion\s*=\s*'(\d+\.\d+\.\d+)'" ) {
-              $currentVersion = $matches[1]
-              Write-Host "Current version: $currentVersion"
-              $versionParts = $currentVersion -split '\.'
-              $versionParts[2] = [int]$versionParts[2] + 1  # Bumping the patch version
-              $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
-              $newContent = $content -replace "ModuleVersion\s*=\s*'$currentVersion'", "ModuleVersion = '$newVersion'"
-              Set-Content $psd1Path -Value $newContent
-              Write-Host "Updated version to: $newVersion"
-              echo "new_version=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
-          } else {
-              Write-Host "Could not find version in .psd1 file."
-              exit 1
-          }
+          & ./scripts/Update-ModuleVersion.ps1 -Path $psd1Path -GitHubEnv $env:GITHUB_ENV
       - name: Update CHANGELOG.md
         shell: pwsh
         run: |
