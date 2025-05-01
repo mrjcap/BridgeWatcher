@@ -312,10 +312,15 @@ InModuleScope 'BridgeWatcher' {
                 PoUserKey = 'user-key'
                 PoApiKey  = 'app-key'
             }
+            # Redefine Send-BridgeNotification to write to notify.txt for this test
+            function Send-BridgeNotification {
+                param([ValidateSet('Closed','Opened')]$Type, [object[]]$State)
+                "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
+            }
             $prev = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
             $curr = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Μόνιμα κλειστή' }
             Invoke-BridgeStatusComparison @defaultParams -PreviousState $prev -CurrentState $curr
-            Test-Path "$TestDrive\notify.txt" | Should -BeFalse
+            (Get-Content "$TestDrive\notify.txt") | Should -Contain 'NOTIFY:Closed:Ισθμία'
         }
         It 'πυροδοτεί handler για Μόνιμα κλειστή|<=' {
             $defaultParams = @{
