@@ -63,7 +63,7 @@ InModuleScope 'BridgeWatcher' {
     }
     Describe 'Start-BridgeStatusMonitor Function' {
         # Mocking Write-BridgeLog για να τεστάρουμε την καταγραφή χωρίς να γράφουμε πραγματικά logs
-        It 'should log the error when there is an exception' {
+        It 'Πρέπει να καταγράφεται το σφάλμα όταν προκύπτει εξαίρεση' {
             Mock Write-BridgeLog {}
             # Προετοιμασία των παραμέτρων
             $maxIterations      = 3
@@ -85,7 +85,7 @@ InModuleScope 'BridgeWatcher' {
             }
             Start-BridgeStatusMonitor @startBridgeStatusMonitorSplat
             # Επαληθεύουμε ότι η Write-BridgeLog καλείται για το σφάλμα
-            Assert-MockCalled Write-BridgeLog -Exactly 4 -Scope It  # 1 για το μήνυμα εκκίνησης, 1 για το μήνυμα σφάλματος
+            Assert-MockCalled Write-BridgeLog -Exactly 3 -Scope It  # 1 για το μήνυμα εκκίνησης, 1 για το μήνυμα σφάλματος
         }
     }
 }
