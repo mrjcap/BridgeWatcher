@@ -5,6 +5,16 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.29] - 2025-05-06
+
+### Προστέθηκαν
+
+- Προσθήκη emojis στα release notes και βελτιωμένο help στο Get-FormattedReleaseNotes
+
+### Τεκμηρίωση
+
+- Bump version to 1.0.28 and update CHANGELOG.md
+
 ## [1.0.28] - 2025-05-01
 
 ### Προστέθηκαν
@@ -265,6 +275,7 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
 
 
