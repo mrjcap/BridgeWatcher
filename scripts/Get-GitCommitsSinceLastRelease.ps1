@@ -35,7 +35,7 @@ param(
 )
 
 # 1. Συλλογή tags
-$tags    = git tag --sort    = creatordate | Where-Object { $_ }
+$tags    = git tag --sort=creatordate | Where-Object { $_ }
 
 if (-not $tags) {
   throw 'Δεν βρέθηκαν git tags στο repository.'
