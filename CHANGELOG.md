@@ -5,6 +5,20 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.31] - 2025-05-07
+
+### Προστέθηκαν
+
+- Προστέθηκε: Πλήρης εναρμόνιση headers → emojis στο Get-FormattedReleaseNotes.ps1
+
+### Διορθώθηκαν
+
+- Διόρθωση: Λάθος σύνταξη στο git tag --sort για Get-GitCommitsSinceLastRelease.ps1
+
+### Τεκμηρίωση
+
+- Επέκταση release pipeline με filtering, merge support & προστασία διπλότυπων changelogs
+
 ## [1.0.30] - 2025-05-07
 
 ### Προστέθηκαν
@@ -289,6 +303,7 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
 
 
