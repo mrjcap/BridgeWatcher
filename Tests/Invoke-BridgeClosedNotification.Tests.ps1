@@ -20,6 +20,21 @@ InModuleScope 'BridgeWatcher' {
                 Assert-MockCalled -CommandName Invoke-BridgeOCRGoogleCloud -Exactly 1
                 Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
             }
+            It 'Στέλνει debug log και Pushover notification χωρίς OCR' {
+                $entry = [pscustomobject]@{
+                    gefyraName   = 'Ισθμία'
+                    gefyraStatus = 'Κλειστή για συντήρηση'
+                    timestamp    = (Get-Date)
+                    imageUrl     = 'https://example.com/image.jpg'
+                }
+                Mock Send-BridgePushover -MockWith { }
+                Mock Write-BridgeLog -MockWith { }
+                Mock Invoke-BridgeOCRGoogleCloud { throw 'Δεν πρέπει να κληθεί OCR!' }
+                Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug
+                Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
+                Assert-MockCalled -CommandName Write-BridgeLog -Exactly 1 -ParameterFilter { $Message -like '*κλειστή για συντήρηση*' }
+                Assert-MockCalled -CommandName Invoke-BridgeOCRGoogleCloud -Exactly 0
+            }
             It 'Γράφει debug για μόνιμα κλειστή γέφυρα' {
                 $entry = [pscustomobject]@{
                     gefyraName   = 'Ισθμία'
