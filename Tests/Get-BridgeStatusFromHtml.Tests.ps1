@@ -16,7 +16,7 @@ InModuleScope 'BridgeWatcher' {
                 $result = Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp -Debug
                 $result
                 # Εναλλακτικά, μπορείς να τσεκάρεις αν το Write-Debug εκτελέστηκε:
-                Assert-MockCalled Resolve-BridgeStatus -Exactly 6 -Scope It # Καλείται για κάθε status
+                Assert-MockCalled Resolve-BridgeStatus -Exactly 8 -Scope It # Καλείται για κάθε status
                 # Το σημαντικό: το Write-Debug της "Δεν ταιριάζει" θα εκτελεστεί για κάθε status
             }
         }
