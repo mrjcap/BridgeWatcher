@@ -36,6 +36,21 @@
     )
     foreach ($entry in $CurrentState) {
         switch ($entry.gefyraStatus) {
+            'Κλειστή για συντήρηση' {
+                $writeBridgeLogSplat = @{
+                    Stage      = 'Ειδοποίηση'
+                    Message    = "🛑 Ειδοποίηση: $($entry.gefyraName)ς είναι κλειστή για συντήρηση (χωρίς OCR)."
+                    Level      = 'Debug'
+                }
+                Write-BridgeLog @writeBridgeLogSplat
+                $pushoverSplat = @{
+                    PoUserKey = $PoUserKey
+                    PoApiKey  = $PoApiKey
+                    Title     = "🚧 Η γέφυρα της $($entry.gefyraName)ς είναι κλειστή για συντήρηση"
+                    Message   = "Η γέφυρα $($entry.gefyraName)ς είναι κλειστή για συντήρηση. Επιλέξτε άλλη διαδρομή."
+                }
+                Send-BridgePushover @pushoverSplat
+            }
             'Μόνιμα κλειστή' {
                 $writeBridgeLogSplat = @{
                     Stage      = 'Ειδοποίηση'
