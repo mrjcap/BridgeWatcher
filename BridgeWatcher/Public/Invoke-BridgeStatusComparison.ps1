@@ -59,12 +59,14 @@
             return $false
         }
         $handlerMap = @{
-            'Κλειστή με πρόγραμμα|=>' = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Κλειστή με πρόγραμμα|<=' = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Μόνιμα κλειστή|=>'       = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Μόνιμα κλειστή|<='       = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Ανοιχτή|=>'              = { Send-BridgeNotification 'Opened' $CurrentState }
-            'Ανοιχτή|<='              = { Send-BridgeNotification 'Opened' $CurrentState }
+            'Κλειστή για συντήρηση|=>' = { Send-BridgeNotification 'Closed' $CurrentState }
+            'Κλειστή για συντήρηση|<=' = { Send-BridgeNotification 'Closed' $CurrentState }
+            'Κλειστή με πρόγραμμα|=>'  = { Send-BridgeNotification 'Closed' $CurrentState }
+            'Κλειστή με πρόγραμμα|<='  = { Send-BridgeNotification 'Closed' $CurrentState }
+            'Μόνιμα κλειστή|=>'        = { Send-BridgeNotification 'Closed' $CurrentState }
+            'Μόνιμα κλειστή|<='        = { Send-BridgeNotification 'Closed' $CurrentState }
+            'Ανοιχτή|=>'               = { Send-BridgeNotification 'Opened' $CurrentState }
+            'Ανοιχτή|<='               = { Send-BridgeNotification 'Opened' $CurrentState }
         }
         foreach ($change in $diff) {
             $writeBridgeStageSplat = @{
