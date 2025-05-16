@@ -5,6 +5,15 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.32] - 2025-05-16
+
+### Προστέθηκαν
+
+- Προσθήκη χειρισμού "Κλειστή για συντήρηση" στο Invoke-BridgeStatusComparison
+- Προσθήκη υποστήριξης ειδοποίησης για "Κλειστή για συντήρηση" στο Invoke-BridgeClosedNotification
+- Προσθήκη υποστήριξης status "Κλειστή για συντήρηση" στη Get-BridgeStatusFromHtml
+- Προστέθηκε: Πλήρης εναρμόνιση headers → emojis στο Get-FormattedReleaseNotes.ps1
+
 ## [1.0.31] - 2025-05-07
 
 ### Προστέθηκαν
@@ -303,6 +312,7 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
 
 
