@@ -340,6 +340,39 @@ InModuleScope 'BridgeWatcher' {
             Invoke-BridgeStatusComparison @defaultParams -PreviousState @($previous) -CurrentState @($current)
             (Get-Content "$TestDrive\notify.txt") | Should -Contain 'NOTIFY:Closed:Ισθμία'
         }
+        It 'Στέλνει ειδοποίηση τύπου Open όταν γίνεται αλλαγή απο "Κλειστή για συντήρηση" (=>)' {
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
+            $prev      = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            $curr      = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή για συντήρηση'; timestamp = (Get-Date); imageUrl = 'img_maintenance.jpg' }
+            $params    = @{
+                PreviousState    = $prev
+                CurrentState     = $curr
+                ApiKey           = 'dummy'
+                PoUserKey        = 'dummy'
+                PoApiKey         = 'dummy'
+            }
+            Invoke-BridgeStatusComparison @params
+            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
+            Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Exactly 1
+        }
+        # Από Κλειστή για συντήρηση σε Ανοιχτή (πρέπει να καλείται μόνο Opened)
+        It 'Στέλνει ειδοποίηση τύπου Closed όταν γίνεται αλλαγή από "Ανοιχτή" σε Κλειστή για συντήρηση"' {
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
+            $prev      = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Κλειστή για συντήρηση' }
+            $curr      = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img_open.jpg' }
+            $params    = @{
+                PreviousState    = $prev
+                CurrentState     = $curr
+                ApiKey           = 'dummy'
+                PoUserKey        = 'dummy'
+                PoApiKey         = 'dummy'
+            }
+            Invoke-BridgeStatusComparison @params
+            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
+            Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Exactly 1
+        }
     }
     Describe 'Invoke-BridgeStatusComparison' {
 
