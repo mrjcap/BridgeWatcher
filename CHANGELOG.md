@@ -5,6 +5,13 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.34] - 2025-05-16
+
+### Προστέθηκαν
+
+- Προστέθηκαν Pester tests για αλλαγές status "Κλειστή για συντήρηση" στην Invoke-BridgeStatusComparison
+- Προστέθηκε Pester test για status "Κλειστή για συντήρηση" στην Invoke-BridgeClosedNotification
+
 ## [1.0.33] - 2025-05-16
 
 ### Προστέθηκαν
@@ -321,6 +328,7 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
 
 
