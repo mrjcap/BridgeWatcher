@@ -32,14 +32,16 @@
     $baseUrl = 'https://www.topvision.gr/dioriga/'
     $patterns = @{
         'poseidonia' = @{
-            'Κλειστή με πρόγραμμα' = 'image-bridge-open-with-schedule-posidonia\.php(\?\d+)?'
-            'Μόνιμα κλειστή'       = 'image-bridge-always-close\.php(\?\d+)?'
-            'Ανοιχτή'              = 'image-bridge-open-no-schedule\.php\?\d+'
+            'Κλειστή για συντήρηση'  = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
+            'Κλειστή με πρόγραμμα'   = 'image-bridge-open-with-schedule-posidonia\.php(\?\d+)?'
+            'Μόνιμα κλειστή'         = 'image-bridge-always-close\.php(\?\d+)?'
+            'Ανοιχτή'                = 'image-bridge-open-no-schedule\.php\?\d+'
         }
         'isthmia'    = @{
-            'Κλειστή με πρόγραμμα' = 'image-bridge-open-with-schedule-isthmia\.php(\?\d+)?'
-            'Μόνιμα κλειστή'       = 'image-bridge-always-close\.php(\?\d+)?'
-            'Ανοιχτή'              = 'image-bridge-open-no-schedule\.php\?\d+'
+            'Κλειστή για συντήρηση' = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
+            'Κλειστή με πρόγραμμα'  = 'image-bridge-open-with-schedule-isthmia\.php(\?\d+)?'
+            'Μόνιμα κλειστή'        = 'image-bridge-always-close\.php(\?\d+)?'
+            'Ανοιχτή'               = 'image-bridge-open-no-schedule\.php\?\d+'
         }
     }
     $result = @()
