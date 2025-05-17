@@ -5,6 +5,16 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.36] - 2025-05-17
+
+### Αλλαγές
+
+- Αλλαγές:
+
+### Τεκμηρίωση
+
+- Ενημέρωση CHANGELOG.md
+
 ## [1.0.35] - 2025-05-17
 
 ### Προστέθηκαν
@@ -338,6 +348,7 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
 
 
