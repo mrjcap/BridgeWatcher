@@ -12,8 +12,8 @@
     CmdletsToExport       = @()
     VariablesToExport     = @()
     AliasesToExport       = @()
-    FormatsToProcess     = @('Formats/BridgeStatus.format.ps1xml')
-    FunctionsToExport = @(
+    FormatsToProcess      = @('Formats/BridgeStatus.format.ps1xml')
+    FunctionsToExport     = @(
         'Get-BridgeStatus',
         'Get-BridgePreviousStatus',
         'Get-BridgeStatusComparison',
@@ -21,28 +21,12 @@
         'Send-BridgePushover',
         'Start-BridgeStatusMonitor'
     )
-    PrivateData = @{
+    PrivateData        = @{
         PSData = @{
-            Tags       = @('Bridge', 'Monitoring', 'Pushover', 'OCR')
-            LicenseUri = 'https://opensource.org/licenses/MIT'
-            ProjectUri = 'https://github.com/mrjcap/BridgeWatcher'
-            ReleaseNotes = 'Πρώτη επίσημη έκδοση.'
+            Tags            = @('Bridge', 'Monitoring', 'Pushover', 'OCR')
+            LicenseUri      = 'https://opensource.org/licenses/MIT'
+            ProjectUri      = 'https://github.com/mrjcap/BridgeWatcher'
+            ReleaseNotes    = 'Πρώτη επίσημη έκδοση.'
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
