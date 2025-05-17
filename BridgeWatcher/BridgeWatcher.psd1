@@ -1,17 +1,18 @@
 @{
-    RootModule = 'BridgeWatcher.psm1'
-    ModuleVersion = '1.0.34'
-    GUID = 'e7c0fd85-a740-47f4-8179-d952e33edb9f'
-    Author = 'Γιάννης Καπλατζής'
-    CompanyName = 'Open Source Community'
-    Copyright = '(c) 2025 Γιάννης Καπλατζής. MIT License.'
-    Description = 'Παρακολούθηση κατάστασης γεφυρών Ισθμίας & Ποσειδωνίας, με υποστήριξη OCR και ειδοποιήσεις Pushover.'
-    PowerShellVersion = '5.1'
-    RequiredModules      = @()
-    RequiredAssemblies   = @()
-    CmdletsToExport      = @()
-    VariablesToExport    = @()
-    AliasesToExport      = @()
+    RootModule            = 'BridgeWatcher.psm1'
+    ModuleVersion         = '1.0.34'
+    GUID                  = 'e7c0fd85-a740-47f4-8179-d952e33edb9f'
+    Author                = 'Γιάννης Καπλατζής'
+    CompanyName           = 'Open Source Community'
+    Copyright             = '(c) 2025 Γιάννης Καπλατζής. MIT License.'
+    Description           = 'Παρακολούθηση κατάστασης γεφυρών Ισθμίας & Ποσειδωνίας, με υποστήριξη OCR και ειδοποιήσεις Pushover.'
+    PowerShellVersion     = '5.1'
+    RequiredModules       = @()
+    RequiredAssemblies    = @()
+    CmdletsToExport       = @()
+    VariablesToExport     = @()
+    AliasesToExport       = @()
+    FormatsToProcess     = @('Formats/BridgeStatus.format.ps1xml')
     FunctionsToExport = @(
         'Get-BridgeStatus',
         'Get-BridgePreviousStatus',

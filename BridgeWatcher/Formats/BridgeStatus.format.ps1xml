@@ -1,0 +1,45 @@
+<?xml version    = "1.0" encoding    = "utf-8"?>
+<Configuration>
+    <ViewDefinitions>
+    <View>
+        <Name>BridgeStatusView</Name>
+        <ViewSelectedBy>
+        <TypeName>Bridge.Status</TypeName>
+        </ViewSelectedBy>
+        <TableControl>
+        <AutoSize />
+        <TableHeaders>
+            <TableColumnHeader>
+            <Label>GefyraName</Label>
+            <Width>16</Width>
+            </TableColumnHeader>
+            <TableColumnHeader>
+            <Label>GefyraStatus</Label>
+            <Width>12</Width>
+            </TableColumnHeader>
+            <TableColumnHeader>
+            <Label>Timestamp</Label>
+            <Width>18</Width>
+            </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+            <TableRowEntry>
+            <TableColumnItems>
+                <TableColumnItem>
+                <PropertyName>GefyraName</PropertyName>
+                </TableColumnItem>
+                <TableColumnItem>
+                <PropertyName>GefyraStatus</PropertyName>
+                </TableColumnItem>
+                <TableColumnItem>
+                <ScriptBlock>
+                    [DateTime]::Parse($_.Timestamp).ToString('yyyy-MM-dd HH:mm')
+                </ScriptBlock>
+                </TableColumnItem>
+            </TableColumnItems>
+            </TableRowEntry>
+        </TableRowEntries>
+        </TableControl>
+    </View>
+    </ViewDefinitions>
+</Configuration>
