@@ -42,6 +42,7 @@
         [Parameter()][string]$BaseUrl = 'https://www.topvision.gr/dioriga/'
     )
     return [pscustomobject]@{
+        PSTypeName   = 'Bridge.Status'
         GefyraName   = if ($Location -eq 'poseidonia') { 'Ποσειδωνία' } else { 'Ισθμία' }
         GefyraStatus = $Status
         Timestamp    = $Timestamp
