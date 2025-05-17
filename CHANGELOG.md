@@ -9,7 +9,17 @@
 
 ### Αλλαγές
 
-- Αλλαγές:
+- Αλλαγές: Δημιουργήθηκε το αρχείο BridgeStatus.format.ps1xml με custom πίνακα για τα πεδία GefyraName, GefyraStatus και Timestamp (μορφοποιημένο)
+
+- Ορίστηκε PSTypeName = 'Bridge.Status' στο output της New-BridgeStatusObject για ενεργοποίηση format view
+
+- Ενημερώθηκε το BridgeWatcher.psd1 με FormatsToProcess = @('Formats/BridgeStatus.format.ps1xml') για σωστό import του format
+
+- 🧹 Cleanup: Ευθυγράμμιση πεδίων στο module manifest για αναγνωσιμότητα
+
+- Ενοποιήθηκε το indentation για όλα τα πεδία του BridgeWatcher.psd1
+
+- Δεν αλλάζει καμία λειτουργικότητα – purely cosmetic αλλαγή
 
 ### Τεκμηρίωση
 
