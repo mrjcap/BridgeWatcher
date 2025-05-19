@@ -78,7 +78,6 @@
                 Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
-                break
             }
         }
         $writeBridgeLogSplat = @{
