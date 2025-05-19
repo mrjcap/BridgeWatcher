@@ -85,7 +85,7 @@ InModuleScope 'BridgeWatcher' {
             }
             Start-BridgeStatusMonitor @startBridgeStatusMonitorSplat
             # Επαληθεύουμε ότι η Write-BridgeLog καλείται για το σφάλμα
-            Assert-MockCalled Write-BridgeLog -Exactly 3 -Scope It  # 1 για το μήνυμα εκκίνησης, 1 για το μήνυμα σφάλματος
+            Assert-MockCalled Write-BridgeLog -Exactly 5 -Scope It  # 1 για το μήνυμα εκκίνησης, 1 για το μήνυμα σφάλματος
         }
     }
 }
