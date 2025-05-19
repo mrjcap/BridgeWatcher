@@ -5,6 +5,17 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.37] - 2025-05-19
+
+### Αφαιρέθηκαν
+
+- Αφαίρεση break από το catch για συνεχή παρακολούθηση
+
+### Τεκμηρίωση
+
+- Ενημέρωση CHANGELOG.md
+- Ενημέρωση CHANGELOG.md
+
 ## [1.0.36] - 2025-05-17
 
 ### Αλλαγές
@@ -358,6 +369,7 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
 
 
