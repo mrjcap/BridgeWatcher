@@ -44,11 +44,11 @@
         user    = $PoUserKey
         message = $Message
     }
-    if ($PSBoundParameters.ContainsKey('Device')) { $data.device = $Device }
-    if ($PSBoundParameters.ContainsKey('Title')) { $data.title = $Title }
-    if ($PSBoundParameters.ContainsKey('Url')) { $data.url = $Url }
-    if ($PSBoundParameters.ContainsKey('UrlTitle')) { $data.url_title = $UrlTitle }
-    if ($PSBoundParameters.ContainsKey('Priority')) { $data.priority = $Priority }
-    if ($PSBoundParameters.ContainsKey('Sound')) { $data.sound = $Sound }
+    if ($PSBoundParameters.ContainsKey('Device') -and $Device) { $data.device = $Device }
+    if ($PSBoundParameters.ContainsKey('Title') -and $Title) { $data.title = $Title }
+    if ($PSBoundParameters.ContainsKey('Url') -and $Url) { $data.url = $Url }
+    if ($PSBoundParameters.ContainsKey('UrlTitle') -and $UrlTitle) { $data.url_title = $UrlTitle }
+    if ($PSBoundParameters.ContainsKey('Priority') -and $Priority) { $data.priority = $Priority }
+    if ($PSBoundParameters.ContainsKey('Sound') -and $Sound) { $data.sound = $Sound }
     return $data
 }
