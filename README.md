@@ -4,7 +4,9 @@
 [![Κατασκευή Docker](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml)
 [![Τεκμηρίωση PowerShell](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml)
 [![Δημοσίευση](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml)
+[![GitHub issues](https://img.shields.io/github/issues/mrjcap/BridgeWatcher)](https://github.com/mrjcap/BridgeWatcher/issues)
 [![Κάλυψη Κώδικα](https://codecov.io/gh/mrjcap/BridgeWatcher/branch/main/graph/badge.svg)](https://app.codecov.io/gh/mrjcap/BridgeWatcher)
+[![Pester Tests](https://img.shields.io/badge/Pester-v5-blue)](https://pester.dev/)
 [![Έκδοση PowerShell Gallery](https://img.shields.io/powershellgallery/v/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
 [![Λήψεις από Gallery](https://img.shields.io/powershellgallery/dt/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
 [![Docker Pulls](https://img.shields.io/docker/pulls/mrjcap/bridgewatcher.svg)](https://hub.docker.com/r/mrjcap/bridgewatcher/)
@@ -16,104 +18,263 @@
 
 ## 📖 Περιγραφή
 
-Το **BridgeWatcher** αποτελεί ένα υψηλής εξειδίκευσης και πλήρως αυτοματοποιημένο PowerShell module, σχεδιασμένο με σκοπό την αξιόπιστη εποπτεία της λειτουργικής κατάστασης των γεφυρών Ποσειδωνίας και Ισθμίας στον Ισθμό της Κορίνθου. Με την αξιοποίηση τεχνικών HTML scraping και Οπτικής Αναγνώρισης Χαρακτήρων (OCR) μέσω του Google Vision API, το σύστημα διενεργεί σε βάθος ανάλυση δεδομένων σε πραγματικό χρόνο, αποστέλλει κρίσιμες ειδοποιήσεις μέσω της πλατφόρμας Pushover και διατηρεί ιστορικό καταγραφών σε μορφή JSON για εκ των υστέρων επεξεργασία και αξιολόγηση.
+Το **BridgeWatcher** αποτελεί ένα υψηλής εξειδίκευσης και πλήρως αυτοματοποιημένο PowerShell module, σχεδιασμένο με σκοπό την αξιόπιστη εποπτεία της λειτουργικής κατάστασης των γεφυρών **Ποσειδωνίας** και **Ισθμίας** στον Ισθμό της Κορίνθου. 
 
----
+Με την αξιοποίηση τεχνικών HTML scraping και Οπτικής Αναγνώρισης Χαρακτήρων (OCR) μέσω του [Google Vision API](https://cloud.google.com/vision), το σύστημα διενεργεί σε βάθος ανάλυση δεδομένων σε πραγματικό χρόνο, αποστέλλει κρίσιμες ειδοποιήσεις μέσω της πλατφόρμας [Pushover](https://pushover.net/) και διατηρεί ιστορικό καταγραφών σε μορφή JSON για εκ των υστέρων επεξεργασία και αξιολόγηση.
+
+## 📋 Πίνακας Περιεχομένων
+
+- [💡 Δυνατότητες](#-δυνατότητες)
+- [🛠️ Προϋποθέσεις](#️-προϋποθέσεις)
+- [📦 Εγκατάσταση](#-εγκατάσταση)
+- [🚀 Παραδείγματα Χρήσης](#-παραδείγματα-χρήσης)
+- [⚙️ Παράμετροι & Ρυθμίσεις](#️-παράμετροι--ρυθμίσεις)
+- [📊 Δομή Δεδομένων](#-δομή-δεδομένων)
+- [🧩 Εξαρτήσεις Module](#-εξαρτήσεις-module)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [📝 Άδεια Χρήσης & Συμμετοχή](#-άδεια-χρήσης--συμμετοχή)
+- [🗺️ Οδικός Χάρτης Ανάπτυξης](#️-οδικός-χάρτης-ανάπτυξης)
+- [❓ Συχνές Ερωτήσεις (FAQ)](#-συχνές-ερωτήσεις-faq)
 
 ## 💡 Δυνατότητες
 
-- Αυτοματοποιημένη και επαναλαμβανόμενη ανάκτηση δεδομένων από επίσημες διαδικτυακές πηγές
-- Χρήση εξελιγμένων αλγορίθμων OCR για ακριβή εξαγωγή χρονικών παραμέτρων
-- Στιγμιαία αποστολή προσαρμοσμένων ειδοποιήσεων μέσω Pushover API
-- Δημιουργία και διαχείριση χρονικών στιγμιοτύπων (JSON snapshots)
-- Ευέλικτος καθορισμός διαστημάτων παρακολούθησης μέσω παραμέτρων
-- Ενσωματωμένες δοκιμές μονάδων με χρήση Pester έκδοσης 5
-- Απόλυτη συμβατότητα με περιβάλλοντα συνεχούς ενσωμάτωσης (CI/CD)
-
----
+* ✅ **Αυτοματοποιημένη ανάκτηση δεδομένων** από την επίσημη διαδικτυακή πηγή
+* ✅ **OCR ανάλυση** με εξελιγμένους αλγορίθμους για ακριβή εξαγωγή χρονικών παραμέτρων
+* ✅ **Push notifications** με στιγμιαία αποστολή προσαρμοσμένων ειδοποιήσεων
+* ✅ Ιστορικό καταγραφών με δημιουργία στιγμιοτύπων σε μορφή JSON
+* ✅ **Ευέλικτη παραμετροποίηση** διαστημάτων παρακολούθησης
+* ✅ Πλήρης κάλυψη δοκιμών με testing framework (Pester v5)
+* ✅ **CI/CD ready** με απόλυτη συμβατότητα για συνεχή ενσωμάτωση
 
 ## 🛠️ Προϋποθέσεις
 
-### 📄 **Απαραίτητες Παράμετροι για την εκτέλεση του BridgeWatcher**
+### 📄 Απαραίτητες Παράμετροι
 
 Προτού ξεκινήσεις την αξιοποίηση του **BridgeWatcher**, βεβαιώσου ότι έχεις εξασφαλίσει τα ακόλουθα:
 
-1. **Κλειδί API για Google Vision**
-   - Απαραίτητο για την ενεργοποίηση των OCR λειτουργιών.
-   - Απόκτησέ το μέσω του [Google Cloud Console](https://console.cloud.google.com/) ενεργοποιώντας το αντίστοιχο API.
+| Απαίτηση | Περιγραφή | Πώς να το αποκτήσεις |
+|----------|-----------|----------------------|
+| **Google Vision API Key** | Απαραίτητο για OCR λειτουργίες | [Google Cloud Console](https://console.cloud.google.com/) |
+| **Pushover API Key** | Για αποστολή ειδοποιήσεων | [Pushover Dashboard](https://pushover.net/apps) |
+| **Pushover User Key** | Για προσωποποιημένες ειδοποιήσεις | [Pushover Account](https://pushover.net/) |
+| **Pushover Mobile App** | Για λήψη ειδοποιήσεων | [iOS](https://apps.apple.com/us/app/pushover-notifications/id506088175) / [Android](https://play.google.com/store/apps/details?id=net.superblock.pushover) |
 
-2. **Κλειδί Pushover API**
-   - Απαιτείται για την αποστολή ειδοποιήσεων προς την πλατφόρμα Pushover.
-   - Παρέχεται μέσω του [επίσημου ιστότοπου Pushover](https://pushover.net/).
+### 💻 Απαιτήσεις Συστήματος
 
-3. **Κλειδί Χρήστη Pushover (User Key)**
-   - Απαραίτητο για την προσωποποιημένη αποστολή ειδοποιήσεων.
-   - Εντοπίζεται μέσω του [Pushover Dashboard](https://pushover.net/).
-
-4. **Εγκατάσταση Pushover στο κινητό**
-   - Για την απρόσκοπτη λήψη ειδοποιήσεων, απαιτείται η εφαρμογή Pushover σε Android ή iOS.
-   - Διαθέσιμη στο [Google Play Store](https://play.google.com/store/apps/details?id=net.superblock.pushover) και στο [Apple App Store](https://apps.apple.com/us/app/pushover/id506088175).
-
----
+- PowerShell 5.1 ή νεότερο
+- Windows, macOS ή Linux
+- Σύνδεση στο διαδίκτυο
 
 ## 📦 Εγκατάσταση
 
+### Μέθοδος 1: PowerShell Gallery (Προτεινόμενη)
+
 ```powershell
-# Εγκατάσταση μέσω PowerShell Gallery:
+# Εγκατάσταση για τον τρέχοντα χρήστη
 Install-Module -Name BridgeWatcher -Scope CurrentUser
 
-# Χειροκίνητη φόρτωση από τοπικό αποθετήριο:
+# Εγκατάσταση για όλους τους χρήστες (απαιτεί admin)
+Install-Module -Name BridgeWatcher -Scope AllUsers
+```
+
+### Μέθοδος 2: Χειροκίνητη εγκατάσταση από GitHub
+
+```powershell
+# Κλωνοποίηση του repository
+git clone https://github.com/mrjcap/BridgeWatcher.git
+
+# Μετάβαση στον φάκελο
+cd BridgeWatcher
+
+# Φόρτωση του module
 Import-Module ./BridgeWatcher.psd1 -Force
 ```
 
----
-
 ## 🚀 Παραδείγματα Χρήσης
 
-**Εκκίνηση συνεχούς παρακολούθησης:**
+### Παράδειγμα 1: Εκκίνηση συνεχούς παρακολούθησης
 
 ```powershell
-$startBridgeStatusMonitorSplat = @{
-    MaxIterations      = 0
-    IntervalSeconds    = 600
-    PoApiKey           = 'your-api-key'
-    PoUserKey          = 'your-user-key'
+# Δημιουργία hashtable με παραμέτρους
+$params = @{
+    MaxIterations      = 0           # 0 = άπειρες επαναλήψεις
+    IntervalSeconds    = 600         # Έλεγχος κάθε 10 λεπτά
+    PoApiKey           = 'your-pushover-api-key'
+    PoUserKey          = 'your-pushover-user-key'
     ApiKey             = 'your-google-vision-api-key'
     OutputFile         = './BridgeStatusSnapshot.json'
 }
 
-Start-BridgeStatusMonitor @startBridgeStatusMonitorSplat
+# Εκκίνηση παρακολούθησης
+Start-BridgeStatusMonitor @params
 ```
 
-**Άμεση ανάκτηση τρέχουσας κατάστασης:**
+### Παράδειγμα 2: Άμεση ανάκτηση κατάστασης
 
 ```powershell
+# Απλή κλήση
+Get-BridgeStatus
+
+# Με verbose output για debugging
 Get-BridgeStatus -Verbose
+
+# Αποθήκευση σε μεταβλητή για περαιτέρω επεξεργασία
+$status = Get-BridgeStatus
+$status | Format-Table -AutoSize
 ```
 
----
+### Παράδειγμα 3: Περιορισμένη παρακολούθηση
+
+```powershell
+# Παρακολούθηση για 24 ώρες με έλεγχο κάθε 30 λεπτά
+$params = @{
+    MaxIterations      = 48          # 24 ώρες / 30 λεπτά = 48 επαναλήψεις
+    IntervalSeconds    = 1800        # 30 λεπτά = 1800 δευτερόλεπτα
+    PoApiKey           = $env:PUSHOVER_API_KEY
+    PoUserKey          = $env:PUSHOVER_USER_KEY
+    ApiKey             = $env:GOOGLE_VISION_API_KEY
+    OutputFile         = ".\logs\BridgeStatus_$(Get-Date -Format 'yyyyMMdd').json"
+}
+
+Start-BridgeStatusMonitor @params
+```
+
+## ⚙️ Παράμετροι & Ρυθμίσεις
+
+### Start-BridgeStatusMonitor Parameters
+
+| Παράμετρος | Τύπος | Περιγραφή | Προεπιλογή |
+|------------|-------|-----------|------------|
+| `MaxIterations` | int | Αριθμός επαναλήψεων (0 = άπειρες) | 0 |
+| `IntervalSeconds` | int | Χρονικό διάστημα μεταξύ ελέγχων | 600 |
+| `PoApiKey` | string | Pushover API Key | - |
+| `PoUserKey` | string | Pushover User Key | - |
+| `ApiKey` | string | Google Vision API Key | - |
+| `OutputFile` | string | Διαδρομή αρχείου JSON | ./BridgeStatusSnapshot.json |
+
+## 📊 Δομή Δεδομένων
+
+### Παράδειγμα JSON Output
+
+```json
+[
+    {
+        "GefyraName": "Ισθμία",
+        "GefyraStatus": "Ανοιχτή",
+        "ImageUrl": "https://www.topvision.gr/dioriga/image-bridge-open-no-schedule.php?1748373632",
+        "Timestamp": "2025-05-27T22:20:32.1076961+03:00"
+    },
+    {
+        "GefyraName": "Ποσειδωνία",
+        "GefyraStatus": "Ανοιχτή",
+        "ImageUrl": "https://www.topvision.gr/dioriga/image-bridge-open-no-schedule.php?1748373632",
+        "Timestamp": "2025-05-27T22:20:32.1076961+03:00"
+    }
+]
+```
 
 ## 🧩 Εξαρτήσεις Module
 
-Το **BridgeWatcher** έχει αναπτυχθεί ως αυτάρκες module χωρίς εξωτερικές εξαρτήσεις, με αποκλειστική χρήση του Pester v5 για τις δοκιμές.
+Το **BridgeWatcher** έχει αναπτυχθεί ως αυτάρκες module χωρίς εξωτερικές εξαρτήσεις:
 
----
+- ✅ **Παραγωγή**: Καμία εξωτερική εξάρτηση
+- 🧪 **Ανάπτυξη/Testing**: Pester v5 (για unit tests)
+
+## 🔧 Troubleshooting
+
+### Κοινά Προβλήματα & Λύσεις
+
+#### 🔴 Σφάλμα: "Cannot connect to bridge status website"
+```powershell
+# Έλεγχος σύνδεσης
+Test-NetConnection -ComputerName "www.topvision.gr" -Port 443
+
+```
+
+#### 🔴 Σφάλμα: "Pushover notification failed"
+```powershell
+# Δοκιμή Pushover connection
+Send-BridgePushover -Token $PoApiKey -User $PoUserKey -Message "Test" -Verbose
+```
+
+### Debug Mode
+
+```powershell
+# Ενεργοποίηση verbose logging
+$VerbosePreference = "Continue"
+Start-BridgeStatusMonitor @params -Verbose
+
+# Αποθήκευση debug log
+Start-Transcript -Path ".\debug_log.txt"
+Start-BridgeStatusMonitor @params -Verbose
+Stop-Transcript
+```
 
 ## 📝 Άδεια Χρήσης & Συμμετοχή
 
-- **Άδεια**: [MIT License](https://opensource.org/licenses/MIT)
-- **Συγγραφέας**: Γιάννης Καπλατζής
-- **Repository**: [GitHub: mrjcap/BridgeWatcher](https://github.com/mrjcap/BridgeWatcher)
-- Κάθε μορφή συνεισφοράς είναι ευπρόσδεκτη — είτε μέσω Pull Requests είτε μέσω αναφοράς ζητημάτων.
+- **📜 Άδεια**: [MIT License](LICENSE)
+- **👨‍💻 Συγγραφέας**: Γιάννης Καπλατζής
+- **🔗 Repository**: [GitHub: mrjcap/BridgeWatcher](https://github.com/mrjcap/BridgeWatcher)
+- **🤝 Συνεισφορά**: Pull Requests και Issues είναι ευπρόσδεκτα!
 
----
+### Πώς να συνεισφέρεις
+
+1. Fork το repository
+2. Δημιούργησε ένα feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit τις αλλαγές σου (`git commit -m 'Add some AmazingFeature'`)
+4. Push στο branch (`git push origin feature/AmazingFeature`)
+5. Άνοιξε ένα Pull Request
 
 ## 🗺️ Οδικός Χάρτης Ανάπτυξης
 
+### ✅ Ολοκληρωμένα
+- [x] Βασική λειτουργικότητα module
+- [x] OCR integration με Google Vision
+- [x] Pushover notifications
 - [x] Ολοκληρωμένη κάλυψη μέσω Pester tests
 - [x] Ενσωμάτωση GitHub Actions για CI
 - [x] Δημοσίευση στο PowerShell Gallery
-- [x] Υποστήριξη Codecov
 - [x] Δημιουργία Docker Image
+- [x] Υποστήριξη Codecov
+
+### 📅 Μελλοντικά
+- [ ] REST API endpoint
+
+## ❓ Συχνές Ερωτήσεις (FAQ)
+
+<details>
+<summary><strong>Πόσο συχνά πρέπει να ελέγχω την κατάσταση των γεφυρών;</strong></summary>
+
+Συνιστάται έλεγχος κάθε 10-15 λεπτά για βέλτιστη ισορροπία μεταξύ ενημέρωσης και χρήσης πόρων.
+</details>
+
+<details>
+<summary><strong>Μπορώ να χρησιμοποιήσω το module σε Linux/macOS;</strong></summary>
+
+Ναι! Το BridgeWatcher είναι συμβατό με PowerShell Core (7+) και λειτουργεί σε όλες τις πλατφόρμες.
+</details>
+
+<details>
+<summary><strong>Πώς μπορώ να αποθηκεύσω τα API keys με ασφάλεια;</strong></summary>
+
+```powershell
+# Χρήση environment variables
+$env:GOOGLE_VISION_API_KEY = "your-key"
+$env:PUSHOVER_API_KEY = "your-key"
+$env:PUSHOVER_USER_KEY = "your-key"
+
+# Ή χρήση SecretManagement module
+Install-Module Microsoft.PowerShell.SecretManagement
+Set-Secret -Name "GoogleVisionKey" -Secret "your-key"
+```
+</details>
+
+<details>
+<summary><strong>Υποστηρίζει το module άλλες υπηρεσίες ειδοποιήσεων;</strong></summary>
+
+Προς το παρόν υποστηρίζεται μόνο το Pushover.
+</details>
 
 ---
+
+Made with ❤️ in Greece
