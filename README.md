@@ -52,7 +52,7 @@
 
 4. **Εγκατάσταση Pushover στο κινητό**
    - Για την απρόσκοπτη λήψη ειδοποιήσεων, απαιτείται η εφαρμογή Pushover σε Android ή iOS.
-   - Διαθέσιμη στο [Google Play Store](https://play.google.com/store/apps/details?id=com.pushover.client) και στο [Apple App Store](https://apps.apple.com/us/app/pushover/id506088175).
+   - Διαθέσιμη στο [Google Play Store](https://play.google.com/store/apps/details?id=net.superblock.pushover) και στο [Apple App Store](https://apps.apple.com/us/app/pushover/id506088175).
 
 ---
 
