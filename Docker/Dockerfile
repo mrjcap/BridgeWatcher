@@ -11,4 +11,6 @@ COPY Docker/entrypoint.sh /scripts/
 COPY run.ps1 /scripts/
 COPY Docker/.env /scripts/
 RUN chmod +x /scripts/entrypoint.sh
-ENTRYPOINT ["/scripts/entrypoint.sh"]
+ENTRYPOINT ["sh","/scripts/entrypoint.sh"]
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+CMD pwsh -Command "if (Test-Path '/tmp/bridge_status.json' -NewerThan (Get-Date).AddMinutes(-10)) { exit 0 } else { exit 1 }"
