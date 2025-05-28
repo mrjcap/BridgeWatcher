@@ -39,31 +39,50 @@ jobs:
         run: |
           Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1)
 
+      # Step 1: Check for new commits since last release
+      - name: Check for new commits since last release
+        id: commit_check
+        shell: pwsh
+        run: |
+          $commits = & ./scripts/Get-GitCommitsSinceLastRelease.ps1
+          if (-not $commits -or $commits.Count -eq 0) {
+            Write-Host "No new commits since last release."
+            "$false" | Set-Content has_new_commits.flag
+          } else {
+            Write-Host "Found $($commits.Count) new commits since last release."
+            "$true" | Set-Content has_new_commits.flag
+          }
+
+      # Step 2: Read flag to set output for conditional steps
+      - name: Read commits flag
+        id: has_commits
+        shell: bash
+        run: |
+          if [[ -f has_new_commits.flag ]] && grep -q true has_new_commits.flag; then
+            echo "has_commits=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_commits=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Step 3: Version bump only if there are new commits
       - name: Bump Version
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        if: steps.has_commits.outputs.has_commits == 'true'
         shell: pwsh
         id: version_bump
         run: |
           $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
           & ./scripts/Update-ModuleVersion.ps1 -Path $psd1Path -GitHubEnv $env:GITHUB_ENV
 
+      # Step 4: Update CHANGELOG.md only if there are new commits
       - name: Update CHANGELOG.md
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        if: steps.has_commits.outputs.has_commits == 'true'
         shell: pwsh
         run: |
           & ./scripts/Update-ReleaseChangeLog.ps1 -Version "${{ env.new_version }}"
 
-      - name: Check if Changelog Updated
-        id: changelog_check
-        run: |
-          if [[ -f changelog_updated.flag ]] && grep -q true changelog_updated.flag; then
-            echo "updated=true" >> $GITHUB_OUTPUT
-          else
-            echo "updated=false" >> $GITHUB_OUTPUT
-          fi
-
+      # Step 5: Commit only if there are new commits
       - name: Commit Version and Changelog
-        if: steps.changelog_check.outputs.updated == 'true'
+        if: steps.has_commits.outputs.has_commits == 'true'
         id: commit_step
         shell: bash
         run: |
@@ -79,22 +98,22 @@ jobs:
           fi
 
       - name: Pull and rebase before push
-        if: steps.changelog_check.outputs.updated == 'true' && steps.commit_step.outputs.committed == 'true'
+        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         run: git pull --rebase origin main
 
       - name: Push changes
-        if: steps.changelog_check.outputs.updated == 'true' && steps.commit_step.outputs.committed == 'true'
+        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         run: git push origin main
 
       - name: Create Tag
-        if: steps.changelog_check.outputs.updated == 'true' && steps.commit_step.outputs.committed == 'true'
+        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         run: |
           TAG_NAME="v${{ env.new_version }}"
           git tag $TAG_NAME
           git push origin $TAG_NAME
 
       - name: Extract release notes from CHANGELOG.md
-        if: steps.changelog_check.outputs.updated == 'true' && steps.commit_step.outputs.committed == 'true'
+        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         id: changelog_notes
         shell: pwsh
         run: |
@@ -104,7 +123,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        if: steps.changelog_check.outputs.updated == 'true' && steps.commit_step.outputs.committed == 'true'
+        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "v${{ env.new_version }}"
@@ -114,7 +133,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish Module
-        if: steps.changelog_check.outputs.updated == 'true' && steps.commit_step.outputs.committed == 'true'
+        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         shell: pwsh
         env:
           PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}
@@ -134,7 +153,7 @@ jobs:
             exit 1
           }
 
-      # Cleanup flag file so subsequent runs start fresh
-      - name: Cleanup changelog flag
+      # Cleanup flag files so subsequent runs start fresh
+      - name: Cleanup flag files
         if: always()
-        run: rm -f changelog_updated.flag
+        run: rm -f has_new_commits.flag
