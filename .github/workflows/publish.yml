@@ -22,9 +22,11 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Fetch all tags
+        run: git fetch --tags
       - name: Install Pester
         shell: pwsh
         run: Install-Module Pester -Force -Scope CurrentUser
@@ -33,48 +35,64 @@ jobs:
         run: |
           Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1)
       - name: Bump Version
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: pwsh
         id: version_bump
         run: |
           $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
           & ./scripts/Update-ModuleVersion.ps1 -Path $psd1Path -GitHubEnv $env:GITHUB_ENV
       - name: Update CHANGELOG.md
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: pwsh
         run: |
           & ./scripts/Update-ReleaseChangeLog.ps1 -Version "${{ env.new_version }}"
       - name: Commit Version and Changelog
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        id: commit_step
         shell: bash
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ./BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
-          git commit -m "Bump version to ${{ env.new_version }} and update CHANGELOG.md" || echo "No changes to commit"
+          if git diff --staged --quiet; then
+            echo "No changes to commit from version bump or changelog update."
+            echo "committed=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "Bump version to ${{ env.new_version }} and update CHANGELOG.md" -m "[skip ci]"
+            echo "committed=true" >> $GITHUB_OUTPUT
+          fi
       - name: Pull and rebase before push
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.commit_step.outputs.committed == 'true'
         run: git pull --rebase origin main
       - name: Push changes
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.commit_step.outputs.committed == 'true'
         run: git push origin main
       - name: Create Tag
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.commit_step.outputs.committed == 'true'
         run: |
           TAG_NAME="v${{ env.new_version }}"
           git tag $TAG_NAME
           git push origin $TAG_NAME
       - name: Extract release notes from CHANGELOG.md
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.commit_step.outputs.committed == 'true'
         id: changelog_notes
         shell: pwsh
         run: |
           $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v${{ env.new_version }}"
-          echo "release_notes<<EOF" >> $env:GITHUB_ENV
-          echo "$notes" >> $env:GITHUB_ENV
-          echo "EOF" >> $env:GITHUB_ENV
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$notes" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.commit_step.outputs.committed == 'true'
+        uses: softprops/action-gh-release@v2 # Ενημέρωση σε v2
         with:
           tag_name: "v${{ env.new_version }}"
-          body: ${{ env.release_notes }}
+          name: "Release v${{ env.new_version }}" # Προσθήκη ονόματος για το release
+          body: ${{ steps.changelog_notes.outputs.release_notes }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Module
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.commit_step.outputs.committed == 'true'
         shell: pwsh
         env:
           PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}
