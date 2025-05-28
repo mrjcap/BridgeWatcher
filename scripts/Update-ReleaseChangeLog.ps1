@@ -39,8 +39,10 @@ $commits    = $commits | Where-Object { $_ -notmatch '(?i)changelog' }
 # 🔹 Αν δεν υπάρχουν commits, exit
 if (-not $commits -or $commits.Count -eq 0) {
   Write-Host 'No new commits since last release.'
+  "$false" | Set-Content 'changelog_updated.flag'
   exit 0
 }
+"$true" | Set-Content 'changelog_updated.flag'
 # Έλεγχος αν η έκδοση υπάρχει ήδη στο CHANGELOG.md
 $changelogPath    = "$PSScriptRoot\..\CHANGELOG.md"
 if (Get-Content $changelogPath | Select-String "## \[$Version\]") {
