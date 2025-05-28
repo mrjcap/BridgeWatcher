@@ -5,7 +5,7 @@
             ModuleName = 'BridgeWatcher'
         }
         TestExtension = '.Tests.ps1'
-        Exit        = $false
+        Exit        = $true
         Throw       = $false
         PassThru    = $true
     }
