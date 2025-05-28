@@ -35,6 +35,7 @@ if ($IncludeMergeCommits) {
   $commitArgs.IncludeMergeCommits    = $true
 }
 $commits    = & "$scriptRoot\Get-GitCommitsSinceLastRelease.ps1" @commitArgs
+$commits    = $commits | Where-Object { $_ -notmatch '(?i)changelog' }
 # 🔹 Αν δεν υπάρχουν commits, exit
 if (-not $commits -or $commits.Count -eq 0) {
   Write-Host 'No new commits since last release.'
