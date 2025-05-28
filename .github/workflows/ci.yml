@@ -1,4 +1,4 @@
-name: PowerShell Module CI
+name: PowerShell Module CI 
 
 on:
   push:
@@ -10,18 +10,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Install Pester
-        shell: pwsh
-        run: Install-Module Pester -Force -Scope CurrentUser
-      - name: Run Tests
+      - uses: actions/checkout@v4.2.2
+
+      - name: Install Pester and Run Tests
         shell: pwsh
         run: |
-          $res = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1) -Verbose
-          if ($res.FailedCount -gt 0) { exit 1 }
-      # Βήμα 4: Αποστολή του Coverage Report στο Codecov
+          Install-Module Pester -Force -Scope CurrentUser
+          Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1)
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v5.4.3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}  # Χρησιμοποιούμε το GitHub secret για το API token
-          files: ./coverage.xml  # Η διαδρομή του coverage report
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
