@@ -45,6 +45,7 @@ jobs:
         shell: pwsh
         run: |
           $commits = & ./scripts/Get-GitCommitsSinceLastRelease.ps1
+          $commits = $commits | Where-Object {$_ -notmatch '(?i)(changelog|bump version|publish\.yml)'}
           if (-not $commits -or $commits.Count -eq 0) {
             Write-Host "No new commits since last release."
             "$false" | Set-Content has_new_commits.flag
