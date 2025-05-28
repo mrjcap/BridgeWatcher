@@ -5,6 +5,17 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.39] - 2025-05-28
+
+### Προστέθηκαν
+
+- Προσθήκη ελέγχου για μη κενές optional παραμέτρους στο New-BridgePushoverPayload
+
+### Τεκμηρίωση
+
+- Ενημέρωση CHANGELOG.md
+- Ενημέρωση CHANGELOG.md
+
 ## [1.0.38] - 2025-05-20
 
 ### Προστέθηκαν
@@ -379,6 +390,7 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
 
 
