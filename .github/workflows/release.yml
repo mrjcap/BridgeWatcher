@@ -1,0 +1,20 @@
+﻿name: Release Orchestrator
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+    
+  docs:
+    needs: test
+    uses: ./.github/workflows/powershell-docs.yml
+
+  publish:
+    needs: docs
+    uses: ./.github/workflows/publish.yml
+
+  docker:
+    needs: publish
+    uses: ./.github/workflows/docker-build.yml
