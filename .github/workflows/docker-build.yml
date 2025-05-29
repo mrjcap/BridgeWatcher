@@ -3,7 +3,7 @@ name: Build, Test and Push Docker image
 on:
   workflow_call:
     inputs:
-      published:
+      version:
         required: true
         type: string
     secrets:
@@ -14,7 +14,6 @@ on:
 
 jobs:
   build-and-test:
-    if: ${{ inputs.published == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       image_version: ${{ steps.extract-version.outputs.image_version }}
@@ -31,11 +30,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract version from tag
+      - name: Use Provided Version
         id: extract-version
         run: |
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "latest")
-          echo "image_version=${TAG#v}" >> $GITHUB_OUTPUT
+          echo "image_version=${{ inputs.version }}" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
         run: |
