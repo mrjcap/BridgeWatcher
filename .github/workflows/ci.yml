@@ -2,6 +2,9 @@ name: PowerShell Module CI
 
 on:
   workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: true
 
 jobs:
   test:
