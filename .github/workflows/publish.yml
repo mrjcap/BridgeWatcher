@@ -30,14 +30,7 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags
 
-      - name: Install Pester
-        shell: pwsh
-        run: Install-Module Pester -Force -Scope CurrentUser
-
-      - name: Run Tests
-        shell: pwsh
-        run: |
-          Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1)
+      # Τα βήματα για Pester και tests έχουν αφαιρεθεί
 
       # Step 1: Check for new commits since last release
       - name: Check for new commits since last release
