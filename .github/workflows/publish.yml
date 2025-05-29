@@ -82,10 +82,15 @@ jobs:
         run: git push origin main
       - name: Create Tag
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
+        shell: bash
         run: |
           TAG_NAME="v${{ env.new_version }}"
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists. Skipping tag creation."
+          else
+            git tag "$TAG_NAME"
+            git push origin "$TAG_NAME"
+          fi
       - name: Extract release notes from CHANGELOG.md
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         id: changelog_notes
