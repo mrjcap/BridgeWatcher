@@ -107,29 +107,3 @@
         throw
     }
 }
-function Write-BridgeStage {
-    param(
-        [ValidateSet('Ανάλυση','Σφάλμα')][string]$Stage,
-        [string]$Message,
-        [ValidateSet('Verbose','Warning','Error')][string]$Level = 'Verbose'
-    )
-    $writeBridgeLogSplat = @{
-        Stage      = $Stage
-        Message    = $Message
-        Level      = $Level
-    }
-    Write-BridgeLog @writeBridgeLogSplat
-}
-function Send-BridgeNotification {
-    param(
-        [ValidateSet('Closed','Opened')]$Type,
-        [object[]]$State
-    )
-    $splat = @{
-        CurrentState = $State
-        PoUserKey    = $PoUserKey
-        PoApiKey     = $PoApiKey
-    }
-    if ($Type -eq 'Closed') { $splat.ApiKey = $ApiKey;  Invoke-BridgeClosedNotification @splat }
-    else { Invoke-BridgeOpenedNotification @splat }
-}
