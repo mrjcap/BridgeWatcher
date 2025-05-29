@@ -19,24 +19,30 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags
 
+      # Τα βήματα για Pester και tests έχουν αφαιρεθεί
+
       - name: Check for new commits since last release
         id: commit_check
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
           $commits = & ./scripts/Get-GitCommitsSinceLastRelease.ps1
           $commits = $commits | Where-Object {$_ -notmatch '(?i)(changelog|bump version|publish\.yml)'}
-          $flagValue = if (-not $commits -or $commits.Count -eq 0) { 'false' } else { 'true' }
-          Set-Content -Path 'has_new_commits.flag' -Value $flagValue -NoNewline -Encoding utf8
+          if (-not $commits -or $commits.Count -eq 0) {
+            Write-Host "No new commits since last release."
+            "$false" | Set-Content has_new_commits.flag
+          } else {
+            Write-Host "Found $($commits.Count) new commits since last release."
+            "$true" | Set-Content has_new_commits.flag
+          }
 
       - name: Read commits flag
         id: has_commits
         shell: bash
         run: |
-          if [[ -f has_new_commits.flag ]] && grep -iq '^true$' has_new_commits.flag; then
-            echo "has_commits=true" >> "$GITHUB_OUTPUT"
+          if [[ -f has_new_commits.flag ]] && grep -q true has_new_commits.flag; then
+            echo "has_commits=true" >> $GITHUB_OUTPUT
           else
-            echo "has_commits=false" >> "$GITHUB_OUTPUT"
+            echo "has_commits=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Bump Version
@@ -45,10 +51,7 @@ jobs:
         id: version_bump
         run: |
           $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
-          $newVersion = & ./scripts/Update-ModuleVersion.ps1 -Path $psd1Path -GitHubEnv $env:GITHUB_ENV
-          if ($newVersion) {
-            "new_version=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
-          }
+          & ./scripts/Update-ModuleVersion.ps1 -Path $psd1Path -GitHubEnv $env:GITHUB_ENV
 
       - name: Update CHANGELOG.md
         if: steps.has_commits.outputs.has_commits == 'true'
@@ -65,10 +68,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ./BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
           if git diff --staged --quiet; then
-            echo "committed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes to commit from version bump or changelog update."
+            echo "committed=false" >> $GITHUB_OUTPUT
           else
             git commit -m "Bump version to ${{ env.new_version }} and update CHANGELOG.md" -m "[skip ci]"
-            echo "committed=true" >> "$GITHUB_OUTPUT"
+            echo "committed=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Pull and rebase before push
@@ -81,15 +85,10 @@ jobs:
 
       - name: Create Tag
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
-        shell: bash
         run: |
           TAG_NAME="v${{ env.new_version }}"
-          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
-            echo "Tag $TAG_NAME already exists. Skipping tag creation."
-          else
-            git tag "$TAG_NAME"
-            git push origin "$TAG_NAME"
-          fi
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
 
       - name: Extract release notes from CHANGELOG.md
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
@@ -97,9 +96,9 @@ jobs:
         shell: pwsh
         run: |
           $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v${{ env.new_version }}"
-          echo "release_notes<<EOF" >> $env:GITHUB_OUTPUT
-          echo "$notes" >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$notes" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
@@ -115,7 +114,7 @@ jobs:
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         shell: pwsh
         env:
-          PSGalleryApiKey: ${{ secrets.PSGALLERYAPIKEY }}
+          PSGalleryApiKey: ${{ secrets.POWERSHELL_GALLERY_KEY }}
         run: |
           if (!$env:PSGalleryApiKey) {
             Write-Error "PSGalleryApiKey is not set. Ensure it is added as a GitHub Secret."
