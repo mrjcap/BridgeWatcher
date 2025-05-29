@@ -2,101 +2,113 @@ name: PowerShell Module Publish
 
 on:
   workflow_call:
-    secrets:
-        PSGALLERYAPIKEY:
-          required: true
     inputs:
       next_version:
-        description: 'The exact version to release'
+        description: 'The version to publish'
         required: true
         type: string
+    outputs:
+      module_published:
+        description: 'Whether the module was successfully published'
+        value: ${{ jobs.publish.outputs.module_published }}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     outputs:
       module_published: ${{ steps.set_output.outputs.published }}
+    
     steps:
-      - name: Checkout repo
+      # Step 1: Checkout με persist credentials
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-
-      - name: Set Final Module Version
+      
+      # Step 2: PowerShell setup
+      - name: Set up PowerShell
         shell: pwsh
         run: |
-          & ./scripts/Set-FinalModuleVersion.ps1 -Version "${{ inputs.next_version }}" -Path ./BridgeWatcher/BridgeWatcher.psd1
-
-      - name: Configure Git User
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+      
+      # Step 3: Update module version
+      - name: Set final module version
+        shell: pwsh
+        run: |
+          & ./scripts/Set-FinalModuleVersion.ps1 `
+            -Version '${{ inputs.next_version }}' `
+            -Path './BridgeWatcher/BridgeWatcher.psd1' `
+            -Verbose
+      
+      # Step 4: Configure Git
+      - name: Configure Git user
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Commit Version and Changelog
-        id: commit_step
+      
+      # Step 5: Commit changes
+      - name: Commit version and changelog updates
         run: |
-          git add ./BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
-          if git diff --staged --quiet; then
-            echo "No changes to commit."
-            echo "committed=false" >> $GITHUB_OUTPUT
-          else
-            git commit -m "chore: Bump version to ${{ inputs.next_version }} and update changelog"
-            echo "committed=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Push changes
-        if: steps.commit_step.outputs.committed == 'true'
-        run: git push origin HEAD
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create Tag
-        if: steps.commit_step.outputs.committed == 'true'
+          git add BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
+          git commit -m "chore: Bump version to ${{ inputs.next_version }} and update changelog"
+      
+      # Step 6: Push changes
+      - name: Push changes to repository
         run: |
-          TAG_NAME="v${{ inputs.next_version }}"
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
-
-      - name: Extract Release Notes
-        id: changelog_notes
+          git push origin HEAD:${{ github.ref_name }}
+      
+      # Step 7: Create GitHub Release
+      - name: Extract release notes
+        id: release_notes
         shell: pwsh
         run: |
-          $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v${{ inputs.next_version }}"
-          echo "release_notes<<EOF" >> $env:GITHUB_OUTPUT
+          # Assuming you have Get-ReleaseNotes.ps1
+          $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version 'v${{ inputs.next_version }}'
+          
+          # GitHub Actions multiline output
+          echo "notes<<EOF" >> $env:GITHUB_OUTPUT
           echo "$notes" >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
-
+      
       - name: Create GitHub Release
-        if: steps.commit_step.outputs.committed == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "v${{ inputs.next_version }}"
-          name: "Release v${{ inputs.next_version }}"
-          body: ${{ steps.changelog_notes.outputs.release_notes }}
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish Module
+        with:
+          tag_name: v${{ inputs.next_version }}
+          release_name: Release v${{ inputs.next_version }}
+          body: ${{ steps.release_notes.outputs.notes }}
+          draft: false
+          prerelease: false
+      
+      # Step 8: Publish to PowerShell Gallery
+      - name: Publish module to PowerShell Gallery
         shell: pwsh
-        env:
-          PSGalleryApiKey: ${{ secrets.PSGALLERYAPIKEY }}
         run: |
-          if (!$env:PSGalleryApiKey) {
-            Write-Error "PSGalleryApiKey is not set. Ensure it is added as a GitHub Secret."
-            exit 1
-          }
-          if (-Not (Test-Path -Path ./BridgeWatcher)) {
-            Write-Error "Module path ./BridgeWatcher does not exist. Check the workflow configuration."
-            exit 1
-          }
           try {
-            Publish-Module -Path ./BridgeWatcher -Repository PSGallery -NuGetApiKey $env:PSGalleryApiKey -Verbose
+            $publishSplat = @{
+              Path = './BridgeWatcher'
+              NuGetApiKey = '${{ secrets.PSGALLERYAPIKEY }}'
+              Verbose = $true
+              ErrorAction = 'Stop'
+            }
+            Publish-Module @publishSplat
+            Write-Host "✅ Module published successfully to PowerShell Gallery"
           } catch {
-            Write-Error "Failed to publish the module: $_"
+            Write-Error "❌ Failed to publish module: $_"
             exit 1
           }
-
-      - name: Set output for orchestrator
+      
+      # Step 9: Set output
+      - name: Set job output
         id: set_output
+        if: success()
         run: |
           echo "published=true" >> $GITHUB_OUTPUT
+      
+      # Fallback for failure
+      - name: Set failure output
+        if: failure()
+        run: |
+          echo "published=false" >> $GITHUB_OUTPUT
