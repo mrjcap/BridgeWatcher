@@ -4,7 +4,7 @@
 [![Κατασκευή Docker](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml)
 [![Τεκμηρίωση PowerShell](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml)
 [![Δημοσίευση](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml)
-[![Release Orchestrator](https://github.com/mrjcap/BridgeWatcher/actions/workflows/release.yml/badge.svg?event=release)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/release.yml)
+[![Release Orchestrator](https://github.com/mrjcap/BridgeWatcher/actions/workflows/release.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/release.yml)
 [![GitHub issues](https://img.shields.io/github/issues/mrjcap/BridgeWatcher)](https://github.com/mrjcap/BridgeWatcher/issues)
 [![Κάλυψη Κώδικα](https://codecov.io/gh/mrjcap/BridgeWatcher/branch/main/graph/badge.svg)](https://app.codecov.io/gh/mrjcap/BridgeWatcher)
 [![Pester Tests](https://img.shields.io/badge/Pester-v5-blue)](https://pester.dev/)
