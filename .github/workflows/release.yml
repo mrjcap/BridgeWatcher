@@ -1,74 +1,97 @@
-name: Release Orchestrator
+name: Release Process
 
 on:
   workflow_dispatch:
     inputs:
       version_bump_type:
-        description: 'Version bump type (major, minor, patch)'
+        description: 'Version bump type'
         required: true
-        default: 'patch'
         type: choice
         options:
-          - major
-          - minor
           - patch
+          - minor
+          - major
+        default: patch
 
 jobs:
+  # Test job - runs unconditionally
   test:
     uses: ./.github/workflows/ci.yml
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    secrets: inherit
 
+  # Gatekeeper job - determines if release should proceed
   gatekeeper:
     runs-on: ubuntu-latest
+    needs: test
     outputs:
-      next_version: ${{ steps.determine_version.outputs.next_version }}
-      changelog_updated: ${{ steps.check_changelog.outputs.changelog_updated }}
+      next_version: ${{ steps.determine_version.outputs.version }}
+      changelog_updated: ${{ steps.check_changelog.outputs.updated }}
+    
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Ensure all tags are available
       
-      - name: Calculate Potential Next Version
+      - name: Set up PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+      
+      - name: Calculate potential next version
         id: determine_version
         shell: pwsh
         run: |
-          $next = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType "${{ github.event.inputs.version_bump_type }}"
-          echo "next_version=$next" >> $env:GITHUB_OUTPUT
-
-      - name: Check Commits & Update Changelog
+          $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType '${{ github.event.inputs.version_bump_type }}' -Verbose
+          Write-Host "Calculated version: $version"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+      
+      - name: Check commits and update changelog
         id: check_changelog
         shell: pwsh
         run: |
-          & ./scripts/Update-ReleaseChangeLog.ps1 -Version "${{ steps.determine_version.outputs.next_version }}"
-          $flag = Get-Content changelog_updated.flag
-          echo "changelog_updated=$flag" >> $env:GITHUB_OUTPUT
+          & ./scripts/Update-ReleaseChangeLog.ps1 -Version '${{ steps.determine_version.outputs.version }}' -Verbose
+          
+          # Read the flag file
+          if (Test-Path './changelog_updated.flag') {
+            $updated = Get-Content './changelog_updated.flag' -Raw
+            Write-Host "Changelog updated: $updated"
+            echo "updated=$updated" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "Flag file not found, assuming no update"
+            echo "updated=false" >> $env:GITHUB_OUTPUT
+          }
+      
+      - name: Output gatekeeper decision
+        shell: pwsh
+        run: |
+          if ('${{ steps.check_changelog.outputs.updated }}' -eq 'true') {
+            Write-Host "✅ New changes detected. Proceeding with release for version ${{ steps.determine_version.outputs.version }}"
+          } else {
+            Write-Host "⏸️ No new changes detected or changelog already up-to-date. Skipping release steps."
+          }
 
-      - name: Output status
-        if: steps.check_changelog.outputs.changelog_updated == 'false'
-        run: echo "No new changes detected or changelog already up-to-date. Skipping release steps."
-
+  # Documentation job - only runs if changelog was updated
   docs:
-    needs: [gatekeeper]
+    needs: gatekeeper
     if: needs.gatekeeper.outputs.changelog_updated == 'true'
     uses: ./.github/workflows/powershell-docs.yml
+    secrets: inherit
 
+  # Publish job - handles the actual release
   publish:
     needs: [gatekeeper, docs]
     if: needs.gatekeeper.outputs.changelog_updated == 'true'
     uses: ./.github/workflows/publish.yml
-    secrets:
-      PSGALLERYAPIKEY: ${{ secrets.PSGALLERYAPIKEY }}
     with:
       next_version: ${{ needs.gatekeeper.outputs.next_version }}
+    secrets: inherit
 
+  # Docker build job - only runs after successful publish
   docker:
     needs: [gatekeeper, publish]
     if: needs.gatekeeper.outputs.changelog_updated == 'true' && needs.publish.outputs.module_published == 'true'
     uses: ./.github/workflows/docker-build.yml
     with:
       version: ${{ needs.gatekeeper.outputs.next_version }}
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    secrets: inherit
