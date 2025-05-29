@@ -5,8 +5,6 @@ on:
     secrets:
         PSGALLERYAPIKEY:
           required: true
-        GITHUB_TOKEN:
-          required: true
     inputs:
       next_version:
         description: 'The exact version to release'
