@@ -1,20 +1,23 @@
 name: PowerShell Module Publish
+
 on:
+  workflow_dispatch:
   workflow_call:
     secrets:
       PSGALLERYAPIKEY:
         required: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
-    outputs:
-      module_published: ${{ steps.set_output.outputs.published }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Fetch all tags
         run: git fetch --tags
+
       - name: Check for new commits since last release
         id: commit_check
         shell: pwsh
@@ -24,14 +27,7 @@ jobs:
           $commits = $commits | Where-Object {$_ -notmatch '(?i)(changelog|bump version|publish\.yml)'}
           $flagValue = if (-not $commits -or $commits.Count -eq 0) { 'false' } else { 'true' }
           Set-Content -Path 'has_new_commits.flag' -Value $flagValue -NoNewline -Encoding utf8
-          Write-Host "Wrote has_new_commits.flag: $flagValue"
-      - name: Debug flag file
-        run: |
-          echo "PWD: $(pwd)"
-          ls -al
-          echo "Flag value:"
-          cat has_new_commits.flag
-          file has_new_commits.flag
+
       - name: Read commits flag
         id: has_commits
         shell: bash
@@ -41,6 +37,7 @@ jobs:
           else
             echo "has_commits=false" >> "$GITHUB_OUTPUT"
           fi
+
       - name: Bump Version
         if: steps.has_commits.outputs.has_commits == 'true'
         shell: pwsh
@@ -48,15 +45,16 @@ jobs:
         run: |
           $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
           $newVersion = & ./scripts/Update-ModuleVersion.ps1 -Path $psd1Path -GitHubEnv $env:GITHUB_ENV
-          # Αν το helper δεν γράφει ήδη, το περνάμε εμείς:
           if ($newVersion) {
             "new_version=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
+
       - name: Update CHANGELOG.md
         if: steps.has_commits.outputs.has_commits == 'true'
         shell: pwsh
         run: |
           & ./scripts/Update-ReleaseChangeLog.ps1 -Version "${{ env.new_version }}"
+
       - name: Commit Version and Changelog
         if: steps.has_commits.outputs.has_commits == 'true'
         id: commit_step
@@ -66,18 +64,20 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ./BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
           if git diff --staged --quiet; then
-            echo "No changes to commit from version bump or changelog update."
             echo "committed=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "Bump version to ${{ env.new_version }} and update CHANGELOG.md" -m "[skip ci]"
             echo "committed=true" >> "$GITHUB_OUTPUT"
           fi
+
       - name: Pull and rebase before push
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         run: git pull --rebase origin main
+
       - name: Push changes
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         run: git push origin main
+
       - name: Create Tag
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         shell: bash
@@ -89,6 +89,7 @@ jobs:
             git tag "$TAG_NAME"
             git push origin "$TAG_NAME"
           fi
+
       - name: Extract release notes from CHANGELOG.md
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         id: changelog_notes
@@ -98,6 +99,7 @@ jobs:
           echo "release_notes<<EOF" >> $env:GITHUB_OUTPUT
           echo "$notes" >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
+
       - name: Create GitHub Release
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         uses: softprops/action-gh-release@v2
@@ -107,12 +109,12 @@ jobs:
           body: ${{ steps.changelog_notes.outputs.release_notes }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish Module
         if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
-        id: publish_module
         shell: pwsh
         env:
-          PSGalleryApiKey: ${{ secrets.PSGalleryApiKey }}
+          PSGalleryApiKey: ${{ secrets.PSGALLERYAPIKEY }}
         run: |
           if (!$env:PSGalleryApiKey) {
             Write-Error "PSGalleryApiKey is not set. Ensure it is added as a GitHub Secret."
@@ -128,15 +130,22 @@ jobs:
             Write-Error "Failed to publish the module: $_"
             exit 1
           }
-      - name: Set output for orchestrator
-        id: set_output
+
+      # Status artifact για downstream workflow
+      - name: Write publish status artifact
         shell: bash
         run: |
           if [[ "${{ steps.has_commits.outputs.has_commits }}" == "true" && "${{ steps.commit_step.outputs.committed }}" == "true" ]]; then
-            echo "published=true" >> $GITHUB_OUTPUT
+            echo "published=true" > publish_status.txt
           else
-            echo "published=false" >> $GITHUB_OUTPUT
+            echo "published=false" > publish_status.txt
           fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: publish-status
+          path: publish_status.txt
+
       - name: Cleanup flag files
         if: always()
         run: rm -f has_new_commits.flag
