@@ -2,6 +2,11 @@ name: PowerShell Module Publish
 
 on:
   workflow_call:
+    secrets:
+        PSGALLERYAPIKEY:
+          required: true
+        GITHUB_TOKEN:
+          required: true
     inputs:
       next_version:
         description: 'The exact version to release'
