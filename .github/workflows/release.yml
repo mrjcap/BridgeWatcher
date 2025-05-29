@@ -33,7 +33,7 @@ jobs:
       - name: Install PowerShell
         uses: actions/setup-python@v5 # Only if you need Python; otherwise use pwsh as below
       - name: Set up PowerShell
-        uses: actions/setup-powershell@v2
+        uses: actions/setup-powershell@v1
 
       - name: Calculate Potential Next Version
         id: determine_version
