@@ -4,6 +4,18 @@
 
 Η μορφή ακολουθεί το [Keep a Changelog](https://keepachangelog.com/el/1.1.0/) και το έργο εφαρμόζει [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.52] - 2025-05-29
+
+### Προστέθηκαν
+
+- Προσθήκη ξεχωριστού βήματος tagging εικόνας ως latest
+
+### Τεκμηρίωση
+
+- Ενημέρωση commit CHANGELOG.md σε ξεχωριστό βήμα
+- chore: Bump version to 1.0.51 and update changelog
+- chore: Bump version to 1.0.50 and update changelog
+
 ---
 
 ## [1.0.48] - 2025-05-29
