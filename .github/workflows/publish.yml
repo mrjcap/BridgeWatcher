@@ -1,7 +1,6 @@
 name: PowerShell Module Publish
 
 on:
-  workflow_dispatch:
   workflow_call:
     secrets:
       PSGALLERYAPIKEY:
@@ -10,6 +9,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    outputs:
+      module_published: ${{ steps.set_output.outputs.published }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -131,20 +132,14 @@ jobs:
             exit 1
           }
 
-      # Status artifact για downstream workflow
-      - name: Write publish status artifact
-        shell: bash
+      - name: Set output for orchestrator
+        id: set_output
         run: |
           if [[ "${{ steps.has_commits.outputs.has_commits }}" == "true" && "${{ steps.commit_step.outputs.committed }}" == "true" ]]; then
-            echo "published=true" > publish_status.txt
+            echo "published=true" >> $GITHUB_OUTPUT
           else
-            echo "published=false" > publish_status.txt
+            echo "published=false" >> $GITHUB_OUTPUT
           fi
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: publish-status
-          path: publish_status.txt
 
       - name: Cleanup flag files
         if: always()

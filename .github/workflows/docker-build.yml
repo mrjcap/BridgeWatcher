@@ -1,38 +1,21 @@
 name: Build, Test and Push Docker image
 
 on:
-  workflow_run:
-    workflows: ["PowerShell Module Publish"]
-    types:
-      - completed
+  workflow_call:
+    inputs:
+      published:
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
 
 jobs:
-  check-publish-status:
-    runs-on: ubuntu-latest
-    outputs:
-      published: ${{ steps.read_status.outputs.published }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: publish-status
-          path: .
-      - name: Read publish status
-        id: read_status
-        shell: bash
-        run: |
-          if [[ -f publish_status.txt ]]; then
-            source publish_status.txt
-            echo "Published status: $published"
-            echo "published=$published" >> $GITHUB_OUTPUT
-          else
-            echo "publish_status.txt not found"
-            echo "published=false" >> $GITHUB_OUTPUT
-          fi
-
   build-and-test:
+    if: ${{ inputs.published == 'true' }}
     runs-on: ubuntu-latest
-    needs: check-publish-status
-    if: needs.check-publish-status.outputs.published == 'true'
     outputs:
       image_version: ${{ steps.extract-version.outputs.image_version }}
     steps:
@@ -92,6 +75,7 @@ jobs:
           name: bridgewatcher-image
           path: bridgewatcher.tar.gz
         if: always()
+
   push:
     runs-on: ubuntu-latest
     needs: build-and-test
