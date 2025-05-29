@@ -2,29 +2,77 @@ name: Release Orchestrator
 
 on:
   workflow_dispatch:
+    inputs:
+      version_bump_type:
+        description: 'Version bump type (major, minor, patch)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
 
 jobs:
   test:
     uses: ./.github/workflows/ci.yml
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  gatekeeper:
+    runs-on: ubuntu-latest
+    outputs:
+      next_version: ${{ steps.determine_version.outputs.next_version }}
+      changelog_updated: ${{ steps.check_changelog.outputs.changelog_updated }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install PowerShell
+        uses: actions/setup-python@v5 # Only if you need Python; otherwise use pwsh as below
+      - name: Set up PowerShell
+        uses: actions/setup-powershell@v2
+
+      - name: Calculate Potential Next Version
+        id: determine_version
+        shell: pwsh
+        run: |
+          $next = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType "${{ github.event.inputs.version_bump_type }}"
+          echo "next_version=$next" >> $env:GITHUB_OUTPUT
+
+      - name: Check Commits & Update Changelog
+        id: check_changelog
+        shell: pwsh
+        run: |
+          & ./scripts/Update-ReleaseChangeLog.ps1 -Version "${{ steps.determine_version.outputs.next_version }}"
+          $flag = Get-Content changelog_updated.flag
+          echo "changelog_updated=$flag" >> $env:GITHUB_OUTPUT
+
+      - name: Output status
+        if: steps.check_changelog.outputs.changelog_updated == 'false'
+        run: echo "No new changes detected or changelog already up-to-date. Skipping release steps."
 
   docs:
-    needs: test
+    needs: [gatekeeper]
+    if: needs.gatekeeper.outputs.changelog_updated == 'true'
     uses: ./.github/workflows/powershell-docs.yml
 
   publish:
-    needs: docs
+    needs: [gatekeeper, docs]
+    if: needs.gatekeeper.outputs.changelog_updated == 'true'
     uses: ./.github/workflows/publish.yml
+    with:
+      next_version: ${{ needs.gatekeeper.outputs.next_version }}
     secrets:
       PSGALLERYAPIKEY: ${{ secrets.PSGALLERYAPIKEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
-    needs: publish
-    if: needs.publish.outputs.module_published == 'true'
+    needs: [gatekeeper, publish]
+    if: needs.gatekeeper.outputs.changelog_updated == 'true' && needs.publish.outputs.module_published == 'true'
     uses: ./.github/workflows/docker-build.yml
     with:
-      published: ${{ needs.publish.outputs.module_published }}
+      version: ${{ needs.gatekeeper.outputs.next_version }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
