@@ -1,98 +1,54 @@
-﻿[CmdletBinding()]
-<#
-.SYNOPSIS
-Υπολογίζει την επόμενη πιθανή έκδοση χωρίς να τροποποιεί αρχεία.
-
-.DESCRIPTION
-Η Get-PotentialNextVersion αναλύει τα Git tags για να βρει την τελευταία σταθερή
-έκδοση και υπολογίζει την επόμενη βάσει του τύπου αύξησης (major/minor/patch).
-
-.PARAMETER BumpType
-Ο τύπος αύξησης έκδοσης: 'major', 'minor', ή 'patch'.
-
-.OUTPUTS
-[string] - Η υπολογισμένη έκδοση (π.χ. 1.2.4).
-
-.EXAMPLE
-Get-PotentialNextVersion -BumpType 'patch'
-# Επιστρέφει: 1.0.39 (αν η τελευταία έκδοση είναι 1.0.38)
-
-.EXAMPLE
-Get-PotentialNextVersion -BumpType 'minor'
-# Επιστρέφει: 1.1.0 (αν η τελευταία έκδοση είναι 1.0.38)
-
-.NOTES
-Αγνοεί pre-release tags και υποστηρίζει μορφές vX.Y.Z και X.Y.Z.
-#>
-param (
+﻿param (
     [Parameter(Mandatory)]
     [ValidateSet('major', 'minor', 'patch')]
     [string]$BumpType
 )
 
-# Βήμα 1: Ανάκτηση όλων των tags
-$writeBridgeLogSplat = @{
-    Message = "🔍 Αναζήτηση Git tags..."
-}
-Write-Verbose @writeBridgeLogSplat
-
-$gitTagSplat = @{
-    ArgumentList = @('tag', '--sort=-v:refname')
-    NoNewWindow  = $true
-    Wait         = $true
-    PassThru     = $true
-}
-$tagProcess = Start-Process -FilePath 'git' @gitTagSplat
-$allTags = $tagProcess.StandardOutput.ReadToEnd() -split "`n" | Where-Object { $_ }
-
-# Βήμα 2: Φιλτράρισμα για σταθερές εκδόσεις
-$stableTags = $allTags | Where-Object { $_ -match '^v?\d+\.\d+\.\d+$' }
-$latestTag = $stableTags | Select-Object -First 1
-
-$writeBridgeLogSplat = @{
-    Message = "📌 Τελευταίο σταθερό tag: $($latestTag ?? 'Κανένα')"
-}
-Write-Verbose @writeBridgeLogSplat
-
-# Βήμα 3: Προσδιορισμός αρχικής έκδοσης
-if (-not $latestTag) {
-    $version = switch ($BumpType) {
-        'major' { '1.0.0' }
-        'minor' { '0.1.0' }
-        'patch' { '0.0.1' }
+# Ultra-simple implementation for testing
+try {
+    # Get latest tag
+    $tags = @(git tag | Where-Object { $_ -match '^v?\d+\.\d+\.\d+$' })
+    
+    if ($tags.Count -eq 0) {
+        # No tags, return default
+        switch ($BumpType) {
+            'major' { Write-Output '1.0.0'; return }
+            'minor' { Write-Output '0.1.0'; return }
+            'patch' { Write-Output '0.0.1'; return }
+        }
     }
-    $writeBridgeLogSplat = @{
-        Message = "🆕 Δεν βρέθηκαν tags. Χρήση προεπιλογής: $version"
+    
+    # Sort manually to avoid issues
+    $sorted = $tags | ForEach-Object {
+        $clean = $_ -replace '^v', ''
+        $parts = $clean -split '\.'
+        [PSCustomObject]@{
+            Tag = $_
+            Major = [int]$parts[0]
+            Minor = [int]$parts[1]
+            Patch = [int]$parts[2]
+            Clean = $clean
+        }
+    } | Sort-Object -Property Major,Minor,Patch -Descending
+    
+    $latest = $sorted | Select-Object -First 1
+    
+    # Calculate new version
+    switch ($BumpType) {
+        'major' { 
+            $new = "$($latest.Major + 1).0.0" 
+        }
+        'minor' { 
+            $new = "$($latest.Major).$($latest.Minor + 1).0" 
+        }
+        'patch' { 
+            $new = "$($latest.Major).$($latest.Minor).$($latest.Patch + 1)" 
+        }
     }
-    Write-Verbose @writeBridgeLogSplat
-    Write-Output $version
-    return
+    
+    Write-Output $new
+    
+} catch {
+    Write-Error $_
+    exit 1
 }
-
-# Βήμα 4: Ανάλυση της τρέχουσας έκδοσης
-$cleanVersion = $latestTag -replace '^v', ''
-$versionParts = $cleanVersion -split '\.'
-
-$major = [int]$versionParts[0]
-$minor = [int]$versionParts[1]
-$patch = [int]$versionParts[2]
-
-# Βήμα 5: Υπολογισμός νέας έκδοσης
-$newVersion = switch ($BumpType) {
-    'major' {
-        "$($major + 1).0.0"
-    }
-    'minor' {
-        "$major.$($minor + 1).0"
-    }
-    'patch' {
-        "$major.$minor.$($patch + 1)"
-    }
-}
-
-$writeBridgeLogSplat = @{
-    Message = "✅ Υπολογισμένη έκδοση: $newVersion"
-}
-Write-Verbose @writeBridgeLogSplat
-
-Write-Output $newVersion
