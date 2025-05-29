@@ -5,6 +5,27 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.46] - 2025-05-29
+
+### Προστέθηκαν
+
+- Προσθήκη εισαγωγής των helper functions Send-BridgeNotification και Write-BridgeStage στο BridgeWatcher.psm1
+- Προσθήκη workflow_call trigger με required secrets, έξοδος module_published μέσω set_output και αφαίρεση βημάτων Pester/tests.
+- Προστέθηκαν τα secrets στα PowerShell Module workflows
+- Προστέθηκε HEALTHCHECK, αλλάζει ENTRYPOINT σε sh και βελτιώνει ρύθμιση timezone
+- Προστέθηκε default φάκελο εξόδου, try/catch και έξοδο με κωδικό 1 σε σφάλμα
+- Προστέθηκε προέλεγχος νέων commits πριν από version bump
+
+### Αλλαγές
+
+- Αλλαγή του shell wrapper, αφαιρεί τη συνάρτηση get_secret και ελέγχει μόνο ύπαρξη των secrets πριν από το exec pwsh
+
+### Αφαιρέθηκαν
+
+- Αφαίρεση της συνάρτησης Send-BridgeNotification από το Invoke-BridgeStatusComparison και μεταφορά της σε ξεχωριστό αρχείο Send-BridgeNotification.ps1
+- Αφαίρεση της συνάρτησης Write-BridgeStage από το Invoke-BridgeStatusComparison και μεταφορά της σε ξεχωριστό αρχείο Write-BridgeStage.ps1
+- Αφαίρεση των helper functions από το Invoke-BridgeStatusComparison και μεταφορά τους σε ξεχωριστά .ps1 αρχεία
+
 ## [1.0.45] - 2025-05-29
 
 ### Προστέθηκαν
@@ -406,6 +427,7 @@
 - Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
 
 
 
