@@ -22,11 +22,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set up PowerShell
-        uses: actions/setup-powershell@v1
-        with:
-          pwsh-version: '7.5.x'
-
       - name: Set Final Module Version
         shell: pwsh
         run: |
