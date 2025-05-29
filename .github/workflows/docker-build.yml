@@ -1,17 +1,8 @@
 name: Build, Test and Push Docker image
+
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*'
-    paths-ignore:
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'LICENSE'
-      - '.github/workflows/publish.yml'
-      - '/tools/**'
+  workflow_call:
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest

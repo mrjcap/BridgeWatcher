@@ -1,23 +1,7 @@
 name: PowerShell Module Publish
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
-    paths-ignore:
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'LICENSE'
-      - '.github/workflows/publish.yml'
-      - '/tools/**'
-  pull_request:
-    branches: [ main ]
-    paths-ignore:
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'LICENSE'
-      - '.github/workflows/publish.yml'
-      - '/tools/**'
+  workflow_call:
 
 jobs:
   publish:
