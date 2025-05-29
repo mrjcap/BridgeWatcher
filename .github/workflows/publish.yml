@@ -47,13 +47,16 @@ jobs:
       - name: Push changes
         if: steps.commit_step.outputs.committed == 'true'
         run: git push origin HEAD
-
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Tag
         if: steps.commit_step.outputs.committed == 'true'
         run: |
           TAG_NAME="v${{ inputs.next_version }}"
           git tag $TAG_NAME
           git push origin $TAG_NAME
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
 
       - name: Extract Release Notes
         id: changelog_notes
