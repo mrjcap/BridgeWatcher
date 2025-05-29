@@ -96,7 +96,10 @@ jobs:
       - name: Load Docker image
         run: |
           gunzip -c bridgewatcher.tar.gz | docker load
-
+      - name: Tag Docker image as latest
+        run: |
+          IMAGE_TAG=${{ needs.build-and-test.outputs.image_version }}
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:$IMAGE_TAG ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:latest
       - name: Push Docker image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ needs.build-and-test.outputs.image_version }}
