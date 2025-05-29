@@ -27,6 +27,8 @@
 . "$PSScriptRoot\Private\New-BridgePushoverPayload.ps1"
 . "$PSScriptRoot\Private\Resolve-BridgeStatus.ps1"
 . "$PSScriptRoot\Private\Send-BridgePushoverRequest.ps1"
+. "$PSScriptRoot\Private\Send-BridgeNotification.ps1"
+. "$PSScriptRoot\Private\Write-BridgeStage.ps1"
 . "$PSScriptRoot\Private\Write-BridgeLog.ps1"
 
 # Export only public functions
