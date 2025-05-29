@@ -62,11 +62,18 @@ jobs:
             echo "updated=false" >> $env:GITHUB_OUTPUT
           }
       
-      - name: Output gatekeeper decision
+      - name: Output gatekeeper decision & commit CHANGELOG.md
         shell: pwsh
         run: |
           if ('${{ steps.check_changelog.outputs.updated }}' -eq 'true') {
             Write-Host "✅ New changes detected. Proceeding with release for version ${{ steps.determine_version.outputs.version }}"
+      
+            # Commit & push updated CHANGELOG.md
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add CHANGELOG.md
+            git commit -m "ci: update CHANGELOG.md for v${{ steps.determine_version.outputs.version }}" || Write-Host "No changes to commit"
+            git push origin HEAD:${env:GITHUB_REF -replace 'refs/heads/', ''}
           } else {
             Write-Host "⏸️ No new changes detected or changelog already up-to-date. Skipping release steps."
           }
