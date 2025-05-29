@@ -56,6 +56,7 @@ jobs:
       # Step 6: Push changes
       - name: Push changes to repository
         run: |
+          git pull --rebase origin main
           git push origin HEAD:${{ github.ref_name }}
       
       # Step 7: Create GitHub Release
