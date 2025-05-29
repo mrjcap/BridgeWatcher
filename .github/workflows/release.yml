@@ -65,7 +65,6 @@ jobs:
     uses: ./.github/workflows/publish.yml
     secrets:
       PSGALLERYAPIKEY: ${{ secrets.PSGALLERYAPIKEY }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     with:
       next_version: ${{ needs.gatekeeper.outputs.next_version }}
 
