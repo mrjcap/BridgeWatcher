@@ -2,8 +2,15 @@ name: PowerShell Module Publish
 
 on:
   workflow_call:
+    inputs:
+      next_version:
+        description: 'The exact version to release'
+        required: true
+        type: string
     secrets:
       PSGALLERYAPIKEY:
+        required: true
+      GITHUB_TOKEN:
         required: true
 
 jobs:
@@ -12,109 +19,71 @@ jobs:
     outputs:
       module_published: ${{ steps.set_output.outputs.published }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - name: Fetch all tags
-        run: git fetch --tags
+      - name: Set up PowerShell
+        uses: actions/setup-powershell@v2
 
-      # Τα βήματα για Pester και tests έχουν αφαιρεθεί
-
-      - name: Check for new commits since last release
-        id: commit_check
+      - name: Set Final Module Version
         shell: pwsh
         run: |
-          $commits = & ./scripts/Get-GitCommitsSinceLastRelease.ps1
-          $commits = $commits | Where-Object {$_ -notmatch '(?i)(changelog|bump version|publish\.yml)'}
-          if (-not $commits -or $commits.Count -eq 0) {
-            Write-Host "No new commits since last release."
-            "$false" | Set-Content has_new_commits.flag
-          } else {
-            Write-Host "Found $($commits.Count) new commits since last release."
-            "$true" | Set-Content has_new_commits.flag
-          }
+          & ./scripts/Set-FinalModuleVersion.ps1 -Version "${{ inputs.next_version }}" -Path ./BridgeWatcher/BridgeWatcher.psd1
 
-      - name: Read commits flag
-        id: has_commits
-        shell: bash
-        run: |
-          if [[ -f has_new_commits.flag ]] && grep -q true has_new_commits.flag; then
-            echo "has_commits=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_commits=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Bump Version
-        if: steps.has_commits.outputs.has_commits == 'true'
-        shell: pwsh
-        id: version_bump
-        run: |
-          $psd1Path = './BridgeWatcher/BridgeWatcher.psd1'
-          & ./scripts/Update-ModuleVersion.ps1 -Path $psd1Path -GitHubEnv $env:GITHUB_ENV
-
-      - name: Update CHANGELOG.md
-        if: steps.has_commits.outputs.has_commits == 'true'
-        shell: pwsh
-        run: |
-          & ./scripts/Update-ReleaseChangeLog.ps1 -Version "${{ env.new_version }}"
-
-      - name: Commit Version and Changelog
-        if: steps.has_commits.outputs.has_commits == 'true'
-        id: commit_step
-        shell: bash
+      - name: Configure Git User
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit Version and Changelog
+        id: commit_step
+        run: |
           git add ./BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
           if git diff --staged --quiet; then
-            echo "No changes to commit from version bump or changelog update."
+            echo "No changes to commit."
             echo "committed=false" >> $GITHUB_OUTPUT
           else
-            git commit -m "Bump version to ${{ env.new_version }} and update CHANGELOG.md" -m "[skip ci]"
+            git commit -m "chore: Bump version to ${{ inputs.next_version }} and update changelog"
             echo "committed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Pull and rebase before push
-        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
-        run: git pull --rebase origin main
-
       - name: Push changes
-        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
-        run: git push origin main
+        if: steps.commit_step.outputs.committed == 'true'
+        run: git push origin HEAD
 
       - name: Create Tag
-        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
+        if: steps.commit_step.outputs.committed == 'true'
         run: |
-          TAG_NAME="v${{ env.new_version }}"
+          TAG_NAME="v${{ inputs.next_version }}"
           git tag $TAG_NAME
           git push origin $TAG_NAME
 
-      - name: Extract release notes from CHANGELOG.md
-        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
+      - name: Extract Release Notes
         id: changelog_notes
         shell: pwsh
         run: |
-          $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v${{ env.new_version }}"
-          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$notes" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v${{ inputs.next_version }}"
+          echo "release_notes<<EOF" >> $env:GITHUB_OUTPUT
+          echo "$notes" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
+        if: steps.commit_step.outputs.committed == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ env.new_version }}"
-          name: "Release v${{ env.new_version }}"
+          tag_name: "v${{ inputs.next_version }}"
+          name: "Release v${{ inputs.next_version }}"
           body: ${{ steps.changelog_notes.outputs.release_notes }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish Module
-        if: steps.has_commits.outputs.has_commits == 'true' && steps.commit_step.outputs.committed == 'true'
         shell: pwsh
         env:
-          PSGalleryApiKey: ${{ secrets.POWERSHELL_GALLERY_KEY }}
+          PSGalleryApiKey: ${{ secrets.PSGALLERYAPIKEY }}
         run: |
           if (!$env:PSGalleryApiKey) {
             Write-Error "PSGalleryApiKey is not set. Ensure it is added as a GitHub Secret."
@@ -134,12 +103,4 @@ jobs:
       - name: Set output for orchestrator
         id: set_output
         run: |
-          if [[ "${{ steps.has_commits.outputs.has_commits }}" == "true" && "${{ steps.commit_step.outputs.committed }}" == "true" ]]; then
-            echo "published=true" >> $GITHUB_OUTPUT
-          else
-            echo "published=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Cleanup flag files
-        if: always()
-        run: rm -f has_new_commits.flag
+          echo "published=true" >> $GITHUB_OUTPUT
