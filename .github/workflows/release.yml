@@ -17,8 +17,7 @@ jobs:
     needs: docs
     uses: ./.github/workflows/publish.yml
     secrets:
-      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-      POWERSHELL_GALLERY_KEY: ${{ secrets.POWERSHELL_GALLERY_KEY }}
+      POWERSHELL_GALLERY_KEY: ${{ secrets.PSGALLERYAPIKEY }}
 
   docker:
     needs: publish
