@@ -2,9 +2,7 @@ name: PowerShell Module Publish
 on:
   workflow_call:
     secrets:
-      NUGET_API_KEY:
-        required: true
-      POWERSHELL_GALLERY_KEY:
+      PSGALLERYAPIKEY:
         required: true
 jobs:
   publish:
