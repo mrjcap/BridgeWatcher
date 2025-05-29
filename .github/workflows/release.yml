@@ -1,4 +1,4 @@
-﻿name: Release Orchestrator
+name: Release Orchestrator
 
 on:
   workflow_dispatch:
@@ -6,7 +6,9 @@ on:
 jobs:
   test:
     uses: ./.github/workflows/ci.yml
-    
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
   docs:
     needs: test
     uses: ./.github/workflows/powershell-docs.yml
@@ -14,7 +16,13 @@ jobs:
   publish:
     needs: docs
     uses: ./.github/workflows/publish.yml
+    secrets:
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      POWERSHELL_GALLERY_KEY: ${{ secrets.POWERSHELL_GALLERY_KEY }}
 
   docker:
     needs: publish
     uses: ./.github/workflows/docker-build.yml
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
