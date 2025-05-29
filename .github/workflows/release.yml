@@ -63,11 +63,11 @@ jobs:
     needs: [gatekeeper, docs]
     if: needs.gatekeeper.outputs.changelog_updated == 'true'
     uses: ./.github/workflows/publish.yml
-    with:
-      next_version: ${{ needs.gatekeeper.outputs.next_version }}
     secrets:
       PSGALLERYAPIKEY: ${{ secrets.PSGALLERYAPIKEY }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      next_version: ${{ needs.gatekeeper.outputs.next_version }}
 
   docker:
     needs: [gatekeeper, publish]
