@@ -22,6 +22,7 @@ jobs:
 
   docker:
     needs: publish
+    if: needs.publish.outputs.module_published == 'true'
     uses: ./.github/workflows/docker-build.yml
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
