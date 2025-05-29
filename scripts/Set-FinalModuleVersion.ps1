@@ -1,33 +1,109 @@
-﻿<#
+﻿[CmdletBinding()]
+<#
 .SYNOPSIS
-    Sets the exact module version in a PowerShell module manifest.
+Ενημερώνει την έκδοση του module στο manifest και ορίζει environment variable.
+
 .DESCRIPTION
-    Updates the ModuleVersion property in the specified .psd1 file, and sets GitHub Actions env var if available.
+Η Set-FinalModuleVersion τροποποιεί το ModuleVersion στο αρχείο .psd1
+και προαιρετικά ορίζει την έκδοση ως GitHub Actions environment variable.
+
 .PARAMETER Version
-    The exact version string to set (e.g., 1.2.4).
+Η ακριβής έκδοση που θα οριστεί (π.χ. 1.2.4).
+
 .PARAMETER Path
-    Path to the module manifest. Default: ./BridgeWatcher.psd1
+Η διαδρομή του module manifest αρχείου.
+
+.OUTPUTS
+None.
+
 .EXAMPLE
-    ./Set-FinalModuleVersion.ps1 -Version 1.2.4
+Set-FinalModuleVersion -Version '1.2.4'
+# Ενημερώνει το ModuleVersion στο BridgeWatcher.psd1
+
+.EXAMPLE
+Set-FinalModuleVersion -Version '2.0.0' -Path './Custom/Module.psd1'
+# Ενημερώνει το ModuleVersion στο καθορισμένο αρχείο
+
+.NOTES
+Διατηρεί τα single quotes γύρω από την έκδοση στο PSD1 αρχείο.
 #>
-[CmdletBinding()]
-param(
+param (
     [Parameter(Mandatory)]
+    [ValidatePattern('^\d+\.\d+\.\d+$')]
     [string]$Version,
+    
+    [Parameter()]
+    [ValidateScript({
+        if (-not (Test-Path $_ -PathType Leaf)) {
+            throw "Το αρχείο '$_' δεν βρέθηκε."
+        }
+        if ($_ -notmatch '\.psd1$') {
+            throw "Το αρχείο πρέπει να έχει κατάληξη .psd1"
+        }
+        $true
+    })]
     [string]$Path = './BridgeWatcher.psd1'
 )
 
-if (-not (Test-Path $Path)) {
-    throw "Module manifest file '$Path' not found."
+# Βήμα 1: Ανάγνωση περιεχομένου
+$writeBridgeLogSplat = @{
+    Message = "📖 Ανάγνωση αρχείου: $Path"
 }
+Write-Verbose @writeBridgeLogSplat
 
-$content = Get-Content $Path -Raw
+$getContentSplat = @{
+    Path     = $Path
+    Raw      = $true
+    Encoding = 'UTF8'
+}
+$content = Get-Content @getContentSplat
+
+# Βήμα 2: Έλεγχος ύπαρξης ModuleVersion
 if ($content -notmatch "ModuleVersion\s*=\s*'[^']+'") {
-    throw "No ModuleVersion property found in $Path."
+    $errorRecord = [System.Management.Automation.ErrorRecord]::new(
+        ([System.Exception]::new("Δεν βρέθηκε το ModuleVersion στο αρχείο.")),
+        'ModuleVersionNotFound',
+        [System.Management.Automation.ErrorCategory]::InvalidData,
+        $Path
+    )
+    $PSCmdlet.ThrowTerminatingError($errorRecord)
 }
-$newContent = $content -replace "ModuleVersion\s*=\s*'[^']+'", "ModuleVersion = '$Version'"
-Set-Content $Path -Value $newContent -Encoding UTF8
 
+# Βήμα 3: Αντικατάσταση έκδοσης
+$pattern = "ModuleVersion\s*=\s*'[^']+'"
+$replacement = "ModuleVersion = '$Version'"
+$newContent = $content -replace $pattern, $replacement
+
+$writeBridgeLogSplat = @{
+    Message = "✏️ Αντικατάσταση: ModuleVersion = '$Version'"
+}
+Write-Verbose @writeBridgeLogSplat
+
+# Βήμα 4: Αποθήκευση αλλαγών
+$setContentSplat = @{
+    Path     = $Path
+    Value    = $newContent
+    Encoding = 'UTF8'
+    NoNewline = $true
+}
+Set-Content @setContentSplat
+
+$writeBridgeLogSplat = @{
+    Message = "💾 Αρχείο ενημερώθηκε επιτυχώς"
+}
+Write-Verbose @writeBridgeLogSplat
+
+# Βήμα 5: GitHub Actions Environment Variable
 if ($env:GITHUB_ENV) {
-    "new_version=$Version" | Out-File -FilePath $env:GITHUB_ENV -Append
+    $addContentSplat = @{
+        Path     = $env:GITHUB_ENV
+        Value    = "new_version=$Version"
+        Encoding = 'UTF8'
+    }
+    Add-Content @addContentSplat
+    
+    $writeBridgeLogSplat = @{
+        Message = "🚀 GitHub Actions ENV: new_version=$Version"
+    }
+    Write-Verbose @writeBridgeLogSplat
 }
