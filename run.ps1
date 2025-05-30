@@ -1,4 +1,4 @@
-Import-Module '/scripts/modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
+﻿Import-Module '/scripts/modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
 
 $API_KEY       = Get-Content '/run/secrets/API_KEY' -Raw
 $POAPI_KEY     = Get-Content '/run/secrets/POAPI_KEY' -Raw
