@@ -14,6 +14,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Cache PowerShell modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-pwshmodules-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pwshmodules-
+
       - name: Install PowerShell modules (platyPS & PSScriptAnalyzer)
         run: |
           Install-Module platyPS -Scope CurrentUser -Force -AllowClobber
