@@ -1,4 +1,4 @@
-name: PowerShell Module CI 
+name: PowerShell Module CI
 
 on:
   workflow_call:
@@ -12,12 +12,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Pester and Run Tests
+      - name: Install Pester
         shell: pwsh
         run: |
           Install-Module Pester -Force -Scope CurrentUser
-          Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1)
+
+      - name: Run Tests
+        shell: pwsh
+        run: |
+          if (Test-Path ./Tests/PesterConfiguration.psd1) {
+            Invoke-Pester -Configuration (Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1)
+          } else {
+            Write-Error "PesterConfiguration.psd1 not found!"
+            exit 1
+          }
+
+      - name: Check if coverage.xml exists
+        id: check_coverage
+        shell: pwsh
+        run: |
+          if (Test-Path './coverage.xml') {
+            echo "coverage_exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "coverage_exists=false" >> $env:GITHUB_OUTPUT
+          }
+
       - name: Upload coverage reports to Codecov
+        if: success() && steps.check_coverage.outputs.coverage_exists == 'true'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
