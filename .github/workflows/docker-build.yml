@@ -41,6 +41,8 @@ jobs:
             --label "org.opencontainers.image.version=${{ steps.extract-version.outputs.image_version }}" \
             --label "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
             --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
+            --label "maintainer=mrjcap" \
+            --label "org.opencontainers.image.description=BridgeWatcher PowerShell module docker image" \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ steps.extract-version.outputs.image_version }} .
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ steps.extract-version.outputs.image_version }} ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:latest
 
@@ -53,29 +55,49 @@ jobs:
           IMAGE_TAG=${{ steps.extract-version.outputs.image_version }}
           docker run --rm -d --name bridgewatcher-test -v ${{ github.workspace }}/secrets:/run/secrets ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:$IMAGE_TAG
           sleep 5
+
       - name: Check container logs
-        run: docker logs bridgewatcher-test
+        run: |
+          docker logs bridgewatcher-test | tee container_logs.txt
+
       - name: Test output directory exists
-        run: docker exec bridgewatcher-test ls -l /tmp/
+        run: docker exec bridgewatcher-test ls -l /tmp/ | tee output_dir_listing.txt
+
       - name: Test process exists
-        run: docker exec bridgewatcher-test ps aux
+        run: docker exec bridgewatcher-test ps aux | tee container_ps.txt
+
       - name: Test output file exists
         run: docker exec bridgewatcher-test test -f /tmp/bridge_status.json
+
       - name: Show output file
-        run: docker exec bridgewatcher-test cat /tmp/bridge_status.json
+        run: docker exec bridgewatcher-test cat /tmp/bridge_status.json | tee bridge_status.json.txt
+
       - name: Stop test container
         if: always()
         run: docker stop bridgewatcher-test || true
+
       - name: Save Docker image
         run: |
           IMAGE_TAG=${{ steps.extract-version.outputs.image_version }}
           docker save ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:$IMAGE_TAG | gzip > bridgewatcher.tar.gz
         if: always()
+
       - name: Upload Docker image artifact
         uses: actions/upload-artifact@v4
         with:
           name: bridgewatcher-image
           path: bridgewatcher.tar.gz
+        if: always()
+
+      - name: Upload container logs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-logs
+          path: |
+            container_logs.txt
+            output_dir_listing.txt
+            container_ps.txt
+            bridge_status.json.txt
         if: always()
 
       - name: Docker system prune (cleanup)
@@ -104,10 +126,12 @@ jobs:
       - name: Load Docker image
         run: |
           gunzip -c bridgewatcher.tar.gz | docker load
+
       - name: Tag Docker image as latest
         run: |
           IMAGE_TAG=${{ needs.build-and-test.outputs.image_version }}
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:$IMAGE_TAG ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:latest
+
       - name: Push Docker image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ needs.build-and-test.outputs.image_version }}
