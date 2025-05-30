@@ -35,9 +35,13 @@ jobs:
         run: |
           echo "image_version=${{ inputs.version }}" >> $GITHUB_OUTPUT
 
-      - name: Build Docker image
+      - name: Build Docker image with labels
         run: |
-          docker build -f Docker/Dockerfile -t ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ steps.extract-version.outputs.image_version }} .
+          docker build -f Docker/Dockerfile \
+            --label "org.opencontainers.image.version=${{ steps.extract-version.outputs.image_version }}" \
+            --label "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ steps.extract-version.outputs.image_version }} .
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ steps.extract-version.outputs.image_version }} ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:latest
 
       - name: Run container for testing
@@ -74,6 +78,10 @@ jobs:
           path: bridgewatcher.tar.gz
         if: always()
 
+      - name: Docker system prune (cleanup)
+        if: always()
+        run: docker system prune -af
+
   push:
     runs-on: ubuntu-latest
     needs: build-and-test
@@ -104,3 +112,7 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ needs.build-and-test.outputs.image_version }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:latest
+
+      - name: Docker system prune (cleanup)
+        if: always()
+        run: docker system prune -af
