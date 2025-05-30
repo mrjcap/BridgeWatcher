@@ -27,9 +27,9 @@ jobs:
           Install-Module platyPS -Scope CurrentUser -Force -AllowClobber
           Install-Module PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber
 
-      - name: Run PSScriptAnalyzer
+      - name: Run PSScriptAnalyzer (Error & Warning)
         run: |
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error,Warning
           if ($results.Count -gt 0) {
             $results | Format-Table
             Write-Error "PSScriptAnalyzer found issues!"
@@ -58,3 +58,9 @@ jobs:
           commit_message: "docs: auto-generate PowerShell documentation"
           branch: ${{ github.head_ref || github.ref_name }}
           file_pattern: docs/*.md
+
+      - name: Upload documentation as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: powershell-docs
+          path: docs/
