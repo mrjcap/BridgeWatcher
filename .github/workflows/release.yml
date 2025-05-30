@@ -14,13 +14,22 @@ on:
         default: patch
 
 jobs:
-  # Test job - runs unconditionally
+  # Ομαδοποίηση (Grouping) για αναγνωσιμότητα:
+  pre-release:
+    name: Pre-release Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print start
+        run: echo "Ξεκινάει η διαδικασία release..."
+
   test:
+    name: Module Tests
     uses: ./.github/workflows/ci.yml
     secrets: inherit
 
   # Gatekeeper job - determines if release should proceed
   gatekeeper:
+    name: Gatekeeper & Changelog
     runs-on: ubuntu-latest
     needs: test
     outputs:
@@ -82,6 +91,7 @@ jobs:
           git push origin HEAD:$branch
   # Documentation job - only runs if changelog was updated
   docs:
+    name: Documentation Generation
     needs: gatekeeper
     if: needs.gatekeeper.outputs.changelog_updated == 'true'
     uses: ./.github/workflows/powershell-docs.yml
@@ -89,6 +99,7 @@ jobs:
 
   # Publish job - handles the actual release
   publish:
+    name: Publish Module
     needs: [gatekeeper, docs]
     if: needs.gatekeeper.outputs.changelog_updated == 'true'
     uses: ./.github/workflows/publish.yml
@@ -98,6 +109,7 @@ jobs:
 
   # Docker build job - only runs after successful publish
   docker:
+    name: Docker Build & Push
     needs: [gatekeeper, publish]
     if: needs.gatekeeper.outputs.changelog_updated == 'true' && needs.publish.outputs.module_published == 'true'
     uses: ./.github/workflows/docker-build.yml
