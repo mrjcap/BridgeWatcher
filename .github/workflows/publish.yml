@@ -19,20 +19,17 @@ jobs:
       module_published: ${{ steps.set_output.outputs.published }}
     
     steps:
-      # Step 1: Checkout με persist credentials
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
       
-      # Step 2: PowerShell setup
       - name: Set up PowerShell
         shell: pwsh
         run: |
           Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
       
-      # Step 3: Update module version
       - name: Set final module version
         shell: pwsh
         run: |
@@ -41,33 +38,26 @@ jobs:
             -Path './BridgeWatcher/BridgeWatcher.psd1' `
             -Verbose
       
-      # Step 4: Configure Git
       - name: Configure Git user
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
-      # Step 5: Commit changes
       - name: Commit version and changelog updates
         run: |
           git add BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
           git commit -m "chore: Bump version to ${{ inputs.next_version }} and update changelog"
       
-      # Step 6: Push changes
       - name: Push changes to repository
         run: |
           git pull --rebase origin main
           git push origin HEAD:${{ github.ref_name }}
       
-      # Step 7: Create GitHub Release
       - name: Extract release notes
         id: release_notes
         shell: pwsh
         run: |
-          # Assuming you have Get-ReleaseNotes.ps1
           $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version 'v${{ inputs.next_version }}'
-          
-          # GitHub Actions multiline output
           echo "notes<<EOF" >> $env:GITHUB_OUTPUT
           echo "$notes" >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
@@ -83,7 +73,6 @@ jobs:
           draft: false
           prerelease: false
       
-      # Step 8: Publish to PowerShell Gallery
       - name: Publish module to PowerShell Gallery
         shell: pwsh
         run: |
@@ -101,11 +90,13 @@ jobs:
             exit 1
           }
       
-      # Step 9: Set output
       - name: Verify module publish
         shell: pwsh
         run: |
           Find-Module -Name BridgeWatcher -Repository PSGallery -ErrorAction Stop
+
+      - name: Cleanup git repository
+        run: git gc
 
       - name: Set job output
         id: set_output
@@ -113,7 +104,6 @@ jobs:
         run: |
           echo "published=true" >> $GITHUB_OUTPUT
       
-      # Fallback for failure
       - name: Set failure output
         if: failure()
         run: |
