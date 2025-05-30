@@ -4,6 +4,22 @@
 
 Η μορφή ακολουθεί το [Keep a Changelog](https://keepachangelog.com/el/1.1.0/) και το έργο εφαρμόζει [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.52] - 2025-05-30
+
+### Προστέθηκαν
+
+- Προσθήκη συγχρονισμού branch πριν το push
+- Προσθήκη ξεχωριστού βήματος tagging εικόνας ως latest
+
+### Τεκμηρίωση
+
+- Ενημέρωση CHANGELOG.md
+- Ενημέρωση CHANGELOG.md
+- ci: update CHANGELOG.md for v1.0.52
+- Ενημέρωση commit CHANGELOG.md σε ξεχωριστό βήμα
+- chore: Bump version to 1.0.51 and update changelog
+- chore: Bump version to 1.0.50 and update changelog
+
 ## [1.0.51] - 2025-05-29
 
 ### Προστέθηκαν
@@ -299,3 +315,4 @@
 * Συνεχής ενσωμάτωση [GitHub Actions](https://docs.github.com/en/actions) με έλεγχο δοκιμών και κάλυψης.
 
 ---
+
