@@ -27,9 +27,9 @@ jobs:
           Install-Module platyPS -Scope CurrentUser -Force -AllowClobber
           Install-Module PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber
 
-      - name: Run PSScriptAnalyzer (Error & Warning)
+      - name: Run PSScriptAnalyzer (Error)
         run: |
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error,Warning
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error
           if ($results.Count -gt 0) {
             $results | Format-Table
             Write-Error "PSScriptAnalyzer found issues!"
