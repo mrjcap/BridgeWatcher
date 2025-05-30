@@ -90,32 +90,6 @@ jobs:
           find . -type f -name '*.tar.gz' -delete
           find . -type f -name '*.zip' -delete
         if: always()
-
-  docs:
-    name: Documentation Generation
-    needs: gatekeeper
-    if: needs.gatekeeper.outputs.changelog_updated == 'true'
-    uses: ./.github/workflows/powershell-docs.yml
-    secrets: inherit
-
-  publish:
-    name: Publish Module
-    needs: [gatekeeper, docs]
-    if: needs.gatekeeper.outputs.changelog_updated == 'true'
-    uses: ./.github/workflows/publish.yml
-    with:
-      next_version: ${{ needs.gatekeeper.outputs.next_version }}
-    secrets: inherit
-
-  docker:
-    name: Docker Build & Push
-    needs: [gatekeeper, publish]
-    if: needs.gatekeeper.outputs.changelog_updated == 'true' && needs.publish.outputs.module_published == 'true'
-    uses: ./.github/workflows/docker-build.yml
-    with:
-      version: ${{ needs.gatekeeper.outputs.next_version }}
-    secrets: inherit
-
   test-matrix:
     name: Multi-OS/Version Tests
     runs-on: ${{ matrix.os }}
@@ -142,3 +116,27 @@ jobs:
             Write-Error "PesterConfiguration.psd1 not found!"
             exit 1
           }
+  docs:
+    name: Documentation Generation
+    needs: [gatekeeper, test-matrix]
+    if: needs.gatekeeper.outputs.changelog_updated == 'true'
+    uses: ./.github/workflows/powershell-docs.yml
+    secrets: inherit
+
+  publish:
+    name: Publish Module
+    needs: [gatekeeper, docs, test-matrix]
+    if: needs.gatekeeper.outputs.changelog_updated == 'true'
+    uses: ./.github/workflows/publish.yml
+    with:
+      next_version: ${{ needs.gatekeeper.outputs.next_version }}
+    secrets: inherit
+
+  docker:
+    name: Docker Build & Push
+    needs: [gatekeeper, publish, test-matrix]
+    if: needs.gatekeeper.outputs.changelog_updated == 'true' && needs.publish.outputs.module_published == 'true'
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      version: ${{ needs.gatekeeper.outputs.next_version }}
+    secrets: inherit
