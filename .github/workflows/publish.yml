@@ -102,6 +102,11 @@ jobs:
           }
       
       # Step 9: Set output
+      - name: Verify module publish
+        shell: pwsh
+        run: |
+          Find-Module -Name BridgeWatcher -Repository PSGallery -ErrorAction Stop
+
       - name: Set job output
         id: set_output
         if: success()
