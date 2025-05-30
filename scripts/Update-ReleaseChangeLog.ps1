@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 <#
 .SYNOPSIS
 Αυτόματο update CHANGELOG.md με based-on-commits sections.
@@ -38,9 +38,9 @@ function Initialize-ChangelogIfNeeded {
         [Parameter(Mandatory)]
         [string]$ChangelogPath
     )
-    
+
     $initialized = $false
-    
+
     # Check if file exists
     if (-not (Test-Path $ChangelogPath)) {
         Write-Verbose "📝 Creating new CHANGELOG.md file"
@@ -54,18 +54,18 @@ function Initialize-ChangelogIfNeeded {
             $initialized = $true
         }
     }
-    
+
     if ($initialized) {
         $header = @'
 # Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
-Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),  
+Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 '@
-        
+
         $setContentSplat = @{
             Path     = $ChangelogPath
             Value    = $header
@@ -75,7 +75,7 @@ function Initialize-ChangelogIfNeeded {
         Set-Content @setContentSplat
         Write-Host "✅ CHANGELOG.md initialized with header" -ForegroundColor Green
     }
-    
+
     return $initialized
 }
 
@@ -124,8 +124,8 @@ foreach ($script in $requiredScripts) {
 Write-Verbose "🔍 Getting commits since last release..."
 
 $commitArgs = @{
-    To                 = 'HEAD'
-    ExcludeBumpCommits = $true
+    To                  = 'HEAD'
+    ExcludeHousekeeping = $true
 }
 
 if ($IncludeMergeCommits) {
@@ -134,16 +134,16 @@ if ($IncludeMergeCommits) {
 
 try {
     $commits = & "$scriptRoot\Get-GitCommitsSinceLastRelease.ps1" @commitArgs
-    
+
     # Έλεγχος για νέα commits
     if (-not $commits -or $commits.Count -eq 0) {
         Write-Host "📭 No new commits since last release." -ForegroundColor Yellow
         'false' | Set-Content './changelog_updated.flag'
         exit 0
     }
-    
+
     Write-Verbose "✅ Found $($commits.Count) new commits"
-    
+
 } catch {
     Write-Error "Failed to get commits: $_"
     'false' | Set-Content './changelog_updated.flag'
@@ -169,7 +169,7 @@ try {
         ChangelogPath = $changelogPath
         Version       = $Version
     }
-    
+
     # Προσθήκη sections αν υπάρχουν
     if ($sections.'Προστέθηκαν' -and $sections.'Προστέθηκαν'.Count -gt 0) {
         $updateArgs.Added = $sections.'Προστέθηκαν'
@@ -192,9 +192,9 @@ try {
     if ($sections.'Τεκμηρίωση' -and $sections.'Τεκμηρίωση'.Count -gt 0) {
         $updateArgs.Documentation = $sections.'Τεκμηρίωση'
     }
-    
+
     & "$scriptRoot\Update-Changelog.ps1" @updateArgs
-    
+
 } catch {
     Write-Error "Failed to update changelog: $_"
     'false' | Set-Content './changelog_updated.flag'
