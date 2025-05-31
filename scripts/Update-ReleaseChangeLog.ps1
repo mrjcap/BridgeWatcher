@@ -81,7 +81,7 @@ function Initialize-ChangelogIfNeeded {
 
 # Main script logic
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$changelogPath = Join-Path $scriptRoot ".." "CHANGELOG.md" | Resolve-Path -ErrorAction SilentlyContinue
+$changelogPath = Join-Path -Path $scriptRoot -ChildPath ".." -AdditionalChildPath "CHANGELOG.md" | Resolve-Path -ErrorAction SilentlyContinue
 
 # If path doesn't resolve, create it
 if (-not $changelogPath) {
