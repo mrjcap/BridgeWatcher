@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/powershell:7.5-alpine-3.20
 RUN apk update && \
-    apk add --no-cache tzdata && \
+    apk add --no-cache tzdata:2025b-r0 && \
     cp /usr/share/zoneinfo/Europe/Athens /etc/localtime && \
     echo "Europe/Athens" > /etc/timezone
 RUN mkdir -p /scripts/modules
