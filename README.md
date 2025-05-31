@@ -187,6 +187,7 @@ Start-BridgeStatusMonitor @params
 ### Κοινά Προβλήματα & Λύσεις
 
 #### 🔴 Σφάλμα: "Cannot connect to bridge status website"
+
 ```powershell
 # Έλεγχος σύνδεσης
 Test-NetConnection -ComputerName "www.topvision.gr" -Port 443
@@ -194,6 +195,7 @@ Test-NetConnection -ComputerName "www.topvision.gr" -Port 443
 ```
 
 #### 🔴 Σφάλμα: "Pushover notification failed"
+
 ```powershell
 # Δοκιμή Pushover connection
 Send-BridgePushover -Token $PoApiKey -User $PoUserKey -Message "Test" -Verbose
@@ -230,6 +232,7 @@ Stop-Transcript
 ## 🗺️ Οδικός Χάρτης Ανάπτυξης
 
 ### ✅ Ολοκληρωμένα
+
 - [x] Βασική λειτουργικότητα module
 - [x] OCR integration με Google Vision
 - [x] Pushover notifications
@@ -240,6 +243,7 @@ Stop-Transcript
 - [x] Υποστήριξη Codecov
 
 ### 📅 Μελλοντικά
+
 - [ ] REST API endpoint
 
 ## ❓ Συχνές Ερωτήσεις (FAQ)
