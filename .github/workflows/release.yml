@@ -63,12 +63,13 @@ jobs:
           $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType '${{ github.event.inputs.version_bump_type }}' -Verbose
           Write-Host "Calculated version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
-
       - name: Build Changelog with mikepenz/release-changelog-builder-action
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@v5
         with:
+          mode: "HYBRID"
           outputFile: CHANGELOG.md
+          configuration: .github/changelog-configuration.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
