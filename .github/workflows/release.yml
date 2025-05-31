@@ -14,7 +14,7 @@ on:
         default: patch
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: read
 
 jobs:
