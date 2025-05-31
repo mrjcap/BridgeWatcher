@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Εξάγει και μορφοποιεί (με emojis) το changelog section για συγκεκριμένη έκδοση.
 

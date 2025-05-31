@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Κατηγοριοποιεί commit messages σε sections changelog (Προστέθηκαν, Διορθώθηκαν, κ.λπ.) βασισμένο σε ελληνικά ρήματα και μοτίβα τύπου Keep a Changelog.
 
