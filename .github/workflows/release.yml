@@ -47,7 +47,7 @@ jobs:
       changelog_updated: ${{ steps.commit_changelog.outputs.changelog_updated }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
 
@@ -65,7 +65,7 @@ jobs:
           echo "version=$version" >> $env:GITHUB_OUTPUT
       - name: Build Changelog with mikepenz/release-changelog-builder-action
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@5fb6e51e44d4aea73f66549f425aa3ed5008109e
         with:
           mode: "HYBRID"
           outputFile: CHANGELOG.md
@@ -150,7 +150,7 @@ jobs:
         pwsh_version: ["7.3.x", "7.4.x"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Install Pester
         shell: pwsh
