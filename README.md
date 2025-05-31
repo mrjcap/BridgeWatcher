@@ -244,20 +244,16 @@ Stop-Transcript
 
 ## ❓ Συχνές Ερωτήσεις (FAQ)
 
-<details>
-<summary><strong>Πόσο συχνά πρέπει να ελέγχω την κατάσταση των γεφυρών;</strong></summary>
 
-Συνιστάται έλεγχος κάθε 10-15 λεπτά για βέλτιστη ισορροπία μεταξύ ενημέρωσης και χρήσης πόρων.
-</details>
+### Πόσο συχνά πρέπει να ελέγχω την κατάσταση των γεφυρών;
 
-<details>
-<summary><strong>Μπορώ να χρησιμοποιήσω το module σε Linux/macOS;</strong></summary>
+- Συνιστάται έλεγχος κάθε 5-10 λεπτά για βέλτιστη ισορροπία μεταξύ ενημέρωσης και χρήσης πόρων.
 
-Ναι! Το BridgeWatcher είναι συμβατό με PowerShell Core (7+) και λειτουργεί σε όλες τις πλατφόρμες.
-</details>
+### Μπορώ να χρησιμοποιήσω το module σε Linux/macOS;
 
-<details>
-<summary><strong>Πώς μπορώ να αποθηκεύσω τα API keys με ασφάλεια;</strong></summary>
+- Ναι! Το BridgeWatcher είναι συμβατό με PowerShell Core (7+) και λειτουργεί σε όλες τις πλατφόρμες.
+
+### Πώς μπορώ να αποθηκεύσω τα API keys με ασφάλεια;
 
 ```powershell
 # Χρήση environment variables
@@ -269,13 +265,10 @@ $env:PUSHOVER_USER_KEY = "your-key"
 Install-Module Microsoft.PowerShell.SecretManagement
 Set-Secret -Name "GoogleVisionKey" -Secret "your-key"
 ```
-</details>
 
-<details>
-<summary><strong>Υποστηρίζει το module άλλες υπηρεσίες ειδοποιήσεων;</strong></summary>
+### Υποστηρίζει το module άλλες υπηρεσίες ειδοποιήσεων;
 
-Προς το παρόν υποστηρίζεται μόνο το Pushover.
-</details>
+- Προς το παρόν υποστηρίζεται μόνο το Pushover.
 
 ---
 
