@@ -13,6 +13,10 @@ on:
           - major
         default: patch
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   pre-release:
     name: Pre-release Checks
@@ -32,7 +36,7 @@ jobs:
     needs: test
     outputs:
       next_version: ${{ steps.determine_version.outputs.version }}
-      changelog_updated: ${{ steps.check_changelog.outputs.updated }}
+      changelog_updated: ${{ steps.commit_changelog.outputs.changelog_updated }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -52,44 +56,29 @@ jobs:
           Write-Host "Calculated version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
 
-      - name: Check commits and update changelog
-        id: check_changelog
-        shell: pwsh
-        run: |
-          & ./scripts/Update-ReleaseChangeLog.ps1 -Version '${{ steps.determine_version.outputs.version }}' -Verbose
-          if (Test-Path './changelog_updated.flag') {
-            $updated = Get-Content './changelog_updated.flag' -Raw
-            Write-Host "Changelog updated: $updated"
-            echo "updated=$updated" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Host "Flag file not found, assuming no update"
-            echo "updated=false" >> $env:GITHUB_OUTPUT
-          }
+      - name: Build Changelog with mikepenz/release-changelog-builder-action
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          outputFile: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Output gatekeeper decision & commit CHANGELOG.md
-        shell: pwsh
-        run: |
-          if ('${{ steps.check_changelog.outputs.updated }}' -eq 'true') {
-            Write-Host "✅ New changes detected. Proceeding with release for version ${{ steps.determine_version.outputs.version }}"
-          } else {
-            Write-Host "⏸️ No new changes detected or changelog already up-to-date. Skipping release steps."
-          }
       - name: Commit & push updated CHANGELOG.md
-        if: steps.check_changelog.outputs.updated == 'true'
-        shell: pwsh
+        id: commit_changelog
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          git commit -m "ci: update CHANGELOG.md for v${{ steps.determine_version.outputs.version }}" || echo "No changes to commit"
-          $branch = git rev-parse --abbrev-ref HEAD
-          git push origin HEAD:$branch
+          if [[ $(git status --porcelain CHANGELOG.md) ]]; then
+            git add CHANGELOG.md
+            git commit -m "ci: auto-update CHANGELOG.md for v${{ steps.determine_version.outputs.version }}"
+            git push origin HEAD:$(git rev-parse --abbrev-ref HEAD)
+            echo "changelog_updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes in CHANGELOG.md"
+            echo "changelog_updated=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Cleanup old release artifacts
-        run: |
-          find . -type f -name '*.tar.gz' -delete
-          find . -type f -name '*.zip' -delete
-        if: always()
   test-matrix:
     name: Multi-OS/Version Tests
     runs-on: ${{ matrix.os }}
@@ -116,6 +105,7 @@ jobs:
             Write-Error "PesterConfiguration.psd1 not found!"
             exit 1
           }
+
   docs:
     name: Documentation Generation
     needs: [gatekeeper, test-matrix]
