@@ -1,21 +1,20 @@
-name: SonarCloud Analysis
+name: Codacy Analysis
 
 on:
   workflow_call:
     secrets:
-      SONAR_TOKEN:
+      CODACY_PROJECT_TOKEN:
         required: true
 
 jobs:
-  sonarcloud:
+  codacy-analysis:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@v4
         with:
-          fetch-depth: 0
-      
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+          output: text
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
