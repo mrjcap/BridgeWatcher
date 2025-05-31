@@ -24,6 +24,10 @@
     {
       "title": "## 📦 Εξαρτήσεις",
       "labels": ["dependencies", "dependabot", "εξαρτήσεις"]
+    },
+    {
+      "title": "## 🗂️ Άλλα",
+      "labels": [""]
     }
   ],
   "ignore_labels": [
@@ -35,5 +39,5 @@
   },
   "pr_template": "- #{{TITLE}} ([#{{NUMBER}}]({{URL}})) από @#{{AUTHOR}}",
   "empty_template": "- Καμία σημαντική αλλαγή σε αυτή την έκδοση 🎉",
-  "max_tags_to_fetch": 50
+  "max_tags_to_fetch": 100
 }
