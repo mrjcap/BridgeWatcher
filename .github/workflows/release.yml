@@ -69,7 +69,58 @@ jobs:
         with:
           mode: "HYBRID"
           outputFile: CHANGELOG.md
-          configuration: ./.github/changelog-configuration.json
+          includeOpen: false
+          fetchViaCommits: true
+          commitMode: false
+          configurationJson: |
+            {
+              "template": "## [#{{TO_TAG}}] - #{{TO_TAG_DATE}}\n\n#{{CHANGELOG}}\n\n---\n",
+              "categories": [
+                {
+                  "title": "### ✨ Νέα χαρακτηριστικά",
+                  "rules": [
+                    {
+                      "pattern": "^(feat|feature|add|προστέθ|προσθήκη|νέο)",
+                      "flags": "i"
+                    }
+                  ]
+                },
+                {
+                  "title": "### 🐛 Διορθώσεις",
+                  "rules": [
+                    {
+                      "pattern": "^(fix|bug|διορθ|διόρθ|σφαλμ)",
+                      "flags": "i"
+                    }
+                  ]
+                },
+                {
+                  "title": "### 🔧 CI & Συντήρηση",
+                  "rules": [
+                    {
+                      "pattern": "^(ci:|chore:|build:|αναβάθμιση|ενημέρωση(?!.*changelog))",
+                      "flags": "i"
+                    }
+                  ]
+                },
+                {
+                  "title": "### 📝 Τεκμηρίωση",
+                  "rules": [
+                    {
+                      "pattern": "^(docs|documentation|readme|τεκμηρ|changelog)",
+                      "flags": "i"
+                    }
+                  ]
+                }
+              ],
+              "pr_template": "- #{{TITLE}} ([#{{SHA_SHORT}}]({{URL}}))",
+              "empty_template": "- Καμία σημαντική αλλαγή σε αυτή την έκδοση 🎉",
+              "sort": {
+                "order": "DESC",
+                "on_property": "mergedAt"
+              },
+              "max_tags_to_fetch": 50
+            }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
