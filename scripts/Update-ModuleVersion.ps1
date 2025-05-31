@@ -40,19 +40,19 @@ function Set-ModuleVersion {
 try {
     $content = Get-Content $Path -Raw
     $currentVersion = Get-ModuleVersion -Content $content
-    Write-Host "Current version: $currentVersion"
+    Write-Output "Current version: $currentVersion"
     $versionParts = $currentVersion -split '\.'
     $versionParts[2] = [int]$versionParts[2] + 1
     $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
     $newContent = Set-ModuleVersion -Content $content -OldVersion $currentVersion -NewVersion $newVersion
     Set-Content $Path -Value $newContent
-    Write-Host "Updated version to: $newVersion"
+    Write-Output "Updated version to: $newVersion"
     if ($GitHubEnv) {
         "new_version=$newVersion" | Out-File -FilePath $GitHubEnv -Append
     }
     return $newVersion
 }
 catch {
-    Write-Host $_.Exception.Message
+    Write-Output $_.Exception.Message
     exit 1
 }
