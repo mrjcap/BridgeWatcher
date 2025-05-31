@@ -34,7 +34,7 @@ jobs:
   codacy:
     name: Codacy Analysis
     needs: test # ή [test, test-matrix] κτλ.
-    uses: ./.github/workflows/codacy-analysis.yml
+    uses: ./.github/workflows/codequality.yml
     secrets:
       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
   
