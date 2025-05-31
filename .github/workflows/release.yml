@@ -31,6 +31,13 @@ jobs:
     needs: pre-release
     secrets: inherit
 
+  sonar:
+    name: SonarCloud Analysis
+    needs: test
+    uses: ./.github/workflows/sonarcloud.yml
+    secrets:
+     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  
   gatekeeper:
     name: Gatekeeper & Changelog
     runs-on: ubuntu-latest
