@@ -59,8 +59,11 @@ jobs:
       - name: Calculate potential next version
         id: determine_version
         shell: pwsh
+        env:
+          
+          VERSION_BUMP_TYPE: ${{ github.event.inputs.version_bump_type }}
         run: |
-          $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType '${{ github.event.inputs.version_bump_type }}' -Verbose
+          $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType $Env:VERSION_BUMP_TYPE -Verbose
           Write-Host "Calculated version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
       - name: Build Changelog with mikepenz/release-changelog-builder-action
