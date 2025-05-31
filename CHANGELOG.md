@@ -7,6 +7,7 @@
 ## [1.0.58] - 2025-05-31
 
 ### Αφαιρέθηκαν
+
 - Refactor: μόνο ενημέρωση έκδοσης στο psd1 (το changelog πλέον γίνεται upstream)
 
 ---
@@ -128,9 +129,9 @@
 
 - Ενημέρωση workflows (publish.yml, docker-build.yml)
 - Προσθήκη HEALTHCHECK & αλλαγή ENTRYPOINT σε Alpine shell (Dockerfile):
-    - ENTRYPOINT → `["sh","/scripts/entrypoint.sh"]`
-    - HEALTHCHECK κάθε 60s: ελέγχει αν `/tmp/bridge_status.json` πρόσφατο (10 λεπτά)
-    - Διατήρηση tzdata, ρυθμίσεις Europe/Athens, σχόλιο για charles.crt, chmod +x στο entrypoint.sh
+- ENTRYPOINT → `["sh","/scripts/entrypoint.sh"]`
+- HEALTHCHECK κάθε 60s: ελέγχει αν `/tmp/bridge_status.json` πρόσφατο (10 λεπτά)
+- Διατήρηση tzdata, ρυθμίσεις Europe/Athens, σχόλιο για charles.crt, chmod +x στο entrypoint.sh
 - Αλλαγή του shell wrapper: αφαιρέθηκε get_secret, loop ελέγχου των αρχείων μυστικών, εκτύπωση μηνύματος σε stderr & exit 1 αν λείπουν, exec pwsh
 - Προσθήκη default φάκελου εξόδου `/tmp`, try/catch & exit 1 σε σφάλμα στο Start-BridgeStatusMonitor
 - Ενημέρωση publish.yml
