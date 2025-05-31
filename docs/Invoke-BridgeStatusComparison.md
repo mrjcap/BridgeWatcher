@@ -26,6 +26,7 @@ Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Objec
 ## EXAMPLES
 
 ### EXAMPLE 1
+
 ```
 Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -ApiKey 'abc' -PoUserKey 'user' -PoApiKey 'token'
 ```
