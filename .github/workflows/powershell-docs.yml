@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Cache PowerShell modules
-        uses: actions/cache@v4
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
         with:
           path: ~/.local/share/powershell/Modules
           key: ${{ runner.os }}-pwshmodules-${{ hashFiles('**/requirements.txt') }}
@@ -53,14 +53,14 @@ jobs:
           }
 
       - name: Commit docs
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403
         with:
           commit_message: "docs: auto-generate PowerShell documentation"
           branch: ${{ github.head_ref || github.ref_name }}
           file_pattern: docs/*.md
 
       - name: Upload documentation as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: powershell-docs
           path: docs/
