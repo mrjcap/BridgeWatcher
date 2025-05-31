@@ -48,8 +48,8 @@ jobs:
       
       - name: Commit version and changelog updates
         run: |
-          git add BridgeWatcher/BridgeWatcher.psd1 CHANGELOG.md
-          git commit -m "chore: Bump version to ${{ inputs.next_version }} and update changelog"
+          git add BridgeWatcher/BridgeWatcher.psd1
+          git commit -m "chore: Bump version to ${{ inputs.next_version }}"
       
       - name: Push changes to repository
         run: |
