@@ -1,5 +1,6 @@
 # 🌉 BridgeWatcher: Προηγμένη Παρακολούθηση Γεφυρών Ισθμού
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c76b3a9351bb43ff8d4f2ac3fae8741f)](https://app.codacy.com/gh/mrjcap/BridgeWatcher?utm_source=github.com&utm_medium=referral&utm_content=mrjcap/BridgeWatcher&utm_campaign=Badge_Grade)
 [![Κατάσταση CI](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml)
 [![Κατασκευή Docker](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml)
 [![Τεκμηρίωση PowerShell](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml)
