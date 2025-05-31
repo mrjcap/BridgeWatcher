@@ -8,6 +8,7 @@ schema: 2.0.0
 # Get-BridgeStatus
 
 ## SYNOPSIS
+
 {{ Fill in the Synopsis }}
 
 ## SYNTAX
@@ -17,11 +18,13 @@ Get-BridgeStatus [[-OutputFile] <String>] [-ProgressAction <ActionPreference>] [
 ```
 
 ## DESCRIPTION
+
 {{ Fill in the Description }}
 
 ## EXAMPLES
 
 ### Example 1
+
 ```powershell
 PS C:\> {{ Add example code here }}
 ```
@@ -31,6 +34,7 @@ PS C:\> {{ Add example code here }}
 ## PARAMETERS
 
 ### -OutputFile
+
 {{ Fill OutputFile Description }}
 
 ```yaml
@@ -46,6 +50,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
+
 {{ Fill ProgressAction Description }}
 
 ```yaml
@@ -61,14 +66,17 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
+
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
+
 ## OUTPUTS
 
 ### System.Object[]
+
 ## NOTES
 
 ## RELATED LINKS

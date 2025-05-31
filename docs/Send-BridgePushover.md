@@ -8,6 +8,7 @@ schema: 2.0.0
 # Send-BridgePushover
 
 ## SYNOPSIS
+
 {{ Fill in the Synopsis }}
 
 ## SYNTAX
@@ -19,11 +20,13 @@ Send-BridgePushover [-PoUserKey] <String> [-PoApiKey] <String> [-Message] <Strin
 ```
 
 ## DESCRIPTION
+
 {{ Fill in the Description }}
 
 ## EXAMPLES
 
 ### Example 1
+
 ```powershell
 PS C:\> {{ Add example code here }}
 ```
@@ -33,6 +36,7 @@ PS C:\> {{ Add example code here }}
 ## PARAMETERS
 
 ### -Device
+
 {{ Fill Device Description }}
 
 ```yaml
@@ -48,6 +52,7 @@ Accept wildcard characters: False
 ```
 
 ### -Message
+
 {{ Fill Message Description }}
 
 ```yaml
@@ -63,6 +68,7 @@ Accept wildcard characters: False
 ```
 
 ### -PoApiKey
+
 {{ Fill PoApiKey Description }}
 
 ```yaml
@@ -78,6 +84,7 @@ Accept wildcard characters: False
 ```
 
 ### -PoUserKey
+
 {{ Fill PoUserKey Description }}
 
 ```yaml
@@ -93,6 +100,7 @@ Accept wildcard characters: False
 ```
 
 ### -Priority
+
 {{ Fill Priority Description }}
 
 ```yaml
@@ -108,6 +116,7 @@ Accept wildcard characters: False
 ```
 
 ### -Sound
+
 {{ Fill Sound Description }}
 
 ```yaml
@@ -123,6 +132,7 @@ Accept wildcard characters: False
 ```
 
 ### -Title
+
 {{ Fill Title Description }}
 
 ```yaml
@@ -138,6 +148,7 @@ Accept wildcard characters: False
 ```
 
 ### -Url
+
 {{ Fill Url Description }}
 
 ```yaml
@@ -153,6 +164,7 @@ Accept wildcard characters: False
 ```
 
 ### -UrlTitle
+
 {{ Fill UrlTitle Description }}
 
 ```yaml
@@ -168,6 +180,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
+
 {{ Fill ProgressAction Description }}
 
 ```yaml
@@ -183,14 +196,17 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
+
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
+
 ## OUTPUTS
 
 ### System.Void
+
 ## NOTES
 
 ## RELATED LINKS

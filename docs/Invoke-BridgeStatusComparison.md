@@ -8,6 +8,7 @@ schema: 2.0.0
 # Invoke-BridgeStatusComparison
 
 ## SYNOPSIS
+
 Συγκρίνει δύο λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
 
 ## SYNTAX
@@ -18,6 +19,7 @@ Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Objec
 ```
 
 ## DESCRIPTION
+
 Η Invoke-BridgeStatusComparison συγκρίνει την προηγούμενη και την τρέχουσα
 κατάσταση γεφυρών και καλεί ειδικούς handlers για αλλαγές (άνοιγμα/κλείσιμο).
 
@@ -31,6 +33,7 @@ Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -ApiKey '
 ## PARAMETERS
 
 ### -PreviousState
+
 Η προηγούμενη λίστα καταστάσεων.
 
 ```yaml
@@ -46,6 +49,7 @@ Accept wildcard characters: False
 ```
 
 ### -CurrentState
+
 Η τρέχουσα λίστα καταστάσεων.
 
 ```yaml
@@ -61,6 +65,7 @@ Accept wildcard characters: False
 ```
 
 ### -ApiKey
+
 Το API Key για OCR αν απαιτηθεί.
 
 ```yaml
@@ -76,6 +81,7 @@ Accept wildcard characters: False
 ```
 
 ### -PoUserKey
+
 Το User Key για Pushover ειδοποίηση.
 
 ```yaml
@@ -91,6 +97,7 @@ Accept wildcard characters: False
 ```
 
 ### -PoApiKey
+
 Το API Token για Pushover ειδοποίηση.
 
 ```yaml
@@ -106,6 +113,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
+
 {{ Fill ProgressAction Description }}
 
 ```yaml
@@ -121,14 +129,17 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
+
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ## OUTPUTS
 
-### None.
+### None
+
 ## NOTES
+
 Καταγράφει αλλαγές και ενεργοποιεί κατάλληλες ειδοποιήσεις.
 
 ## RELATED LINKS
