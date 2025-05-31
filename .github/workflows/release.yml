@@ -69,7 +69,7 @@ jobs:
         with:
           mode: "HYBRID"
           outputFile: CHANGELOG.md
-          configuration: .github/changelog-configuration.json
+          configuration: ./.github/changelog-configuration.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
