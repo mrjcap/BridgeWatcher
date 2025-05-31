@@ -73,7 +73,7 @@ function Initialize-ChangelogIfNeeded {
             Force    = $true
         }
         Set-Content @setContentSplat
-        Write-Host "✅ CHANGELOG.md initialized with header" -ForegroundColor Green
+        Write-Verbose "✅ CHANGELOG.md initialized with header"
     }
 
     return $initialized
@@ -137,7 +137,7 @@ try {
 
     # Έλεγχος για νέα commits
     if (-not $commits -or $commits.Count -eq 0) {
-        Write-Host "📭 No new commits since last release." -ForegroundColor Yellow
+        Write-Verbose "📭 No new commits since last release."
         'false' | Set-Content './changelog_updated.flag'
         exit 0
     }
@@ -203,7 +203,7 @@ try {
 
 # Βήμα 7: Set success flag
 'true' | Set-Content './changelog_updated.flag'
-Write-Host "✅ CHANGELOG.md updated for version $Version." -ForegroundColor Green
+Write-Verbose "✅ CHANGELOG.md updated for version $Version."
 
 # Display summary
 if ($VerbosePreference -eq 'Continue') {
