@@ -133,4 +133,4 @@ $finalChangelog = "$header$newEntry$body"
 # Εγγραφή στο αρχείο
 Set-Content -Path $ChangelogPath -Value $finalChangelog -Encoding UTF8
 
-Write-Host "Το CHANGELOG.md ενημερώθηκε με επιτυχία για την έκδοση $Version." -ForegroundColor Green
+Write-Verbose "Το CHANGELOG.md ενημερώθηκε με επιτυχία για την έκδοση $Version."
