@@ -107,7 +107,7 @@ jobs:
     needs: gatekeeper
     if: needs.gatekeeper.outputs.changelog_changed == 'true'
     outputs:
-      changelog_pr_opened: ${{ steps.changelog_pr.outputs.changelog_pr_opened }}
+      changelog_pr_opened: ${{ steps.create-pr.outputs.pull-request-number }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -115,23 +115,76 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Run Update-ChangelogAndCreatePR.ps1
-        id: changelog_pr
-        shell: pwsh
-        run: |
-          & ./scripts/Update-ChangelogAndCreatePR.ps1 -ChangelogPath ./CHANGELOG.md
+      - name: Build Changelog Again (για το PR)
+        uses: mikepenz/release-changelog-builder-action@5fb6e51e44d4aea73f66549f425aa3ed5008109e
+        with:
+          mode: 'HYBRID'
+          outputFile: CHANGELOG.md
+          includeOpen: false
+          fetchViaCommits: true
+          commitMode: false
+          configurationJson: |
+            {
+              "template": "## [${{ needs.gatekeeper.outputs.next_version }}] - #{{TO_TAG_DATE}}\n\n#{{CHANGELOG}}\n\n---\n",
+              "categories": [
+                { "title": "### ✨ Προστέθηκαν", "rules": [ { "pattern": "^(feat|feature|add|προστέθ|προσθήκη|νέο|new)", "flags": "i" } ] },
+                { "title": "### 🔄 Αλλαγές", "rules": [ { "pattern": "^(change|changed|update|αλλαγ|τροποπ|μεταβ|ενημέρωση(?!.*changelog)|refactor)", "flags": "i" } ] },
+                { "title": "### ⚠️ Υποψήφια προς απόσυρση", "rules": [ { "pattern": "^(deprecat|υποψήφια προς απόσυρση|παρωχημ|απόσυρση)", "flags": "i" } ] },
+                { "title": "### ❌ Αφαιρέθηκαν", "rules": [ { "pattern": "^(remove|removed|delete|καταργ|αφαίρ|διαγρά)", "flags": "i" } ] },
+                { "title": "### 🐛 Διορθώθηκαν", "rules": [ { "pattern": "^(fix|fixed|bug|bugfix|διορθ|διόρθ|σφαλμ|επιδιορθ|αποκαταστ)", "flags": "i" } ] },
+                { "title": "### 🔒 Ασφάλεια", "rules": [ { "pattern": "^(security|sec|ασφάλ)", "flags": "i" } ] },
+                { "title": "### 📝 Τεκμηρίωση", "rules": [ { "pattern": "^(docs|documentation|readme|τεκμηρ|changelog)", "flags": "i" } ] },
+                { "title": "### 🔧 CI & Συντήρηση", "rules": [ { "pattern": "^(ci:|chore:|build:|test:|αναβάθμιση)", "flags": "i" } ] }
+              ],
+              "pr_template": "- #{{TITLE}} ([#{{SHA_SHORT}}]({{URL}}))",
+              "empty_template": "- Καμία σημαντική αλλαγή σε αυτή την έκδοση 🎉",
+              "sort": { "order": "DESC", "on_property": "mergedAt" },
+              "max_tags_to_fetch": 50,
+              "ignore_labels": [ "duplicate", "question", "invalid", "wontfix", "skip-changelog" ]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Output PR status (audit)
-        if: always()
-        shell: pwsh
-        run: |
-          if (Test-Path $env:GITHUB_OUTPUT) {
-            Write-Host '---- GITHUB_OUTPUT ----'
-            Get-Content $env:GITHUB_OUTPUT
-            Write-Host '-----------------------'
-          }
+      - name: Create Pull Request
+        id: create-pr
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            docs: auto-update CHANGELOG.md για έκδοση v${{ needs.gatekeeper.outputs.next_version }}
+            
+            Αυτόματη ενημέρωση του CHANGELOG από το GitHub Actions workflow.
+          title: "📝 Auto-update CHANGELOG.md για v${{ needs.gatekeeper.outputs.next_version }}"
+          body: |
+            ## 🤖 Αυτόματη Ενημέρωση CHANGELOG
+            
+            Αυτό το PR δημιουργήθηκε αυτόματα από το Release Process workflow.
+            
+            ### 📋 Αλλαγές
+            - Ενημέρωση του CHANGELOG.md με τις νέες αλλαγές για την έκδοση `v${{ needs.gatekeeper.outputs.next_version }}`
+            
+            ### ✅ Checklist
+            - [ ] Έλεγχος ότι το CHANGELOG περιλαμβάνει όλες τις σημαντικές αλλαγές
+            - [ ] Έλεγχος ορθής κατηγοριοποίησης των αλλαγών
+            - [ ] Έλεγχος ορθογραφίας και μορφοποίησης
+            
+            ---
+            *Δημιουργήθηκε από GitHub Actions* 🚀
+          branch: changelog/update-v${{ needs.gatekeeper.outputs.next_version }}-${{ github.run_number }}
+          branch-suffix: timestamp
+          delete-branch: true
+          labels: |
+            auto-changelog
+            documentation
+          assignees: ${{ github.actor }}
+          reviewers: ${{ github.actor }}
 
-  # Τα επόμενα jobs τρέχουν ΜΟΝΟ όταν το changelog δεν χρειάζεται PR (δηλαδή δεν άλλαξε)
+      - name: Enable Pull Request Automerge
+        if: steps.create-pr.outputs.pull-request-number
+        run: |
+          echo "Pull Request created: #${{ steps.create-pr.outputs.pull-request-number }}"
+          echo "URL: ${{ steps.create-pr.outputs.pull-request-url }}"
+
   test-matrix:
     name: Multi-OS/Version Tests
     runs-on: ${{ matrix.os }}
