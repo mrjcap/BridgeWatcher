@@ -8,7 +8,7 @@
 
 ### ❌ Αφαιρέθηκαν
 
-- Refactor: μόνο ενημέρωση έκδοσης στο psd1 (το changelog πλέον γίνεται upstream)
+- refactor: μόνο ενημέρωση έκδοσης στο psd1 (το changelog πλέον γίνεται upstream)
 
 ---
 
@@ -16,8 +16,8 @@
 
 ### ✨ Προστέθηκαν
 
-- CI(release): ενσωμάτωση inline configuration για mikepenz/release-changelog-builder (mode “HYBRID”, προσθήκη κανόνων κατηγοριοποίησης feat/fix/chore/docs)
-- CI: προσαρμογή εξαρτήσεων Gatekeeper ώστε να περιλαμβάνει ανάλυση Codacy
+- ci(release): ενσωμάτωση inline configuration για mikepenz/release-changelog-builder (mode “HYBRID”, προσθήκη κανόνων κατηγοριοποίησης feat/fix/chore/docs)
+- ci: προσαρμογή εξαρτήσεων Gatekeeper ώστε να περιλαμβάνει ανάλυση Codacy
 
 ---
 
@@ -25,8 +25,8 @@
 
 ### ✨ Προστέθηκαν
 
-- CI(release): Προσαρμογή του path του configuration για mikepenz/release-changelog-builder-action σε `./.github/changelog-configuration.json`
-- Docs(readme): ενημέρωση του README.md
+- ci(release): Προσαρμογή του path του configuration για mikepenz/release-changelog-builder-action σε `./.github/changelog-configuration.json`
+- docs(readme): ενημέρωση του README.md
 
 ---
 
@@ -34,9 +34,9 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore(doc): Update CHANGELOG.md (προσθήκη νέων αλλαγών, ομαδοποίηση)
-- Chore(release-changelog): Ενημέρωση διαμόρφωσης για custom template & κατηγορίες (“##” επίπεδο τίτλοι, αφαίρεση “Άλλα”, μείωση max_tags_to_fetch, αφαίρεση collapse section για μη κατηγοριοποιημένα PRs, προσθήκη σταθερού separator)
-- CI: προσαρμογή εξαρτήσεων Gatekeeper ώστε να περιλαμβάνει ανάλυση Codacy
+- chore(doc): Update CHANGELOG.md (προσθήκη νέων αλλαγών, ομαδοποίηση)
+- chore(release-changelog): Ενημέρωση διαμόρφωσης για custom template & κατηγορίες (“##” επίπεδο τίτλοι, αφαίρεση “Άλλα”, μείωση max_tags_to_fetch, αφαίρεση collapse section για μη κατηγοριοποιημένα PRs, προσθήκη σταθερού separator)
+- ci: προσαρμογή εξαρτήσεων Gatekeeper ώστε να περιλαμβάνει ανάλυση Codacy
 
 ---
 
@@ -44,11 +44,11 @@
 
 ### ✨ Προστέθηκαν
 
-- CI: Ενημέρωση build_changelog με HYBRID mode και προσθήκη configuration αρχείου
-- CI: Ενημέρωση release.yml
-- CI: Προσθήκη ανάλυσης Codacy & αφαίρεση SonarCloud στο workflow release
-- CI: Αντικατάσταση SonarCloud με Codacy για ανάλυση κώδικα
-- CI: Χρήση codequality.yml αντί sonarcloud.yml στο workflow έκδοσης
+- ci: Ενημέρωση build_changelog με HYBRID mode και προσθήκη configuration αρχείου
+- ci: Ενημέρωση release.yml
+- ci: Προσθήκη ανάλυσης Codacy & αφαίρεση SonarCloud στο workflow release
+- ci: Αντικατάσταση SonarCloud με Codacy για ανάλυση κώδικα
+- ci: Χρήση codequality.yml αντί sonarcloud.yml στο workflow έκδοσης
 
 ---
 
@@ -57,9 +57,9 @@
 ### ✨ Προστέθηκαν
 
 - Ενημέρωση release.yml
-- CI(release-process): αντικατάσταση custom Update-ReleaseChangeLog με mikepenz/release-changelog-builder-action και βελτιώσεις Gatekeeper
-- Feat(scripts): έξυπνη επιλογή From ref με Get-LatestTagOnCurrentBranch & απλοποίηση logic git log
-- CI(release-process): προσθήκη test-matrix job & cleanup παλαιών release artifacts
+- ci(release-process): αντικατάσταση custom Update-ReleaseChangeLog με mikepenz/release-changelog-builder-action και βελτιώσεις Gatekeeper
+- feat(scripts): έξυπνη επιλογή From ref με Get-LatestTagOnCurrentBranch & απλοποίηση logic git log
+- ci(release-process): προσθήκη test-matrix job & cleanup παλαιών release artifacts
 
 ---
 
@@ -69,8 +69,8 @@
 
 - Ενημέρωση release.yml (commit e80bba26)
 - Ενημέρωση CHANGELOG.md (commit 9ab877fd & 38ba07a)
-- Feat(scripts): προσθήκη ExcludeHousekeeping switch στο Update-ReleaseChangeLog.ps1 & έξυπνο commit filtering
-- Feat(scripts): έξυπνη επιλογή From/To refs, προσθήκη ExcludeHousekeeping & IncludeMergeCommits flags με advanced filtering
+- feat(scripts): προσθήκη ExcludeHousekeeping switch στο Update-ReleaseChangeLog.ps1 & έξυπνο commit filtering
+- feat(scripts): έξυπνη επιλογή From/To refs, προσθήκη ExcludeHousekeeping & IncludeMergeCommits flags με advanced filtering
 
 ---
 
@@ -79,13 +79,13 @@
 ### ✨ Προστέθηκαν
 
 - Προσθήκη ξεχωριστού βήματος tagging εικόνας ως latest (Release workflow)
-- CI(release-process): προσθήκη test-matrix job και cleanup artifacts για multi-OS/multi-version PowerShell
-- CI(publish): προσθήκη git cleanup (git gc) μετά το publish στο PSGallery
-- CI(lint-docs): caching modules, warnings στο lint & artifact upload documentation
-- CI(docker-build): βελτιώσεις traceability, logging & artifact upload στο docker build
-- CI(powershell-module-ci): προσθήκη caching PowerShell modules για ταχύτερα builds
-- CI(release-process): ομαδοποίηση jobs & προσθήκη pre-release βήματος για έναρξη διαδικασίας
-- CI(publish): προσθήκη βήματος Verify module publish με Find-Module για έλεγχο στο PSGallery
+- ci(release-process): προσθήκη test-matrix job και cleanup artifacts για multi-OS/multi-version PowerShell
+- ci(publish): προσθήκη git cleanup (git gc) μετά το publish στο PSGallery
+- ci(lint-docs): caching modules, warnings στο lint & artifact upload documentation
+- ci(docker-build): βελτιώσεις traceability, logging & artifact upload στο docker build
+- ci(powershell-module-ci): προσθήκη caching PowerShell modules για ταχύτερα builds
+- ci(release-process): ομαδοποίηση jobs & προσθήκη pre-release βήματος για έναρξη διαδικασίας
+- ci(publish): προσθήκη βήματος Verify module publish με Find-Module για έλεγχο στο PSGallery
 
 ---
 
@@ -119,7 +119,7 @@
 - Προσθήκη gatekeeper job & επιλογής bump τύπου έκδοσης (pipeline changes, conditional εκτέλεση downstream jobs)
 - Αναδιαμόρφωση PowerShell Module Publish workflow (inputs.next_version, αφαίρεση commit detection, PowerShell setup, checkout depth)
 - Αντικατάσταση input “published” με “version” & απλοποίηση ροής
-- Ενημέρωση εκδόσεων actions στο workflow CI
+- Ενημέρωση εκδόσεων actions στο workflow ci
 
 ---
 
@@ -159,11 +159,11 @@
 - Βελτίωση workflow Publish (έλεγχος νέων commits, flag, debug, new_version export)
 - Ενημέρωση publish.yml (πολλαπλές αλλαγές)
 - Ενημέρωση BridgeWatcher.psd1
-- Αναβάθμιση CI: actions & συνένωση βημάτων, caching modules, conditional test & coverage upload
+- Αναβάθμιση ci: actions & συνένωση βημάτων, caching modules, conditional test & coverage upload
 - Προσθήκη gatekeeper job & bump type επιλογή, conditional downstream jobs
 - Αναδιαμόρφωση PowerShell Module Publish workflow (inputs.next_version, removal commit detection, use actions/setup-powershell, checkout depth)
 - Αντικατάσταση input “published” με “version” & απλοποίηση ροής
-- Ενημέρωση εκδόσεων actions στο workflow CI
+- Ενημέρωση εκδόσεων actions στο workflow ci
 - Ενημέρωση CHANGELOG.md (πολλαπλές προσθήκες)
 
 ---
@@ -190,7 +190,7 @@
 - Προσθήκη changelog_updated.flag στο Update-ReleaseChangeLog.ps1 (flag για νέα commits, τερματισμός pipeline όταν δεν υπάρχουν αλλαγές)
 - Ενημέρωση START-BridgeStatusMonitor.Tests.ps1 & αφαίρεση break από catch (συνεχής παρακολούθηση)
 - Προσθήκη χειρισμού “Κλειστή για συντήρηση” σε Invoke-BridgeStatusComparison & Invoke-BridgeClosedNotification & Get-BridgeStatusFromHtml (updates σε Pester tests & regex patterns)
-- Cleanup: ευθυγράμμιση πεδίων στο BridgeWatcher.psd1 (cosmetic)
+- cleanup: ευθυγράμμιση πεδίων στο BridgeWatcher.psd1 (cosmetic)
 - Προσθήκη υποστήριξης custom format view για Bridge.Status (BridgeStatus.format.ps1xml, PSVTypeName, update BridgeWatcher.psd1)
 - Προσθήκη Pester tests για “Κλειστή για συντήρηση” transitions στο Invoke-BridgeStatusComparison & Invoke-BridgeClosedNotification
 
@@ -216,8 +216,8 @@
 
 ### ✨ Προστέθηκαν
 
-- Ενημέρωση CI config: ενεργοποίηση τερματισμού σε αποτυχίες tests
-- Βελτιστοποίηση CI pipeline: αναβάθμιση actions & συνένωση βημάτων, caching modules, conditional test & coverage upload
+- Ενημέρωση ci config: ενεργοποίηση τερματισμού σε αποτυχίες tests
+- Βελτιστοποίηση ci pipeline: αναβάθμιση actions & συνένωση βημάτων, caching modules, conditional test & coverage upload
 
 ---
 
@@ -236,7 +236,7 @@
 ### ✨ Προστέθηκαν
 
 - Αφαίρεση break από το catch στη Start-BridgeStatusMonitor (συνεχής παρακολούθηση)
-- Cleanup: ευθυγράμμιση πεδίων στο BridgeWatcher.psd1 (cosmetic)
+- cleanup: ευθυγράμμιση πεδίων στο BridgeWatcher.psd1 (cosmetic)
 - Προσθήκη υποστήριξης custom format view για Bridge.Status
 - Προσθήκη Pester tests για αλλαγές status “Κλειστή για συντήρηση” (Invoke-BridgeStatusComparison)
 
@@ -246,7 +246,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Merge pull request: Προσθήκη υποστήριξης custom format view για Bridge.Status (σημειώνεται στο v1.0.37)
+- merge pull request: Προσθήκη υποστήριξης custom format view για Bridge.Status (σημειώνεται στο v1.0.37)
 - Πρόσθετες ενημερώσεις CHANGELOG.md (μετονομασίες, ομαδοποιήσεις)
 
 ---
@@ -255,7 +255,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Τροποποίηση GitHub Actions pipeline (PowerShell Module CI) ώστε να ενεργοποιείται σε develop & main, caching modules, test coverage στο Codecov, stopping on test failures
+- Τροποποίηση GitHub Actions pipeline (PowerShell Module ci) ώστε να ενεργοποιείται σε develop & main, caching modules, test coverage στο Codecov, stopping on test failures
 
 ---
 
@@ -411,10 +411,10 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση docker-build.yml
-- Docs: Ενημέρωση LICENSE & README.md
-- Chore: Ενημέρωση publish.yml
-- Docs: Ενημέρωση README.md (πολλαπλές ενημερώσεις)
+- chore: Ενημέρωση docker-build.yml
+- docs: Ενημέρωση LICENSE & README.md
+- chore: Ενημέρωση publish.yml
+- docs: Ενημέρωση README.md (πολλαπλές ενημερώσεις)
 
 ---
 
@@ -422,9 +422,9 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση docker-build.yml
-- Docs: Ενημέρωση README.md & CHANGELOG.md (πολλαπλά commits)
-- Doc: Ενημέρωση CHANGELOG.md (commit 78fbebeb & ea1558df)
+- chore: Ενημέρωση docker-build.yml
+- docs: Ενημέρωση README.md & CHANGELOG.md (πολλαπλά commits)
+- doc: Ενημέρωση CHANGELOG.md (commit 78fbebeb & ea1558df)
 
 ---
 
@@ -432,8 +432,8 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση docker-build.yml
-- Docs: Ενημέρωση README.md & CHANGELOG.md (πολλαπλά commits)
+- chore: Ενημέρωση docker-build.yml
+- docs: Ενημέρωση README.md & CHANGELOG.md (πολλαπλά commits)
 
 ---
 
@@ -441,8 +441,8 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση docker-build.yml
-- Docs: Ενημέρωση README.md
+- chore: Ενημέρωση docker-build.yml
+- docs: Ενημέρωση README.md
 
 ---
 
@@ -450,7 +450,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση docker-build.yml
+- chore: Ενημέρωση docker-build.yml
 
 ---
 
@@ -458,7 +458,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση Dockerfile (commit 4ab55dd)
+- chore: Ενημέρωση Dockerfile (commit 4ab55dd)
 
 ---
 
@@ -466,7 +466,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση Dockerfile (commit ce6033b7)
+- chore: Ενημέρωση Dockerfile (commit ce6033b7)
 
 ---
 
@@ -474,7 +474,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση docker-build.yml (commit df9bd5b)
+- chore: Ενημέρωση docker-build.yml (commit df9bd5b)
 
 ---
 
@@ -482,14 +482,14 @@
 
 ### ✨ Προστέθηκαν
 
-- Docs(changelog): Ενημέρωση CHANGELOG.md με προσθήκες Docker, entrypoint, .env, workflow & αλλαγή run.ps1
-- Refactor(docker): Ενημέρωση run.ps1 για εκτέλεση σε container
-- CI(docker): Δημιουργία workflow docker-build.yml για αυτόματο build εικόνων
-- Feat(docker): Προσθήκη entrypoint.sh για εκκίνηση Docker container
-- Feat(config): Προσθήκη αρχείου .env για παραμετροποίηση μεταβλητών
-- Feat(docker): Προσθήκη Dockerfile για containerization του BridgeWatcher
-- Chore: Ενημέρωση publish.yml
-- Chore: Ενημέρωση CHANGELOG.md
+- docs(changelog): Ενημέρωση CHANGELOG.md με προσθήκες Docker, entrypoint, .env, workflow & αλλαγή run.ps1
+- refactor(docker): Ενημέρωση run.ps1 για εκτέλεση σε container
+- ci(docker): Δημιουργία workflow docker-build.yml για αυτόματο build εικόνων
+- feat(docker): Προσθήκη entrypoint.sh για εκκίνηση Docker container
+- feat(config): Προσθήκη αρχείου .env για παραμετροποίηση μεταβλητών
+- feat(docker): Προσθήκη Dockerfile για containerization του BridgeWatcher
+- chore: Ενημέρωση publish.yml
+- chore: Ενημέρωση CHANGELOG.md
 
 ---
 
@@ -497,8 +497,8 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση powershell-docs.yml (πολλαπλά commits)
-- Docs: auto-generate PowerShell documentation
+- chore: Ενημέρωση powershell-docs.yml (πολλαπλά commits)
+- docs: auto-generate PowerShell documentation
 
 ---
 
@@ -506,8 +506,8 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση powershell-docs.yml
-- Merge: προσθήκη codecov badge στο README
+- chore: Ενημέρωση powershell-docs.yml
+- merge: προσθήκη codecov badge στο README
 
 ---
 
@@ -515,7 +515,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Δημιουργία powershell-docs.yml
+- chore: Δημιουργία powershell-docs.yml
 
 ---
 
@@ -523,8 +523,8 @@
 
 ### ✨ Προστέθηκαν
 
-- Chore: Ενημέρωση publish.yml (πολλαπλές commits)
-- Docs: Ενημέρωση README.md (πολλαπλές commits)
+- chore: Ενημέρωση publish.yml (πολλαπλές commits)
+- docs: Ενημέρωση README.md (πολλαπλές commits)
 
 ---
 
