@@ -1,4 +1,4 @@
-function Update-ChangelogFormat {
+﻿function Update-ChangelogFormat {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -122,14 +122,14 @@ function Update-ChangelogFormat {
 
     end {
         if ($changesCount -gt 0) {
-            Write-Host '✅ Η ενημέρωση ολοκληρώθηκε επιτυχώς!' -ForegroundColor Green
-            Write-Host "📊 Σύνολο αλλαγών: $changesCount" -ForegroundColor Cyan
+            Write-Verbose '✅ Η ενημέρωση ολοκληρώθηκε επιτυχώς!'
+            Write-Verbose "📊 Σύνολο αλλαγών: $changesCount"
         } else {
-            Write-Host 'ℹ️ Το changelog είναι ήδη ενημερωμένο.' -ForegroundColor Yellow
+            Write-Verbose 'ℹ️ Το changelog είναι ήδη ενημερωμένο.'
         }
 
         if ($BackupOriginal) {
-            Write-Host "💾 Backup δημιουργήθηκε: $backupPath" -ForegroundColor Magenta
+            Write-Verbose "💾 Backup δημιουργήθηκε: $backupPath"
         }
     }
 }
@@ -271,17 +271,17 @@ if ($MyInvocation.InvocationName -ne '.') {
     $changelogPath = Join-Path (Get-Location) 'CHANGELOG.md'
 
     if (Test-Path $changelogPath) {
-        Write-Host '🔍 Έλεγχος τρέχοντος format...' -ForegroundColor Cyan
+        Write-Verbose '🔍 Έλεγχος τρέχοντος format...'
         $testResults = Test-ChangelogFormat -ChangelogPath $changelogPath
 
-        Write-Host $testResults.Summary
+        Write-Verbose $testResults.Summary
 
         if ($testResults.Issues) {
-            $testResults.Issues | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+            $testResults.Issues | ForEach-Object { Write-Verbose $_  }
         }
 
         if ($testResults.Warnings) {
-            $testResults.Warnings | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
+            $testResults.Warnings | ForEach-Object { Write-Verbose $_  }
         }
 
         if ($testResults.Warnings -contains '⚠️ Βρέθηκαν * sections χωρίς emojis - προτείνεται ενημέρωση') {
