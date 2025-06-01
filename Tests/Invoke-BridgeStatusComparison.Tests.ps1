@@ -452,7 +452,7 @@ InModuleScope 'BridgeWatcher' {
         }
         Context 'Σφάλμα εσωτερικό (catch)' {
             It 'γράφει εξαίρεση στο log όταν αποτυγχάνει εσωτερικά' {
-                function Compare-Object { throw 'mock fail' }
+                Mock -CommandName Compare-Object -MockWith { throw 'mock fail' }
                 { Invoke-BridgeStatusComparison @defaultParams -PreviousState @(@{ gefyraName = 'X'; gefyraStatus = 'Y' }) -CurrentState @(@{ gefyraName = 'X'; gefyraStatus = 'Y' }) } | Should -Throw
                 (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match '❌ mock fail'
             }
