@@ -59,15 +59,22 @@
             Write-BridgeStage @writeBridgeStageSplat
             return $false
         }
+        $sendBridgeNotificationSplat = @{
+            Type         = 'Closed'
+            State        = $CurrentState
+            ApiKey       = $ApiKey
+            PoUserKey    = $PoUserKey
+            PoApiKey     = $PoApiKey
+        }
         $handlerMap = @{
-            'Κλειστή για συντήρηση|=>' = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Κλειστή για συντήρηση|<=' = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Κλειστή με πρόγραμμα|=>'  = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Κλειστή με πρόγραμμα|<='  = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Μόνιμα κλειστή|=>'        = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Μόνιμα κλειστή|<='        = { Send-BridgeNotification 'Closed' $CurrentState }
-            'Ανοιχτή|=>'               = { Send-BridgeNotification 'Opened' $CurrentState }
-            'Ανοιχτή|<='               = { Send-BridgeNotification 'Opened' $CurrentState }
+            'Κλειστή για συντήρηση|=>' = { Send-BridgeNotification @sendBridgeNotificationSplat }
+            'Κλειστή για συντήρηση|<=' = { Send-BridgeNotification @sendBridgeNotificationSplat }
+            'Κλειστή με πρόγραμμα|=>'  = { Send-BridgeNotification @sendBridgeNotificationSplat }
+            'Κλειστή με πρόγραμμα|<='  = { Send-BridgeNotification @sendBridgeNotificationSplat }
+            'Μόνιμα κλειστή|=>'        = { Send-BridgeNotification @sendBridgeNotificationSplat }
+            'Μόνιμα κλειστή|<='        = { Send-BridgeNotification @sendBridgeNotificationSplat }
+            'Ανοιχτή|=>'               = { Send-BridgeNotification @sendBridgeNotificationSplat -Type 'Opened' }
+            'Ανοιχτή|<='               = { Send-BridgeNotification @sendBridgeNotificationSplat -Type 'Opened' }
         }
         foreach ($change in $diff) {
             $writeBridgeStageSplat = @{

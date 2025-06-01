@@ -31,7 +31,10 @@
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][ValidateSet('Closed','Opened')]$Type,
-        [Parameter(Mandatory)][object[]]$State
+        [Parameter(Mandatory)][object[]]$State,
+        [Parameter(Mandatory)][string]$ApiKey,
+        [Parameter(Mandatory)][string]$PoUserKey,
+        [Parameter(Mandatory)][string]$PoApiKey
     )
     $splat = @{
         CurrentState = $State
