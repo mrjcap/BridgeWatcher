@@ -33,7 +33,7 @@ jobs:
 
   codacy:
     name: Codacy Analysis
-    needs: test # ή [test, test-matrix] κτλ.
+    needs: test
     uses: ./.github/workflows/codequality.yml
     secrets:
       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -60,7 +60,7 @@ jobs:
         id: determine_version
         shell: pwsh
         env:
-          
+
           VERSION_BUMP_TYPE: ${{ github.event.inputs.version_bump_type }}
         run: |
           $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType $Env:VERSION_BUMP_TYPE -Verbose
@@ -77,31 +77,58 @@ jobs:
           commitMode: false
           configurationJson: |
             {
-              "template": "## [#{{TO_TAG}}] - #{{TO_TAG_DATE}}\n\n#{{CHANGELOG}}\n\n---\n",
+              "template": "## [${{ steps.determine_version.outputs.version }}] - #{{TO_TAG_DATE}}\n\n#{{CHANGELOG}}\n\n---\n",
               "categories": [
                 {
-                  "title": "### ✨ Νέα χαρακτηριστικά",
+                  "title": "### ✨ Προστέθηκαν",
                   "rules": [
                     {
-                      "pattern": "^(feat|feature|add|προστέθ|προσθήκη|νέο)",
+                      "pattern": "^(feat|feature|add|προστέθ|προσθήκη|νέο|new)",
                       "flags": "i"
                     }
                   ]
                 },
                 {
-                  "title": "### 🐛 Διορθώσεις",
+                  "title": "### 🔄 Αλλαγές",
                   "rules": [
                     {
-                      "pattern": "^(fix|bug|διορθ|διόρθ|σφαλμ)",
+                      "pattern": "^(change|changed|update|αλλαγ|τροποπ|μεταβ|ενημέρωση(?!.*changelog)|refactor)",
                       "flags": "i"
                     }
                   ]
                 },
                 {
-                  "title": "### 🔧 CI & Συντήρηση",
+                  "title": "### ⚠️ Υποψήφια προς απόσυρση",
                   "rules": [
                     {
-                      "pattern": "^(ci:|chore:|build:|αναβάθμιση|ενημέρωση(?!.*changelog))",
+                      "pattern": "^(deprecat|υποψήφια προς απόσυρση|παρωχημ|απόσυρση)",
+                      "flags": "i"
+                    }
+                  ]
+                },
+                {
+                  "title": "### ❌ Αφαιρέθηκαν",
+                  "rules": [
+                    {
+                      "pattern": "^(remove|removed|delete|καταργ|αφαίρ|διαγρά)",
+                      "flags": "i"
+                    }
+                  ]
+                },
+                {
+                  "title": "### 🐛 Διορθώθηκαν",
+                  "rules": [
+                    {
+                      "pattern": "^(fix|fixed|bug|bugfix|διορθ|διόρθ|σφαλμ|επιδιορθ|αποκαταστ)",
+                      "flags": "i"
+                    }
+                  ]
+                },
+                {
+                  "title": "### 🔒 Ασφάλεια",
+                  "rules": [
+                    {
+                      "pattern": "^(security|sec|ασφάλ)",
                       "flags": "i"
                     }
                   ]
@@ -114,6 +141,15 @@ jobs:
                       "flags": "i"
                     }
                   ]
+                },
+                {
+                  "title": "### 🔧 CI & Συντήρηση",
+                  "rules": [
+                    {
+                      "pattern": "^(ci:|chore:|build:|test:|αναβάθμιση)",
+                      "flags": "i"
+                    }
+                  ]
                 }
               ],
               "pr_template": "- #{{TITLE}} ([#{{SHA_SHORT}}]({{URL}}))",
@@ -122,7 +158,14 @@ jobs:
                 "order": "DESC",
                 "on_property": "mergedAt"
               },
-              "max_tags_to_fetch": 50
+              "max_tags_to_fetch": 50,
+              "ignore_labels": [
+                "duplicate",
+                "question",
+                "invalid",
+                "wontfix",
+                "skip-changelog"
+              ]
             }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -134,11 +177,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [[ $(git status --porcelain CHANGELOG.md) ]]; then
             git add CHANGELOG.md
-            git commit -m "ci: auto-update CHANGELOG.md for v${{ steps.determine_version.outputs.version }}"
+            git commit -m "docs: auto-update CHANGELOG.md για έκδοση v${{ steps.determine_version.outputs.version }}"
             git push origin HEAD:$(git rev-parse --abbrev-ref HEAD)
             echo "changelog_updated=true" >> $GITHUB_OUTPUT
           else
-            echo "No changes in CHANGELOG.md"
+            echo "Δεν υπάρχουν αλλαγές στο CHANGELOG.md"
             echo "changelog_updated=false" >> $GITHUB_OUTPUT
           fi
 
