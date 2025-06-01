@@ -67,8 +67,8 @@ if (git status --porcelain $ChangelogPath) {
         --body "Αυτόματο update από CI" --base main --head $Branch --label auto-changelog
 
     "changelog_updated=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-    Write-Host "✅ Δημιουργήθηκε Pull Request για το v$Version."
+    Write-Verbose "✅ Δημιουργήθηκε Pull Request για το v$Version."
 } else {
-    Write-Host "Δεν υπάρχουν αλλαγές στο CHANGELOG.md"
+    Write-Verbose "Δεν υπάρχουν αλλαγές στο CHANGELOG.md"
     "changelog_updated=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 }
