@@ -110,21 +110,16 @@ jobs:
       changelog_pr_opened: ${{ steps.changelog_pr.outputs.changelog_pr_opened }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-
-      - name: Install GitHub CLI (gh)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
 
       - name: Run Update-ChangelogAndCreatePR.ps1
         id: changelog_pr
         shell: pwsh
         run: |
-          & ./scripts/Update-ChangelogAndCreatePR.ps1
+          & ./scripts/Update-ChangelogAndCreatePR.ps1 -Path ./CHANGELOG.md
 
       - name: Output PR status (audit)
         if: always()
