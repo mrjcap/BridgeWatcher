@@ -92,6 +92,7 @@ jobs:
             }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: true
 
       - name: Detect CHANGELOG.md changes
         id: detect_changelog_changes
@@ -145,6 +146,8 @@ jobs:
             }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: true
+
 
       - name: Create Pull Request
         id: create-pr
