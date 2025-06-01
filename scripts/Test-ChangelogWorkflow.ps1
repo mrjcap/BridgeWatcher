@@ -1,4 +1,4 @@
-function Test-ChangelogWorkflow {
+﻿function Test-ChangelogWorkflow {
     [CmdletBinding()]
     <#
     .SYNOPSIS
