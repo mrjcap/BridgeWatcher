@@ -22,11 +22,13 @@ InModuleScope 'BridgeWatcher' {
             }
             # Act
             try {
-                $result    = Send-BridgePushoverRequest -Payload $payload
+                $result = Send-BridgePushoverRequest -Payload $payload
             } catch {
-                # Ignore the error, we just want to test the logging
+                # Logging για audit trail (αν θες, αλλιώς μπορείς και μόνο throw)
+                Write-Error "Test caught exception: $_"
+                # Επιλογή: throw # αν θες να σταματάει το test σε σφάλμα.
+                # Εδώ αγνοούμε επίτηδες το σφάλμα για να κάνουμε Assert το logging.
             }
-
             # Assert
             Assert-MockCalled Write-BridgeLog -Exactly 1 -ParameterFilter {
                 $Stage -eq 'Σφάλμα' -and $Level -eq 'Warning'
