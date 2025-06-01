@@ -85,7 +85,7 @@ $changelogPath = Join-Path -Path $scriptRoot -ChildPath ".." -AdditionalChildPat
 
 # If path doesn't resolve, create it
 if (-not $changelogPath) {
-    $changelogPath = Join-Path $scriptRoot ".." "CHANGELOG.md"
+    $changelogPath = Join-Path -Path $scriptRoot -ChildPath '..' -AdditionalChildPath 'CHANGELOG.md'
 }
 
 Write-Verbose "📂 Script root: $scriptRoot"
