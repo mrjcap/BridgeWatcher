@@ -108,7 +108,7 @@ $params = @{
 }
 
 # Εκκίνηση παρακολούθησης
-Start-BridgeStatusMonitor @params
+Get-BridgeStatusMonitor @params
 ```
 
 ### Παράδειγμα 2: Άμεση ανάκτηση κατάστασης
@@ -138,12 +138,12 @@ $params = @{
     OutputFile         = ".\logs\BridgeStatus_$(Get-Date -Format 'yyyyMMdd').json"
 }
 
-Start-BridgeStatusMonitor @params
+Get-BridgeStatusMonitor @params
 ```
 
 ## ⚙️ Παράμετροι & Ρυθμίσεις
 
-### Start-BridgeStatusMonitor Parameters
+### Get-BridgeStatusMonitor Parameters
 
 | Παράμετρος | Τύπος | Περιγραφή | Προεπιλογή |
 |------------|-------|-----------|------------|
@@ -206,11 +206,11 @@ Send-BridgePushover -Token $PoApiKey -User $PoUserKey -Message "Test" -Verbose
 ```powershell
 # Ενεργοποίηση verbose logging
 $VerbosePreference = "Continue"
-Start-BridgeStatusMonitor @params -Verbose
+Get-BridgeStatusMonitor @params -Verbose
 
 # Αποθήκευση debug log
 Start-Transcript -Path ".\debug_log.txt"
-Start-BridgeStatusMonitor @params -Verbose
+Get-BridgeStatusMonitor @params -Verbose
 Stop-Transcript
 ```
 
