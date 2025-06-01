@@ -29,7 +29,7 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path ./Tests/PesterConfiguration.psd1) {
-            Invoke-Pester -Configuration (Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1)
+            Invoke-Pester -Configuration (Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1) 2>$null 3>$null 4>$null 5>$null
           } else {
             Write-Error "PesterConfiguration.psd1 not found!"
             exit 1
