@@ -119,7 +119,7 @@ jobs:
         id: changelog_pr
         shell: pwsh
         run: |
-          & ./scripts/Update-ChangelogAndCreatePR.ps1 -Path ./CHANGELOG.md
+          & ./scripts/Update-ChangelogAndCreatePR.ps1 -ChangelogPath ./CHANGELOG.md
 
       - name: Output PR status (audit)
         if: always()
