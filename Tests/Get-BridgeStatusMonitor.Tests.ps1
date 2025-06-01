@@ -1,7 +1,7 @@
 ﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
-    Describe 'Start-BridgeStatusMonitor' {
+    Describe 'Get-BridgeStatusMonitor' {
         Context 'Default Parameters' {
             It 'Καλεί Get-BridgeStatusComparison  και Start-Sleep σε loop' {
                 Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
@@ -12,7 +12,7 @@ InModuleScope 'BridgeWatcher' {
                     PoApiKey   = 'dummy-app-key'
                 }
                 Mock -CommandName Start-Sleep
-                Start-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1
+                Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1
                 Should -Invoke Get-BridgeStatusComparison -Exactly 2
                 Should -Invoke Start-Sleep -Exactly 1
             }
@@ -28,7 +28,7 @@ InModuleScope 'BridgeWatcher' {
                 }
                 Mock -CommandName Get-BridgeStatusComparison
                 Mock -CommandName Start-Sleep
-                Start-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 10
+                Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 10
                 Should -Invoke Get-BridgeStatusComparison -Exactly 1
                 Should -Not -Invoke Start-Sleep
             }
@@ -43,7 +43,7 @@ InModuleScope 'BridgeWatcher' {
                     PoApiKey   = 'dummy-app-key'
                 }
                 Mock -CommandName Start-Sleep
-                { Start-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 1 -Verbose } | Should -Not -Throw
+                { Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 1 -Verbose } | Should -Not -Throw
             }
         }
         Context 'Ελέγχει παραμέτρους' {
@@ -56,12 +56,12 @@ InModuleScope 'BridgeWatcher' {
                     PoApiKey   = 'dummy-app-key'
                 }
                 Mock -CommandName Start-Sleep
-                Start-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123
+                Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123
                 Should -Invoke Start-Sleep -ParameterFilter { $Seconds -eq 123 } -Exactly 1
             }
         }
     }
-    Describe 'Start-BridgeStatusMonitor Function' {
+    Describe 'Get-BridgeStatusMonitor Function' {
         # Mocking Write-BridgeLog για να τεστάρουμε την καταγραφή χωρίς να γράφουμε πραγματικά logs
         It 'Πρέπει να καταγράφεται το σφάλμα όταν προκύπτει εξαίρεση' {
             Mock Write-BridgeLog {}
@@ -83,7 +83,7 @@ InModuleScope 'BridgeWatcher' {
                 PoUserKey          = $poUserKey
                 PoApiKey           = $poApiKey
             }
-            Start-BridgeStatusMonitor @startBridgeStatusMonitorSplat
+            Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat
             # Επαληθεύουμε ότι η Write-BridgeLog καλείται για το σφάλμα
             Assert-MockCalled Write-BridgeLog -Exactly 5 -Scope It  # 1 για το μήνυμα εκκίνησης, 1 για το μήνυμα σφάλματος
         }

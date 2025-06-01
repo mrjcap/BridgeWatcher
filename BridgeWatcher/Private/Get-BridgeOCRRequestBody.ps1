@@ -1,11 +1,11 @@
-﻿function New-BridgeOCRRequestBody {
+﻿function Get-BridgeOCRRequestBody {
     [CmdletBinding()]
     <#
     .SYNOPSIS
     Δημιουργεί σώμα JSON αιτήματος OCR.
 
     .DESCRIPTION
-    Η New-BridgeOCRRequestBody δημιουργεί ένα JSON αίτημα για ανάλυση εικόνας
+    Η Get-BridgeOCRRequestBody δημιουργεί ένα JSON αίτημα για ανάλυση εικόνας
     μέσω OCR, βασισμένο σε URI εικόνας.
 
     .PARAMETER ImageUri
@@ -15,7 +15,7 @@
     [string] - Το JSON αίτημα σε μορφή string.
 
     .EXAMPLE
-    New-BridgeOCRRequestBody -ImageUri 'https://example.com/image.jpg'
+    Get-BridgeOCRRequestBody -ImageUri 'https://example.com/image.jpg'
 
     .NOTES
     Το JSON περιλαμβάνει fields όπως imageUri και features.

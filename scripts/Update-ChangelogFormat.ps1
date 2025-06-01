@@ -1,11 +1,11 @@
-﻿function Update-ChangelogFormat {
+﻿function Get-ChangelogFormat {
     [CmdletBinding()]
     <#
     .SYNOPSIS
     Ενημερώνει το υπάρχον CHANGELOG.md για εναρμόνιση με τη νέα μορφή.
 
     .DESCRIPTION
-    Η Update-ChangelogFormat μετατρέπει τους υπάρχοντες τίτλους sections στο CHANGELOG.md
+    Η Get-ChangelogFormat μετατρέπει τους υπάρχοντες τίτλους sections στο CHANGELOG.md
     ώστε να εναρμονιστούν με τη νέα μορφή που περιλαμβάνει emojis και συνεπή ονομασία.
 
     .PARAMETER ChangelogPath
@@ -18,10 +18,10 @@
     None. Ενημερώνει το αρχείο CHANGELOG.md στη θέση του.
 
     .EXAMPLE
-    Update-ChangelogFormat -ChangelogPath './CHANGELOG.md' -BackupOriginal
+    Get-ChangelogFormat -ChangelogPath './CHANGELOG.md' -BackupOriginal
 
     .EXAMPLE
-    Update-ChangelogFormat -ChangelogPath './CHANGELOG.md' -Verbose
+    Get-ChangelogFormat -ChangelogPath './CHANGELOG.md' -Verbose
 
     .NOTES
     Το script διατηρεί τη δομή και το περιεχόμενο, αλλάζει μόνο τους τίτλους των sections.
@@ -287,7 +287,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         if ($testResults.Warnings -contains '⚠️ Βρέθηκαν * sections χωρίς emojis - προτείνεται ενημέρωση') {
             $response = Read-Host "`nΘέλετε να ενημερώσετε το format αυτόματα; (Y/N)"
             if ($response -match '^[Yy]') {
-                Update-ChangelogFormat -ChangelogPath $changelogPath -BackupOriginal -Verbose
+                Get-ChangelogFormat -ChangelogPath $changelogPath -BackupOriginal -Verbose
             }
         }
     } else {

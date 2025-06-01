@@ -8,8 +8,8 @@ InModuleScope 'BridgeWatcher' {
                 Mock Get-BridgeImage { @(@{ src = 'not-matching.jpg' }) }
                 # Mock το Resolve-BridgeStatus να επιστρέφει $null (κανένα status δεν ταιριάζει)
                 Mock Resolve-BridgeStatus { $null }
-                # Mock το New-BridgeStatusObject για να μην εκτελεστεί ποτέ (θα μπει μόνο στο else)
-                Mock New-BridgeStatusObject {}
+                # Mock το Get-BridgeStatusObject για να μην εκτελεστεί ποτέ (θα μπει μόνο στο else)
+                Mock Get-BridgeStatusObject {}
                 $html = '<div>dummy</div>'
                 $timestamp = '2025-04-18T08:00:00'
                 # Πρέπει να ενεργοποιήσεις το Debug output!

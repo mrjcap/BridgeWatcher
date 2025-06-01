@@ -1,11 +1,11 @@
-﻿function Start-BridgeStatusMonitor {
+﻿function Get-BridgeStatusMonitor {
     [CmdletBinding()]
     <#
     .SYNOPSIS
     Ξεκινά συνεχή παρακολούθηση της κατάστασης γεφυρών.
 
     .DESCRIPTION
-    Η Start-BridgeStatusMonitor εκτελεί ατέρμονο monitoring της κατάστασης γεφυρών,
+    Η Get-BridgeStatusMonitor εκτελεί ατέρμονο monitoring της κατάστασης γεφυρών,
     κάνοντας περιοδικά λήψη και ανάλυση της κατάστασης και αποθηκεύοντας αποτελέσματα.
 
     .PARAMETER MaxIterations
@@ -30,7 +30,7 @@
     None.
 
     .EXAMPLE
-    Start-BridgeStatusMonitor -MaxIterations 100 -IntervalSeconds 60 -OutputFile 'C:\Logs\bridge.json' -ApiKey 'api123' -PoUserKey 'user123' -PoApiKey 'token123'
+    Get-BridgeStatusMonitor -MaxIterations 100 -IntervalSeconds 60 -OutputFile 'C:\Logs\bridge.json' -ApiKey 'api123' -PoUserKey 'user123' -PoApiKey 'token123'
 
     .NOTES
     Το monitoring συνεχίζει μέχρι να ολοκληρωθούν οι επαναλήψεις ή να τερματιστεί χειροκίνητα.

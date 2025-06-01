@@ -106,8 +106,8 @@
             }
             # Βήμα 4: Validation
             Write-Verbose '🔍 Βήμα 4: Validation changelog format'
-            if (Test-Path './CHANGELOG.md' -and (Test-Path './scripts/Update-ChangelogFormat.ps1')) {
-                . './scripts/Update-ChangelogFormat.ps1'
+            if (Test-Path './CHANGELOG.md' -and (Test-Path './scripts/Get-ChangelogFormat.ps1')) {
+                . './scripts/Get-ChangelogFormat.ps1'
                 $validationResult = Test-ChangelogFormat -ChangelogPath './CHANGELOG.md'
 
                 if ($validationResult.IsValid) {
@@ -162,7 +162,7 @@ function Compare-ChangelogApproach {
     .NOTES
     Χρήσιμο για την επιλογή της κατάλληλης στρατηγικής.
     #>
-    [OutputType([PSCustomObject[]])]
+    [OutputType([System.Object[]])]
     param()
     $comparison = @(
         [PSCustomObject]@{

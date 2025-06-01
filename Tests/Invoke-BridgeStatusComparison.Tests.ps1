@@ -399,8 +399,15 @@ InModuleScope 'BridgeWatcher' {
                 param([ValidateSet('Closed','Opened')]$Type, [object[]]$State)
                 "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
             }
+            $defaultParams = @{
+                ApiKey    = 'fake-key'
+                PoUserKey = 'user-key'
+                PoApiKey  = 'app-key'
+            }
+            $defaultParams
         }
         Context 'Καμία αλλαγή' {
+
             It 'πυροδοτεί το block "Καμία ουσιαστική αλλαγή"' {
                 $obj = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
                 Invoke-BridgeStatusComparison @defaultParams -PreviousState @($obj) -CurrentState @($obj)

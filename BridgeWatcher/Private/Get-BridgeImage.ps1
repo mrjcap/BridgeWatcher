@@ -21,7 +21,7 @@
     Η ανάλυση βασίζεται σε regex για ανεύρεση εικόνων.
     #>
 
-    [OutputType([pscustomobject[]])]
+    [OutputType([System.Collections.ArrayList])]
     param (
         [Parameter(Mandatory)][string]$HtmlContent,
         [Parameter(Mandatory)][ValidateSet('poseidonia','isthmia')] [string]$Location

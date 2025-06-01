@@ -4,7 +4,7 @@ InModuleScope 'BridgeWatcher' {
     Describe 'Invoke-BridgeOCRGoogleCloud' {
         It 'Επιστρέφει object από API με orchestrated call' {
             $validUri = 'https://example.com/image-bridge-open-with-schedule-isthmia.php'
-            Mock New-BridgeOCRRequestBody { return '{}' }
+            Mock Get-BridgeOCRRequestBody { return '{}' }
             Mock Invoke-BridgeOCRRequest {
                 return @{
                     responses = @(
@@ -24,7 +24,7 @@ InModuleScope 'BridgeWatcher' {
             }
             $out = Invoke-BridgeOCRGoogleCloud -ApiKey 'abc' -ImageUri $validUri
             $out.mock | Should -Be 'result'
-            Assert-MockCalled New-BridgeOCRRequestBody -Times 1
+            Assert-MockCalled Get-BridgeOCRRequestBody -Times 1
             Assert-MockCalled Invoke-BridgeOCRRequest -Times 1
             Assert-MockCalled ConvertFrom-BridgeOCRResult -Times 1
         }

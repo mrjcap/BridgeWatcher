@@ -33,6 +33,7 @@
     #>
 
     [CmdletBinding()]
+    [OutputType([System.Boolean])]
     param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$PreviousState,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$CurrentState,

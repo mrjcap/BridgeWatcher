@@ -41,7 +41,7 @@
         $newOCRRequestBodySplat = @{
             ImageUri    = $ImageUri
         }
-        $requestBody    = New-BridgeOCRRequestBody @newOCRRequestBodySplat
+        $requestBody    = Get-BridgeOCRRequestBody @newOCRRequestBodySplat
         $invokeOCRRequestSplat = @{
             ApiKey         = $ApiKey
             RequestBody    = $requestBody

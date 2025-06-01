@@ -12,7 +12,7 @@ $OutDir    = $Env:BRIDGEWATCHER_OUT
 if ([string]::IsNullOrWhiteSpace($OutDir)) {
     $OutDir    = '/tmp'
 }
-# Wrap το Start-BridgeStatusMonitor
+# Wrap το Get-BridgeStatusMonitor
 try {
     $startBridgeStatusMonitorSplat = @{
         IntervalSeconds = 300
@@ -23,7 +23,7 @@ try {
         PoUserKey       = $POUSER_KEY
         Verbose         = $true
     }
-    Start-BridgeStatusMonitor @startBridgeStatusMonitorSplat
+    Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat
 } catch {
     Write-Error "Monitor failed: $_"
     # Send alert?

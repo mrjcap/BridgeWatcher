@@ -1,11 +1,11 @@
-﻿function New-BridgePushoverPayload {
+﻿function Get-BridgePushoverPayload {
     [CmdletBinding()]
     <#
     .SYNOPSIS
     Δημιουργεί σώμα αιτήματος για αποστολή μέσω Pushover.
 
     .DESCRIPTION
-    Η New-BridgePushoverPayload κατασκευάζει hashtable με όλα τα απαραίτητα
+    Η Get-BridgePushoverPayload κατασκευάζει hashtable με όλα τα απαραίτητα
     πεδία για αποστολή ειδοποίησης στο Pushover.
 
     .PARAMETER PoUserKey
@@ -21,7 +21,7 @@
     [hashtable] - Το payload σε μορφή hashtable.
 
     .EXAMPLE
-    New-BridgePushoverPayload -PoUserKey 'user123' -PoApiKey 'token123' -Message 'Bridge Closed!'
+    Get-BridgePushoverPayload -PoUserKey 'user123' -PoApiKey 'token123' -Message 'Bridge Closed!'
 
     .NOTES
     Υποστηρίζει επίσης optional fields όπως Device, Title, Url, Priority, Sound.

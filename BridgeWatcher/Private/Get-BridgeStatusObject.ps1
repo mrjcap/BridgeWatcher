@@ -1,11 +1,11 @@
-﻿function New-BridgeStatusObject {
+﻿function Get-BridgeStatusObject {
     [CmdletBinding()]
     <#
     .SYNOPSIS
     Δημιουργεί αντικείμενο κατάστασης γέφυρας.
 
     .DESCRIPTION
-    Η New-BridgeStatusObject δημιουργεί structured αντικείμενο που περιέχει
+    Η Get-BridgeStatusObject δημιουργεί structured αντικείμενο που περιέχει
     όνομα γέφυρας, κατάσταση, χρονική σφραγίδα και URL εικόνας.
 
     .PARAMETER Location
@@ -27,7 +27,7 @@
     [pscustomobject] - Αντικείμενο κατάστασης.
 
     .EXAMPLE
-    New-BridgeStatusObject -Location 'poseidonia' -Status 'Closed' -Timestamp (Get-Date) -ImageSrc 'bridge1.jpg'
+    Get-BridgeStatusObject -Location 'poseidonia' -Status 'Closed' -Timestamp (Get-Date) -ImageSrc 'bridge1.jpg'
 
     .NOTES
     Επιστρέφει πάντα πλήρες αντικείμενο με σωστά πεδία.

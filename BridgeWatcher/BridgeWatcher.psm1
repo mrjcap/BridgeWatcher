@@ -6,7 +6,7 @@
 . "$PSScriptRoot\Public\Get-BridgeStatusComparison.ps1"
 . "$PSScriptRoot\Public\Invoke-BridgeStatusComparison.ps1"
 . "$PSScriptRoot\Public\Send-BridgePushover.ps1"
-. "$PSScriptRoot\Public\Start-BridgeStatusMonitor.ps1"
+. "$PSScriptRoot\Public\Get-BridgeStatusMonitor.ps1"
 
 # region Private Functions
 . "$PSScriptRoot\Private\ConvertFrom-BridgeOCRResult.ps1"
@@ -22,9 +22,9 @@
 . "$PSScriptRoot\Private\Invoke-BridgeOpenedNotification.ps1"
 . "$PSScriptRoot\Private\Invoke-BridgeOCRGoogleCloud.ps1"
 . "$PSScriptRoot\Private\Invoke-BridgeOCRRequest.ps1"
-. "$PSScriptRoot\Private\New-BridgeStatusObject.ps1"
-. "$PSScriptRoot\Private\New-BridgeOCRRequestBody.ps1"
-. "$PSScriptRoot\Private\New-BridgePushoverPayload.ps1"
+. "$PSScriptRoot\Private\Get-BridgeStatusObject.ps1"
+. "$PSScriptRoot\Private\Get-BridgeOCRRequestBody.ps1"
+. "$PSScriptRoot\Private\Get-BridgePushoverPayload.ps1"
 . "$PSScriptRoot\Private\Resolve-BridgeStatus.ps1"
 . "$PSScriptRoot\Private\Send-BridgePushoverRequest.ps1"
 . "$PSScriptRoot\Private\Send-BridgeNotification.ps1"
@@ -32,4 +32,4 @@
 . "$PSScriptRoot\Private\Write-BridgeLog.ps1"
 
 # Export only public functions
-Export-ModuleMember -Function Get-BridgeStatus,Get-BridgePreviousStatus,Get-BridgeStatusComparison,Invoke-BridgeStatusComparison,Send-BridgePushover,Start-BridgeStatusMonitor
+Export-ModuleMember -Function Get-BridgeStatus,Get-BridgePreviousStatus,Get-BridgeStatusComparison,Invoke-BridgeStatusComparison,Send-BridgePushover,Get-BridgeStatusMonitor

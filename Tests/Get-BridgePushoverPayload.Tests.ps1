@@ -14,7 +14,7 @@ InModuleScope 'BridgeWatcher' {
                 Priority  = 1
                 Sound     = 'bike'
             }
-            $payload = New-BridgePushoverPayload @newPushoverPayloadSplat
+            $payload = Get-BridgePushoverPayload @newPushoverPayloadSplat
             $payload | Should -BeOfType 'hashtable'
             $payload.token | Should -Be 'a1'
             $payload.user | Should -Be 'u1'
@@ -32,7 +32,7 @@ InModuleScope 'BridgeWatcher' {
                 PoApiKey  = 'a1'
                 Message   = 'msg'
             }
-            $payload = New-BridgePushoverPayload @newPushoverPayloadSplat
+            $payload = Get-BridgePushoverPayload @newPushoverPayloadSplat
             $payload.Keys.Count | Should -Be 3
             $payload['device'] | Should -BeNullOrEmpty
         }

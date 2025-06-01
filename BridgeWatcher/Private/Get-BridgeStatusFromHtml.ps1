@@ -110,7 +110,7 @@
                     ImageSrc  = $image.src
                     BaseUrl   = $baseUrl
                 }
-                $object = New-BridgeStatusObject @newBridgeStatusObjectSplat
+                $object = Get-BridgeStatusObject @newBridgeStatusObjectSplat
                 $result += $object
                 break
             } else {

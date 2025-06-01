@@ -74,7 +74,7 @@
         Priority     = $Priority
         Sound        = $Sound
     }
-    $payload                     = New-BridgePushoverPayload @newPushoverPayloadSplat
+    $payload                     = Get-BridgePushoverPayload @newPushoverPayloadSplat
     $sendPushoverRequestSplat    = @{
         Payload    = $payload
     }

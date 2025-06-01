@@ -29,7 +29,7 @@ function Get-ModuleVersion {
         throw "Could not find version in .psd1 file."
     }
 }
-function Set-ModuleVersion {
+function Get-ModuleVersion {
     param(
         [string]$Content,
         [string]$OldVersion,
@@ -44,7 +44,7 @@ try {
     $versionParts = $currentVersion -split '\.'
     $versionParts[2] = [int]$versionParts[2] + 1
     $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
-    $newContent = Set-ModuleVersion -Content $content -OldVersion $currentVersion -NewVersion $newVersion
+    $newContent = Get-ModuleVersion -Content $content -OldVersion $currentVersion -NewVersion $newVersion
     Set-Content $Path -Value $newContent
     Write-Output "Updated version to: $newVersion"
     if ($GitHubEnv) {
