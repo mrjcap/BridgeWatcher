@@ -31,17 +31,16 @@ param (
     [Parameter(Mandatory)]
     [ValidatePattern('^\d+\.\d+\.\d+$')]
     [string]$Version,
-    
     [Parameter()]
     [ValidateScript({
-        if (-not (Test-Path $_ -PathType Leaf)) {
-            throw "Το αρχείο '$_' δεν βρέθηκε."
-        }
-        if ($_ -notmatch '\.psd1$') {
-            throw "Το αρχείο πρέπει να έχει κατάληξη .psd1"
-        }
-        $true
-    })]
+            if (-not (Test-Path $_ -PathType Leaf)) {
+                throw "Το αρχείο '$_' δεν βρέθηκε."
+            }
+            if ($_ -notmatch '\.psd1$') {
+                throw 'Το αρχείο πρέπει να έχει κατάληξη .psd1'
+            }
+            $true
+        })]
     [string]$Path = './BridgeWatcher.psd1'
 )
 
@@ -61,7 +60,7 @@ $content = Get-Content @getContentSplat
 # Βήμα 2: Έλεγχος ύπαρξης ModuleVersion
 if ($content -notmatch "ModuleVersion\s*=\s*'[^']+'") {
     $errorRecord = [System.Management.Automation.ErrorRecord]::new(
-        ([System.Exception]::new("Δεν βρέθηκε το ModuleVersion στο αρχείο.")),
+        ([System.Exception]::new('Δεν βρέθηκε το ModuleVersion στο αρχείο.')),
         'ModuleVersionNotFound',
         [System.Management.Automation.ErrorCategory]::InvalidData,
         $Path
@@ -81,15 +80,15 @@ Write-Verbose @writeBridgeLogSplat
 
 # Βήμα 4: Αποθήκευση αλλαγών
 $setContentSplat = @{
-    Path     = $Path
-    Value    = $newContent
-    Encoding = 'UTF8'
+    Path      = $Path
+    Value     = $newContent
+    Encoding  = 'UTF8'
     NoNewline = $true
 }
 Set-Content @setContentSplat
 
 $writeBridgeLogSplat = @{
-    Message = "💾 Αρχείο ενημερώθηκε επιτυχώς"
+    Message = '💾 Αρχείο ενημερώθηκε επιτυχώς'
 }
 Write-Verbose @writeBridgeLogSplat
 
@@ -101,7 +100,6 @@ if ($env:GITHUB_ENV) {
         Encoding = 'UTF8'
     }
     Add-Content @addContentSplat
-    
     $writeBridgeLogSplat = @{
         Message = "🚀 GitHub Actions ENV: new_version=$Version"
     }
