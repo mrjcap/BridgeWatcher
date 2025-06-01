@@ -74,16 +74,17 @@ jobs:
           configurationJson: |
             {
               "template": "## [${{ steps.determine_version.outputs.version }}] - #{{TO_TAG_DATE}}\n\n#{{CHANGELOG}}\n\n---\n",
-              "categories": [
-                { "title": "### ✨ Προστέθηκαν", "rules": [ { "pattern": "^(feat|feature|add|προστέθ|προσθήκη|νέο|new)", "flags": "i" } ] },
-                { "title": "### 🔄 Αλλαγές", "rules": [ { "pattern": "^(change|changed|update|αλλαγ|τροποπ|μεταβ|ενημέρωση(?!.*changelog)|refactor)", "flags": "i" } ] },
-                { "title": "### ⚠️ Υποψήφια προς απόσυρση", "rules": [ { "pattern": "^(deprecat|υποψήφια προς απόσυρση|παρωχημ|απόσυρση)", "flags": "i" } ] },
-                { "title": "### ❌ Αφαιρέθηκαν", "rules": [ { "pattern": "^(remove|removed|delete|καταργ|αφαίρ|διαγρά)", "flags": "i" } ] },
-                { "title": "### 🐛 Διορθώθηκαν", "rules": [ { "pattern": "^(fix|fixed|bug|bugfix|διορθ|διόρθ|σφαλμ|επιδιορθ|αποκαταστ)", "flags": "i" } ] },
-                { "title": "### 🔒 Ασφάλεια", "rules": [ { "pattern": "^(security|sec|ασφάλ)", "flags": "i" } ] },
-                { "title": "### 📝 Τεκμηρίωση", "rules": [ { "pattern": "^(docs|documentation|readme|τεκμηρ|changelog)", "flags": "i" } ] },
-                { "title": "### 🔧 CI & Συντήρηση", "rules": [ { "pattern": "^(ci:|chore:|build:|test:|αναβάθμιση)", "flags": "i" } ] }
-              ],
+            "categories": [
+              { "title": "✨ Προστέθηκαν", "rules": [ { "pattern": "^(feat(\\([^\\)]*\\))?:|feature:|add:|προστέθ|προσθήκη|νέο:|new:)", "flags": "i" } ] },
+              { "title": "🐛 Διορθώθηκαν", "rules": [ { "pattern": "^(fix(\\([^\\)]*\\))?:|fixed:|bugfix:|bug:|διορθ|διόρθ|σφαλμ|επιδιορθ|αποκαταστ)", "flags": "i" } ] },
+              { "title": "🧪 Tests", "rules": [ { "pattern": "^(test(\\([^\\)]*\\))?:|tests?:)", "flags": "i" } ] },
+              { "title": "📝 Τεκμηρίωση", "rules": [ { "pattern": "^(docs?(:|\\())|documentation:|readme:|τεκμηρ|doc(\\([^\\)]*\\))?:|changelog:)", "flags": "i" } ] },
+              { "title": "🔄 Αλλαγές", "rules": [ { "pattern": "^(refactor(\\([^\\)]*\\))?:|change:|changed:|update:|αλλαγ|τροποπ|μεταβ|ενημέρωση(?!.*changelog):)", "flags": "i" } ] },
+              { "title": "🔧 CI & Συντήρηση", "rules": [ { "pattern": "^(ci:|chore(\\([^\\)]*\\))?:|build:|αναβάθμιση:)", "flags": "i" } ] },
+              { "title": "❌ Αφαιρέθηκαν", "rules": [ { "pattern": "^(remove:|removed:|delete:|καταργ|αφαίρ|διαγρά)", "flags": "i" } ] },
+              { "title": "🔒 Ασφάλεια", "rules": [ { "pattern": "^(security:|sec:|ασφάλ)", "flags": "i" } ] },
+              { "title": "⚠️ Υποψήφια προς απόσυρση", "rules": [ { "pattern": "^(deprecat|υποψήφια προς απόσυρση|παρωχημ|απόσυρση)", "flags": "i" } ] }
+            ],
               "pr_template": "- #{{TITLE}} ([#{{SHA_SHORT}}]({{URL}}))",
               "empty_template": "- Καμία σημαντική αλλαγή σε αυτή την έκδοση 🎉",
               "sort": { "order": "DESC", "on_property": "mergedAt" },
@@ -92,7 +93,6 @@ jobs:
             }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEBUG: true
 
       - name: Detect CHANGELOG.md changes
         id: detect_changelog_changes
@@ -128,16 +128,17 @@ jobs:
           configurationJson: |
             {
               "template": "## [${{ needs.gatekeeper.outputs.next_version }}] - #{{TO_TAG_DATE}}\n\n#{{CHANGELOG}}\n\n---\n",
-              "categories": [
-                { "title": "### ✨ Προστέθηκαν", "rules": [ { "pattern": "^(feat|feature|add|προστέθ|προσθήκη|νέο|new)", "flags": "i" } ] },
-                { "title": "### 🔄 Αλλαγές", "rules": [ { "pattern": "^(change|changed|update|αλλαγ|τροποπ|μεταβ|ενημέρωση(?!.*changelog)|refactor)", "flags": "i" } ] },
-                { "title": "### ⚠️ Υποψήφια προς απόσυρση", "rules": [ { "pattern": "^(deprecat|υποψήφια προς απόσυρση|παρωχημ|απόσυρση)", "flags": "i" } ] },
-                { "title": "### ❌ Αφαιρέθηκαν", "rules": [ { "pattern": "^(remove|removed|delete|καταργ|αφαίρ|διαγρά)", "flags": "i" } ] },
-                { "title": "### 🐛 Διορθώθηκαν", "rules": [ { "pattern": "^(fix|fixed|bug|bugfix|διορθ|διόρθ|σφαλμ|επιδιορθ|αποκαταστ)", "flags": "i" } ] },
-                { "title": "### 🔒 Ασφάλεια", "rules": [ { "pattern": "^(security|sec|ασφάλ)", "flags": "i" } ] },
-                { "title": "### 📝 Τεκμηρίωση", "rules": [ { "pattern": "^(docs|documentation|readme|τεκμηρ|changelog)", "flags": "i" } ] },
-                { "title": "### 🔧 CI & Συντήρηση", "rules": [ { "pattern": "^(ci:|chore:|build:|test:|αναβάθμιση)", "flags": "i" } ] }
-              ],
+            "categories": [
+              { "title": "✨ Προστέθηκαν", "rules": [ { "pattern": "^(feat(\\([^\\)]*\\))?:|feature:|add:|προστέθ|προσθήκη|νέο:|new:)", "flags": "i" } ] },
+              { "title": "🐛 Διορθώθηκαν", "rules": [ { "pattern": "^(fix(\\([^\\)]*\\))?:|fixed:|bugfix:|bug:|διορθ|διόρθ|σφαλμ|επιδιορθ|αποκαταστ)", "flags": "i" } ] },
+              { "title": "🧪 Tests", "rules": [ { "pattern": "^(test(\\([^\\)]*\\))?:|tests?:)", "flags": "i" } ] },
+              { "title": "📝 Τεκμηρίωση", "rules": [ { "pattern": "^(docs?(:|\\())|documentation:|readme:|τεκμηρ|doc(\\([^\\)]*\\))?:|changelog:)", "flags": "i" } ] },
+              { "title": "🔄 Αλλαγές", "rules": [ { "pattern": "^(refactor(\\([^\\)]*\\))?:|change:|changed:|update:|αλλαγ|τροποπ|μεταβ|ενημέρωση(?!.*changelog):)", "flags": "i" } ] },
+              { "title": "🔧 CI & Συντήρηση", "rules": [ { "pattern": "^(ci:|chore(\\([^\\)]*\\))?:|build:|αναβάθμιση:)", "flags": "i" } ] },
+              { "title": "❌ Αφαιρέθηκαν", "rules": [ { "pattern": "^(remove:|removed:|delete:|καταργ|αφαίρ|διαγρά)", "flags": "i" } ] },
+              { "title": "🔒 Ασφάλεια", "rules": [ { "pattern": "^(security:|sec:|ασφάλ)", "flags": "i" } ] },
+              { "title": "⚠️ Υποψήφια προς απόσυρση", "rules": [ { "pattern": "^(deprecat|υποψήφια προς απόσυρση|παρωχημ|απόσυρση)", "flags": "i" } ] }
+            ],
               "pr_template": "- #{{TITLE}} ([#{{SHA_SHORT}}]({{URL}}))",
               "empty_template": "- Καμία σημαντική αλλαγή σε αυτή την έκδοση 🎉",
               "sort": { "order": "DESC", "on_property": "mergedAt" },
@@ -146,8 +147,6 @@ jobs:
             }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEBUG: true
-
 
       - name: Create Pull Request
         id: create-pr
