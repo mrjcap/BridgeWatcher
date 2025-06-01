@@ -20,19 +20,19 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       module_published: ${{ steps.set_output.outputs.published }}
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-      
+
       - name: Set up PowerShell
         shell: pwsh
         run: |
           Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
-      
+
       - name: Set final module version
         shell: pwsh
         run: |
@@ -40,22 +40,22 @@ jobs:
             -Version '${{ inputs.next_version }}' `
             -Path './BridgeWatcher/BridgeWatcher.psd1' `
             -Verbose
-      
+
       - name: Configure Git user
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      
+
       - name: Commit version and changelog updates
         run: |
           git add BridgeWatcher/BridgeWatcher.psd1
           git commit -m "chore: Bump version to ${{ inputs.next_version }}"
-      
+
       - name: Push changes to repository
         run: |
           git pull --rebase origin main
           git push origin HEAD:${{ github.ref_name }}
-      
+
       - name: Extract release notes
         id: release_notes
         shell: pwsh
@@ -90,7 +90,7 @@ jobs:
             Write-Error "❌ Failed to publish module: $_"
             exit 1
           }
-      
+
       - name: Verify module publish
         shell: pwsh
         run: |
@@ -104,7 +104,7 @@ jobs:
         if: success()
         run: |
           echo "published=true" >> $GITHUB_OUTPUT
-      
+
       - name: Set failure output
         if: failure()
         run: |

@@ -18,7 +18,8 @@ jobs:
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
         with:
           path: ~/.local/share/powershell/Modules
-          key: ${{ runner.os }}-pwshmodules-${{ hashFiles('**/requirements.txt') }}
+          key:
+            ${{ runner.os }}-pwshmodules-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pwshmodules-
 
@@ -55,7 +56,7 @@ jobs:
       - name: Commit docs
         uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403
         with:
-          commit_message: "docs: auto-generate PowerShell documentation"
+          commit_message: 'docs: auto-generate PowerShell documentation'
           branch: ${{ github.head_ref || github.ref_name }}
           file_pattern: docs/*.md
 
