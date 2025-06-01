@@ -15,7 +15,7 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   pre-release:
@@ -27,8 +27,8 @@ jobs:
 
   test:
     name: Module Tests
-    uses: ./.github/workflows/ci.yml
     needs: pre-release
+    uses: ./.github/workflows/ci.yml
     secrets: inherit
 
   codacy:
@@ -39,22 +39,17 @@ jobs:
       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
   gatekeeper:
-    name: Gatekeeper & Changelog
+    name: Gatekeeper (Changelog builder)
     runs-on: ubuntu-latest
-    needs: [test, codacy]
+    needs: [pre-release, test, codacy]
     outputs:
       next_version: ${{ steps.determine_version.outputs.version }}
-      changelog_updated: ${{ steps.commit_changelog.outputs.changelog_updated }}
+      changelog_changed: ${{ steps.detect_changelog_changes.outputs.changelog_changed }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-
-      - name: Set up PowerShell
-        shell: pwsh
-        run: |
-          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
 
       - name: Calculate potential next version
         id: determine_version
@@ -65,7 +60,8 @@ jobs:
           $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType $Env:VERSION_BUMP_TYPE -Verbose
           Write-Host "Calculated version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
-      - name: Build Changelog with mikepenz/release-changelog-builder-action
+
+      - name: Build Changelog (mikepenz/release-changelog-builder-action)
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@5fb6e51e44d4aea73f66549f425aa3ed5008109e
         with:
@@ -78,117 +74,80 @@ jobs:
             {
               "template": "## [${{ steps.determine_version.outputs.version }}] - #{{TO_TAG_DATE}}\n\n#{{CHANGELOG}}\n\n---\n",
               "categories": [
-                {
-                  "title": "### ✨ Προστέθηκαν",
-                  "rules": [
-                    {
-                      "pattern": "^(feat|feature|add|προστέθ|προσθήκη|νέο|new)",
-                      "flags": "i"
-                    }
-                  ]
-                },
-                {
-                  "title": "### 🔄 Αλλαγές",
-                  "rules": [
-                    {
-                      "pattern": "^(change|changed|update|αλλαγ|τροποπ|μεταβ|ενημέρωση(?!.*changelog)|refactor)",
-                      "flags": "i"
-                    }
-                  ]
-                },
-                {
-                  "title": "### ⚠️ Υποψήφια προς απόσυρση",
-                  "rules": [
-                    {
-                      "pattern": "^(deprecat|υποψήφια προς απόσυρση|παρωχημ|απόσυρση)",
-                      "flags": "i"
-                    }
-                  ]
-                },
-                {
-                  "title": "### ❌ Αφαιρέθηκαν",
-                  "rules": [
-                    {
-                      "pattern": "^(remove|removed|delete|καταργ|αφαίρ|διαγρά)",
-                      "flags": "i"
-                    }
-                  ]
-                },
-                {
-                  "title": "### 🐛 Διορθώθηκαν",
-                  "rules": [
-                    {
-                      "pattern": "^(fix|fixed|bug|bugfix|διορθ|διόρθ|σφαλμ|επιδιορθ|αποκαταστ)",
-                      "flags": "i"
-                    }
-                  ]
-                },
-                {
-                  "title": "### 🔒 Ασφάλεια",
-                  "rules": [
-                    {
-                      "pattern": "^(security|sec|ασφάλ)",
-                      "flags": "i"
-                    }
-                  ]
-                },
-                {
-                  "title": "### 📝 Τεκμηρίωση",
-                  "rules": [
-                    {
-                      "pattern": "^(docs|documentation|readme|τεκμηρ|changelog)",
-                      "flags": "i"
-                    }
-                  ]
-                },
-                {
-                  "title": "### 🔧 CI & Συντήρηση",
-                  "rules": [
-                    {
-                      "pattern": "^(ci:|chore:|build:|test:|αναβάθμιση)",
-                      "flags": "i"
-                    }
-                  ]
-                }
+                { "title": "### ✨ Προστέθηκαν", "rules": [ { "pattern": "^(feat|feature|add|προστέθ|προσθήκη|νέο|new)", "flags": "i" } ] },
+                { "title": "### 🔄 Αλλαγές", "rules": [ { "pattern": "^(change|changed|update|αλλαγ|τροποπ|μεταβ|ενημέρωση(?!.*changelog)|refactor)", "flags": "i" } ] },
+                { "title": "### ⚠️ Υποψήφια προς απόσυρση", "rules": [ { "pattern": "^(deprecat|υποψήφια προς απόσυρση|παρωχημ|απόσυρση)", "flags": "i" } ] },
+                { "title": "### ❌ Αφαιρέθηκαν", "rules": [ { "pattern": "^(remove|removed|delete|καταργ|αφαίρ|διαγρά)", "flags": "i" } ] },
+                { "title": "### 🐛 Διορθώθηκαν", "rules": [ { "pattern": "^(fix|fixed|bug|bugfix|διορθ|διόρθ|σφαλμ|επιδιορθ|αποκαταστ)", "flags": "i" } ] },
+                { "title": "### 🔒 Ασφάλεια", "rules": [ { "pattern": "^(security|sec|ασφάλ)", "flags": "i" } ] },
+                { "title": "### 📝 Τεκμηρίωση", "rules": [ { "pattern": "^(docs|documentation|readme|τεκμηρ|changelog)", "flags": "i" } ] },
+                { "title": "### 🔧 CI & Συντήρηση", "rules": [ { "pattern": "^(ci:|chore:|build:|test:|αναβάθμιση)", "flags": "i" } ] }
               ],
               "pr_template": "- #{{TITLE}} ([#{{SHA_SHORT}}]({{URL}}))",
               "empty_template": "- Καμία σημαντική αλλαγή σε αυτή την έκδοση 🎉",
-              "sort": {
-                "order": "DESC",
-                "on_property": "mergedAt"
-              },
+              "sort": { "order": "DESC", "on_property": "mergedAt" },
               "max_tags_to_fetch": 50,
-              "ignore_labels": [
-                "duplicate",
-                "question",
-                "invalid",
-                "wontfix",
-                "skip-changelog"
-              ]
+              "ignore_labels": [ "duplicate", "question", "invalid", "wontfix", "skip-changelog" ]
             }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit & push updated CHANGELOG.md
-        id: commit_changelog
+      - name: Detect CHANGELOG.md changes
+        id: detect_changelog_changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [[ $(git status --porcelain CHANGELOG.md) ]]; then
-            git add CHANGELOG.md
-            git commit -m "docs: auto-update CHANGELOG.md για έκδοση v${{ steps.determine_version.outputs.version }}"
-            git push origin HEAD:$(git rev-parse --abbrev-ref HEAD)
-            echo "changelog_updated=true" >> $GITHUB_OUTPUT
+          if git status --porcelain CHANGELOG.md | grep 'CHANGELOG.md'; then
+            echo "changelog_changed=true" >> $GITHUB_OUTPUT
           else
-            echo "Δεν υπάρχουν αλλαγές στο CHANGELOG.md"
-            echo "changelog_updated=false" >> $GITHUB_OUTPUT
+            echo "changelog_changed=false" >> $GITHUB_OUTPUT
           fi
 
+  changelog-pr:
+    name: "Auto PR για αλλαγή CHANGELOG.md"
+    runs-on: ubuntu-latest
+    needs: gatekeeper
+    if: needs.gatekeeper.outputs.changelog_changed == 'true'
+    outputs:
+      changelog_pr_opened: ${{ steps.changelog_pr.outputs.changelog_pr_opened }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Install GitHub CLI (gh)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Authenticate gh CLI (safe)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${GITHUB_TOKEN}" | gh auth login --with-token
+
+      - name: Run Update-ChangelogAndCreatePR.ps1
+        id: changelog_pr
+        shell: pwsh
+        run: |
+          & ./scripts/Update-ChangelogAndCreatePR.ps1
+
+      - name: Output PR status (audit)
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path $env:GITHUB_OUTPUT) {
+            Write-Host '---- GITHUB_OUTPUT ----'
+            Get-Content $env:GITHUB_OUTPUT
+            Write-Host '-----------------------'
+          }
+
+  # Τα επόμενα jobs τρέχουν ΜΟΝΟ όταν το changelog δεν χρειάζεται PR (δηλαδή δεν άλλαξε)
   test-matrix:
     name: Multi-OS/Version Tests
     runs-on: ${{ matrix.os }}
-    needs: gatekeeper
-    if: needs.gatekeeper.outputs.changelog_updated == 'true'
+    needs: [gatekeeper]
+    if: needs.gatekeeper.outputs.changelog_changed == 'false'
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -214,14 +173,14 @@ jobs:
   docs:
     name: Documentation Generation
     needs: [gatekeeper, test-matrix]
-    if: needs.gatekeeper.outputs.changelog_updated == 'true'
+    if: needs.gatekeeper.outputs.changelog_changed == 'false'
     uses: ./.github/workflows/powershell-docs.yml
     secrets: inherit
 
   publish:
     name: Publish Module
     needs: [gatekeeper, docs, test-matrix]
-    if: needs.gatekeeper.outputs.changelog_updated == 'true'
+    if: needs.gatekeeper.outputs.changelog_changed == 'false'
     uses: ./.github/workflows/publish.yml
     with:
       next_version: ${{ needs.gatekeeper.outputs.next_version }}
@@ -231,7 +190,7 @@ jobs:
     name: Docker Build & Push
     needs: [gatekeeper, publish, test-matrix]
     if:
-      needs.gatekeeper.outputs.changelog_updated == 'true' &&
+      needs.gatekeeper.outputs.changelog_changed == 'false' &&
       needs.publish.outputs.module_published == 'true'
     uses: ./.github/workflows/docker-build.yml
     with:
