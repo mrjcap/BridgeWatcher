@@ -136,7 +136,7 @@ jobs:
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
         with:
-          pwsh-version: '7.4.x'
+          tag: '7.4.10'
 
       - name: Set final module version
         shell: pwsh
