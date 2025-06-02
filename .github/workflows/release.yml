@@ -138,17 +138,6 @@ jobs:
           $updated = (Get-Content ./changelog_updated.flag -Raw).Trim()
           "updated=$updated" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Check for changelog changes
-        id: changelog_check
-        run: |
-          if git diff --quiet CHANGELOG.md; then
-            echo "updated=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No changelog updates needed"
-          else
-            echo "updated=true" >> $GITHUB_OUTPUT
-            echo "✅ Changelog updated"
-          fi
-
       - name: Decide whether to proceed
         id: decide
         run: |
