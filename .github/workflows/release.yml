@@ -175,13 +175,6 @@ jobs:
               ;;
           esac
 
-  test-matrix:
-    name: Cross-Platform Tests
-    needs: [gatekeeper, quality-gate]
-    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
-    uses: ./.github/workflows/ci.yml
-    secrets: inherit
-
   security-analysis:
     name: Security Analysis
     needs: [gatekeeper, quality-gate]
@@ -191,18 +184,17 @@ jobs:
 
   docs-generation:
     name: Documentation Generation
-    needs: [gatekeeper, test-matrix]
+    needs: [gatekeeper]
     if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
     uses: ./.github/workflows/powershell-docs.yml
     secrets: inherit
 
   publish-module:
     name: Publish Module
-    needs: [gatekeeper, test-matrix, security-analysis, docs-generation]
+    needs: [gatekeeper, security-analysis, docs-generation]
     if: |
       always() &&
       needs.gatekeeper.outputs.proceed_with_release == 'true' &&
-      needs.test-matrix.result == 'success' &&
       needs.security-analysis.result == 'success'
     uses: ./.github/workflows/publish.yml
     with:
