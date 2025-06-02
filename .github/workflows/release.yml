@@ -152,7 +152,7 @@ jobs:
   quality-gate:
     name: Quality Gate
     needs: [gatekeeper]
-    if: needs.gatekeeper.outputs.proceed_with_release == 'true' && needs.gatekeeper.outputs.changelog_updated == 'false'
+    if: needs.gatekeeper.outputs.proceed_with_release == 'true'
     strategy:
       matrix:
         check: [tests, security, docs]
@@ -178,21 +178,21 @@ jobs:
   test-matrix:
     name: Cross-Platform Tests
     needs: [gatekeeper, quality-gate]
-    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true' && needs.gatekeeper.outputs.changelog_updated == 'false'
+    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
     uses: ./.github/workflows/ci.yml
     secrets: inherit
 
   security-analysis:
     name: Security Analysis
     needs: [gatekeeper, quality-gate]
-    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true' && needs.gatekeeper.outputs.changelog_updated == 'false'
+    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
     uses: ./.github/workflows/codequality.yml
     secrets: inherit
 
   docs-generation:
     name: Documentation Generation
     needs: [gatekeeper, test-matrix]
-    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true' && needs.gatekeeper.outputs.changelog_updated == 'false'
+    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
     uses: ./.github/workflows/powershell-docs.yml
     secrets: inherit
 
@@ -202,7 +202,6 @@ jobs:
     if: |
       always() &&
       needs.gatekeeper.outputs.proceed_with_release == 'true' &&
-      needs.gatekeeper.outputs.changelog_updated == 'false' &&
       needs.test-matrix.result == 'success' &&
       needs.security-analysis.result == 'success'
     uses: ./.github/workflows/publish.yml
@@ -217,7 +216,6 @@ jobs:
     if: |
       always() &&
       needs.gatekeeper.outputs.proceed_with_release == 'true' &&
-      needs.gatekeeper.outputs.changelog_updated == 'false' &&
       (needs.publish-module.outputs.module_published == 'true' || needs.publish-module.outputs.module_published == 'dry-run')
     uses: ./.github/workflows/docker-build.yml
     with:
