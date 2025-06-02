@@ -46,7 +46,7 @@ jobs:
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
         with:
-          pwsh-version: '7.4.x'
+          tag: '7.4.x'
       - name: Set module version before validation
         shell: pwsh
         run: |
@@ -219,11 +219,12 @@ jobs:
             # Validate the module would be publishable
             try {
               $publishSplat = @{
-                Path = './BridgeWatcher'
-                WhatIf = $true
-                Repository = 'PSGallery'
-                Verbose = $true
-                ErrorAction = 'Stop'
+                Path           = './BridgeWatcher'
+                NuGetApiKey    = '${{ secrets.PSGALLERYAPIKEY }}'
+                WhatIf         = $true
+                Repository     = 'PSGallery'
+                Verbose        = $true
+                ErrorAction    = 'Stop'
               }
               Publish-Module @publishSplat
               Write-Host "✅ Module validation for publish passed" -ForegroundColor Green
@@ -235,12 +236,12 @@ jobs:
             # Actual publish
             try {
               $publishSplat = @{
-                Path = './BridgeWatcher'
-                NuGetApiKey = '${{ secrets.PSGALLERYAPIKEY }}'
-                Repository = 'PSGallery'
-                Verbose = $true
-                ErrorAction = 'Stop'
-                Force = $true
+                Path           = './BridgeWatcher'
+                NuGetApiKey    = '${{ secrets.PSGALLERYAPIKEY }}'
+                Repository     = 'PSGallery'
+                Verbose        = $true
+                ErrorAction    = 'Stop'
+                Force          = $true
               }
               Publish-Module @publishSplat
               Write-Host "✅ Module published successfully to PowerShell Gallery" -ForegroundColor Green
