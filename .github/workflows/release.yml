@@ -149,70 +149,6 @@ jobs:
             echo "⏸️ No significant changes detected, skipping release"
           fi
 
-  changelog-pr:
-    name: Changelog Pull Request
-    runs-on: ubuntu-latest
-    needs: gatekeeper
-    if: needs.gatekeeper.outputs.changelog_updated == 'true'
-    outputs:
-      pr_number: ${{ steps.create-pr.outputs.pull-request-number }}
-      pr_url: ${{ steps.create-pr.outputs.pull-request-url }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
-
-      - name: Recreate changelog changes
-        uses: mikepenz/release-changelog-builder-action@5fb6e51e44d4aea73f66549f425aa3ed5008109e
-        with:
-          configuration: ".github/workflows/changelog-configuration.json"
-          toTag: "v${{ needs.gatekeeper.outputs.next_version }}"
-          mode: 'COMMIT'
-          outputFile: CHANGELOG.md
-          includeOpen: false
-          fetchViaCommits: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Pull Request
-        id: create-pr
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: |
-            docs: auto-update CHANGELOG.md για έκδοση v${{ needs.gatekeeper.outputs.next_version }}
-
-            Αυτόματη ενημέρωση του CHANGELOG από το GitHub Actions workflow.
-          title: "📝 Auto-update CHANGELOG.md για v${{ needs.gatekeeper.outputs.next_version }}"
-          body: |
-            ## 🤖 Αυτόματη Ενημέρωση CHANGELOG
-
-            Αυτό το PR δημιουργήθηκε αυτόματα από το Release Process workflow.
-
-            ### 📋 Αλλαγές
-            - Ενημέρωση του CHANGELOG.md με τις νέες αλλαγές για την έκδοση `v${{ needs.gatekeeper.outputs.next_version }}`
-            - Version bump type: `${{ inputs.version_bump_type }}`
-
-            ### ✅ Checklist
-            - [ ] Έλεγχος ότι το CHANGELOG περιλαμβάνει όλες τις σημαντικές αλλαγές
-            - [ ] Έλεγχος ορθής κατηγοριοποίησης των αλλαγών
-            - [ ] Έλεγχος ορθογραφίας και μορφοποίησης
-
-            ---
-            *Δημιουργήθηκε από GitHub Actions* 🚀
-
-            **Note:** Αυτό το PR πρέπει να γίνει merge πριν συνεχιστεί η διαδικασία release.
-          branch: changelog/update-v${{ needs.gatekeeper.outputs.next_version }}-${{ github.run_number }}
-          delete-branch: true
-          labels: |
-            auto-changelog
-            documentation
-            release-prep
-          assignees: ${{ github.actor }}
-
   quality-gate:
     name: Quality Gate
     needs: [gatekeeper]
@@ -291,9 +227,8 @@ jobs:
   release-summary:
     name: Release Summary
     runs-on: ubuntu-latest
-    needs: [gatekeeper, changelog-pr, publish-module, docker-build]
+    needs: [gatekeeper, publish-module, docker-build]
     if: always()
-
     steps:
       - name: Generate release summary
         shell: bash
@@ -311,26 +246,17 @@ jobs:
           echo "| Job | Status | Result |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Gatekeeper | ${{ needs.gatekeeper.result }} | ${{ needs.gatekeeper.outputs.proceed_with_release == 'true' && '✅ Proceed' || '⏸️ Skip' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Changelog PR | ${{ needs.changelog-pr.result || 'skipped' }} | ${{ needs.changelog-pr.outputs.pr_number && format('📝 PR #{0}', needs.changelog-pr.outputs.pr_number) || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Changelog | auto | Updated by script |" >> $GITHUB_STEP_SUMMARY
           echo "| Module Publish | ${{ needs.publish-module.result || 'skipped' }} | ${{ needs.publish-module.outputs.module_published || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Docker Build | ${{ needs.docker-build.result || 'skipped' }} | ${{ needs.docker-build.result == 'success' && '✅ Built' || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [[ "${{ needs.changelog-pr.outputs.pr_url }}" != "" ]]; then
-            echo "## 🔗 Links" >> $GITHUB_STEP_SUMMARY
-            echo "- [Changelog PR](${{ needs.changelog-pr.outputs.pr_url }})" >> $GITHUB_STEP_SUMMARY
-          fi
-
           # Determine overall status
           if [[ "${{ needs.gatekeeper.outputs.proceed_with_release }}" == "true" && "${{ needs.publish-module.result }}" == "success" ]]; then
             echo "## ✅ Release Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
-          elif [[ "${{ needs.changelog-pr.outputs.pr_number }}" != "" ]]; then
-            echo "## 📝 Release Status: CHANGELOG PR CREATED" >> $GITHUB_STEP_SUMMARY
-            echo "Please review and merge the changelog PR to continue with the release." >> $GITHUB_STEP_SUMMARY
           else
             echo "## ❌ Release Status: FAILED or SKIPPED" >> $GITHUB_STEP_SUMMARY
           fi
-
   cleanup:
     name: Cleanup
     runs-on: ubuntu-latest
