@@ -104,7 +104,7 @@ jobs:
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
         with:
-          pwsh-version: '7.4.x' 
+          pwsh-version: '7.4.x'
 
       - name: Calculate next version
         id: determine_version
@@ -126,18 +126,17 @@ jobs:
             exit 1
           }
 
-      - name: Update changelog
-        id: changelog
-        uses: mikepenz/release-changelog-builder-action@5fb6e51e44d4aea73f66549f425aa3ed5008109e
-        with:
-          configuration: ".github/workflows/changelog-configuration.json"
-          toTag: "v${{ steps.determine_version.outputs.version }}"
-          mode: 'COMMIT'
-          outputFile: CHANGELOG.md
-          includeOpen: false
-          fetchViaCommits: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update Changelog from commits
+        shell: pwsh
+        run: |
+          ./scripts/Update-ReleaseChangeLog.ps1 -Version ${{ steps.determine_version.outputs.version }} -Verbose
+
+      - name: Check if changelog updated
+        id: changelog_check
+        shell: pwsh
+        run: |
+          $updated = (Get-Content ./changelog_updated.flag -Raw).Trim()
+          "updated=$updated" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Check for changelog changes
         id: changelog_check
