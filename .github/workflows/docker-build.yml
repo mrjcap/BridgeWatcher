@@ -14,7 +14,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       image_version: ${{ steps.extract-version.outputs.image_version }}
     steps:
@@ -109,7 +109,7 @@ jobs:
         run: docker system prune -af
 
   push:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-and-test
     if: needs.build-and-test.outputs.image_version != ''
     steps:

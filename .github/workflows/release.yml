@@ -21,7 +21,7 @@ permissions:
 jobs:
   pre-release:
     name: Pre-release Checks
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Print start
         run: echo "Ξεκινάει η διαδικασία release..."
@@ -41,7 +41,7 @@ jobs:
 
   gatekeeper:
     name: Gatekeeper (Changelog builder)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [pre-release, test, codacy]
     outputs:
       next_version: ${{ steps.determine_version.outputs.version }}
@@ -91,7 +91,7 @@ jobs:
 
   changelog-pr:
     name: "Auto PR για αλλαγή CHANGELOG.md"
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: gatekeeper
     if: needs.gatekeeper.outputs.changelog_changed == 'true'
     outputs:
@@ -123,22 +123,22 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
             docs: auto-update CHANGELOG.md για έκδοση v${{ needs.gatekeeper.outputs.next_version }}
-            
+
             Αυτόματη ενημέρωση του CHANGELOG από το GitHub Actions workflow.
           title: "📝 Auto-update CHANGELOG.md για v${{ needs.gatekeeper.outputs.next_version }}"
           body: |
             ## 🤖 Αυτόματη Ενημέρωση CHANGELOG
-            
+
             Αυτό το PR δημιουργήθηκε αυτόματα από το Release Process workflow.
-            
+
             ### 📋 Αλλαγές
             - Ενημέρωση του CHANGELOG.md με τις νέες αλλαγές για την έκδοση `v${{ needs.gatekeeper.outputs.next_version }}`
-            
+
             ### ✅ Checklist
             - [ ] Έλεγχos ότι το CHANGELOG περιλαμβάνει όλες τις σημαντικές αλλαγές
             - [ ] Έλεγχος ορθής κατηγοριοποίησης των αλλαγών
             - [ ] Έλεγχος ορθογραφίας και μορφοποίησης
-            
+
             ---
             *Δημιουργήθηκε από GitHub Actions* 🚀
           branch: changelog/update-v${{ needs.gatekeeper.outputs.next_version }}-${{ github.run_number }}
@@ -163,7 +163,7 @@ jobs:
     if: always() && needs.gatekeeper.outputs.changelog_changed == 'false'
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [self-hosted, windows-latest]
         pwsh_version: ['7.3.x', '7.4.x']
     steps:
       - name: Checkout
@@ -205,7 +205,7 @@ jobs:
     if: |
       always() &&
       needs.gatekeeper.outputs.changelog_changed == 'false' &&
-      (needs.publish.outputs.module_published == 'true' || needs.publish.outputs.module_published == '') 
+      (needs.publish.outputs.module_published == 'true' || needs.publish.outputs.module_published == '')
       # Προσθήκη ελέγχου για κενή τιμή στο module_published, καθώς μπορεί να μην οριστεί αν το publish job παραλειφθεί
       # ή αν δεν έχει οριστεί το output στο publish.yml υπό όλες τις συνθήκες.
       # Ιδανικά, το publish.yml θα πρέπει πάντα να εξάγει μια σαφή τιμή (true/false).
