@@ -5,7 +5,7 @@ on:
 
 jobs:
   lint-docs-pages:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: pwsh

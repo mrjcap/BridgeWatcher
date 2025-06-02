@@ -21,7 +21,7 @@ permissions:
 jobs:
   pre-release:
     name: Pre-release Checks
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Print start
         run: echo "Ξεκινάει η διαδικασία release..."
@@ -41,7 +41,7 @@ jobs:
 
   gatekeeper:
     name: Gatekeeper (Changelog builder)
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [pre-release, test, codacy]
     outputs:
       next_version: ${{ steps.determine_version.outputs.version }}
@@ -91,7 +91,7 @@ jobs:
 
   changelog-pr:
     name: "Auto PR για αλλαγή CHANGELOG.md"
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: gatekeeper
     if: needs.gatekeeper.outputs.changelog_changed == 'true'
     outputs:
@@ -163,7 +163,7 @@ jobs:
     if: always() && needs.gatekeeper.outputs.changelog_changed == 'false'
     strategy:
       matrix:
-        os: [self-hosted, windows-latest]
+        os: [ubuntu-latest, windows-latest]
         pwsh_version: ['7.3.x', '7.4.x']
     steps:
       - name: Checkout
