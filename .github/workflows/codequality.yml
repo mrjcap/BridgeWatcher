@@ -24,7 +24,7 @@ jobs:
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
         with:
-          tag: 'v7.4.2'
+          tag: 'v7.4.10'
 
       - name: Install PSScriptAnalyzer
         shell: pwsh
