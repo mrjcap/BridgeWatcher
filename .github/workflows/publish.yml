@@ -47,7 +47,16 @@ jobs:
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
         with:
           pwsh-version: '7.4.x'
-
+      - name: Set module version before validation
+        shell: pwsh
+        run: |
+          Write-Host "Setting module version to ${{ inputs.next_version }} before validation..." -ForegroundColor Green
+          if (Test-Path "./scripts/Set-FinalModuleVersion.ps1") {
+            & ./scripts/Set-FinalModuleVersion.ps1 -Version '${{ inputs.next_version }}' -Path './BridgeWatcher/BridgeWatcher.psd1' -Verbose
+          } else {
+            Write-Error "Set-FinalModuleVersion.ps1 script not found!"
+            exit 1
+          }
       - name: Validate module before publish
         id: validate
         shell: pwsh
