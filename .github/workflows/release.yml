@@ -51,7 +51,14 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-
+      - name: Install PowerShell
+        run: |
+          apt-get update
+          apt-get install -y wget apt-transport-https software-properties-common
+          wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+          dpkg -i packages-microsoft-prod.deb
+          apt-get update
+          apt-get install -y powershell
       - name: Calculate potential next version
         id: determine_version
         shell: pwsh
@@ -155,22 +162,22 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
             docs: auto-update CHANGELOG.md για έκδοση v${{ needs.gatekeeper.outputs.next_version }}
-            
+
             Αυτόματη ενημέρωση του CHANGELOG από το GitHub Actions workflow.
           title: "📝 Auto-update CHANGELOG.md για v${{ needs.gatekeeper.outputs.next_version }}"
           body: |
             ## 🤖 Αυτόματη Ενημέρωση CHANGELOG
-            
+
             Αυτό το PR δημιουργήθηκε αυτόματα από το Release Process workflow.
-            
+
             ### 📋 Αλλαγές
             - Ενημέρωση του CHANGELOG.md με τις νέες αλλαγές για την έκδοση `v${{ needs.gatekeeper.outputs.next_version }}`
-            
+
             ### ✅ Checklist
             - [ ] Έλεγχος ότι το CHANGELOG περιλαμβάνει όλες τις σημαντικές αλλαγές
             - [ ] Έλεγχος ορθής κατηγοριοποίησης των αλλαγών
             - [ ] Έλεγχος ορθογραφίας και μορφοποίησης
-            
+
             ---
             *Δημιουργήθηκε από GitHub Actions* 🚀
           branch: changelog/update-v${{ needs.gatekeeper.outputs.next_version }}-${{ github.run_number }}
