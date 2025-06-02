@@ -206,9 +206,6 @@ jobs:
       always() &&
       needs.gatekeeper.outputs.changelog_changed == 'false' &&
       (needs.publish.outputs.module_published == 'true' || needs.publish.outputs.module_published == '')
-      # Προσθήκη ελέγχου για κενή τιμή στο module_published, καθώς μπορεί να μην οριστεί αν το publish job παραλειφθεί
-      # ή αν δεν έχει οριστεί το output στο publish.yml υπό όλες τις συνθήκες.
-      # Ιδανικά, το publish.yml θα πρέπει πάντα να εξάγει μια σαφή τιμή (true/false).
     uses: ./.github/workflows/docker-build.yml
     with:
       version: ${{ needs.gatekeeper.outputs.next_version }}
