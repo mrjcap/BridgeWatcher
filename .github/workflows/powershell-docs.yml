@@ -139,9 +139,8 @@ jobs:
             }
 
             # Generate module page if it doesn't exist
-            $modulePagePath = Join-Path $docsPath "$moduleName.md"
+            $modulePagePath = Join-Path $docsPath "about_$($moduleName).md"
             if (-not (Test-Path $modulePagePath)) {
-              Remove-Item $modulePagePath -Force -Verbose
               Write-Host "Creating module overview page..." -ForegroundColor Cyan
               New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName $moduleName
               Write-Host "✅ Documentation generated successfully" -ForegroundColor Green
