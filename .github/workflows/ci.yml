@@ -90,7 +90,7 @@ jobs:
           Write-Host "Running Pester tests..." -ForegroundColor Green
           if (Test-Path ./Tests/PesterConfiguration.psd1) {
             $config = Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1
-            $result = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1) -PassThru
+            $result = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1)
             if ($result.Result -ne 'Passed') {
               Write-Error "❌ Tests failed! $($result.FailedCount) of $($result.TotalCount) tests failed"
               exit 1
