@@ -102,7 +102,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup PowerShell
-        uses: actions/setup-powershell@ab7fce6c36e59c2695e9cee0f4c7b7b29fff04b5
+        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
         with:
           pwsh-version: '7.4.x'
 
