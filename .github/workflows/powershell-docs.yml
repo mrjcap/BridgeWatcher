@@ -1,67 +1,253 @@
-name: PowerShell Lint, Docs
+name: PowerShell Documentation
 
 on:
   workflow_call:
 
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
 jobs:
-  lint-docs-pages:
+  generate-docs:
+    name: Generate PowerShell Documentation
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: pwsh
+
+    # Prevent infinite loops from auto-commits
+    if: "!contains(github.event.head_commit.message, '[skip docs]') && !contains(github.event.head_commit.message, 'docs: auto-generate')"
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          # Use a PAT or the default token with write permissions
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@ab7fce6c36e59c2695e9cee0f4c7b7b29fff04b5
+        with:
+          pwsh-version: '7.4.x'
 
       - name: Cache PowerShell modules
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
         with:
-          path: ~/.local/share/powershell/Modules
-          key:
-            ${{ runner.os }}-pwshmodules-${{ hashFiles('**/requirements.txt') }}
+          path: |
+            ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-docs-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
           restore-keys: |
-            ${{ runner.os }}-pwshmodules-
+            ${{ runner.os }}-docs-pwshmodules-
 
-      - name: Install PowerShell modules (platyPS & PSScriptAnalyzer)
+      - name: Install PowerShell modules
+        shell: pwsh
         run: |
-          Install-Module platyPS -Scope CurrentUser -Force -AllowClobber
-          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 
-      - name: Run PSScriptAnalyzer (Error)
-        run: |
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error
-          if ($results.Count -gt 0) {
-            $results | Format-Table
-            Write-Error "PSScriptAnalyzer found issues!"
+          Write-Host "Installing required modules..." -ForegroundColor Green
+          $modules = @(
+            @{ Name = 'platyPS'; MinimumVersion = '0.14.2' }
+            @{ Name = 'PSScriptAnalyzer'; MinimumVersion = '1.21.0' }
+          )
+
+          foreach ($module in $modules) {
+            Write-Host "Installing $($module.Name)..." -ForegroundColor Cyan
+            Install-Module -Name $module.Name -MinimumVersion $module.MinimumVersion -Force -Scope CurrentUser -AllowClobber
           }
 
-      - name: Generate/update documentation with platyPS
+          Write-Host "✅ All modules installed successfully" -ForegroundColor Green
+
+      - name: Run PSScriptAnalyzer for documentation
+        shell: pwsh
         run: |
-          $psd1 = Get-ChildItem -Path . -Filter *.psd1 -Recurse | Where-Object { $_.FullName -notmatch 'config' } | Select-Object -First 1
-          if (-not $psd1) {
-            Write-Error "No .psd1 file found! Cannot determine module name."
+          Write-Host "Running PSScriptAnalyzer for documentation compliance..." -ForegroundColor Green
+
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity @('Error', 'Warning') -IncludeRule @(
+            'PSProvideCommentHelp',
+            'PSUseApprovedVerbs',
+            'PSUseSingularNouns',
+            'PSAvoidUsingCmdletAliases'
+          )
+
+          if ($results) {
+            Write-Host "Documentation-related issues found:" -ForegroundColor Yellow
+            $results | Format-Table -AutoSize
+
+            $errors = $results | Where-Object { $_.Severity -eq 'Error' }
+            if ($errors) {
+              Write-Error "❌ Critical documentation issues found that must be fixed!"
+              exit 1
+            }
+          } else {
+            Write-Host "✅ No documentation issues found" -ForegroundColor Green
+          }
+
+      - name: Validate module manifest
+        shell: pwsh
+        run: |
+          Write-Host "Validating module manifest..." -ForegroundColor Green
+
+          $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse |
+            Where-Object { $_.Directory.Name -notmatch 'Tests|\.git|config' } |
+            Select-Object -First 1
+
+          if (-not $manifestPath) {
+            Write-Error "Module manifest (.psd1) not found!"
             exit 1
           }
-          $moduleName = [System.IO.Path]::GetFileNameWithoutExtension($psd1.Name)
-          $docsPath = 'docs'
-          if (!(Test-Path $docsPath)) { New-Item -ItemType Directory -Path $docsPath }
-          Import-Module $psd1.FullName -Force
-          if (Get-ChildItem $docsPath\*.md -ErrorAction SilentlyContinue) {
-            Update-MarkdownHelp -Path $docsPath -Force
-          } else {
-            New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force
+
+          try {
+            $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
+            Write-Host "✅ Module manifest is valid: $($manifest.Name) v$($manifest.Version)" -ForegroundColor Green
+
+            # Store manifest info for later use
+            echo "MANIFEST_PATH=$($manifestPath.FullName)" >> $env:GITHUB_ENV
+            echo "MODULE_NAME=$($manifest.Name)" >> $env:GITHUB_ENV
+            echo "MODULE_VERSION=$($manifest.Version)" >> $env:GITHUB_ENV
+          } catch {
+            Write-Error "Module manifest validation failed: $($_.Exception.Message)"
+            exit 1
           }
 
-      - name: Commit docs
+      - name: Generate documentation with platyPS
+        shell: pwsh
+        run: |
+          Write-Host "Generating PowerShell documentation with platyPS..." -ForegroundColor Green
+
+          $manifestPath = $env:MANIFEST_PATH
+          $moduleName = $env:MODULE_NAME
+          $docsPath = 'docs'
+
+          # Ensure docs directory exists
+          if (-not (Test-Path $docsPath)) {
+            New-Item -ItemType Directory -Path $docsPath -Force
+            Write-Host "Created docs directory" -ForegroundColor Cyan
+          }
+
+          try {
+            # Import the module
+            Write-Host "Importing module: $moduleName" -ForegroundColor Cyan
+            Import-Module $manifestPath -Force -Verbose:$false
+
+            # Check if documentation already exists
+            $existingDocs = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
+
+            if ($existingDocs) {
+              Write-Host "Updating existing documentation..." -ForegroundColor Cyan
+              Update-MarkdownHelp -Path $docsPath -Force -Verbose:$false
+            } else {
+              Write-Host "Creating new documentation..." -ForegroundColor Cyan
+              New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force -Verbose:$false
+            }
+
+            # Generate module page if it doesn't exist
+            $modulePagePath = Join-Path $docsPath "$moduleName.md"
+            if (-not (Test-Path $modulePagePath)) {
+              Write-Host "Creating module overview page..." -ForegroundColor Cyan
+              New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName $moduleName
+            }
+
+            Write-Host "✅ Documentation generated successfully" -ForegroundColor Green
+
+            # List generated files
+            $generatedFiles = Get-ChildItem $docsPath -Filter "*.md"
+            Write-Host "Generated documentation files:" -ForegroundColor Cyan
+            $generatedFiles | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor Gray }
+
+          } catch {
+            Write-Error "Documentation generation failed: $($_.Exception.Message)"
+            Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Red
+            exit 1
+          }
+
+      - name: Validate generated documentation
+        shell: pwsh
+        run: |
+          Write-Host "Validating generated documentation..." -ForegroundColor Green
+
+          $docsPath = 'docs'
+          $markdownFiles = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
+
+          if (-not $markdownFiles) {
+            Write-Error "No documentation files were generated!"
+            exit 1
+          }
+
+          $issues = @()
+          foreach ($file in $markdownFiles) {
+            $content = Get-Content $file.FullName -Raw
+
+            # Check for placeholder text that should be filled
+            if ($content -match '\{\{ Fill .+ Description \}\}') {
+              $issues += "File $($file.Name) contains unfilled placeholders"
+            }
+
+            # Check for basic markdown structure
+            if ($content -notmatch '^# ') {
+              $issues += "File $($file.Name) missing main heading"
+            }
+          }
+
+          if ($issues) {
+            Write-Host "Documentation validation issues:" -ForegroundColor Yellow
+            $issues | ForEach-Object { Write-Host "  ⚠️ $_" -ForegroundColor Yellow }
+          } else {
+            Write-Host "✅ Documentation validation passed" -ForegroundColor Green
+          }
+
+      - name: Check for documentation changes
+        id: docs_changes
+        run: |
+          if git diff --quiet HEAD docs/; then
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+            echo "No documentation changes detected"
+          else
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+            echo "Documentation changes detected"
+            git diff --name-status docs/
+          fi
+
+      - name: Commit documentation changes
+        if: steps.docs_changes.outputs.changes_detected == 'true'
         uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403
         with:
-          commit_message: 'docs: auto-generate PowerShell documentation'
+          commit_message: |
+            docs: auto-generate PowerShell documentation [skip docs]
+
+            - Updated documentation for module version ${{ env.MODULE_VERSION }}
+            - Generated by platyPS via GitHub Actions
           branch: ${{ github.head_ref || github.ref_name }}
           file_pattern: docs/*.md
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_author: GitHub Actions <actions@github.com>
 
-      - name: Upload documentation as artifact
+      - name: Upload documentation artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: powershell-docs
+          name: powershell-documentation
           path: docs/
+          retention-days: 30
+
+      - name: Generate documentation summary
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "📖 Documentation Generation Summary" -ForegroundColor Green
+          Write-Host "=================================" -ForegroundColor Green
+          Write-Host "Module: $env:MODULE_NAME v$env:MODULE_VERSION" -ForegroundColor Cyan
+          Write-Host "Changes detected: ${{ steps.docs_changes.outputs.changes_detected }}" -ForegroundColor Cyan
+
+          $docsPath = 'docs'
+          if (Test-Path $docsPath) {
+            $docFiles = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
+            Write-Host "Documentation files: $($docFiles.Count)" -ForegroundColor Cyan
+
+            if ($docFiles) {
+              Write-Host "Files generated:" -ForegroundColor Cyan
+              $docFiles | ForEach-Object {
+                $size = [math]::Round((Get-Item $_.FullName).Length / 1KB, 2)
+                Write-Host "  📄 $($_.Name) (${size}KB)" -ForegroundColor Gray
+              }
+            }
+          }
+
+          Write-Host "✅ Documentation workflow completed" -ForegroundColor Green

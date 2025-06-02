@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Ενημερώνει το CHANGELOG.md, κάνει commit σε νέο branch και ανοίγει αυτόματο Pull Request μέσω GitHub Actions.
 

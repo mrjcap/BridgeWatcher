@@ -1,9 +1,10 @@
-name: Build, Test and Push Docker image
+name: Docker Build, Test and Push
 
 on:
   workflow_call:
     inputs:
       version:
+        description: 'Version tag for the Docker image'
         required: true
         type: string
     secrets:
@@ -12,135 +13,212 @@ on:
       DOCKERHUB_TOKEN:
         required: true
 
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: bridgewatcher
+
 jobs:
   build-and-test:
+    name: Build and Test Docker Image
     runs-on: ubuntu-latest
     outputs:
-      image_version: ${{ steps.extract-version.outputs.image_version }}
+      image_version: ${{ steps.meta.outputs.version }}
+      image_digest: ${{ steps.build.outputs.digest }}
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
+        with:
+          version: latest
+          driver-opts: network=host
 
       - name: Log in to Docker Hub
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Use Provided Version
-        id: extract-version
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@94e2bfa636c6c3ac2a19c2ccc1d1c509a42ad12c
+        with:
+          images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ inputs.version }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=BridgeWatcher
+            org.opencontainers.image.description=PowerShell module for monitoring bridge status in Corinth Isthmus
+            org.opencontainers.image.vendor=${{ github.repository_owner }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.documentation=${{ github.server_url }}/${{ github.repository }}/blob/main/README.md
+            org.opencontainers.image.licenses=MIT
+
+      - name: Build Docker image
+        id: build
+        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825
+        with:
+          context: .
+          file: ./Docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          load: false
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=/tmp/bridgewatcher.tar
+
+      - name: Load Docker image for testing
         run: |
-          echo "image_version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          docker load --input /tmp/bridgewatcher.tar
 
-      - name: Build Docker image with labels
+      - name: Test Docker image
         run: |
-          docker build -f Docker/Dockerfile \
-            --label "org.opencontainers.image.version=${{ steps.extract-version.outputs.image_version }}" \
-            --label "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
-            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
-            --label "maintainer=mrjcap" \
-            --label "org.opencontainers.image.description=BridgeWatcher PowerShell module docker image" \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ steps.extract-version.outputs.image_version }} .
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ steps.extract-version.outputs.image_version }} ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:latest
+          echo "Testing Docker image functionality..."
 
-      - name: Run container for testing
-        run: |
-          mkdir secrets
-          echo "dummy" > secrets/API_KEY
-          echo "dummy" > secrets/POAPI_KEY
-          echo "dummy" > secrets/POUSER_KEY
-          IMAGE_TAG=${{ steps.extract-version.outputs.image_version }}
-          docker run --rm -d --name bridgewatcher-test -v ${{ github.workspace }}/secrets:/run/secrets ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:$IMAGE_TAG
-          sleep 5
+          # Create test secrets directory
+          mkdir -p test-secrets
+          echo "test-api-key" > test-secrets/API_KEY
+          echo "test-po-api-key" > test-secrets/POAPI_KEY
+          echo "test-po-user-key" > test-secrets/POUSER_KEY
 
-      - name: Check container logs
-        run: |
-          docker logs bridgewatcher-test | tee container_logs.txt
+          # Get the built image tag
+          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}"
 
-      - name: Test output directory exists
-        run:
-          docker exec bridgewatcher-test ls -l /tmp/ | tee
-          output_dir_listing.txt
+          # Test container startup and basic functionality
+          echo "Starting container for testing..."
+          docker run --rm -d \
+            --name bridgewatcher-test \
+            --health-interval=30s \
+            --health-timeout=10s \
+            --health-retries=3 \
+            -v $(pwd)/test-secrets:/run/secrets:ro \
+            "$IMAGE_TAG" &
 
-      - name: Test process exists
-        run: docker exec bridgewatcher-test ps aux | tee container_ps.txt
+          # Wait for container to start
+          sleep 10
 
-      - name: Test output file exists
-        run: docker exec bridgewatcher-test test -f /tmp/bridge_status.json
+          # Check if container is running
+          if ! docker ps | grep bridgewatcher-test; then
+            echo "❌ Container failed to start"
+            docker logs bridgewatcher-test 2>&1 || true
+            exit 1
+          fi
 
-      - name: Show output file
-        run:
-          docker exec bridgewatcher-test cat /tmp/bridge_status.json | tee
-          bridge_status.json.txt
+          echo "✅ Container started successfully"
+
+          # Check container health (if healthcheck is defined)
+          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bridgewatcher-test 2>/dev/null || echo "none")
+          echo "Container health status: $HEALTH_STATUS"
+
+          # Test basic functionality
+          echo "Testing basic module functionality..."
+          docker exec bridgewatcher-test pwsh -Command "Get-Module BridgeWatcher -ListAvailable" || {
+            echo "❌ BridgeWatcher module not found"
+            exit 1
+          }
+
+          echo "✅ Basic functionality test passed"
+
+      - name: Scan Docker image for vulnerabilities
+        uses: aquasecurity/trivy-action@4b9b6fb4ef28b31450391a93ade098bb00de584e
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@f0f3afee809481da311ca3a6ff1ff51d81dbeb24
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
 
       - name: Stop test container
         if: always()
-        run: docker stop bridgewatcher-test || true
-
-      - name: Save Docker image
         run: |
-          IMAGE_TAG=${{ steps.extract-version.outputs.image_version }}
-          docker save ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:$IMAGE_TAG | gzip > bridgewatcher.tar.gz
-        if: always()
+          docker stop bridgewatcher-test 2>/dev/null || true
+          docker rm bridgewatcher-test 2>/dev/null || true
 
       - name: Upload Docker image artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: bridgewatcher-image
-          path: bridgewatcher.tar.gz
-        if: always()
+          name: docker-image
+          path: /tmp/bridgewatcher.tar
+          retention-days: 1
 
-      - name: Upload container logs artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: container-logs
-          path: |
-            container_logs.txt
-            output_dir_listing.txt
-            container_ps.txt
-            bridge_status.json.txt
+      - name: Clean up
         if: always()
-
-      - name: Docker system prune (cleanup)
-        if: always()
-        run: docker system prune -af
+        run: |
+          rm -rf test-secrets
+          docker system prune -f
 
   push:
+    name: Push Docker Image
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: needs.build-and-test.outputs.image_version != ''
-    steps:
-      - name: Download Docker image artifact
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: bridgewatcher-image
+    if: success()
 
+    steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
 
       - name: Log in to Docker Hub
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Load Docker image
-        run: |
-          gunzip -c bridgewatcher.tar.gz | docker load
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: docker-image
+          path: /tmp
 
-      - name: Tag Docker image as latest
+      - name: Load and push Docker image
         run: |
-          IMAGE_TAG=${{ needs.build-and-test.outputs.image_version }}
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:$IMAGE_TAG ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:latest
+          # Load the image
+          docker load --input /tmp/bridgewatcher.tar
 
-      - name: Push Docker image
-        run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:${{ needs.build-and-test.outputs.image_version }}
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/bridgewatcher:latest
+          # Get image tags
+          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          VERSION_TAG="$IMAGE_NAME:${{ inputs.version }}"
+          LATEST_TAG="$IMAGE_NAME:latest"
 
-      - name: Docker system prune (cleanup)
+          # Tag as latest
+          docker tag "$VERSION_TAG" "$LATEST_TAG"
+
+          # Push both tags
+          echo "Pushing $VERSION_TAG..."
+          docker push "$VERSION_TAG"
+
+          echo "Pushing $LATEST_TAG..."
+          docker push "$LATEST_TAG"
+
+          echo "✅ Successfully pushed Docker images"
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@20c3d0ad0b9a8ead2a1eb9ffe6b4dba3a52b88c3
+        with:
+          image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: docker-sbom
+          path: sbom.spdx.json
+          retention-days: 30
+
+      - name: Clean up
         if: always()
-        run: docker system prune -af
+        run: |
+          docker system prune -f

@@ -6,48 +6,131 @@ on:
       CODECOV_TOKEN:
         required: true
 
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: Test on ${{ matrix.os }} with PowerShell ${{ matrix.pwsh-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        pwsh-version: ['7.3.x', '7.4.x']
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@ab7fce6c36e59c2695e9cee0f4c7b7b29fff04b5
+        with:
+          pwsh-version: ${{ matrix.pwsh-version }}
 
       - name: Cache PowerShell modules
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
         with:
-          path: ~/.local/share/powershell/Modules
-          key: ${{ runner.os }}-pwshmodules-${{ hashFiles('**/requirements.txt') }}
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+            ~\Documents\PowerShell\Modules
+            ~/Library/PowerShell/Modules
+          key: ${{ runner.os }}-${{ matrix.pwsh-version }}-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
           restore-keys: |
-            ${{ runner.os }}-pwshmodules-
+            ${{ runner.os }}-${{ matrix.pwsh-version }}-pwshmodules-
 
-      - name: Install Pester
+      - name: Install required PowerShell modules
         shell: pwsh
         run: |
-          Install-Module Pester -Force -Scope CurrentUser
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          $modules = @('Pester', 'PSScriptAnalyzer')
+          foreach ($module in $modules) {
+            Write-Host "Installing $module..."
+            Install-Module -Name $module -Force -Scope CurrentUser -ErrorAction Stop
+          }
 
-      - name: Run Tests
+      - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
+          Write-Host "Running PSScriptAnalyzer..." -ForegroundColor Green
+          $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -EnableExit
+          if ($analysisResults) {
+            $analysisResults | Format-Table -AutoSize
+            Write-Error "PSScriptAnalyzer found $($analysisResults.Count) issues!"
+            exit 1
+          } else {
+            Write-Host "✅ No PSScriptAnalyzer issues found" -ForegroundColor Green
+          }
+
+      - name: Validate module manifest
+        shell: pwsh
+        run: |
+          Write-Host "Validating module manifest..." -ForegroundColor Green
+          $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse | Where-Object { $_.Directory.Name -notmatch "Tests|\.git" } | Select-Object -First 1
+          if (-not $manifestPath) {
+            Write-Error "Module manifest (.psd1) not found!"
+            exit 1
+          }
+          try {
+            $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
+            Write-Host "✅ Module manifest is valid" -ForegroundColor Green
+            Write-Host "Module: $($manifest.Name) v$($manifest.Version)" -ForegroundColor Cyan
+          } catch {
+            Write-Error "Module manifest validation failed: $($_.Exception.Message)"
+            exit 1
+          }
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Write-Host "Running Pester tests..." -ForegroundColor Green
           if (Test-Path ./Tests/PesterConfiguration.psd1) {
-            Invoke-Pester -Configuration (Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1) 2>$null 3>$null 4>$null 5>$null
+            $config = Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1
+            $result = Invoke-Pester -Configuration $config -PassThru
+
+            if ($result.Result -ne 'Passed') {
+              Write-Error "❌ Tests failed! $($result.FailedCount) of $($result.TotalCount) tests failed"
+              exit 1
+            } else {
+              Write-Host "✅ All $($result.TotalCount) tests passed" -ForegroundColor Green
+            }
           } else {
             Write-Error "PesterConfiguration.psd1 not found!"
             exit 1
           }
 
-      - name: Check if coverage.xml exists
+      - name: Upload test results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.pwsh-version }}
+          path: |
+            testResults.xml
+            coverage.xml
+          retention-days: 7
+
+      - name: Check coverage file exists
         id: check_coverage
         shell: pwsh
         run: |
           if (Test-Path './coverage.xml') {
+            Write-Host "✅ Coverage file found" -ForegroundColor Green
             echo "coverage_exists=true" >> $env:GITHUB_OUTPUT
           } else {
+            Write-Host "⚠️ Coverage file not found" -ForegroundColor Yellow
             echo "coverage_exists=false" >> $env:GITHUB_OUTPUT
           }
 
-      - name: Upload coverage reports to Codecov
-        if: success() && steps.check_coverage.outputs.coverage_exists == 'true'
+      - name: Upload coverage to Codecov
+        if: success() && steps.check_coverage.outputs.coverage_exists == 'true' && matrix.os == 'ubuntu-latest' && matrix.pwsh-version == '7.4.x'
         uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
+          flags: unittests
+          name: codecov-${{ matrix.os }}-${{ matrix.pwsh-version }}
+          fail_ci_if_error: true

@@ -7,19 +7,34 @@ on:
         description: 'The version to publish'
         required: true
         type: string
+      dry_run:
+        description: 'Perform a dry run without actually publishing'
+        required: false
+        type: boolean
+        default: false
     outputs:
       module_published:
         description: 'Whether the module was successfully published'
         value: ${{ jobs.publish.outputs.module_published }}
+      published_version:
+        description: 'The version that was published'
+        value: ${{ jobs.publish.outputs.published_version }}
 
 permissions:
   contents: write
+  pull-requests: read
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
 jobs:
-  publish:
+  pre-publish-validation:
+    name: Pre-publish Validation
     runs-on: ubuntu-latest
     outputs:
-      module_published: ${{ steps.set_output.outputs.published }}
+      validation_passed: ${{ steps.validate.outputs.validation_passed }}
+      module_name: ${{ steps.validate.outputs.module_name }}
 
     steps:
       - name: Checkout repository
@@ -28,84 +43,282 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Set up PowerShell
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@ab7fce6c36e59c2695e9cee0f4c7b7b29fff04b5
+        with:
+          pwsh-version: '7.4.x'
+
+      - name: Validate module before publish
+        id: validate
         shell: pwsh
         run: |
-          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+          Write-Host "Validating module before publish..." -ForegroundColor Green
+
+          # Find module manifest
+          $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse |
+            Where-Object { $_.Directory.Name -notmatch 'Tests|\.git|config' } |
+            Select-Object -First 1
+
+          if (-not $manifestPath) {
+            Write-Error "Module manifest (.psd1) not found!"
+            exit 1
+          }
+
+          try {
+            # Test module manifest
+            $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
+            Write-Host "✅ Module manifest is valid: $($manifest.Name) v$($manifest.Version)" -ForegroundColor Green
+
+            # Validate version matches input
+            if ($manifest.Version -ne '${{ inputs.next_version }}') {
+              Write-Error "❌ Module version ($($manifest.Version)) doesn't match expected version (${{ inputs.next_version }})"
+              exit 1
+            }
+
+            # Check required fields
+            $requiredFields = @('Author', 'Description', 'PowerShellVersion')
+            foreach ($field in $requiredFields) {
+              if (-not $manifest.$field) {
+                Write-Error "❌ Required field '$field' is missing from manifest"
+                exit 1
+              }
+            }
+
+            # Validate functions exist
+            if ($manifest.FunctionsToExport -and $manifest.FunctionsToExport -ne '*') {
+              $moduleDir = $manifestPath.Directory.FullName
+              $publicFunctions = Get-ChildItem "$moduleDir\Public\*.ps1" -ErrorAction SilentlyContinue
+
+              if ($publicFunctions) {
+                Write-Host "Found $($publicFunctions.Count) public functions" -ForegroundColor Cyan
+              } else {
+                Write-Warning "No public functions found, but FunctionsToExport is specified"
+              }
+            }
+
+            # Set outputs
+            echo "validation_passed=true" >> $env:GITHUB_OUTPUT
+            echo "module_name=$($manifest.Name)" >> $env:GITHUB_OUTPUT
+
+            Write-Host "✅ Pre-publish validation passed" -ForegroundColor Green
+
+          } catch {
+            Write-Error "❌ Module validation failed: $($_.Exception.Message)"
+            echo "validation_passed=false" >> $env:GITHUB_OUTPUT
+            exit 1
+          }
+
+  publish:
+    name: Publish to PowerShell Gallery
+    runs-on: ubuntu-latest
+    needs: pre-publish-validation
+    if: needs.pre-publish-validation.outputs.validation_passed == 'true'
+    outputs:
+      module_published: ${{ steps.set_output.outputs.published }}
+      published_version: ${{ steps.set_output.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@ab7fce6c36e59c2695e9cee0f4c7b7b29fff04b5
+        with:
+          pwsh-version: '7.4.x'
 
       - name: Set final module version
         shell: pwsh
         run: |
-          & ./scripts/Set-FinalModuleVersion.ps1 `
-            -Version '${{ inputs.next_version }}' `
-            -Path './BridgeWatcher/BridgeWatcher.psd1' `
-            -Verbose
+          Write-Host "Setting final module version to ${{ inputs.next_version }}" -ForegroundColor Green
+
+          if (Test-Path "./scripts/Set-FinalModuleVersion.ps1") {
+            & ./scripts/Set-FinalModuleVersion.ps1 `
+              -Version '${{ inputs.next_version }}' `
+              -Path './BridgeWatcher/BridgeWatcher.psd1' `
+              -Verbose
+          } else {
+            Write-Error "Set-FinalModuleVersion.ps1 script not found!"
+            exit 1
+          }
 
       - name: Configure Git user
         run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit version and changelog updates
+      - name: Commit version update
         run: |
           git add BridgeWatcher/BridgeWatcher.psd1
-          git commit -m "chore: Bump version to ${{ inputs.next_version }}"
+          git commit -m "chore: bump version to ${{ inputs.next_version }} [skip ci]" || echo "No changes to commit"
 
-      - name: Push changes to repository
+      - name: Push changes
         run: |
-          git pull --rebase origin main
+          git pull --rebase origin ${{ github.ref_name }}
           git push origin HEAD:${{ github.ref_name }}
 
       - name: Extract release notes
         id: release_notes
         shell: pwsh
         run: |
-          $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version 'v${{ inputs.next_version }}'
-          echo "notes<<EOF" >> $env:GITHUB_OUTPUT
-          echo "$notes" >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
+          Write-Host "Extracting release notes for version ${{ inputs.next_version }}" -ForegroundColor Green
+
+          if (Test-Path "./scripts/Get-ReleaseNotes.ps1") {
+            try {
+              $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version 'v${{ inputs.next_version }}' -ErrorAction Stop
+              if ($notes) {
+                # Escape special characters for GitHub output
+                $escapedNotes = $notes -replace '%', '%25' -replace '\n', '%0A' -replace '\r', '%0D'
+                echo "notes=$escapedNotes" >> $env:GITHUB_OUTPUT
+                Write-Host "✅ Release notes extracted successfully" -ForegroundColor Green
+              } else {
+                echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
+                Write-Host "⚠️ No release notes found, using default" -ForegroundColor Yellow
+              }
+            } catch {
+              Write-Host "⚠️ Failed to extract release notes: $($_.Exception.Message)" -ForegroundColor Yellow
+              echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
+            }
+          } else {
+            Write-Host "⚠️ Get-ReleaseNotes.ps1 not found, using default notes" -ForegroundColor Yellow
+            echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
+          }
 
       - name: Create GitHub Release
+        id: create_release
         uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
         with:
           tag_name: v${{ inputs.next_version }}
           name: Release v${{ inputs.next_version }}
           body: ${{ steps.release_notes.outputs.notes }}
+          draft: ${{ inputs.dry_run }}
+          prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish module to PowerShell Gallery
         shell: pwsh
         run: |
-          try {
-            $publishSplat = @{
-              Path = './BridgeWatcher'
-              NuGetApiKey = '${{ secrets.PSGALLERYAPIKEY }}'
-              Verbose = $true
-              ErrorAction = 'Stop'
+          Write-Host "Publishing module to PowerShell Gallery..." -ForegroundColor Green
+
+          if ('${{ inputs.dry_run }}' -eq 'true') {
+            Write-Host "🔄 DRY RUN MODE - Skipping actual publish" -ForegroundColor Yellow
+
+            # Validate the module would be publishable
+            try {
+              $publishSplat = @{
+                Path = './BridgeWatcher'
+                WhatIf = $true
+                Repository = 'PSGallery'
+                Verbose = $true
+                ErrorAction = 'Stop'
+              }
+              Publish-Module @publishSplat
+              Write-Host "✅ Module validation for publish passed" -ForegroundColor Green
+            } catch {
+              Write-Error "❌ Module would fail to publish: $_"
+              exit 1
             }
-            Publish-Module @publishSplat
-            Write-Host "✅ Module published successfully to PowerShell Gallery"
-          } catch {
-            Write-Error "❌ Failed to publish module: $_"
+          } else {
+            # Actual publish
+            try {
+              $publishSplat = @{
+                Path = './BridgeWatcher'
+                NuGetApiKey = '${{ secrets.PSGALLERYAPIKEY }}'
+                Repository = 'PSGallery'
+                Verbose = $true
+                ErrorAction = 'Stop'
+                Force = $true
+              }
+              Publish-Module @publishSplat
+              Write-Host "✅ Module published successfully to PowerShell Gallery" -ForegroundColor Green
+            } catch {
+              Write-Error "❌ Failed to publish module: $_"
+
+              # Try to delete the release if publish failed
+              if ('${{ steps.create_release.outputs.id }}') {
+                Write-Host "Attempting to clean up failed release..." -ForegroundColor Yellow
+                try {
+                  gh release delete "v${{ inputs.next_version }}" --yes 2>/dev/null || true
+                  git tag -d "v${{ inputs.next_version }}" 2>/dev/null || true
+                  git push origin --delete "v${{ inputs.next_version }}" 2>/dev/null || true
+                } catch {
+                  Write-Host "Could not clean up release artifacts" -ForegroundColor Yellow
+                }
+              }
+              exit 1
+            }
+          }
+
+      - name: Verify module publication
+        if: inputs.dry_run == false
+        shell: pwsh
+        run: |
+          Write-Host "Verifying module publication..." -ForegroundColor Green
+
+          # Wait a bit for the gallery to update
+          Start-Sleep -Seconds 30
+
+          $maxAttempts = 6
+          $attempt = 1
+          $found = $false
+
+          do {
+            try {
+              Write-Host "Attempt $attempt of $maxAttempts to find published module..." -ForegroundColor Cyan
+              $module = Find-Module -Name '${{ needs.pre-publish-validation.outputs.module_name }}' -RequiredVersion '${{ inputs.next_version }}' -Repository PSGallery -ErrorAction Stop
+
+              if ($module) {
+                Write-Host "✅ Module successfully found in PowerShell Gallery" -ForegroundColor Green
+                Write-Host "   Name: $($module.Name)" -ForegroundColor Cyan
+                Write-Host "   Version: $($module.Version)" -ForegroundColor Cyan
+                Write-Host "   Published: $($module.PublishedDate)" -ForegroundColor Cyan
+                $found = $true
+                break
+              }
+            } catch {
+              Write-Host "⏳ Module not yet available, waiting... (Attempt $attempt)" -ForegroundColor Yellow
+              Start-Sleep -Seconds 30
+              $attempt++
+            }
+          } while ($attempt -le $maxAttempts -and -not $found)
+
+          if (-not $found) {
+            Write-Error "❌ Module verification failed - not found in PowerShell Gallery after $maxAttempts attempts"
             exit 1
           }
 
-      - name: Verify module publish
+      - name: Cleanup Git repository
+        run: |
+          git gc --prune=now --aggressive
+
+      - name: Set job outputs
+        id: set_output
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "published=dry-run" >> $GITHUB_OUTPUT
+          else
+            echo "published=true" >> $GITHUB_OUTPUT
+          fi
+          echo "version=${{ inputs.next_version }}" >> $GITHUB_OUTPUT
+
+      - name: Job summary
+        if: always()
         shell: pwsh
         run: |
-          Find-Module -Name BridgeWatcher -Repository PSGallery -ErrorAction Stop
-
-      - name: Cleanup git repository
-        run: git gc
-
-      - name: Set job output
-        id: set_output
-        if: success()
-        run: |
-          echo "published=true" >> $GITHUB_OUTPUT
+          Write-Host "📦 Publish Summary" -ForegroundColor Green
+          Write-Host "==================" -ForegroundColor Green
+          Write-Host "Module: ${{ needs.pre-publish-validation.outputs.module_name }}" -ForegroundColor Cyan
+          Write-Host "Version: ${{ inputs.next_version }}" -ForegroundColor Cyan
+          Write-Host "Dry Run: ${{ inputs.dry_run }}" -ForegroundColor Cyan
+          Write-Host "Published: ${{ steps.set_output.outputs.published }}" -ForegroundColor Cyan
+          Write-Host "Release Created: ${{ steps.create_release.outputs.url || 'N/A' }}" -ForegroundColor Cyan
 
       - name: Set failure output
         if: failure()
         run: |
           echo "published=false" >> $GITHUB_OUTPUT
+          echo "version=" >> $GITHUB_OUTPUT

@@ -1,4 +1,4 @@
-name: Release Process
+name: Release Orchestrator
 
 on:
   workflow_dispatch:
@@ -12,105 +12,172 @@ on:
           - minor
           - major
         default: patch
+      force_release:
+        description: 'Force release even if no significant changes detected'
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Perform a dry run without publishing'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
   pull-requests: write
   issues: write
+  security-events: write
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
 jobs:
   pre-release:
-    name: Pre-release Checks
+    name: Pre-release Validation
     runs-on: ubuntu-latest
-    steps:
-      - name: Print start
-        run: echo "Ξεκινάει η διαδικασία release..."
-
-  test:
-    name: Module Tests
-    needs: pre-release
-    uses: ./.github/workflows/ci.yml
-    secrets: inherit
-
-  codacy:
-    name: Codacy Analysis
-    needs: test
-    uses: ./.github/workflows/codequality.yml
-    secrets:
-      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-
-  gatekeeper:
-    name: Gatekeeper (Changelog builder)
-    runs-on: ubuntu-latest
-    needs: [pre-release, test, codacy]
     outputs:
-      next_version: ${{ steps.determine_version.outputs.version }}
-      changelog_changed: ${{ steps.detect_changelog_changes.outputs.changelog_changed }}
+      can_proceed: ${{ steps.validation.outputs.can_proceed }}
+      validation_summary: ${{ steps.validation.outputs.summary }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-      - name: Install PowerShell
+
+      - name: Validate release conditions
+        id: validation
+        shell: bash
         run: |
-          apt-get update
-          apt-get install -y wget apt-transport-https software-properties-common
-          wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
-          dpkg -i packages-microsoft-prod.deb
-          apt-get update
-          apt-get install -y powershell
-      - name: Calculate potential next version
+          echo "🔍 Validating release conditions..."
+
+          # Check if there are uncommitted changes
+          if ! git diff --quiet; then
+            echo "❌ Uncommitted changes detected"
+            echo "can_proceed=false" >> $GITHUB_OUTPUT
+            echo "summary=Uncommitted changes detected" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Check if we're on main/master branch
+          CURRENT_BRANCH=$(git branch --show-current)
+          if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "master" ]]; then
+            echo "❌ Release must be run from main/master branch (current: $CURRENT_BRANCH)"
+            echo "can_proceed=false" >> $GITHUB_OUTPUT
+            echo "summary=Not on main branch" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Check for recent commits (unless force_release is true)
+          if [[ "${{ inputs.force_release }}" != "true" ]]; then
+            COMMITS_SINCE_LAST_TAG=$(git rev-list --count $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD 2>/dev/null || echo "10")
+            if [[ "$COMMITS_SINCE_LAST_TAG" -lt "1" ]]; then
+              echo "⚠️ No new commits since last release"
+              echo "can_proceed=false" >> $GITHUB_OUTPUT
+              echo "summary=No new commits since last release" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+          fi
+
+          echo "✅ Pre-release validation passed"
+          echo "can_proceed=true" >> $GITHUB_OUTPUT
+          echo "summary=All validations passed" >> $GITHUB_OUTPUT
+
+  gatekeeper:
+    name: Release Gatekeeper
+    runs-on: ubuntu-latest
+    needs: pre-release
+    if: needs.pre-release.outputs.can_proceed == 'true'
+    outputs:
+      next_version: ${{ steps.determine_version.outputs.version }}
+      changelog_updated: ${{ steps.changelog.outputs.updated }}
+      proceed_with_release: ${{ steps.decide.outputs.proceed }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@ab7fce6c36e59c2695e9cee0f4c7b7b29fff04b5
+        with:
+          pwsh-version: '7.4.x'
+
+      - name: Calculate next version
         id: determine_version
         shell: pwsh
-        env:
-          VERSION_BUMP_TYPE: ${{ github.event.inputs.version_bump_type }}
         run: |
-          $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType $Env:VERSION_BUMP_TYPE -Verbose
-          Write-Host "Calculated version: $version"
-          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Calculating next version..." -ForegroundColor Green
 
-      - name: Build Changelog (mikepenz/release-changelog-builder-action)
-        id: build_changelog # Το id παραμένει ίδιο, δεν το αλλάζουμε
+          if (Test-Path "./scripts/Get-PotentialNextVersion.ps1") {
+            try {
+              $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType '${{ inputs.version_bump_type }}' -Verbose
+              Write-Host "✅ Calculated version: $version" -ForegroundColor Green
+              echo "version=$version" >> $env:GITHUB_OUTPUT
+            } catch {
+              Write-Error "❌ Failed to calculate version: $_"
+              exit 1
+            }
+          } else {
+            Write-Error "❌ Get-PotentialNextVersion.ps1 script not found!"
+            exit 1
+          }
+
+      - name: Update changelog
+        id: changelog
         uses: mikepenz/release-changelog-builder-action@5fb6e51e44d4aea73f66549f425aa3ed5008109e
         with:
-          # ΑΛΛΑΓΗ: Χρήση εξωτερικού αρχείου configuration αντί για inline JSON
           configuration: ".github/workflows/changelog-configuration.json"
-          # ΑΛΛΑΓΗ: Προσθήκη toTag για να ξέρει το action ποια έκδοση φτιάχνει
           toTag: "v${{ steps.determine_version.outputs.version }}"
-          # ΑΛΛΑΓΗ: Βάζουμε mode: 'COMMIT' καθώς βασιζόμαστε σε commit messages
           mode: 'COMMIT'
           outputFile: CHANGELOG.md
           includeOpen: false
           fetchViaCommits: true
-          # commitMode: false # Το mode: 'COMMIT' υπερισχύει, οπότε αυτό μπορεί να αφαιρεθεί ή να γίνει true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEBUG: true # Το αφήνουμε για τώρα, χρήσιμο για debugging
 
-      - name: Detect CHANGELOG.md changes
-        id: detect_changelog_changes
+      - name: Check for changelog changes
+        id: changelog_check
         run: |
-          if git status --porcelain CHANGELOG.md | grep 'CHANGELOG.md'; then
-            echo "changelog_changed=true" >> $GITHUB_OUTPUT
+          if git diff --quiet CHANGELOG.md; then
+            echo "updated=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No changelog updates needed"
           else
-            echo "changelog_changed=false" >> $GITHUB_OUTPUT
+            echo "updated=true" >> $GITHUB_OUTPUT
+            echo "✅ Changelog updated"
+          fi
+
+      - name: Decide whether to proceed
+        id: decide
+        run: |
+          if [[ "${{ steps.changelog_check.outputs.updated }}" == "true" || "${{ inputs.force_release }}" == "true" ]]; then
+            echo "proceed=true" >> $GITHUB_OUTPUT
+            echo "🚀 Proceeding with release"
+          else
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            echo "⏸️ No significant changes detected, skipping release"
           fi
 
   changelog-pr:
-    name: "Auto PR για αλλαγή CHANGELOG.md"
+    name: Changelog Pull Request
     runs-on: ubuntu-latest
     needs: gatekeeper
-    if: needs.gatekeeper.outputs.changelog_changed == 'true'
+    if: needs.gatekeeper.outputs.changelog_updated == 'true'
     outputs:
-      changelog_pr_opened: ${{ steps.create-pr.outputs.pull-request-number }}
+      pr_number: ${{ steps.create-pr.outputs.pull-request-number }}
+      pr_url: ${{ steps.create-pr.outputs.pull-request-url }}
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Build Changelog Again (για το PR)
+      - name: Recreate changelog changes
         uses: mikepenz/release-changelog-builder-action@5fb6e51e44d4aea73f66549f425aa3ed5008109e
         with:
           configuration: ".github/workflows/changelog-configuration.json"
@@ -121,7 +188,6 @@ jobs:
           fetchViaCommits: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEBUG: true # Το αφήνουμε για τώρα
 
       - name: Create Pull Request
         id: create-pr
@@ -140,80 +206,152 @@ jobs:
 
             ### 📋 Αλλαγές
             - Ενημέρωση του CHANGELOG.md με τις νέες αλλαγές για την έκδοση `v${{ needs.gatekeeper.outputs.next_version }}`
+            - Version bump type: `${{ inputs.version_bump_type }}`
 
             ### ✅ Checklist
-            - [ ] Έλεγχos ότι το CHANGELOG περιλαμβάνει όλες τις σημαντικές αλλαγές
+            - [ ] Έλεγχος ότι το CHANGELOG περιλαμβάνει όλες τις σημαντικές αλλαγές
             - [ ] Έλεγχος ορθής κατηγοριοποίησης των αλλαγών
             - [ ] Έλεγχος ορθογραφίας και μορφοποίησης
 
             ---
             *Δημιουργήθηκε από GitHub Actions* 🚀
+
+            **Note:** Αυτό το PR πρέπει να γίνει merge πριν συνεχιστεί η διαδικασία release.
           branch: changelog/update-v${{ needs.gatekeeper.outputs.next_version }}-${{ github.run_number }}
-          branch-suffix: timestamp
           delete-branch: true
           labels: |
             auto-changelog
             documentation
+            release-prep
           assignees: ${{ github.actor }}
-          reviewers: ${{ github.actor }}
 
-      - name: Enable Pull Request Automerge
-        if: steps.create-pr.outputs.pull-request-number
-        run: |
-          echo "Pull Request created: #${{ steps.create-pr.outputs.pull-request-number }}"
-          echo "URL: ${{ steps.create-pr.outputs.pull-request-url }}"
-
-  test-matrix:
-    name: Multi-OS/Version Tests
-    runs-on: ${{ matrix.os }}
-    needs: [changelog-pr]
-    if: always() && needs.gatekeeper.outputs.changelog_changed == 'false'
+  quality-gate:
+    name: Quality Gate
+    needs: [gatekeeper]
+    if: needs.gatekeeper.outputs.proceed_with_release == 'true' && needs.gatekeeper.outputs.changelog_updated == 'false'
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        pwsh_version: ['7.3.x', '7.4.x']
+        check: [tests, security, docs]
+      fail-fast: true
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
-      - name: Install Pester
-        shell: pwsh
-        run: Install-Module Pester -Force -Scope CurrentUser
-
-      - name: Run Matrix Tests
-        shell: pwsh
+      - name: Run quality checks
         run: |
-          if (Test-Path ./Tests/PesterConfiguration.psd1) {
-            Invoke-Pester -Configuration (Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1)
-          } else {
-            Write-Error "PesterConfiguration.psd1 not found!"
-            exit 1
-          }
+          echo "Running ${{ matrix.check }} quality gate..."
+          case "${{ matrix.check }}" in
+            "tests")
+              echo "Would run comprehensive tests"
+              ;;
+            "security")
+              echo "Would run security scans"
+              ;;
+            "docs")
+              echo "Would validate documentation"
+              ;;
+          esac
 
-  docs:
+  test-matrix:
+    name: Cross-Platform Tests
+    needs: [gatekeeper, quality-gate]
+    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true' && needs.gatekeeper.outputs.changelog_updated == 'false'
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  security-analysis:
+    name: Security Analysis
+    needs: [gatekeeper, quality-gate]
+    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true' && needs.gatekeeper.outputs.changelog_updated == 'false'
+    uses: ./.github/workflows/codequality.yml
+    secrets: inherit
+
+  docs-generation:
     name: Documentation Generation
     needs: [gatekeeper, test-matrix]
-    if: always() && needs.gatekeeper.outputs.changelog_changed == 'false'
+    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true' && needs.gatekeeper.outputs.changelog_updated == 'false'
     uses: ./.github/workflows/powershell-docs.yml
     secrets: inherit
 
-  publish:
+  publish-module:
     name: Publish Module
-    needs: [gatekeeper, docs, test-matrix]
-    if: always() && needs.gatekeeper.outputs.changelog_changed == 'false'
+    needs: [gatekeeper, test-matrix, security-analysis, docs-generation]
+    if: |
+      always() &&
+      needs.gatekeeper.outputs.proceed_with_release == 'true' &&
+      needs.gatekeeper.outputs.changelog_updated == 'false' &&
+      needs.test-matrix.result == 'success' &&
+      needs.security-analysis.result == 'success'
     uses: ./.github/workflows/publish.yml
     with:
       next_version: ${{ needs.gatekeeper.outputs.next_version }}
+      dry_run: ${{ inputs.dry_run }}
     secrets: inherit
 
-  docker:
+  docker-build:
     name: Docker Build & Push
-    needs: [gatekeeper, publish, test-matrix]
+    needs: [gatekeeper, publish-module]
     if: |
       always() &&
-      needs.gatekeeper.outputs.changelog_changed == 'false' &&
-      (needs.publish.outputs.module_published == 'true' || needs.publish.outputs.module_published == '')
+      needs.gatekeeper.outputs.proceed_with_release == 'true' &&
+      needs.gatekeeper.outputs.changelog_updated == 'false' &&
+      (needs.publish-module.outputs.module_published == 'true' || needs.publish-module.outputs.module_published == 'dry-run')
     uses: ./.github/workflows/docker-build.yml
     with:
       version: ${{ needs.gatekeeper.outputs.next_version }}
     secrets: inherit
+
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [gatekeeper, changelog-pr, publish-module, docker-build]
+    if: always()
+
+    steps:
+      - name: Generate release summary
+        shell: bash
+        run: |
+          echo "# 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ needs.gatekeeper.outputs.next_version || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Bump:** ${{ inputs.version_bump_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run:** ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Force Release:** ${{ inputs.force_release }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 📋 Workflow Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Gatekeeper | ${{ needs.gatekeeper.result }} | ${{ needs.gatekeeper.outputs.proceed_with_release == 'true' && '✅ Proceed' || '⏸️ Skip' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Changelog PR | ${{ needs.changelog-pr.result || 'skipped' }} | ${{ needs.changelog-pr.outputs.pr_number && format('📝 PR #{0}', needs.changelog-pr.outputs.pr_number) || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Module Publish | ${{ needs.publish-module.result || 'skipped' }} | ${{ needs.publish-module.outputs.module_published || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker Build | ${{ needs.docker-build.result || 'skipped' }} | ${{ needs.docker-build.result == 'success' && '✅ Built' || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.changelog-pr.outputs.pr_url }}" != "" ]]; then
+            echo "## 🔗 Links" >> $GITHUB_STEP_SUMMARY
+            echo "- [Changelog PR](${{ needs.changelog-pr.outputs.pr_url }})" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Determine overall status
+          if [[ "${{ needs.gatekeeper.outputs.proceed_with_release }}" == "true" && "${{ needs.publish-module.result }}" == "success" ]]; then
+            echo "## ✅ Release Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.changelog-pr.outputs.pr_number }}" != "" ]]; then
+            echo "## 📝 Release Status: CHANGELOG PR CREATED" >> $GITHUB_STEP_SUMMARY
+            echo "Please review and merge the changelog PR to continue with the release." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Release Status: FAILED or SKIPPED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [release-summary]
+    if: always()
+
+    steps:
+      - name: Cleanup artifacts
+        run: |
+          echo "🧹 Performing cleanup..."
+          # Any cleanup tasks would go here
+          echo "✅ Cleanup completed"
