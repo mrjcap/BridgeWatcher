@@ -43,10 +43,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Setup PowerShell
-        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
-        with:
-          tag: ''
       - name: Set module version before validation
         shell: pwsh
         run: |
