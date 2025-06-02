@@ -142,7 +142,7 @@ jobs:
             $modulePagePath = Join-Path $docsPath "about_$($moduleName).md"
             if (-not (Test-Path $modulePagePath)) {
               Write-Host "Creating module overview page..." -ForegroundColor Cyan
-              New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName $moduleName
+              New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName "about_$($moduleName).md"
               Write-Host "✅ Documentation generated successfully" -ForegroundColor Green
             }
             # List generated files
