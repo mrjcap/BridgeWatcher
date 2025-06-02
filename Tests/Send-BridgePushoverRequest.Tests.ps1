@@ -24,8 +24,7 @@ InModuleScope 'BridgeWatcher' {
             try {
                 $result = Send-BridgePushoverRequest -Payload $payload
             } catch {
-                # Μην κάνεις Write-Error ούτε throw
-                # Απλά αγνόησε το exception για να κάνεις assert το mock
+                Write-Verbose "Expected error, ignoring for test."
             }
             $result | Should -BeNullOrEmpty
         }
