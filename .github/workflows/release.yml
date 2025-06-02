@@ -92,7 +92,7 @@ jobs:
     if: needs.pre-release.outputs.can_proceed == 'true'
     outputs:
       next_version: ${{ steps.determine_version.outputs.version }}
-      changelog_updated: ${{ steps.changelog.outputs.updated }}
+      changelog_updated: ${{ steps.changelog_check.outputs.updated }}
       proceed_with_release: ${{ steps.decide.outputs.proceed }}
 
     steps:
@@ -135,7 +135,7 @@ jobs:
         id: changelog_check
         shell: pwsh
         run: |
-          $updated = (Get-Content ./changelog_updated.flag -Raw).Trim()
+          $updated = (Get-Content ./changelog_updated.flag -Raw).Trim().ToLower()
           "updated=$updated" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Decide whether to proceed
