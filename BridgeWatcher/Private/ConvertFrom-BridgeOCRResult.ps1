@@ -88,7 +88,7 @@
         'Από'         = $from.ToString('dd/MM/yyyy HH:mm')
         'Έως'         = $to.ToString('dd/MM/yyyy HH:mm')
         'Κλειστή για' = $closedForText
-        'Aνοιγει σε'  = "$minutesLeft λεπτά"
+        'Ανοίγει σε'  = "$minutesLeft λεπτά"
         'Σημείωση 1'  = $advice
         'Σημείωση 2'  = $advice2
     }
