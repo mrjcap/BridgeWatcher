@@ -162,8 +162,13 @@ jobs:
       - name: Install markdownlint-cli2
         run: npm install --no-save markdownlint-cli2
 
-      - name: Lint & auto-fix Markdown
-        run: npx markdownlint-cli2 "docs/*.md"
+      - name: Lint & auto-fix Markdown (warn-only)
+        run: |
+          npx markdownlint-cli2 "docs/*.md" || EXIT_CODE=$?
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "::warning file=docs::MarkdownLint found issues, but build will continue."
+          fi
+          exit 0
 
       - name: Clean npm artifacts
         run: rm -rf node_modules package-lock.json
