@@ -20,9 +20,21 @@
 
 ## 📖 Περιγραφή
 
-Το **BridgeWatcher** αποτελεί ένα υψηλής εξειδίκευσης και πλήρως αυτοματοποιημένο PowerShell module, σχεδιασμένο με σκοπό την αξιόπιστη εποπτεία της λειτουργικής κατάστασης των γεφυρών **Ποσειδωνίας** και **Ισθμίας** στον Ισθμό της Κορίνθου. 
+Το **BridgeWatcher** αποτελεί ένα υψηλής εξειδίκευσης και
+πλήρως αυτοματοποιημένο PowerShell module,
+σχεδιασμένο με σκοπό την αξιόπιστη εποπτεία της λειτουργικής κατάστασης
+των γεφυρών **Ποσειδωνίας** και **Ισθμίας** στον Ισθμό της Κορίνθου.
 
-Με την αξιοποίηση τεχνικών HTML scraping και Οπτικής Αναγνώρισης Χαρακτήρων (OCR) μέσω του [Google Vision API](https://cloud.google.com/vision), το σύστημα διενεργεί σε βάθος ανάλυση δεδομένων σε πραγματικό χρόνο, αποστέλλει κρίσιμες ειδοποιήσεις μέσω της πλατφόρμας [Pushover](https://pushover.net/) και διατηρεί ιστορικό καταγραφών σε μορφή JSON για εκ των υστέρων επεξεργασία και αξιολόγηση.
+Με την αξιοποίηση τεχνικών HTML scraping και Οπτικής Αναγνώρισης Χαρακτήρων (OCR)
+
+μέσω του [Google Vision API](https://cloud.google.com/vision),
+
+το σύστημα διενεργεί σε βάθος ανάλυση δεδομένων σε πραγματικό χρόνο,
+
+αποστέλλει κρίσιμες ειδοποιήσεις μέσω της πλατφόρμας
+
+[Pushover](https://pushover.net/) και διατηρεί ιστορικό καταγραφών σε μορφή JSON
+για εκ των υστέρων επεξεργασία και αξιολόγηση.
 
 ## 📋 Πίνακας Περιεχομένων
 
@@ -52,7 +64,8 @@
 
 ### 📄 Απαραίτητες Παράμετροι
 
-Προτού ξεκινήσεις την αξιοποίηση του **BridgeWatcher**, βεβαιώσου ότι έχεις εξασφαλίσει τα ακόλουθα:
+Προτού ξεκινήσεις την αξιοποίηση του **BridgeWatcher**,
+βεβαιώσου ότι έχεις εξασφαλίσει τα ακόλουθα:
 
 | Απαίτηση | Περιγραφή | Πώς να το αποκτήσεις |
 |----------|-----------|----------------------|
@@ -241,12 +254,12 @@ Stop-Transcript
 - [x] Δημοσίευση στο PowerShell Gallery
 - [x] Δημιουργία Docker Image
 - [x] Υποστήριξη Codecov
-- [x] Αυτοματοποιημένο Changelog σε ελληνικά με PowerShell scripts (native parsing, Keep a Changelog format)
-- [x] Αυτοματοποιημένη τεκμηρίωση μέσω platyPS και markdownlint (docs linting, post-processing, CI integration)
-- [x] Ασφαλές, modular CI/CD με version pinning, reproducibility και audit trail ([NIST DevSecOps](https://csrc.nist.gov/publications/detail/white-paper/2022/06/21/devsecops/))
+- [x] Αυτοματοποιημένο Changelog σε ελληνικά με PowerShell scripts
+- [x] Αυτοματοποιημένη τεκμηρίωση μέσω platyPS και markdownlint
+- [x] Ασφαλές, modular CI/CD με version pinning, reproducibility και audit trail
 - [x] Σαφής έλεγχος ποιότητας και ασφάλειας: Codacy, Trivy Docker scan
-- [x] Επαναχρησιμοποιήσιμα workflows (reusable workflows pattern, isolation-friendly σχεδιασμός)
-- [x] Αυτόματη πρόβλεψη επόμενης έκδοσης (semantic versioning, bump helpers, manifest update)
+- [x] Επαναχρησιμοποιήσιμα workflows
+- [x] Αυτόματη πρόβλεψη επόμενης έκδοσης
 - [x] Κεντρική διαχείριση release gates, cleanup & orchestrator στο pipeline
 
 ### 📅 Μελλοντικά
@@ -257,11 +270,11 @@ Stop-Transcript
 
 ### Πόσο συχνά πρέπει να ελέγχω την κατάσταση των γεφυρών
 
-- Συνιστάται έλεγχος κάθε 5-10 λεπτά για βέλτιστη ισορροπία μεταξύ ενημέρωσης και χρήσης πόρων.
+- Συνιστάται έλεγχος κάθε 5-10 λεπτά.
 
 ### Μπορώ να χρησιμοποιήσω το module σε Linux/macOS
 
-- Ναι! Το BridgeWatcher είναι συμβατό με PowerShell Core (7+) και λειτουργεί σε όλες τις πλατφόρμες.
+- Ναι! Το BridgeWatcher είναι συμβατό με PowerShell (7+).
 
 ### Πώς μπορώ να αποθηκεύσω τα API keys με ασφάλεια
 

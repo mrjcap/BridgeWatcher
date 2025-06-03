@@ -17,7 +17,7 @@ Do not include file extensions.
 The second header should have no spaces.
 ```
 
-# SHORT DESCRIPTION
+## SHORT DESCRIPTION
 
 {{ Short Description Placeholder }}
 
@@ -28,7 +28,7 @@ Any topics greater than 80 characters will be automatically wrapped.
 The generated about topic will be encoded UTF-8.
 ```
 
-# LONG DESCRIPTION
+## LONG DESCRIPTION
 
 {{ Long Description Placeholder }}
 
@@ -36,27 +36,27 @@ The generated about topic will be encoded UTF-8.
 
 {{ Optional Subtopic Placeholder }}
 
-# EXAMPLES
+## EXAMPLES
 
 {{ Code or descriptive examples of how to leverage the functions described. }}
 
-# NOTE
+## NOTE
 
 {{ Note Placeholder - Additional information that a user needs to know.}}
 
-# TROUBLESHOOTING NOTE
+## TROUBLESHOOTING NOTE
 
 {{ Troubleshooting Placeholder - Warns users of bugs}}
 
 {{ Explains behavior that is likely to change with fixes }}
 
-# SEE ALSO
+## SEE ALSO
 
 {{ See also placeholder }}
 
 {{ You can also list related articles, blogs, and video URLs. }}
 
-# KEYWORDS
+## KEYWORDS
 
 {{List alternate names or titles for this topic that readers might use.}}
 
