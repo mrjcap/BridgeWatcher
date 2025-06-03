@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Διορθώνει αυτόματα αρχεία Markdown για Codacy/markdownlint (MD022, MD025).
 .DESCRIPTION
