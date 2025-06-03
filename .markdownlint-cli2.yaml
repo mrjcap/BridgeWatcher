@@ -1,0 +1,10 @@
+﻿fix: true
+
+ignores:
+  - .vscode
+  - assets
+  - tests
+  - tools
+
+noInlineConfig: false
+noProgress: true
