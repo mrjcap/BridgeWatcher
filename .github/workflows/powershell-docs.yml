@@ -12,14 +12,12 @@ jobs:
     name: Generate PowerShell Documentation
     runs-on: ubuntu-latest
 
-    # Prevent infinite loops from auto-commits
     if: "!contains(github.event.head_commit.message, '[skip docs]') && !contains(github.event.head_commit.message, 'docs: auto-generate')"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          # Use a PAT or the default token with write permissions
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
@@ -156,9 +154,16 @@ jobs:
             exit 1
           }
 
-      - name: Repair markdown formatting for Codacy (MD022 & MD025)
-        shell: pwsh
-        run: ./scripts/Repair-MarkdownForCodacy.ps1 -Path 'docs/*.md'
+      - name: Setup Node.js
+        uses: actions/setup-node@v49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+
+      - name: Install markdownlint-cli2
+        run: npm install --no-save markdownlint-cli2
+
+      - name: Lint & auto-fix Markdown
+        run: npx markdownlint-cli2 "docs/*.md"
 
       - name: Validate generated documentation
         shell: pwsh
