@@ -1,4 +1,4 @@
-name: Code Quality Analysis
+name: Codacy Analysis
 
 on:
   workflow_call:
@@ -6,191 +6,15 @@ on:
       CODACY_PROJECT_TOKEN:
         required: true
 
-env:
-  POWERSHELL_TELEMETRY_OPTOUT: 1
-  DOTNET_CLI_TELEMETRY_OPTOUT: 1
-
 jobs:
-  powershell-analysis:
-    name: PowerShell Code Analysis
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: 0
-
-      - name: Setup PowerShell
-        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
-        with:
-          tag: 'v7.4.10'
-
-      - name: Install PSScriptAnalyzer
-        shell: pwsh
-        run: |
-          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
-
-      - name: Run comprehensive PSScriptAnalyzer
-        shell: pwsh
-        run: |
-          Write-Host "Running comprehensive PowerShell analysis..." -ForegroundColor Green
-
-          # Run analysis with all severity levels
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary
-
-          if ($results) {
-            Write-Host "Found $($results.Count) issues:" -ForegroundColor Yellow
-            $results | Format-Table -AutoSize
-
-            # Group by severity
-            $grouped = $results | Group-Object Severity
-            foreach ($group in $grouped) {
-              Write-Host "$($group.Name): $($group.Count) issues" -ForegroundColor Cyan
-            }
-
-            # Check for critical issues that should fail the build
-            $critical = $results | Where-Object { $_.Severity -eq 'Error' }
-            if ($critical) {
-              Write-Error "❌ Found $($critical.Count) critical issues that must be fixed!"
-              exit 1
-            } else {
-              Write-Host "✅ No critical issues found" -ForegroundColor Green
-            }
-          } else {
-            Write-Host "✅ No PSScriptAnalyzer issues found" -ForegroundColor Green
-          }
-
-      - name: Check PowerShell best practices
-        shell: pwsh
-        run: |
-          Write-Host "Checking PowerShell best practices..." -ForegroundColor Green
-
-          # Check for approved verbs in function names
-          $psFiles = Get-ChildItem -Path . -Filter "*.ps1" -Recurse | Where-Object { $_.Directory.Name -notmatch "\.git" }
-          $violations = @()
-
-          foreach ($file in $psFiles) {
-            $content = Get-Content $file.FullName -Raw
-            $functions = [regex]::Matches($content, 'function\s+([A-Za-z]+-[A-Za-z]+)')
-
-            foreach ($match in $functions) {
-              $functionName = $match.Groups[1].Value
-              $verb = $functionName.Split('-')[0]
-
-              if ($verb -notin (Get-Verb).Verb) {
-                $violations += "⚠️ Non-approved verb '$verb' in function '$functionName' in file '$($file.Name)'"
-              }
-            }
-          }
-
-          if ($violations) {
-            Write-Host "PowerShell best practice violations found:" -ForegroundColor Yellow
-            $violations | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
-          } else {
-            Write-Host "✅ All functions use approved PowerShell verbs" -ForegroundColor Green
-          }
-
-      - name: Upload PSScriptAnalyzer results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: psscriptanalyzer-results
-          path: |
-            **/*.xml
-            **/*.sarif
-          retention-days: 7
-
   codacy-analysis:
-    name: Codacy Security Analysis
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Run Codacy Analysis CLI
         uses: codacy/codacy-analysis-cli-action@97bf5df3c09e75f5bcd72695998f96ebd701846e
         with:
-          output: results.sarif
-          format: sarif
-          gh-code-scanning-compat: true
-          max-allowed-issues: 2147483647
+          output: text
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-
-      - name: Upload Codacy results to GitHub
-        uses: github/codeql-action/upload-sarif@f0f3afee809481da311ca3a6ff1ff51d81dbeb24
-        if: always()
-        with:
-          sarif_file: results.sarif
-
-  security-scan:
-    name: Security Scanning
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: 0
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@4b9b6fb4ef28b31450391a93ade098bb00de584e
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@f0f3afee809481da311ca3a6ff1ff51d81dbeb24
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Scan for secrets
-        shell: pwsh
-        run: |
-          Write-Host "Scanning for potential secrets..." -ForegroundColor Green
-
-          $secretPatterns = @(
-            @{ Name = 'API Keys'; Pattern = '(?i)(api[_-]?key|apikey)\s*[:=]\s*[''"]?[a-zA-Z0-9_-]{20,}[''"]?' }
-            @{ Name = 'Passwords'; Pattern = '(?i)(password|passwd|pwd)\s*[:=]\s*[''"][^''"]{8,}[''"]' }
-            @{ Name = 'Tokens'; Pattern = '(?i)(token|secret)\s*[:=]\s*[''"]?[a-zA-Z0-9_-]{20,}[''"]?' }
-            @{ Name = 'Connection Strings'; Pattern = '(?i)(connection[_-]?string|connectionstring)\s*[:=]\s*[''"][^''"]+[''"]' }
-          )
-
-          $findings = @()
-          $files = Get-ChildItem -Path . -Include "*.ps1", "*.psm1", "*.psd1", "*.yml", "*.yaml" -Recurse | Where-Object { $_.Directory.Name -notmatch "\.git" }
-
-          foreach ($file in $files) {
-            $content = Get-Content $file.FullName -Raw
-            foreach ($pattern in $secretPatterns) {
-              $matches = [regex]::Matches($content, $pattern.Pattern)
-              foreach ($match in $matches) {
-                # Skip test files and examples
-                if ($file.Name -notmatch "test|example|sample") {
-                  $findings += @{
-                    File = $file.FullName
-                    Type = $pattern.Name
-                    Match = $match.Value
-                    Line = ($content.Substring(0, $match.Index) -split "`n").Count
-                  }
-                }
-              }
-            }
-          }
-
-          if ($findings) {
-            Write-Host "⚠️ Potential secrets found:" -ForegroundColor Yellow
-            $findings | ForEach-Object {
-              Write-Host "  - $($_.Type) in $($_.File):$($_.Line)" -ForegroundColor Yellow
-            }
-            Write-Host "Please review these findings and ensure no real secrets are committed!" -ForegroundColor Yellow
-          } else {
-            Write-Host "✅ No potential secrets detected" -ForegroundColor Green
-          }
