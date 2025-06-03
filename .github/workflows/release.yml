@@ -144,35 +144,9 @@ jobs:
             echo "⏸️ No significant changes detected, skipping release"
           fi
 
-  quality-gate:
-    name: Quality Gate
-    needs: [gatekeeper]
-    if: needs.gatekeeper.outputs.proceed_with_release == 'true'
-    strategy:
-      matrix:
-        check: [tests, security, docs]
-      fail-fast: true
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Run quality checks
-        run: |
-          echo "Running ${{ matrix.check }} quality gate..."
-          case "${{ matrix.check }}" in
-            "tests")
-              echo "Would run comprehensive tests"
-              ;;
-            "security")
-              echo "Would run security scans"
-              ;;
-            "docs")
-              echo "Would validate documentation"
-              ;;
-          esac
-
   security-analysis:
     name: Security Analysis
-    needs: [gatekeeper, quality-gate]
+    needs: [gatekeeper]
     if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
     uses: ./.github/workflows/codequality.yml
     secrets: inherit
@@ -249,8 +223,18 @@ jobs:
     if: always()
 
     steps:
-      - name: Cleanup artifacts
-        run: |
-          echo "🧹 Performing cleanup..."
-          # Any cleanup tasks would go here
-          echo "✅ Cleanup completed"
+    - name: Cleanup artifacts
+      if: always()
+      run: |
+        echo "🧹 Performing cleanup..."
+        rm -rf test-secrets/ || true
+        rm -f .env* || true
+        rm -f coverage.xml testResults.xml || true
+        rm -rf dist/ build/ out/ || true
+        docker container prune -f || true
+        docker image prune -f || true
+        docker system prune -af --volumes || true
+        docker logout || true
+        git clean -fdx || true
+        git reset --hard || true
+        echo "✅ Cleanup completed"
