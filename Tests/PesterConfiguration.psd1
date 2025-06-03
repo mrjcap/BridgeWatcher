@@ -21,7 +21,7 @@
         )
         OutputFormat            = 'JaCoCo'
         OutputPath              = 'coverage.xml'
-        OutputEncoding          = 'UTF8'
+        OutputEncoding          = 'utf8BOM'
         CoveragePercentTarget   = 100
         ExcludeTests            = $true
         RecursePaths            = $true
@@ -30,7 +30,7 @@
         Enabled         = $true
         OutputFormat    = 'NUnitXml'
         OutputPath      = 'testResults.xml'
-        OutputEncoding  = 'UTF8'
+        OutputEncoding  = 'utf8BOM'
         TestSuiteName   = 'BridgeWatcher'
     }
     Should = @{

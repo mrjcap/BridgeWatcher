@@ -97,7 +97,7 @@ if ($env:GITHUB_ENV) {
     $addContentSplat = @{
         Path     = $env:GITHUB_ENV
         Value    = "new_version=$Version"
-        Encoding = 'UTF8'
+        Encoding = 'utf8BOM'
     }
     Add-Content @addContentSplat
     $writeBridgeLogSplat = @{

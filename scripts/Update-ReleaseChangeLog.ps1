@@ -69,7 +69,7 @@ function Initialize-ChangelogIfNeeded {
         $setContentSplat = @{
             Path     = $ChangelogPath
             Value    = $header
-            Encoding = 'UTF8'
+            Encoding = 'utf8BOM'
             Force    = $true
         }
         Set-Content @setContentSplat

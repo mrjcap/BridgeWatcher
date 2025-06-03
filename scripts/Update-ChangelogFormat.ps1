@@ -76,7 +76,7 @@
             $getContentSplat = @{
                 Path     = $ChangelogPath
                 Raw      = $true
-                Encoding = 'UTF8'
+                Encoding = 'utf8BOM'
             }
             $content = Get-Content @getContentSplat
 
@@ -99,7 +99,7 @@
                 $setContentSplat = @{
                     Path      = $ChangelogPath
                     Value     = $content
-                    Encoding  = 'UTF8'
+                    Encoding  = 'utf8BOM'
                     NoNewline = $true
                 }
                 Set-Content @setContentSplat
@@ -194,7 +194,7 @@ function Test-ChangelogFormat {
             $getContentSplat = @{
                 Path     = $ChangelogPath
                 Raw      = $true
-                Encoding = 'UTF8'
+                Encoding = 'utf8BOM'
             }
             $content = Get-Content @getContentSplat
 
