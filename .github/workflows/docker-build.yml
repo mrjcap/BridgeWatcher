@@ -203,21 +203,7 @@ jobs:
           docker push "$LATEST_TAG"
 
           echo "✅ Successfully pushed Docker images"
-
-      - name: Generate SBOM
-        uses: anchore/sbom-action@20c3d0ad0b9a8ead2a1eb9ffe6b4dba3a52b88c3
-        with:
-          image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
-          format: spdx-json
-          output-file: sbom.spdx.json
-
-      - name: Upload SBOM
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: docker-sbom
-          path: sbom.spdx.json
-          retention-days: 30
-
+  
       - name: Clean up
         if: always()
         run: |
