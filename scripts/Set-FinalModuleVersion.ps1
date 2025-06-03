@@ -53,7 +53,7 @@ Write-Verbose @writeBridgeLogSplat
 $getContentSplat = @{
     Path     = $Path
     Raw      = $true
-    Encoding = 'UTF8'
+    Encoding = 'utf8BOM'
 }
 $content = Get-Content @getContentSplat
 
@@ -82,7 +82,7 @@ Write-Verbose @writeBridgeLogSplat
 $setContentSplat = @{
     Path      = $Path
     Value     = $newContent
-    Encoding  = 'UTF8'
+    Encoding  = 'utf8BOM'
     NoNewline = $true
 }
 Set-Content @setContentSplat
