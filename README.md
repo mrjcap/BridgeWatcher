@@ -241,6 +241,13 @@ Stop-Transcript
 - [x] Δημοσίευση στο PowerShell Gallery
 - [x] Δημιουργία Docker Image
 - [x] Υποστήριξη Codecov
+- [x] Αυτοματοποιημένο Changelog σε ελληνικά με PowerShell scripts (native parsing, Keep a Changelog format)
+- [x] Αυτοματοποιημένη τεκμηρίωση μέσω platyPS και markdownlint (docs linting, post-processing, CI integration)
+- [x] Ασφαλές, modular CI/CD με version pinning, reproducibility και audit trail ([NIST DevSecOps](https://csrc.nist.gov/publications/detail/white-paper/2022/06/21/devsecops/))
+- [x] Σαφής έλεγχος ποιότητας και ασφάλειας: Codacy, Trivy Docker scan
+- [x] Επαναχρησιμοποιήσιμα workflows (reusable workflows pattern, isolation-friendly σχεδιασμός)
+- [x] Αυτόματη πρόβλεψη επόμενης έκδοσης (semantic versioning, bump helpers, manifest update)
+- [x] Κεντρική διαχείριση release gates, cleanup & orchestrator στο pipeline
 
 ### 📅 Μελλοντικά
 
