@@ -1,6 +1,6 @@
 ﻿@{
     RootModule            = 'BridgeWatcher.psm1'
-    ModuleVersion = '1.0.61'
+    ModuleVersion         = '1.0.61'
     GUID                  = 'e7c0fd85-a740-47f4-8179-d952e33edb9f'
     Author                = 'Γιάννης Καπλατζής'
     CompanyName           = 'Open Source Community'
@@ -19,7 +19,7 @@
         'Get-BridgeStatusComparison',
         'Invoke-BridgeStatusComparison',
         'Send-BridgePushover',
-        'Start-BridgeStatusMonitor'
+        'Get-BridgeStatusMonitor'
     )
     PrivateData        = @{
         PSData = @{
