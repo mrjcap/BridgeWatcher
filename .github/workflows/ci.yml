@@ -12,13 +12,8 @@ env:
 
 jobs:
   test:
-    name: Test on ${{ matrix.os }} with PowerShell ${{ matrix.pwsh-version }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        pwsh-version: [v7.5.1', 'v7.4.10']
-    runs-on: ${{ matrix.os }}
+    name: Test on ubuntu-latest with PowerShell v7.5.1
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -29,7 +24,7 @@ jobs:
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
         with:
-          tag: ${{ matrix.pwsh-version }}
+          tag: 'v7.5.1'
 
       - name: Cache PowerShell modules
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
@@ -37,11 +32,10 @@ jobs:
           path: |
             ~/.local/share/powershell/Modules
             ~/Documents/PowerShell/Modules
-            ~\Documents\PowerShell\Modules
             ~/Library/PowerShell/Modules
-          key: ${{ runner.os }}-${{ matrix.pwsh-version }}-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
+          key: ubuntu-latest-v7.5.1-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.pwsh-version }}-pwshmodules-
+            ubuntu-latest-v7.5.1-pwshmodules-
 
       - name: Install required PowerShell modules
         shell: pwsh
@@ -106,7 +100,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: test-results-${{ matrix.os }}-${{ matrix.pwsh-version }}
+          name: test-results-ubuntu-latest-v7.5.1
           path: |
             testResults.xml
             coverage.xml
@@ -125,11 +119,11 @@ jobs:
           }
 
       - name: Upload coverage to Codecov
-        if: success() && steps.check_coverage.outputs.coverage_exists == 'true' && matrix.os == 'ubuntu-latest' && matrix.pwsh-version == '7.4.x'
+        if: success() && steps.check_coverage.outputs.coverage_exists == 'true'
         uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: unittests
-          name: codecov-${{ matrix.os }}-${{ matrix.pwsh-version }}
+          name: codecov-ubuntu-latest-v7.5.1
           fail_ci_if_error: true
