@@ -2,6 +2,8 @@
 config:
   MD024:
     siblings_only: true
+  MD013:
+    line_length: 120
 ignores:
 
 - .vscode

@@ -13,7 +13,7 @@ schema: 2.0.0
 
 ## SYNTAX
 
-```
+```powershell
 Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Object[]> [-ApiKey] <String>
  [-PoUserKey] <String> [-PoApiKey] <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
@@ -27,7 +27,7 @@ Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Objec
 
 ### EXAMPLE 1
 
-```
+```powershell
 Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -ApiKey 'abc' -PoUserKey 'user' -PoApiKey 'token'
 ```
 
@@ -131,7 +131,9 @@ Accept wildcard characters: False
 
 ### CommonParameters
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
