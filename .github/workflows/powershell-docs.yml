@@ -156,6 +156,10 @@ jobs:
             exit 1
           }
 
+      - name: Repair markdown formatting for Codacy (MD022 & MD025)
+        shell: pwsh
+        run: ./scripts/Repair-MarkdownForCodacy.ps1 -Path 'docs/*.md'
+
       - name: Validate generated documentation
         shell: pwsh
         run: |
