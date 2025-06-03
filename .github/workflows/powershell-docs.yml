@@ -165,6 +165,9 @@ jobs:
       - name: Lint & auto-fix Markdown
         run: npx markdownlint-cli2 "docs/*.md"
 
+      - name: Clean npm artifacts
+        run: rm -rf node_modules package-lock.json
+
       - name: Validate generated documentation
         shell: pwsh
         run: |
