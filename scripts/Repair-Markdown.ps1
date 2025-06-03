@@ -44,4 +44,4 @@ foreach ($file in $mdFiles) {
     Set-Content $file.FullName -Value $fixedContent -Encoding UTF8
 }
 
-Write-Host "✅ Markdown formatting fixed for Codacy (MD022/MD025)."
+Write-Verbose "✅ Markdown formatting fixed for Codacy (MD022/MD025)."
