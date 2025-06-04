@@ -21,7 +21,7 @@
     Χρησιμοποιείται για να αναλυθούν OCR responses και να εξαχθούν status.
     #>
 
-    [OutputType([System.Object[]])]
+    [OutputType([PSCustomObject])]
     param (
         [Parameter(Mandatory)][object]$ApiResponse,
         [Parameter(Mandatory)][string]$ImageUri
