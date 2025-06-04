@@ -2,23 +2,24 @@
     [CmdletBinding()]
     <#
     .SYNOPSIS
-    Παρέχει σύσταση κατάστασης γέφυρας βάσει κειμένου.
+    Προτείνει αν αξίζει να περιμένετε το άνοιγμα της γέφυρας.
 
     .DESCRIPTION
-    Η Get-BridgeStatusAdvice αναλύει ένα κείμενο και επιστρέφει
-    προτεινόμενο status γέφυρας ('Ανοιχτή', 'Κλειστή', 'Άγνωστη').
+    Η Get-BridgeStatusAdvice λαμβάνει τον χρόνο σε λεπτά μέχρι να ανοίξει
+    η γέφυρα και επιστρέφει μήνυμα για το αν πρέπει να περιμένετε.
 
-    .PARAMETER Text
-    Το κείμενο που θα αναλυθεί.
+    .PARAMETER MinutesUntilOpen
+    Τα λεπτά που απομένουν μέχρι να ανοίξει η γέφυρα.
 
     .OUTPUTS
     [string] - String με προτεινόμενο status και μήνυμα.
 
     .EXAMPLE
-    Get-BridgeStatusAdvice -Text 'Η γέφυρα είναι ανοιχτή.'
+    Get-BridgeStatusAdvice -MinutesUntilOpen 15
 
     .NOTES
-    Ανιχνεύει status με βάση προκαθορισμένα patterns.
+    Αν τα λεπτά είναι περισσότερα από 12 επιστρέφεται σύσταση να μην
+    περιμένετε.
     #>
     [OutputType([string])]
     param (
