@@ -33,12 +33,12 @@
     Ελέγχει και για special πληροφοριακές εικόνες αν χρειάζεται.
     #>
 
-    [OutputType([object])]
+    [OutputType([pscustomobject])]
     param (
         [Parameter(Mandatory)][string]$Location,
         [Parameter(Mandatory)][string]$Status,
         [Parameter(Mandatory)][string]$Pattern,
-        [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$BridgeImages,
+        [Parameter(Mandatory)][AllowEmptyCollection()][pscustomobject[]]$BridgeImages,
         [Parameter(Mandatory)][bool]$RequireInfoImage
     )
     $BridgeImages = @($BridgeImages)  # Ensure it's always an array

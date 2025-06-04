@@ -12,7 +12,7 @@
     (Προαιρετικό) Το αρχείο όπου θα αποθηκευτεί η τρέχουσα κατάσταση.
 
     .OUTPUTS
-    [object[]] - Λίστα καταστάσεων γεφυρών.
+    [PSCustomObject] - Λίστα καταστάσεων γεφυρών.
 
     .EXAMPLE
     Get-BridgeStatus -OutputFile 'C:\Logs\current-status.json'
@@ -21,7 +21,7 @@
     Αν αποτύχει η ανάκτηση HTML, επιστρέφεται κενό array.
     #>
 
-    [OutputType([object[]])]
+    [OutputType([pscustomobject])]
     param (
         [Parameter()][string]$OutputFile
     )
