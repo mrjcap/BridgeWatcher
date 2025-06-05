@@ -46,8 +46,8 @@
             }
             Write-BridgeLog @writeBridgeLogSplat
             $writeBridgeLogSplat = @{
-                Stage = 'Ανάλυση'
-                Message   = "Χρονική στιγμή: $($entry.Timestamp)"
+                Stage   = 'Ανάλυση'
+                Message = "Χρονική στιγμή: $($entry.Timestamp)"
             }
             Write-BridgeLog @writeBridgeLogSplat
             $writeBridgeLogSplat = @{

@@ -38,7 +38,7 @@
                 Level   = 'Warning'
             }
             Write-BridgeLog @writeBridgeLogSplat
-            return @()
+            return
         }
         $getBridgeStatusFromHtmlSplat = @{
             Html      = $html
