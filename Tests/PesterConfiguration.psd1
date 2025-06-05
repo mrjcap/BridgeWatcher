@@ -1,55 +1,55 @@
 ﻿@{
-    Run = @{
-        Path    = '.\Tests\'
+    Run          = @{
+        Path          = '.\Tests\'
         Parameters    = @{
             ModuleName = 'BridgeWatcher'
         }
         TestExtension = '.Tests.ps1'
-        Exit        = $true
-        Throw       = $false
-        PassThru    = $true
+        Exit          = $true
+        Throw         = $false
+        PassThru      = $true
     }
-    Filter = @{
-        Tag         = @()
-        ExcludeTag  = @()
+    Filter       = @{
+        Tag        = @()
+        ExcludeTag = @()
     }
     CodeCoverage = @{
-        Enabled                 = $true
-        Path                    = @(
-           '.\\BridgeWatcher\\Public\\*.ps1',
+        Enabled               = $true
+        Path                  = @(
+            '.\\BridgeWatcher\\Public\\*.ps1',
             '.\\BridgeWatcher\\Private\\*.ps1'
         )
-        OutputFormat            = 'JaCoCo'
-        OutputPath              = 'coverage.xml'
-        OutputEncoding          = 'utf8BOM'
-        CoveragePercentTarget   = 100
-        ExcludeTests            = $true
-        RecursePaths            = $true
+        OutputFormat          = 'JaCoCo'
+        OutputPath            = 'coverage.xml'
+        OutputEncoding        = 'utf8BOM'
+        CoveragePercentTarget = 100
+        ExcludeTests          = $true
+        RecursePaths          = $true
     }
-    TestResult = @{
-        Enabled         = $true
-        OutputFormat    = 'NUnitXml'
-        OutputPath      = 'testResults.xml'
-        OutputEncoding  = 'utf8BOM'
-        TestSuiteName   = 'BridgeWatcher'
+    TestResult   = @{
+        Enabled        = $true
+        OutputFormat   = 'NUnitXml'
+        OutputPath     = 'testResults.xml'
+        OutputEncoding = 'utf8BOM'
+        TestSuiteName  = 'BridgeWatcher'
     }
-    Should = @{
+    Should       = @{
         ErrorAction = 'Stop'
     }
-    Debug = @{
+    Debug        = @{
         WriteDebugMessages     = $false
         WriteDebugMessagesFrom = @('Mock', 'CodeCoverage')
         ShowFullErrors         = $false
         ShowNavigationMarkers  = $false
     }
-    Output = @{
-        Verbosity             = 'Detailed'
-        StackTraceVerbosity   = 'Filtered'
-        CIFormat              = 'GithubActions'
-        CILogLevel            = 'Error'
-        RenderMode            = 'Ansi'
+    Output       = @{
+        Verbosity           = 'Detailed'
+        StackTraceVerbosity = 'Filtered'
+        CIFormat            = 'GithubActions'
+        CILogLevel          = 'Error'
+        RenderMode          = 'Ansi'
     }
-    TestDrive = @{
+    TestDrive    = @{
         Enabled = $true
     }
     TestRegistry = @{

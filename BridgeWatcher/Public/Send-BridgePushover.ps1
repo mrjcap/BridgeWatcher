@@ -58,31 +58,31 @@
         [string]$Sound
     )
     $writeBridgeLogSplat = @{
-        Stage      = 'Ειδοποίηση'
-        Message    = "Pushover ➤ Sending: '$Message'"
-        Level      = 'Verbose'
+        Stage   = 'Ειδοποίηση'
+        Message = "Pushover ➤ Sending: '$Message'"
+        Level   = 'Verbose'
     }
     Write-BridgeLog @writeBridgeLogSplat
     $newPushoverPayloadSplat = @{
-        PoUserKey    = $PoUserKey
-        PoApiKey     = $PoApiKey
-        Message      = $Message
-        Device       = $Device
-        Title        = $Title
-        Url          = $Url
-        UrlTitle     = $UrlTitle
-        Priority     = $Priority
-        Sound        = $Sound
+        PoUserKey = $PoUserKey
+        PoApiKey  = $PoApiKey
+        Message   = $Message
+        Device    = $Device
+        Title     = $Title
+        Url       = $Url
+        UrlTitle  = $UrlTitle
+        Priority  = $Priority
+        Sound     = $Sound
     }
-    $payload                     = Get-BridgePushoverPayload @newPushoverPayloadSplat
-    $sendPushoverRequestSplat    = @{
+    $payload = Get-BridgePushoverPayload @newPushoverPayloadSplat
+    $sendPushoverRequestSplat = @{
         Payload    = $payload
     }
     Send-BridgePushoverRequest @sendPushoverRequestSplat | Out-Null
     $writeBridgeLogSplat = @{
-        Stage      = 'Ειδοποίηση'
-        Message    = 'Pushover ✅ Sent successfully'
-        Level      = 'Verbose'
+        Stage   = 'Ειδοποίηση'
+        Message = 'Pushover ✅ Sent successfully'
+        Level   = 'Verbose'
     }
     Write-BridgeLog @writeBridgeLogSplat
 }

@@ -30,8 +30,8 @@
         [Parameter(Mandatory)][string]$ImageUri
     )
     $writeBridgeLogSplat = @{
-        Stage      = 'Ανάλυση'
-        Message    = "📥 [BEGIN] OCR for: $ImageUri"
+        Stage   = 'Ανάλυση'
+        Message = "📥 [BEGIN] OCR for: $ImageUri"
     }
     Write-BridgeLog @writeBridgeLogSplat
     if (-not [Uri]::IsWellFormedUriString($ImageUri, [UriKind]::Absolute)) {
@@ -41,30 +41,30 @@
         $newOCRRequestBodySplat = @{
             ImageUri    = $ImageUri
         }
-        $requestBody    = Get-BridgeOCRRequestBody @newOCRRequestBodySplat
+        $requestBody = Get-BridgeOCRRequestBody @newOCRRequestBodySplat
         $invokeOCRRequestSplat = @{
-            ApiKey         = $ApiKey
-            RequestBody    = $requestBody
+            ApiKey      = $ApiKey
+            RequestBody = $requestBody
         }
-        $apiResponse    = Invoke-BridgeOCRRequest @invokeOCRRequestSplat
+        $apiResponse = Invoke-BridgeOCRRequest @invokeOCRRequestSplat
         $convertFromOCRResultSplat = @{
-            ApiResponse    = $apiResponse
-            ImageUri       = $ImageUri
+            ApiResponse = $apiResponse
+            ImageUri    = $ImageUri
         }
-        $result         = ConvertFrom-BridgeOCRResult @convertFromOCRResultSplat
+        $result = ConvertFrom-BridgeOCRResult @convertFromOCRResultSplat
         return $result
     } catch {
         $writeBridgeLogSplat = @{
-            Stage      = 'Σφάλμα'
-            Message    = "❌ OCR Request failed: $_"
-            Level      = 'Warning'
+            Stage   = 'Σφάλμα'
+            Message = "❌ OCR Request failed: $_"
+            Level   = 'Warning'
         }
         Write-BridgeLog @writeBridgeLogSplat
         throw
     } finally {
         $writeBridgeLogSplat = @{
-            Stage      = 'Ανάλυση'
-            Message    = "📤 [END] OCR process completed"
+            Stage   = 'Ανάλυση'
+            Message = "📤 [END] OCR process completed"
         }
         Write-BridgeLog @writeBridgeLogSplat
     }

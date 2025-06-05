@@ -277,11 +277,11 @@ if ($MyInvocation.InvocationName -ne '.') {
         Write-Verbose $testResults.Summary
 
         if ($testResults.Issues) {
-            $testResults.Issues | ForEach-Object { Write-Verbose $_  }
+            $testResults.Issues | ForEach-Object { Write-Verbose $_ }
         }
 
         if ($testResults.Warnings) {
-            $testResults.Warnings | ForEach-Object { Write-Verbose $_  }
+            $testResults.Warnings | ForEach-Object { Write-Verbose $_ }
         }
 
         if ($testResults.Warnings -contains '⚠️ Βρέθηκαν * sections χωρίς emojis - προτείνεται ενημέρωση') {

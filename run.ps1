@@ -1,16 +1,16 @@
 ﻿Import-Module '/scripts/modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
 
-$API_KEY       = Get-Content '/run/secrets/API_KEY' -Raw
-$POAPI_KEY     = Get-Content '/run/secrets/POAPI_KEY' -Raw
-$POUSER_KEY    = Get-Content '/run/secrets/POUSER_KEY' -Raw
+$API_KEY = Get-Content '/run/secrets/API_KEY' -Raw
+$POAPI_KEY = Get-Content '/run/secrets/POAPI_KEY' -Raw
+$POUSER_KEY = Get-Content '/run/secrets/POUSER_KEY' -Raw
 
 if (-not $API_KEY -or -not $POAPI_KEY -or -not $POUSER_KEY) {
     throw 'One or more secrets are missing or empty'
 }
 
-$OutDir    = $Env:BRIDGEWATCHER_OUT
+$OutDir = $Env:BRIDGEWATCHER_OUT
 if ([string]::IsNullOrWhiteSpace($OutDir)) {
-    $OutDir    = '/tmp'
+    $OutDir = '/tmp'
 }
 # Wrap το Get-BridgeStatusMonitor
 try {

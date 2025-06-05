@@ -89,13 +89,13 @@ $sectionTitles = @{
 }
 
 $sections = @(
-    @{ Key = 'Added';        Items = $Added },
-    @{ Key = 'Changed';      Items = $Changed },
-    @{ Key = 'Deprecated';   Items = $Deprecated },
-    @{ Key = 'Removed';      Items = $Removed },
-    @{ Key = 'Fixed';        Items = $Fixed },
-    @{ Key = 'Security';     Items = $Security },
-    @{ Key = 'Documentation';Items = $Documentation }
+    @{ Key = 'Added'; Items = $Added },
+    @{ Key = 'Changed'; Items = $Changed },
+    @{ Key = 'Deprecated'; Items = $Deprecated },
+    @{ Key = 'Removed'; Items = $Removed },
+    @{ Key = 'Fixed'; Items = $Fixed },
+    @{ Key = 'Security'; Items = $Security },
+    @{ Key = 'Documentation'; Items = $Documentation }
 )
 
 # Διαβάζουμε το changelog ως raw string

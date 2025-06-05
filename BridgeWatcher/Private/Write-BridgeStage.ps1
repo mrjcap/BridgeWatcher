@@ -32,9 +32,9 @@
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][ValidateSet('Ανάλυση','Σφάλμα')][string]$Stage,
+        [Parameter(Mandatory)][ValidateSet('Ανάλυση', 'Σφάλμα')][string]$Stage,
         [Parameter(Mandatory)][string]$Message,
-        [ValidateSet('Verbose','Warning','Error')][string]$Level = 'Verbose'
+        [ValidateSet('Verbose', 'Warning', 'Error')][string]$Level = 'Verbose'
     )
     $writeBridgeLogSplat = @{
         Stage   = $Stage

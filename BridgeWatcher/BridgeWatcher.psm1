@@ -32,4 +32,4 @@
 . "$PSScriptRoot\Private\Write-BridgeLog.ps1"
 
 # Export only public functions
-Export-ModuleMember -Function Get-BridgeStatus,Get-BridgePreviousStatus,Get-BridgeStatusComparison,Invoke-BridgeStatusComparison,Send-BridgePushover,Get-BridgeStatusMonitor
+Export-ModuleMember -Function Get-BridgeStatus, Get-BridgePreviousStatus, Get-BridgeStatusComparison, Invoke-BridgeStatusComparison, Send-BridgePushover, Get-BridgeStatusMonitor

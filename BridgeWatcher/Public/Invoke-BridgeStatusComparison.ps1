@@ -60,11 +60,11 @@
             return $false
         }
         $sendBridgeNotificationSplat = @{
-            Type         = 'Closed'
-            State        = $CurrentState
-            ApiKey       = $ApiKey
-            PoUserKey    = $PoUserKey
-            PoApiKey     = $PoApiKey
+            Type      = 'Closed'
+            State     = $CurrentState
+            ApiKey    = $ApiKey
+            PoUserKey = $PoUserKey
+            PoApiKey  = $PoApiKey
         }
         $handlerMap = @{
             'Κλειστή για συντήρηση|=>' = { Send-BridgeNotification @sendBridgeNotificationSplat }
@@ -86,7 +86,7 @@
             $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
             $handler = $handlerMap[$key]
             switch ($true) {
-                { $handler } { & $handler;           continue }
+                { $handler } { & $handler; continue }
                 { $change.SideIndicator -eq '==' } {
                     $writeBridgeStageSplat = @{
                         Level   = 'Verbose'
@@ -97,19 +97,19 @@
                     continue
                 }
                 default { $writeBridgeStageSplat = @{
-                    Stage      = 'Σφάλμα'
-                    Message    = "❓ Άγνωστο combo: $key"
-                    Level      = 'Warning'
-                }
-                Write-BridgeStage @writeBridgeStageSplat }
+                        Stage   = 'Σφάλμα'
+                        Message = "❓ Άγνωστο combo: $key"
+                        Level   = 'Warning'
+                    }
+                    Write-BridgeStage @writeBridgeStageSplat }
             }
         }
         return $true
     } catch {
         $writeBridgeStageSplat = @{
-            Level      = 'Warning'
-            Stage      = 'Σφάλμα'
-            Message    = "❌ $($_.Exception.Message)"
+            Level   = 'Warning'
+            Stage   = 'Σφάλμα'
+            Message = "❌ $($_.Exception.Message)"
         }
         Write-BridgeStage @writeBridgeStageSplat
         throw

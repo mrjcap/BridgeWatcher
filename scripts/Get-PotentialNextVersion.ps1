@@ -28,7 +28,7 @@ try {
             Patch = [int]$parts[2]
             Clean = $clean
         }
-    } | Sort-Object -Property Major,Minor,Patch -Descending
+    } | Sort-Object -Property Major, Minor, Patch -Descending
 
     $latest = $sorted | Select-Object -First 1
 

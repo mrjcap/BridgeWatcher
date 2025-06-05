@@ -35,26 +35,26 @@
     )
     foreach ($entry in $CurrentState) {
         if ($entry.gefyraStatus -eq 'Ανοιχτή') {
-                $writeBridgeLogSplat = @{
-                    Stage      = 'Ανάλυση'
-                    Message    = "Γέφυρα        : $($entry.GefyraName)"
-                }
-                Write-BridgeLog @writeBridgeLogSplat
-                $writeBridgeLogSplat = @{
-                    Stage      = 'Ανάλυση'
-                    Message    = "Κατάσταση     : $($entry.GefyraStatus)"
-                }
-                Write-BridgeLog @writeBridgeLogSplat
-                $writeBridgeLogSplat = @{
-                    Stage      = 'Ανάλυση'
-                    Message    = "Χρονική στιγμή: $($entry.Timestamp)"
-                }
-                Write-BridgeLog @writeBridgeLogSplat
-                $writeBridgeLogSplat = @{
-                    Stage      = 'Ανάλυση'
-                    Message    = "Εικόνα        : $($entry.ImageUrl)"
-                }
-                Write-BridgeLog @writeBridgeLogSplat
+            $writeBridgeLogSplat = @{
+                Stage   = 'Ανάλυση'
+                Message = "Γέφυρα        : $($entry.GefyraName)"
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+            $writeBridgeLogSplat = @{
+                Stage   = 'Ανάλυση'
+                Message = "Κατάσταση     : $($entry.GefyraStatus)"
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+            $writeBridgeLogSplat = @{
+                Stage = 'Ανάλυση'
+                Message   = "Χρονική στιγμή: $($entry.Timestamp)"
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+            $writeBridgeLogSplat = @{
+                Stage   = 'Ανάλυση'
+                Message = "Εικόνα        : $($entry.ImageUrl)"
+            }
+            Write-BridgeLog @writeBridgeLogSplat
             $sendPushoverSplat = @{
                 PoUserKey = $PoUserKey
                 PoApiKey  = $PoApiKey

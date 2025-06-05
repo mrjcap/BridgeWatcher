@@ -24,7 +24,7 @@
     [OutputType([System.Collections.ArrayList])]
     param (
         [Parameter(Mandatory)][string]$HtmlContent,
-        [Parameter(Mandatory)][ValidateSet('poseidonia','isthmia')] [string]$Location
+        [Parameter(Mandatory)][ValidateSet('poseidonia', 'isthmia')] [string]$Location
     )
     $bridgeLabel = switch ($Location) {
         'poseidonia' { 'ΠΟΣΕΙΔΩΝΙΑ' }

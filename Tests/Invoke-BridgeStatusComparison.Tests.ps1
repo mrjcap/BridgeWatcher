@@ -314,7 +314,7 @@ InModuleScope 'BridgeWatcher' {
             }
             # Redefine Send-BridgeNotification to write to notify.txt for this test
             function Send-BridgeNotification {
-                param([ValidateSet('Closed','Opened')]$Type, [object[]]$State)
+                param([ValidateSet('Closed', 'Opened')]$Type, [object[]]$State)
                 "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
             }
             $prev = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
@@ -334,7 +334,7 @@ InModuleScope 'BridgeWatcher' {
             $previous = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Μόνιμα κλειστή' }
             # παρατηρούμε:ΔΕΝ κάνουμε mock το Send-BridgeNotification
             function Send-BridgeNotification {
-                param([ValidateSet('Closed','Opened')]$Type, [object[]]$State)
+                param([ValidateSet('Closed', 'Opened')]$Type, [object[]]$State)
                 "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
             }
             Invoke-BridgeStatusComparison @defaultParams -PreviousState @($previous) -CurrentState @($current)
@@ -343,14 +343,14 @@ InModuleScope 'BridgeWatcher' {
         It 'Στέλνει ειδοποίηση τύπου Open όταν γίνεται αλλαγή απο "Κλειστή για συντήρηση" (=>)' {
             Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
-            $prev      = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
-            $curr      = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή για συντήρηση'; timestamp = (Get-Date); imageUrl = 'img_maintenance.jpg' }
-            $params    = @{
-                PreviousState    = $prev
-                CurrentState     = $curr
-                ApiKey           = 'dummy'
-                PoUserKey        = 'dummy'
-                PoApiKey         = 'dummy'
+            $prev = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            $curr = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή για συντήρηση'; timestamp = (Get-Date); imageUrl = 'img_maintenance.jpg' }
+            $params = @{
+                PreviousState = $prev
+                CurrentState  = $curr
+                ApiKey        = 'dummy'
+                PoUserKey     = 'dummy'
+                PoApiKey      = 'dummy'
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -360,14 +360,14 @@ InModuleScope 'BridgeWatcher' {
         It 'Στέλνει ειδοποίηση τύπου Closed όταν γίνεται αλλαγή από "Ανοιχτή" σε Κλειστή για συντήρηση"' {
             Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
-            $prev      = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Κλειστή για συντήρηση' }
-            $curr      = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img_open.jpg' }
-            $params    = @{
-                PreviousState    = $prev
-                CurrentState     = $curr
-                ApiKey           = 'dummy'
-                PoUserKey        = 'dummy'
-                PoApiKey         = 'dummy'
+            $prev = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Κλειστή για συντήρηση' }
+            $curr = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img_open.jpg' }
+            $params = @{
+                PreviousState = $prev
+                CurrentState  = $curr
+                ApiKey        = 'dummy'
+                PoUserKey     = 'dummy'
+                PoApiKey      = 'dummy'
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -377,7 +377,7 @@ InModuleScope 'BridgeWatcher' {
     Describe 'Invoke-BridgeStatusComparison' {
 
         BeforeEach {
-            Remove-Item "$TestDrive\log.txt","$TestDrive\notify.txt" -ErrorAction SilentlyContinue
+            Remove-Item "$TestDrive\log.txt", "$TestDrive\notify.txt" -ErrorAction SilentlyContinue
         }
 
         BeforeAll {
@@ -388,15 +388,15 @@ InModuleScope 'BridgeWatcher' {
 
             function Write-BridgeStage {
                 param(
-                    [ValidateSet('Ανάλυση','Σφάλμα')][string]$Stage,
+                    [ValidateSet('Ανάλυση', 'Σφάλμα')][string]$Stage,
                     [string]$Message,
-                    [ValidateSet('Verbose','Warning','Error')][string]$Level = 'Verbose'
+                    [ValidateSet('Verbose', 'Warning', 'Error')][string]$Level = 'Verbose'
                 )
                 Write-BridgeLog -Stage $Stage -Message $Message -Level $Level
             }
 
             function Send-BridgeNotification {
-                param([ValidateSet('Closed','Opened')]$Type, [object[]]$State)
+                param([ValidateSet('Closed', 'Opened')]$Type, [object[]]$State)
                 "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
             }
             $defaultParams = @{

@@ -66,22 +66,22 @@ InModuleScope 'BridgeWatcher' {
         It 'Πρέπει να καταγράφεται το σφάλμα όταν προκύπτει εξαίρεση' {
             Mock Write-BridgeLog {}
             # Προετοιμασία των παραμέτρων
-            $maxIterations      = 3
-            $intervalSeconds    = 1
-            $outputFile         = 'C:\Logs\bridge.json'
-            $apiKey             = 'api123'
-            $poUserKey          = 'user123'
-            $poApiKey           = 'token123'
+            $maxIterations = 3
+            $intervalSeconds = 1
+            $outputFile = 'C:\Logs\bridge.json'
+            $apiKey = 'api123'
+            $poUserKey = 'user123'
+            $poApiKey = 'token123'
             # Δημιουργία mock που θα ρίξει εξαίρεση στην Get-BridgeStatusComparison
             Mock Get-BridgeStatusComparison { throw 'Test Exception' }
             # Εκτέλεση της συνάρτησης
             $startBridgeStatusMonitorSplat = @{
-                MaxIterations      = $maxIterations
-                IntervalSeconds    = $intervalSeconds
-                OutputFile         = $outputFile
-                ApiKey             = $apiKey
-                PoUserKey          = $poUserKey
-                PoApiKey           = $poApiKey
+                MaxIterations   = $maxIterations
+                IntervalSeconds = $intervalSeconds
+                OutputFile      = $outputFile
+                ApiKey          = $apiKey
+                PoUserKey       = $poUserKey
+                PoApiKey        = $poApiKey
             }
             Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat
             # Επαληθεύουμε ότι η Write-BridgeLog καλείται για το σφάλμα

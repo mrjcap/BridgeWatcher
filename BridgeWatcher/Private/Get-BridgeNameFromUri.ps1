@@ -29,8 +29,8 @@
         'posidonia' { return 'Ποσειδωνία' }
         default {
             $writeBridgeLogSplat = @{
-                Stage      = 'Ανάλυση'
-                Message    = "⚠️ Δεν αναγνωρίστηκε η γέφυρα στο URI: $ImageUri"
+                Stage   = 'Ανάλυση'
+                Message = "⚠️ Δεν αναγνωρίστηκε η γέφυρα στο URI: $ImageUri"
             }
             Write-BridgeLog @writeBridgeLogSplat
             return 'Άγνωστη'

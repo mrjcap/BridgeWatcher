@@ -33,20 +33,20 @@
             ErrorAction = 'Stop'
         }
         $writeBridgeLogSplat = @{
-            Stage      = 'Ειδοποίηση'
-            Message    = "➜ Αποστολή POST στο Pushover API..."
-            Level      = 'Verbose'
+            Stage   = 'Ειδοποίηση'
+            Message = "➜ Αποστολή POST στο Pushover API..."
+            Level   = 'Verbose'
         }
         Write-BridgeLog @writeBridgeLogSplat
         return Invoke-RestMethod @invokeRestMethodSplat
     } catch {
         $writeBridgeLogSplat = @{
-            Stage      = 'Σφάλμα'
-            Message    = "❌ Αποτυχία αποστολής: $($_.Exception.Message)"
-            Level      = 'Warning'
+            Stage   = 'Σφάλμα'
+            Message = "❌ Αποτυχία αποστολής: $($_.Exception.Message)"
+            Level   = 'Warning'
         }
         Write-BridgeLog @writeBridgeLogSplat
-        $errorRecord = [System.Management.Automation.ErrorRecord]::new($_.Exception,'PushoverSendFailure',[System.Management.Automation.ErrorCategory]::ConnectionError,$Payload)
+        $errorRecord = [System.Management.Automation.ErrorRecord]::new($_.Exception, 'PushoverSendFailure', [System.Management.Automation.ErrorCategory]::ConnectionError, $Payload)
         throw $errorRecord
     }
 }

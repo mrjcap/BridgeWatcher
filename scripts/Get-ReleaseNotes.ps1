@@ -25,59 +25,59 @@
   - Fixed bug Y
 #>
 
-  [CmdletBinding()]
-  param(
+[CmdletBinding()]
+param(
     [Parameter(Mandatory = $true)]
     [string]$Version,
 
     [string]$Path = './CHANGELOG.md'
-  )
+)
 
-  # 1. Έλεγχος αρχείου
-  if (-not (Test-Path $Path)) {
+# 1. Έλεγχος αρχείου
+if (-not (Test-Path $Path)) {
     throw "Το αρχείο '$Path' δεν βρέθηκε."
-  }
+}
 
-  # 2. Κανονικοποίηση version (αφαίρεση προθέματος 'v')
-  $normalizedVersion = $Version -replace '^v', ''
+# 2. Κανονικοποίηση version (αφαίρεση προθέματος 'v')
+$normalizedVersion = $Version -replace '^v', ''
 
-  # 3. Ανάγνωση changelog
-  $changelog = Get-Content $Path -Raw
+# 3. Ανάγνωση changelog
+$changelog = Get-Content $Path -Raw
 
-  # 4. Regex για extraction του section
-  $sectionPattern = "(## \[$normalizedVersion\][^\r\n]*\r?\n(?:.*?\r?\n)*?)(?=\r?\n## |\Z)"
-  if ($changelog -notmatch $sectionPattern) {
+# 4. Regex για extraction του section
+$sectionPattern = "(## \[$normalizedVersion\][^\r\n]*\r?\n(?:.*?\r?\n)*?)(?=\r?\n## |\Z)"
+if ($changelog -notmatch $sectionPattern) {
     Write-Warning "Δεν βρέθηκε changelog entry για '$Version'."
     return ''
-  }
-  $section = $matches[1].Trim()
+}
+$section = $matches[1].Trim()
 
-  # 5. Mapping headers → emojis
-  $headerEmojis = @{
-    'Προστέθηκαν'               = '✨'
-    'Αλλαγές'                   = '🔄'
-    'Διορθώθηκαν'               = '🐛'
-    'Τεκμηρίωση'                = '📝'
-    'Καταργήθηκαν'              = '❌'
-    'Ασφάλεια'                  = '🔒'
-    'Βελτιώσεις'                = '⚡'
-    'Αφαιρέθηκαν'               = '❌'
-    'Υποψήφια προς απόσυρση'    = '⚠️'
-  }
+# 5. Mapping headers → emojis
+$headerEmojis = @{
+    'Προστέθηκαν'            = '✨'
+    'Αλλαγές'                = '🔄'
+    'Διορθώθηκαν'            = '🐛'
+    'Τεκμηρίωση'             = '📝'
+    'Καταργήθηκαν'           = '❌'
+    'Ασφάλεια'               = '🔒'
+    'Βελτιώσεις'             = '⚡'
+    'Αφαιρέθηκαν'            = '❌'
+    'Υποψήφια προς απόσυρση' = '⚠️'
+}
 
-  # 6. Εφαρμογή formatting
-  foreach ($header in $headerEmojis.Keys) {
+# 6. Εφαρμογή formatting
+foreach ($header in $headerEmojis.Keys) {
     $emoji = [regex]::Escape($headerEmojis[$header])
     # Μόνο αν δεν υπάρχει ήδη το emoji
     $pattern = "(^###\s*)(?!$emoji\s)($header)"
     $section = [regex]::Replace(
-      $section,
-      $pattern,
-      "`$1$emoji $header",
-      'Multiline'
+        $section,
+        $pattern,
+        "`$1$emoji $header",
+        'Multiline'
     )
-  }
+}
 
-  # 7. Επιστροφή αποτελέσματος
-  return $section
+# 7. Επιστροφή αποτελέσματος
+return $section
 

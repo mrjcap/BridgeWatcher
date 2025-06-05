@@ -34,33 +34,33 @@
 #>
 [CmdletBinding()]
 param(
-  [string]$From,
-  [string]$To = 'HEAD',
-  [switch]$ExcludeHousekeeping,
-  [switch]$IncludeMergeCommits
+    [string]$From,
+    [string]$To = 'HEAD',
+    [switch]$ExcludeHousekeeping,
+    [switch]$IncludeMergeCommits
 )
 
 function Get-LatestTagOnCurrentBranch {
-  # Επιστρέφει το τελευταίο tag στο current branch (όχι απλά το τελευταίο tag by date)
-  $tag = git describe --tags --abbrev=0 2>$null
-  if (-not $tag) {
-    Write-Verbose 'Δεν βρέθηκαν tags στο current branch. Επιστροφή πρώτου commit.'
-    return (git rev-list --max-parents=0 HEAD).Trim()
-  }
-  return $tag
+    # Επιστρέφει το τελευταίο tag στο current branch (όχι απλά το τελευταίο tag by date)
+    $tag = git describe --tags --abbrev=0 2>$null
+    if (-not $tag) {
+        Write-Verbose 'Δεν βρέθηκαν tags στο current branch. Επιστροφή πρώτου commit.'
+        return (git rev-list --max-parents=0 HEAD).Trim()
+    }
+    return $tag
 }
 
 # 1. Προσδιορισμός From/To refs
 if (-not $From) {
-  $From = Get-LatestTagOnCurrentBranch
+    $From = Get-LatestTagOnCurrentBranch
 }
 if (-not $To) {
-  $To = 'HEAD'
+    $To = 'HEAD'
 }
 
 if ($From -eq $To) {
-  Write-Verbose "From και To refs είναι ίδια ($From). Δεν υπάρχουν νέα commits."
-  return @()
+    Write-Verbose "From και To refs είναι ίδια ($From). Δεν υπάρχουν νέα commits."
+    return @()
 }
 
 Write-Verbose "Λαμβάνονται commits από '$From' έως '$To'..."
@@ -70,23 +70,23 @@ $gitArgs = @("$From..$To", '--pretty=format:%s')
 if (-not $IncludeMergeCommits) { $gitArgs += '--no-merges' }
 
 if ($ExcludeHousekeeping) {
-  # Εξαίρεση housekeeping/CI/τεχνικών commits με approved patterns
-  $gitArgs += @(
-    '--invert-grep',
-    '--grep=^(chore:|chore\(|fix:|fix\(|ci:|ci\(|docs:|build:|test:|refactor:|perf:|Ενημέρωση|Προσθήκη συγχρονισμού)',
-    '--extended-regexp'
-  )
+    # Εξαίρεση housekeeping/CI/τεχνικών commits με approved patterns
+    $gitArgs += @(
+        '--invert-grep',
+        '--grep=^(chore:|chore\(|fix:|fix\(|ci:|ci\(|docs:|build:|test:|refactor:|perf:|Ενημέρωση|Προσθήκη συγχρονισμού)',
+        '--extended-regexp'
+    )
 }
 
 # 3. Εκτέλεση git log και καθαρισμός αποτελεσμάτων
 try {
-  $messages = git log @gitArgs | Where-Object { $_.Trim() }
-  if ($messages) {
-    $messages
-  } else {
-    Write-Verbose 'Δεν βρέθηκαν user-facing commits στο επιλεγμένο range.'
-  }
+    $messages = git log @gitArgs | Where-Object { $_.Trim() }
+    if ($messages) {
+        $messages
+    } else {
+        Write-Verbose 'Δεν βρέθηκαν user-facing commits στο επιλεγμένο range.'
+    }
 } catch {
-  Write-Error "Σφάλμα εκτέλεσης git log: $_"
-  throw
+    Write-Error "Σφάλμα εκτέλεσης git log: $_"
+    throw
 }

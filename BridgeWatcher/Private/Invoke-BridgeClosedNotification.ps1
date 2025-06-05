@@ -38,9 +38,9 @@
         switch ($entry.gefyraStatus) {
             'Κλειστή για συντήρηση' {
                 $writeBridgeLogSplat = @{
-                    Stage      = 'Ειδοποίηση'
-                    Message    = "🛑 Ειδοποίηση: $($entry.gefyraName)ς είναι κλειστή για συντήρηση (χωρίς OCR)."
-                    Level      = 'Debug'
+                    Stage   = 'Ειδοποίηση'
+                    Message = "🛑 Ειδοποίηση: $($entry.gefyraName)ς είναι κλειστή για συντήρηση (χωρίς OCR)."
+                    Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
                 $pushoverSplat = @{
@@ -53,9 +53,9 @@
             }
             'Μόνιμα κλειστή' {
                 $writeBridgeLogSplat = @{
-                    Stage      = 'Ειδοποίηση'
-                    Message    = "🛑 Ειδοποίηση: $($entry.gefyraName)ς είναι μόνιμα κλειστή (χωρίς OCR)."
-                    Level      = 'Debug'
+                    Stage   = 'Ειδοποίηση'
+                    Message = "🛑 Ειδοποίηση: $($entry.gefyraName)ς είναι μόνιμα κλειστή (χωρίς OCR)."
+                    Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
                 $pushoverSplat = @{
@@ -68,15 +68,15 @@
             }
             'Κλειστή με πρόγραμμα' {
                 $writeBridgeLogSplat = @{
-                    Stage      = 'Ειδοποίηση'
-                    Message    = "📸 Ειδοποίηση: $($entry.gefyraName) είναι κλειστή με πρόγραμμα (θα γίνει OCR)."
-                    Level      = 'Debug'
+                    Stage   = 'Ειδοποίηση'
+                    Message = "📸 Ειδοποίηση: $($entry.gefyraName) είναι κλειστή με πρόγραμμα (θα γίνει OCR)."
+                    Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
                 $writeBridgeLogSplat = @{
-                    Stage      = 'Ανάλυση'
-                    Message    = "📷 Εικόνα προς OCR: $($entry.imageUrl)"
-                    Level      = 'Debug'
+                    Stage   = 'Ανάλυση'
+                    Message = "📷 Εικόνα προς OCR: $($entry.imageUrl)"
+                    Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
                 $ocrSplat = @{
@@ -98,18 +98,18 @@
                     }
                 } catch {
                     $writeBridgeLogSplat = @{
-                        Stage      = 'Σφάλμα'
-                        Message    = "❌ Απέτυχε η OCR για $($entry.imageUrl): $($_.Exception.Message)"
-                        Level      = 'Warning'
+                        Stage   = 'Σφάλμα'
+                        Message = "❌ Απέτυχε η OCR για $($entry.imageUrl): $($_.Exception.Message)"
+                        Level   = 'Warning'
                     }
                     Write-BridgeLog @writeBridgeLogSplat
                 }
             }
             default {
                 $writeBridgeLogSplat = @{
-                    Stage      = 'Ειδοποίηση'
-                    Message    = "ℹ️ Αγνοείται ειδοποίηση για $($entry.gefyraName)ς με κατάσταση: $($entry.gefyraStatus)"
-                    Level      = 'Debug'
+                    Stage   = 'Ειδοποίηση'
+                    Message = "ℹ️ Αγνοείται ειδοποίηση για $($entry.gefyraName)ς με κατάσταση: $($entry.gefyraStatus)"
+                    Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
             }

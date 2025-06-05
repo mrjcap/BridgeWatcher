@@ -47,7 +47,7 @@
         }
         # Παίρνουμε τα 2 πρώτα matches
         $from = [datetime]::ParseExact($bmatches[0].Value, 'dd/MM/yyyy HH:mm', $null)
-        $to   = [datetime]::ParseExact($bmatches[1].Value, 'dd/MM/yyyy HH:mm', $null)
+        $to = [datetime]::ParseExact($bmatches[1].Value, 'dd/MM/yyyy HH:mm', $null)
         # Επιστρέφουμε structured αντικείμενο
         return [PSCustomObject]@{
             From      = $from

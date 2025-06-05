@@ -47,8 +47,8 @@ InModuleScope 'BridgeWatcher' {
         It 'Επιστρέφει exception όταν αποτυγχάνει η κλήση στο API' {
             Mock Invoke-RestMethod { throw 'Simulated API failure' }
             {
-            Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}'
-            }  | Should -Throw "Google Vision API call failed: Simulated API failure"
+                Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}'
+            } | Should -Throw "Google Vision API call failed: Simulated API failure"
         }
     }
 }

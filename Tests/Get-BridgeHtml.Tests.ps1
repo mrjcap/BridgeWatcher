@@ -24,7 +24,7 @@ InModuleScope 'BridgeWatcher' {
         Context 'Σφάλμα κατά την ανάκτηση HTML' {
             It "Γράφει Exception όταν το Invoke-WebRequest αποτυγχάνει" {
                 Mock Invoke-WebRequest { throw 'Network error!' }
-                {Get-BridgeHtml }| Should -Throw "Αποτυχία λήψης HTML: Network error!"
+                { Get-BridgeHtml } | Should -Throw "Αποτυχία λήψης HTML: Network error!"
             }
         }
     }

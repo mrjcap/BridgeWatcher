@@ -47,8 +47,8 @@
         $hasInfoImage = $BridgeImages | Where-Object { $_.src -match 'info\.php\?\d+' }
         if (-not $hasInfoImage -or $hasInfoImage.Count -eq 0) {
             $writeBridgeLogSplat = @{
-                Stage      = 'Ανάλυση'
-                Message    = "Παραλείπεται $Location ($Status): Δεν βρέθηκε info εικόνα"
+                Stage   = 'Ανάλυση'
+                Message = "Παραλείπεται $Location ($Status): Δεν βρέθηκε info εικόνα"
             }
             Write-BridgeLog @writeBridgeLogSplat
             return $null

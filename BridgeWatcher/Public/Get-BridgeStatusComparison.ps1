@@ -37,9 +37,9 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey
     )
     $writeBridgeLogSplat = @{
-        Stage      = 'Ανάλυση'
-        Message    = 'Starting comparison...'
-        Level      = "Verbose"
+        Stage   = 'Ανάλυση'
+        Message = 'Starting comparison...'
+        Level   = "Verbose"
     }
     Write-BridgeLog @writeBridgeLogSplat
     if (-not (Test-Path $OutputFile)) {
@@ -54,15 +54,15 @@
         $getDiorigaPreviousStatusSplat = @{
             InputFile = $OutputFile
         }
-        $previousState    = Get-BridgePreviousStatus @getDiorigaPreviousStatusSplat
-        $currentState     = Get-BridgeStatus
+        $previousState = Get-BridgePreviousStatus @getDiorigaPreviousStatusSplat
+        $currentState = Get-BridgeStatus
     }
-    $invokeSplat      = @{
-        PreviousState    = $previousState
-        CurrentState     = $currentState
-        ApiKey           = $ApiKey
-        PoUserKey        = $PoUserKey
-        PoApiKey         = $PoApiKey
+    $invokeSplat = @{
+        PreviousState = $previousState
+        CurrentState  = $currentState
+        ApiKey        = $ApiKey
+        PoUserKey     = $PoUserKey
+        PoApiKey      = $PoApiKey
     }
     Invoke-BridgeStatusComparison @invokeSplat
     $exportBridgeStatusJsonSplat = @{
@@ -71,9 +71,9 @@
     }
     Export-BridgeStatusJson @exportBridgeStatusJsonSplat
     $writeBridgeLogSplat = @{
-        Stage      = 'Ανάλυση'
-        Message    = 'Finished comparison and saved snapshot.'
-        Level      = "Verbose"
+        Stage   = 'Ανάλυση'
+        Message = 'Finished comparison and saved snapshot.'
+        Level   = "Verbose"
     }
     Write-BridgeLog @writeBridgeLogSplat
 }

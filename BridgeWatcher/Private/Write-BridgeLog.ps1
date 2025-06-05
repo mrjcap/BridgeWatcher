@@ -1,6 +1,6 @@
 ﻿function Write-BridgeLog {
     [CmdletBinding()]
-<#
+    <#
 .SYNOPSIS
 Καταγράφει μηνύματα λειτουργίας του συστήματος.
 
@@ -32,10 +32,10 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
         [string]$Stage,
         [Parameter(Mandatory)][string]$Message,
         [Parameter()][ValidateSet('Verbose', 'Debug', 'Warning')]
-        [string]$Level    = 'Verbose'
+        [string]$Level = 'Verbose'
     )
-    $prefix    = "[Bridge:$Stage]"
-    $output    = "$prefix $Message"
+    $prefix = "[Bridge:$Stage]"
+    $output = "$prefix $Message"
     # Console logging
     switch ($Level) {
         'Verbose' { Write-Verbose $output }
@@ -44,34 +44,34 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
     }
     # File logging - two levels up
     $splitPathSplat = @{
-        Path      = (Split-Path -Path $PSScriptRoot -Parent)
-        Parent    = $true
+        Path   = (Split-Path -Path $PSScriptRoot -Parent)
+        Parent = $true
     }
-    $basePath         = Split-Path @splitPathSplat
-    $joinPathSplat    = @{
-        Path         = $basePath
-        ChildPath    = 'logs'
+    $basePath = Split-Path @splitPathSplat
+    $joinPathSplat = @{
+        Path      = $basePath
+        ChildPath = 'logs'
     }
-    $logDir    = Join-Path @joinPathSplat
+    $logDir = Join-Path @joinPathSplat
     if (-not (Test-Path $logDir)) {
         $newItemSplat = @{
-            Path        = $logDir
-            ItemType    = 'Directory'
-            Force       = $true
+            Path     = $logDir
+            ItemType = 'Directory'
+            Force    = $true
         }
         New-Item @newItemSplat | Out-Null
     }
-    $dateStr          = (Get-Date).ToString('yyyy-MM-dd')
-    $timeStr          = (Get-Date).ToString('HH:mm:ss')
-    $joinPathSplat    = @{
-        Path         = $logDir
-        ChildPath    = "BridgeWatcher-$dateStr.log"
+    $dateStr = (Get-Date).ToString('yyyy-MM-dd')
+    $timeStr = (Get-Date).ToString('HH:mm:ss')
+    $joinPathSplat = @{
+        Path      = $logDir
+        ChildPath = "BridgeWatcher-$dateStr.log"
     }
-    $logPath    = Join-Path @joinPathSplat
-    $logLine    = "[$timeStr] [$Stage] $Message"
+    $logPath = Join-Path @joinPathSplat
+    $logLine = "[$timeStr] [$Stage] $Message"
     $addContentSplat = @{
-        Path     = $logPath
-        Value    = $logLine
+        Path  = $logPath
+        Value = $logLine
     }
     Add-Content @addContentSplat
 }

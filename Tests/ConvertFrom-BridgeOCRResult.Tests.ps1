@@ -122,7 +122,7 @@ InModuleScope 'BridgeWatcher' {
                     }
                 )
             }
-            {ConvertFrom-BridgeOCRResult -ApiResponse $mockApiResponse -ImageUri 'mock_image.jpg'} | Should -Throw
+            { ConvertFrom-BridgeOCRResult -ApiResponse $mockApiResponse -ImageUri 'mock_image.jpg' } | Should -Throw
             Assert-MockCalled Write-BridgeLog -Exactly 2 -Scope It
         }
     }

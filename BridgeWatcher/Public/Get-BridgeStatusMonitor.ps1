@@ -46,12 +46,12 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey
     )
     begin {
-        $iteration              = 0
-        $infiniteLoop           = $MaxIterations -eq 0
-        $writeBridgeLogSplat    = @{
-            Stage      = 'Ανάλυση'
-            Message    = "Ξεκίνησε ο κύκλος παρακολούθησης: Διάστημα = $IntervalSeconds δευτ., Μέγιστες επαναλήψεις = $MaxIterations"
-            Level      = 'Verbose'
+        $iteration = 0
+        $infiniteLoop = $MaxIterations -eq 0
+        $writeBridgeLogSplat = @{
+            Stage   = 'Ανάλυση'
+            Message = "Ξεκίνησε ο κύκλος παρακολούθησης: Διάστημα = $IntervalSeconds δευτ., Μέγιστες επαναλήψεις = $MaxIterations"
+            Level   = 'Verbose'
         }
         Write-BridgeLog @writeBridgeLogSplat
     }
@@ -73,17 +73,17 @@
                 Start-Sleep @startSleepSplat
             } catch {
                 $writeBridgeLogSplat = @{
-                Stage   = 'Σφάλμα'
-                Message = "❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας: $($_) $iteration"
-                Level   = 'Debug'
+                    Stage   = 'Σφάλμα'
+                    Message = "❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας: $($_) $iteration"
+                    Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
             }
         }
         $writeBridgeLogSplat = @{
-            Stage      = 'Ανάλυση'
-            Message    = "✅ Ο κύκλος παρακολούθησης ολοκληρώθηκε μετά από $iteration επανάληψη(εις)."
-            Level      = 'Verbose'
+            Stage   = 'Ανάλυση'
+            Message = "✅ Ο κύκλος παρακολούθησης ολοκληρώθηκε μετά από $iteration επανάληψη(εις)."
+            Level   = 'Verbose'
         }
         Write-BridgeLog @writeBridgeLogSplat
     }

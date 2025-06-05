@@ -39,7 +39,7 @@
             Level   = 'Warning'
         }
         Write-BridgeLog @writeBridgeLogSplat
-        throw [System.Management.Automation.ErrorRecord]::new(([System.Exception]::new('Δεν βρέθηκε κείμενο OCR στην απόκριση.')),'OCRTextNotFound',[System.Management.Automation.ErrorCategory]::InvalidData,$ApiResponse)
+        throw [System.Management.Automation.ErrorRecord]::new(([System.Exception]::new('Δεν βρέθηκε κείμενο OCR στην απόκριση.')), 'OCRTextNotFound', [System.Management.Automation.ErrorCategory]::InvalidData, $ApiResponse)
     }
     $rawText = $ApiResponse.responses[0].textAnnotations[0].description
     $Lines = $rawText
