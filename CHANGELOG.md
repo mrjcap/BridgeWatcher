@@ -1,7 +1,9 @@
 # Αρχείο Αλλαγών (Changelog)
 
-Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα τεκμηριώνονται σε αυτό το αρχείο,
-ακολουθώντας το πρότυπο [Keep a Changelog](https://keepachangelog.com/).
+Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
+
+Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
+και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
@@ -221,3 +223,4 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
+
