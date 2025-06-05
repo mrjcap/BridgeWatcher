@@ -63,7 +63,7 @@
             Level   = 'Warning'
         }
         Write-BridgeLog @writeBridgeLogSplat
-        return @()
+        return
     }
 
     $from = $timeRange.From
