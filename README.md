@@ -154,6 +154,106 @@ $params = @{
 Get-BridgeStatusMonitor @params
 ```
 
+### Παράδειγμα 4: Ασφαλής Αυτοματοποιημένη Εκτέλεση με SecretStore
+
+Για σενάρια automation (CI/CD, Scheduled Tasks, unattended jobs), 
+το προτεινόμενο best practice είναι η χρήση του [Microsoft.PowerShell.SecretStore](https://learn.microsoft.com/en-us/powershell/utility-modules/secretmanagement/use-secretstore-in-automation) 
+για ασφαλή διαχείριση secrets και API keys. Τα παρακάτω βήματα είναι πλήρως συμβατά με NIST SP 800-53 (IA-5) και προτείνονται από την ίδια την Microsoft.
+
+---
+
+#### 1️⃣ Εγκατάσταση & Εισαγωγή Modules
+
+```powershell
+Install-Module -Name Microsoft.PowerShell.SecretStore -Repository PSGallery -Force
+Install-Module -Name Microsoft.PowerShell.SecretManagement -Repository PSGallery -Force
+Import-Module Microsoft.PowerShell.SecretStore
+Import-Module Microsoft.PowerShell.SecretManagement
+```
+
+---
+
+#### 2️⃣ Δημιουργία και Αποθήκευση Vault Password (SecureString)
+
+```powershell
+# Εκτέλεση μία φορά: Ορισμός κωδικού vault (συνίσταται η εισαγωγή με Get-Credential για να μη μένει ορατός)
+$credential = Get-Credential -UserName 'SecureStore'
+$securePasswordPath = 'C:\automation\passwd.xml'
+$credential.Password | Export-Clixml -Path $securePasswordPath
+```
+
+---
+
+#### 3️⃣ Ρύθμιση SecretStore Vault για Automation (No Prompt)
+
+```powershell
+Register-SecretVault -Name SecretStore -ModuleName Microsoft.PowerShell.SecretStore -DefaultVault
+
+$password = Import-Clixml -Path $securePasswordPath
+$storeConfiguration = @{
+    Authentication   = 'Password'
+    PasswordTimeout  = 3600   # 1 ώρα (σε δευτερόλεπτα)
+    Interaction      = 'None' # Δεν επιτρέπονται prompts
+    Password         = $password
+    Confirm          = $false
+}
+Set-SecretStoreConfiguration @storeConfiguration
+```
+
+---
+
+#### 4️⃣ Προσθήκη Secrets στο Vault
+
+```powershell
+Set-Secret -Name BW_GoogleVisionKey   -Secret 'your-google-vision-api-key'
+Set-Secret -Name BW_PushoverApiKey    -Secret 'your-pushover-api-key'
+Set-Secret -Name BW_PushoverUserKey   -Secret 'your-pushover-user-key'
+```
+
+---
+
+#### 5️⃣ Χρήση Secrets σε Automation Script
+
+```powershell
+# Ξεκλείδωμα του SecretStore στην αρχή του script (unattended)
+$password = Import-Clixml -Path $securePasswordPath
+Unlock-SecretStore -Password $password
+
+# Ανάκτηση secrets
+$ApiKey    = Get-Secret -Name BW_GoogleVisionKey   -AsPlainText
+$PoApiKey  = Get-Secret -Name BW_PushoverApiKey    -AsPlainText
+$PoUserKey = Get-Secret -Name BW_PushoverUserKey   -AsPlainText
+
+$params = @{
+    MaxIterations   = 0
+    IntervalSeconds = 600
+    ApiKey          = $ApiKey
+    PoApiKey        = $PoApiKey
+    PoUserKey       = $PoUserKey
+    OutputFile      = './BridgeStatusSnapshot.json'
+}
+
+Get-BridgeStatusMonitor @params
+```
+
+---
+
+#### ⚡ Σημειώσεις & Best Practices
+
+- Ο φάκελος του κωδικού (`C:\automation\passwd.xml`) πρέπει να είναι προστατευμένος με NTFS δικαιώματα.
+- Το vault παραμένει ξεκλείδωτο για όσο έχεις ορίσει στο `PasswordTimeout`.
+- Για cloud ή Linux/macOS automation προτίμησε secrets provider της πλατφόρμας (π.χ. [GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets), [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/)).
+- Μην καταγράφεις ποτέ τα secrets σε log files.
+- Για auditability και compliance, δες [NIST SP 800-53 - IA-5](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf).
+
+---
+
+> Περισσότερα παραδείγματα και τεκμηρίωση:  
+> - [MS Docs - Use SecretStore in automation](https://learn.microsoft.com/en-us/powershell/utility-modules/secretmanagement/use-secretstore-in-automation)  
+> - [MS Docs - SecretManagement Overview](https://learn.microsoft.com/en-us/powershell/secret-management/overview)  
+
+---
+
 ## ⚙️ Παράμετροι & Ρυθμίσεις
 
 ### Get-BridgeStatusMonitor Parameters
