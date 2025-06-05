@@ -248,13 +248,6 @@ Get-BridgeStatusMonitor @params
 
 ---
 
-> Περισσότερα παραδείγματα και τεκμηρίωση:
-
-> - [MS Docs - Use SecretStore in automation](https://learn.microsoft.com/en-us/powershell/utility-modules/secretmanagement/use-secretstore-in-automation)  
-> - [MS Docs - SecretManagement Overview](https://learn.microsoft.com/en-us/powershell/secret-management/overview)  
-
----
-
 ## ⚙️ Παράμετροι & Ρυθμίσεις
 
 ### Get-BridgeStatusMonitor Parameters
