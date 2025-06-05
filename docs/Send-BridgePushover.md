@@ -13,7 +13,7 @@ schema: 2.0.0
 
 ## SYNTAX
 
-```powershell
+```
 Send-BridgePushover [-PoUserKey] <String> [-PoApiKey] <String> [-Message] <String> [[-Device] <String>]
  [[-Title] <String>] [[-Url] <String>] [[-UrlTitle] <String>] [[-Priority] <Int32>] [[-Sound] <String>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
@@ -197,9 +197,7 @@ Accept wildcard characters: False
 
 ### CommonParameters
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
- -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
- For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
