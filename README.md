@@ -157,7 +157,7 @@ Get-BridgeStatusMonitor @params
 ### Παράδειγμα 4: Ασφαλής Αυτοματοποιημένη Εκτέλεση με SecretStore
 
 Για σενάρια automation (CI/CD, Scheduled Tasks, unattended jobs), 
-το προτεινόμενο best practice είναι η χρήση του [Microsoft.PowerShell.SecretStore](https://learn.microsoft.com/en-us/powershell/utility-modules/secretmanagement/use-secretstore-in-automation) 
+το προτεινόμενο best practice είναι η χρήση του [Microsoft.PowerShell.SecretStore](https://learn.microsoft.com/en-us/powershell/utility-modules/secretmanagement/how-to/using-secrets-in-automation?view=ps-modules) 
 για ασφαλή διαχείριση secrets και API keys. Τα παρακάτω βήματα είναι πλήρως συμβατά με NIST SP 800-53 (IA-5) και προτείνονται από την ίδια την Microsoft.
 
 ---
