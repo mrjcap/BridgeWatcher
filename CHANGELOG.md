@@ -5,11 +5,58 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.68] - 2025-06-10
+
+### 🐛 Διορθώθηκαν
+
+#### Alpine Linux Group Conflicts
+- Επίλυση conflict με το προεγκατεστημένο Alpine 'users' group (GID 100)
+  - Smart conditional logic για ανίχνευση GID collision
+  - PGID=100: χρήση existing 'users' group
+  - PGID≠100: δημιουργία custom 'appgroup'
+- Διόρθωση "chown: unknown user/group appuser:appgroup" error
+  - Μετάβαση σε numeric ${PUID}:${PGID} ownership
+  - Platform-agnostic approach που παίζει παντού
+
+#### Critical Path Typo
+- Διόρθωση: `/tm` → `/tmp` στο chmod 1777
+  - Χωρίς αυτό, το healthcheck fallback θα απέτυχνε silently
+  - Affects: PowerShell temp file operations
+
+### 🔄 Αλλαγές
+- Refactoring του user creation flow με if/else logic
+- Adoption των numeric IDs σε όλα τα chown operations
+- Improved error resilience για edge cases
+
+### ✨ Προστέθηκαν
+- Full compatibility matrix:
+  - ✅ Unraid NAS (99:100 - nobody:users)
+  - ✅ Standard Linux (1000:1000)
+  - ✅ Synology DSM (1024:100)
+  - ✅ Custom environments (arbitrary UID/GID)
+- Comments για documentation του Alpine behavior
+
 ## [1.0.67] - 2025-06-10
 
-### Τεκμηρίωση
+### 🐛 Διορθώθηκαν
 
-- docs(changelog): ενημέρωση CHANGELOG.md
+#### Alpine Linux User Creation Syntax
+- Αφαίρεση του `-S` flag από το `addgroup` (unsupported στο Alpine/BusyBox)
+- Αντικατάσταση `-S` με `-D` στο `adduser` για Alpine compatibility
+  - `-D`: Don't assign password (Alpine style)
+  - `-S`: System user (Debian/Ubuntu style - not available)
+- Προσθήκη explicit shell specification: `-s /bin/sh`
+- Διόρθωση argument ordering για BusyBox utilities
+
+### 🔄 Αλλαγές
+- Μετάβαση από GNU coreutils syntax σε BusyBox syntax
+- Χρήση Alpine-specific flags για user/group management
+- Βελτίωση compatibility με το mcr.microsoft.com/powershell Alpine image
+
+### 📝 Τεκμηρίωση
+- Ενημέρωση CHANGELOG.md με αναλυτικές εγγραφές για v1.0.66
+- Προσθήκη τεχνικών details για το dynamic UID/GID feature
+- Χρήση emoji categories για improved readability
 
 ## [1.0.66] - 2025-06-10
 
