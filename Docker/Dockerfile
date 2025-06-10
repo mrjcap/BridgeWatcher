@@ -10,8 +10,8 @@ RUN apk update && \
     apk del tzdata && \
     rm -rf /var/cache/apk/*
 
-RUN addgroup -g ${PGID} -S appgroup && \
-    adduser -u ${PUID} -S appuser -G appgroup -h /home/appuser
+RUN addgroup -g ${PGID} appgroup && \
+    adduser -D -u ${PUID} -G appgroup -h /home/appuser -s /bin/sh appuser
 
 RUN mkdir -p /home/appuser/scripts/modules \
              /home/appuser/logs \
