@@ -41,10 +41,26 @@
 
 ## [1.0.63] - 2025-06-05
 
-### Τεκμηρίωση
+### 📝 Τεκμηρίωση
+- Ενημέρωση README.md με εκτενές παράδειγμα για SecretStore automation
+- Ενημέρωση CHANGELOG.md με την τρέχουσα έκδοση
 
-- docs(readme): ενημέρωση README.md
-- docs(changelog): ενημέρωση CHANGELOG.md
+### ✨ Προστέθηκαν
+- Detailed guide για ασφαλή αυτοματοποίηση με Microsoft.PowerShell.SecretStore
+  - Step-by-step οδηγίες για unattended execution
+  - NIST SP 800-53 (IA-5) compliant approach
+  - Best practices για secret management
+- Παραδείγματα για:
+  - Vault password storage με Export-Clixml
+  - SecretStore configuration για automation
+  - Secure secret retrieval σε scripts
+
+### 🔧 CI & Συντήρηση
+- Βελτίωση release workflow με automated changelog commits
+  - Git user configuration για github-actions[bot]
+  - Auto-commit changelog updates με [skip ci] flag
+  - Push changes πριν το release creation
+- Version bump από 1.0.62 σε 1.0.63
 
 ---
 
