@@ -10,18 +10,23 @@ RUN apk update && \
     apk del tzdata && \
     rm -rf /var/cache/apk/*
 
-RUN addgroup -g ${PGID} appgroup && \
-    adduser -D -u ${PUID} -G appgroup -h /home/appuser -s /bin/sh appuser
-
+# Smart user creation - reuse 'users' group for GID 100
+RUN if [ "${PGID}" = "100" ]; then \
+        adduser -D -u ${PUID} -G users -h /home/appuser -s /bin/sh appuser; \
+    else \
+        addgroup -g ${PGID} appgroup && \
+        adduser -D -u ${PUID} -G appgroup -h /home/appuser -s /bin/sh appuser; \
+    fi
+# Use UID:GID directly - always works!
 RUN mkdir -p /home/appuser/scripts/modules \
              /home/appuser/logs \
              /home/appuser/output \
              /home/appuser/.cache \
              /home/appuser/.local && \
-    chown -R appuser:appgroup /home/appuser && \
+    chown -R ${PUID}:${PGID} /home/appuser && \
     chmod -R 755 /home/appuser
 
-RUN mkdir -p /tmp && chmod 1777 /tm
+RUN mkdir -p /tmp && chmod 1777 /tmp
 
 USER appuser
 WORKDIR /home/appuser/scripts
