@@ -1,6 +1,6 @@
 ﻿@{
     RootModule         = 'BridgeWatcher.psm1'
-    ModuleVersion      = '1.0.63'
+    ModuleVersion = '1.0.64'
     GUID               = 'e7c0fd85-a740-47f4-8179-d952e33edb9f'
     Author             = 'Γιάννης Καπλατζής'
     CompanyName        = 'Open Source Community'
