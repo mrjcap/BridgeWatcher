@@ -26,7 +26,7 @@ WORKDIR /home/appuser/scripts
 
 # Copy files - το entrypoint.sh χρειάζεται special handling
 COPY --chown=appuser:appgroup ./BridgeWatcher ./modules/BridgeWatcher
-COPY --chown=appuser:appgroup Docker/entrypoint.sh ./entrypoint.sh
+COPY --chown=appuser:appgroup Docker/entrypoint.sh /home/appuser/scripts/entrypoint.sh
 COPY --chown=appuser:appgroup run.ps1 .
 
 # Ensure entrypoint is executable (δεν χρειάζεται RUN chmod γιατί δεν έχουμε shell access)

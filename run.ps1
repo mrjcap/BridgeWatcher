@@ -1,8 +1,8 @@
-﻿Import-Module 'C:\code\BridgeWatcher\BridgeWatcher\BridgeWatcher.psm1' -Force -Verbose
+﻿Import-Module './modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
 
-$API_KEY = Get-Secret -Name GoogleVisionAPI -AsPlainText
-$POAPI_KEY = Get-Secret -Name POAPIKEY -AsPlainText
-$POUSER_KEY = Get-Secret -Name POUSERKEY -AsPlainText
+$API_KEY = Get-Content '/run/secrets/API_KEY' -Raw
+$POAPI_KEY = Get-Content '/run/secrets/POAPI_KEY' -Raw
+$POUSER_KEY = Get-Content '/run/secrets/POUSER_KEY' -Raw
 
 if (-not $API_KEY -or -not $POAPI_KEY -or -not $POUSER_KEY) {
     throw 'One or more secrets are missing or empty'
