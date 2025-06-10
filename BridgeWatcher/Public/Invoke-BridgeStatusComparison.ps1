@@ -59,23 +59,18 @@
             Write-BridgeStage @writeBridgeStageSplat
             return $false
         }
-        $sendBridgeNotificationSplat = @{
-            Type      = 'Closed'
-            State     = $CurrentState
-            ApiKey    = $ApiKey
-            PoUserKey = $PoUserKey
-            PoApiKey  = $PoApiKey
-        }
+
         $handlerMap = @{
-            'Κλειστή για συντήρηση|=>' = { Send-BridgeNotification @sendBridgeNotificationSplat }
-            'Κλειστή για συντήρηση|<=' = { Send-BridgeNotification @sendBridgeNotificationSplat }
-            'Κλειστή με πρόγραμμα|=>'  = { Send-BridgeNotification @sendBridgeNotificationSplat }
-            'Κλειστή με πρόγραμμα|<='  = { Send-BridgeNotification @sendBridgeNotificationSplat }
-            'Μόνιμα κλειστή|=>'        = { Send-BridgeNotification @sendBridgeNotificationSplat }
-            'Μόνιμα κλειστή|<='        = { Send-BridgeNotification @sendBridgeNotificationSplat }
-            'Ανοιχτή|=>'               = { Send-BridgeNotification @sendBridgeNotificationSplat -Type 'Opened' }
-            'Ανοιχτή|<='               = { Send-BridgeNotification @sendBridgeNotificationSplat -Type 'Opened' }
+            'Κλειστή για συντήρηση|=>' = 'Closed'
+            'Κλειστή για συντήρηση|<=' = 'Closed'
+            'Κλειστή με πρόγραμμα|=>'  = 'Closed'
+            'Κλειστή με πρόγραμμα|<='  = 'Closed'
+            'Μόνιμα κλειστή|=>'        = 'Closed'
+            'Μόνιμα κλειστή|<='        = 'Closed'
+            'Ανοιχτή|=>'               = 'Opened'
+            'Ανοιχτή|<='               = 'Opened'
         }
+
         foreach ($change in $diff) {
             $writeBridgeStageSplat = @{
                 Level   = 'Verbose'
@@ -83,25 +78,47 @@
                 Message = "🌉 $($change.gefyraName) ➜ $($change.gefyraStatus) ($($change.SideIndicator))"
             }
             Write-BridgeStage @writeBridgeStageSplat
-            $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
-            $handler = $handlerMap[$key]
-            switch ($true) {
-                { $handler } { & $handler; continue }
-                { $change.SideIndicator -eq '==' } {
-                    $writeBridgeStageSplat = @{
-                        Level   = 'Verbose'
-                        Stage   = 'Ανάλυση'
-                        Message = "Καμία ουσιαστική αλλαγή στην $($change.gefyraName)."
-                    }
-                    Write-BridgeStage @writeBridgeStageSplat
-                    continue
+
+            if ($change.SideIndicator -eq '==') {
+                $writeBridgeStageSplat = @{
+                    Level   = 'Verbose'
+                    Stage   = 'Ανάλυση'
+                    Message = "Καμία ουσιαστική αλλαγή στην $($change.gefyraName)."
                 }
-                default { $writeBridgeStageSplat = @{
+                Write-BridgeStage @writeBridgeStageSplat
+                continue
+            }
+
+            $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
+            if ($handlerMap.ContainsKey($key)) {
+                $type = $handlerMap[$key]
+                # Βρες το αντικείμενο που άλλαξε στο CurrentState
+                $changedBridgeState = @($CurrentState | Where-Object { $_.GefyraName -eq $change.GefyraName })
+                if ($changedBridgeState.Count -gt 0) {
+                    $sendBridgeNotificationSplat = @{
+                        Type      = $type
+                        State     = $changedBridgeState
+                        ApiKey    = $ApiKey
+                        PoUserKey = $PoUserKey
+                        PoApiKey  = $PoApiKey
+                    }
+                    Send-BridgeNotification @sendBridgeNotificationSplat
+                } else {
+                    $writeBridgeStageSplat = @{
                         Stage   = 'Σφάλμα'
-                        Message = "❓ Άγνωστο combo: $key"
+                        Message = "❓ Δεν βρέθηκε bridge state για $($change.gefyraName) στο CurrentState."
                         Level   = 'Warning'
                     }
-                    Write-BridgeStage @writeBridgeStageSplat }
+                    Write-BridgeStage @writeBridgeStageSplat
+                }
+                continue
+            } else {
+                $writeBridgeStageSplat = @{
+                    Stage   = 'Σφάλμα'
+                    Message = "❓ Άγνωστο combo: $key"
+                    Level   = 'Warning'
+                }
+                Write-BridgeStage @writeBridgeStageSplat
             }
         }
         return $true
