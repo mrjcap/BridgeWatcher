@@ -7,10 +7,24 @@
 
 ## [1.0.66] - 2025-06-10
 
-### Τεκμηρίωση
+### ✨ Προστέθηκαν
+- Dynamic UID/GID support στο Dockerfile για πλήρη Unraid compatibility
+  - ARG directives για PUID/PGID με default values 99:100 (nobody:users)
+  - Configurable user creation κατά το build time
+  - Υποστήριξη custom builds: `docker build --build-arg PUID=1000`
 
-- docs(changelog): ενημέρωση CHANGELOG.md
-- docs(changelog): ενημέρωση CHANGELOG.md
+### 🔄 Αλλαγές
+- Προσθήκη .cache και .local directories για PowerShell module caching
+- Βελτίωση directory structure για better module isolation
+- Cleanup των verbose comments για cleaner Dockerfile
+
+### 🐛 Διορθώθηκαν
+- Typo fix: `/tm` → `/tmp` στο chmod command (critical για healthcheck fallback)
+
+### 📝 Τεκμηρίωση
+- Ενημέρωση CHANGELOG.md με detailed entries για versions 1.0.64 και 1.0.65
+- Προσθήκη emoji categories για καλύτερη αναγνωσιμότητα
+- Αναλυτική τεκμηρίωση των breaking changes και fixes
 
 ## [1.0.65] - 2025-06-10
 
