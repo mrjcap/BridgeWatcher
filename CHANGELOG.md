@@ -5,11 +5,39 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.65] - 2025-06-10
+
+### 🐛 Διορθώθηκαν
+- Διόρθωση absolute path για το entrypoint.sh στο Dockerfile
+  - Από: `./entrypoint.sh` (relative path που μπορεί να προκαλέσει issues)
+  - Σε: `/home/appuser/scripts/entrypoint.sh` (explicit absolute path)
+- Διόρθωση Windows-specific paths στο run.ps1
+  - Import-Module από hardcoded Windows path σε relative path
+  - Συμβατότητα με Linux container environment
+
+### 🔄 Αλλαγές
+- Μετάβαση από PowerShell SecretManagement σε Docker secrets
+  - Αντικατάσταση `Get-Secret` cmdlet με `Get-Content` από mounted secrets
+  - Χρήση standard Docker pattern `/run/secrets/*`
+  - Platform-agnostic secret management
+
 ## [1.0.64] - 2025-06-10
 
-### Τεκμηρίωση
+### 📝 Τεκμηρίωση
+- Ενημέρωση README.md με βελτιωμένες οδηγίες
 
-- docs(readme): ενημέρωση README.md
+### 🐛 Διορθώθηκαν
+- Διόρθωση λογικής αποστολής ειδοποιήσεων ώστε να στέλνονται μόνο για τις επηρεαζόμενες γέφυρες
+  - Αντικατάσταση του `$CurrentState` με το specific bridge object στο `Send-BridgeNotification`
+  - Προσθήκη validation για την ύπαρξη του bridge state πριν την αποστολή
+  - Βελτίωση error handling με descriptive messages
+
+### 🔄 Αλλαγές
+- Διόρθωση μορφοποίησης module manifest (καθαρισμός κενών γραμμών)
+- Refactoring του `Invoke-BridgeStatusComparison` για καλύτερη readability
+  - Αντικατάσταση inline handlers με lookup table
+  - Απλοποίηση της λογικής με `ContainsKey` check
+  - Βελτίωση του control flow με early continues
 
 ## [1.0.63] - 2025-06-05
 
