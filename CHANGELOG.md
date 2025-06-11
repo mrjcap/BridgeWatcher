@@ -21,16 +21,6 @@
 - test(scripts): προσθήκη test script για changelog fixes validation
 - fix(scripts): διόρθωση syntax error στο changelog workflow test
 
-## [Unreleased]
-
-### 🔄 Αλλαγές
-
-- **build(Dockerfile):** μετάβαση σε σύγχρονο .NET runtime base image
-  - Αντικατάσταση του deprecated `mcr.microsoft.com/powershell:alpine-3.20`
-  - Χρήση `mcr.microsoft.com/dotnet/runtime:9.0.6-alpine3.22` με manual PowerShell 7.5.1 installation
-  - Ενημέρωση σε **Alpine Linux v3.22.0** για βελτιωμένη ασφάλεια
-  - Βελτιωμένη μακροπρόθεσμη υποστήριξη και σταθερότητα
-
 ## [1.0.69] - 2025-06-11
 
 ### 🔄 Αλλαγές
