@@ -69,11 +69,10 @@ Write-Verbose "Λαμβάνονται commits από '$From' έως '$To'..."
 $gitArgs = @("$From..$To", '--pretty=format:%s')
 if (-not $IncludeMergeCommits) { $gitArgs += '--no-merges' }
 
-if ($ExcludeHousekeeping) {
-    # Εξαίρεση housekeeping/CI/τεχνικών commits με approved patterns
+if ($ExcludeHousekeeping) {    # Εξαίρεση housekeeping/CI/τεχνικών commits με approved patterns
     $gitArgs += @(
         '--invert-grep',
-        '--grep=^(chore:|chore\(|fix:|fix\(|ci:|ci\(|docs:|build:|test:|refactor:|perf:|Ενημέρωση|Προσθήκη συγχρονισμού)',
+        '--grep=^(chore:|chore\(|ci:|ci\(|docs:|docs\(|build:|test:|refactor:|perf:|style:|Ενημέρωση|Προσθήκη συγχρονισμού|\[skip ci\]|Update changelog)',
         '--extended-regexp'
     )
 }
