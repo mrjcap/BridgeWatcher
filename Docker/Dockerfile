@@ -1,4 +1,4 @@
-﻿git --no-pager diff HEADFROM mcr.microsoft.com/dotnet/runtime:9.0.6-alpine3.22
+﻿FROM mcr.microsoft.com/dotnet/runtime:9.0.6-alpine3.22
 
 ARG PUID=99
 ARG PGID=100
