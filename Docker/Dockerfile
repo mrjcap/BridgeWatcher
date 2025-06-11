@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/powershell:7.5-alpine-3.20
+﻿FROM mcr.microsoft.com/powershell:7.5-alpine-3.20
 
 ARG PUID=99
 ARG PGID=100
@@ -7,8 +7,9 @@ RUN apk update && \
     apk add --no-cache tzdata=2025b-r0 && \
     cp /usr/share/zoneinfo/Europe/Athens /etc/localtime && \
     echo "Europe/Athens" > /etc/timezone && \
-    apk del tzdata && \
     rm -rf /var/cache/apk/*
+
+ENV TZ=Europe/Athens
 
 # Smart user creation - reuse 'users' group for GID 100
 RUN if [ "${PGID}" = "100" ]; then \
@@ -19,10 +20,10 @@ RUN if [ "${PGID}" = "100" ]; then \
     fi
 # Use UID:GID directly - always works!
 RUN mkdir -p /home/appuser/scripts/modules \
-             /home/appuser/logs \
-             /home/appuser/output \
-             /home/appuser/.cache \
-             /home/appuser/.local && \
+            /home/appuser/logs \
+            /home/appuser/output \
+            /home/appuser/.cache \
+            /home/appuser/.local && \
     chown -R ${PUID}:${PGID} /home/appuser && \
     chmod -R 755 /home/appuser
 
