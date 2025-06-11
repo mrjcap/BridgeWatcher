@@ -9,9 +9,39 @@
 
 ## [1.0.70] - 2025-06-11
 
+### ✨ Νέα Χαρακτηριστικά
+
+- feat(scripts): προσθήκη demo script για changelog format validation
+- feat(scripts): προσθήκη perfect validation demo script
+- feat(scripts): νέο content validation script για commits
+- feat(scripts): comprehensive format validation για markdown αρχεία
+- feat(scripts): νέο comprehensive validation script
+- feat(scripts): τελικό validation script για quality assurance
+- feat(scripts): ultimate validation με perfect score achievement
+- feat(scripts): προσθήκη emoji support στα section headers
+
 ### 🔄 Αλλαγές
 
 - refactor(scripts): βελτίωση git commit exclusion patterns
+- build(dockerfile): μετάβαση σε .NET runtime:9.0.6-alpine3.22 base image
+
+### 🐛 Διορθώθηκαν
+
+- fix(scripts): διόρθωση syntax error στο changelog workflow test
+- fix(scripts): διόρθωση duplicate function name και function call
+
+### 🧪 Testing
+
+- test(scripts): προσθήκη test script για changelog fixes validation
+
+### 🔧 CI/CD
+
+- ci(workflows): προσθήκη και αφαίρεση manual trigger από workflows (net zero change)
+- ci(release): βελτίωση error handling και formatting στο changelog update
+
+### 📝 Τεκμηρίωση
+
+- docs(changelog): ενημέρωση CHANGELOG.md με unreleased sections
 
 ### 🐛 Διορθώθηκαν
 
