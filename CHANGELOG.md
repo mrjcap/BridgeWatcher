@@ -7,6 +7,17 @@
 
 ## [1.0.71] - 2025-06-11
 
+### ✨ Νέα Χαρακτηριστικά
+
+- feat(docker): προσθήκη Docker container για BridgeWatcher
+  - Base image: .NET Runtime 9.0.6 Alpine 3.22
+  - PowerShell 7.5.1 με πλήρεις dependencies
+  - Timezone configuration για Europe/Athens
+  - Configurable user permissions (PUID/PGID)
+  - Port exposure 8090 για web interface
+  - Healthcheck για monitoring bridge status
+  - Entrypoint script για initialization
+
 ## [1.0.70] - 2025-06-11
 
 ### ✨ Νέα Χαρακτηριστικά
