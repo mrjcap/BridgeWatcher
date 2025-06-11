@@ -5,22 +5,28 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.69] - 2025-06-11
-
-### ✨ Προστέθηκαν
-- Προσθήκη `ENV TZ=Europe/Athens` στο `Docker/Dockerfile` για καθορισμό ζώνης ώρας κατά το runtime
-
-### ❌ Αφαιρέθηκαν
-- Αφαίρεση της εντολής `apk del tzdata` από το `Docker/Dockerfile`, ώστε να συνεχίσει να ενημερώνεται η βάση δεδομένων ζωνών
+## [Unreleased]
 
 ### 🔄 Αλλαγές
-- **build(Dockerfile):** ενημέρωση λογικής ρύθμισης ζώνης ώρας με χρήση `TZ` env var  
+
+- **build(Dockerfile):** μετάβαση σε σύγχρονο .NET runtime base image
+  - Αντικατάσταση του deprecated `mcr.microsoft.com/powershell:alpine-3.20`
+  - Χρήση `mcr.microsoft.com/dotnet/runtime:9.0.6-alpine3.22` με manual PowerShell 7.5.1 installation
+  - Ενημέρωση σε **Alpine Linux v3.22.0** για βελτιωμένη ασφάλεια
+  - Βελτιωμένη μακροπρόθεσμη υποστήριξη και σταθερότητα
+
+## [1.0.69] - 2025-06-11
+
+### 🔄 Αλλαγές
+
+- **build(Dockerfile):** ενημέρωση ρύθμισης ζώνης ώρας
 
 ## [1.0.68] - 2025-06-10
 
 ### 🐛 Διορθώθηκαν
 
 #### Alpine Linux Group Conflicts
+
 - Επίλυση conflict με το προεγκατεστημένο Alpine 'users' group (GID 100)
   - Smart conditional logic για ανίχνευση GID collision
   - PGID=100: χρήση existing 'users' group
@@ -30,16 +36,19 @@
   - Platform-agnostic approach που παίζει παντού
 
 #### Critical Path Typo
+
 - Διόρθωση: `/tm` → `/tmp` στο chmod 1777
   - Χωρίς αυτό, το healthcheck fallback θα απέτυχνε silently
   - Affects: PowerShell temp file operations
 
 ### 🔄 Αλλαγές
+
 - Refactoring του user creation flow με if/else logic
 - Adoption των numeric IDs σε όλα τα chown operations
 - Improved error resilience για edge cases
 
 ### ✨ Προστέθηκαν
+
 - Full compatibility matrix:
   - ✅ Unraid NAS (99:100 - nobody:users)
   - ✅ Standard Linux (1000:1000)
@@ -52,6 +61,7 @@
 ### 🐛 Διορθώθηκαν
 
 #### Alpine Linux User Creation Syntax
+
 - Αφαίρεση του `-S` flag από το `addgroup` (unsupported στο Alpine/BusyBox)
 - Αντικατάσταση `-S` με `-D` στο `adduser` για Alpine compatibility
   - `-D`: Don't assign password (Alpine style)
@@ -60,11 +70,13 @@
 - Διόρθωση argument ordering για BusyBox utilities
 
 ### 🔄 Αλλαγές
+
 - Μετάβαση από GNU coreutils syntax σε BusyBox syntax
 - Χρήση Alpine-specific flags για user/group management
-- Βελτίωση compatibility με το mcr.microsoft.com/powershell Alpine image
+- Βελτίωση compatibility με Alpine Linux containers
 
 ### 📝 Τεκμηρίωση
+
 - Ενημέρωση CHANGELOG.md με αναλυτικές εγγραφές για v1.0.66
 - Προσθήκη τεχνικών details για το dynamic UID/GID feature
 - Χρήση emoji categories για improved readability
@@ -72,20 +84,24 @@
 ## [1.0.66] - 2025-06-10
 
 ### ✨ Προστέθηκαν
+
 - Dynamic UID/GID support στο Dockerfile για πλήρη Unraid compatibility
   - ARG directives για PUID/PGID με default values 99:100 (nobody:users)
   - Configurable user creation κατά το build time
   - Υποστήριξη custom builds: `docker build --build-arg PUID=1000`
 
 ### 🔄 Αλλαγές
+
 - Προσθήκη .cache και .local directories για PowerShell module caching
 - Βελτίωση directory structure για better module isolation
 - Cleanup των verbose comments για cleaner Dockerfile
 
 ### 🐛 Διορθώθηκαν
+
 - Typo fix: `/tm` → `/tmp` στο chmod command (critical για healthcheck fallback)
 
 ### 📝 Τεκμηρίωση
+
 - Ενημέρωση CHANGELOG.md με detailed entries για versions 1.0.64 και 1.0.65
 - Προσθήκη emoji categories για καλύτερη αναγνωσιμότητα
 - Αναλυτική τεκμηρίωση των breaking changes και fixes
@@ -93,6 +109,7 @@
 ## [1.0.65] - 2025-06-10
 
 ### 🐛 Διορθώθηκαν
+
 - Διόρθωση absolute path για το entrypoint.sh στο Dockerfile
   - Από: `./entrypoint.sh` (relative path που μπορεί να προκαλέσει issues)
   - Σε: `/home/appuser/scripts/entrypoint.sh` (explicit absolute path)
@@ -101,6 +118,7 @@
   - Συμβατότητα με Linux container environment
 
 ### 🔄 Αλλαγές
+
 - Μετάβαση από PowerShell SecretManagement σε Docker secrets
   - Αντικατάσταση `Get-Secret` cmdlet με `Get-Content` από mounted secrets
   - Χρήση standard Docker pattern `/run/secrets/*`
@@ -109,15 +127,18 @@
 ## [1.0.64] - 2025-06-10
 
 ### 📝 Τεκμηρίωση
+
 - Ενημέρωση README.md με βελτιωμένες οδηγίες
 
 ### 🐛 Διορθώθηκαν
+
 - Διόρθωση λογικής αποστολής ειδοποιήσεων ώστε να στέλνονται μόνο για τις επηρεαζόμενες γέφυρες
   - Αντικατάσταση του `$CurrentState` με το specific bridge object στο `Send-BridgeNotification`
   - Προσθήκη validation για την ύπαρξη του bridge state πριν την αποστολή
   - Βελτίωση error handling με descriptive messages
 
 ### 🔄 Αλλαγές
+
 - Διόρθωση μορφοποίησης module manifest (καθαρισμός κενών γραμμών)
 - Refactoring του `Invoke-BridgeStatusComparison` για καλύτερη readability
   - Αντικατάσταση inline handlers με lookup table
@@ -127,10 +148,12 @@
 ## [1.0.63] - 2025-06-05
 
 ### 📝 Τεκμηρίωση
+
 - Ενημέρωση README.md με εκτενές παράδειγμα για SecretStore automation
 - Ενημέρωση CHANGELOG.md με την τρέχουσα έκδοση
 
 ### ✨ Προστέθηκαν
+
 - Detailed guide για ασφαλή αυτοματοποίηση με Microsoft.PowerShell.SecretStore
   - Step-by-step οδηγίες για unattended execution
   - NIST SP 800-53 (IA-5) compliant approach
@@ -141,6 +164,7 @@
   - Secure secret retrieval σε scripts
 
 ### 🔧 CI & Συντήρηση
+
 - Βελτίωση release workflow με automated changelog commits
   - Git user configuration για github-actions[bot]
   - Auto-commit changelog updates με [skip ci] flag
@@ -365,9 +389,3 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
-
-
-
-
-
-
