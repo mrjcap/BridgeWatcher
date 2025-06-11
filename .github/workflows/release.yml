@@ -130,7 +130,14 @@ jobs:
       - name: Update Changelog from commits
         shell: pwsh
         run: |
-          ./scripts/Update-ReleaseChangeLog.ps1 -Version ${{ steps.determine_version.outputs.version }} -Verbose
+          try {
+            Write-Host "🔄 Updating changelog for version ${{ steps.determine_version.outputs.version }}" -ForegroundColor Green
+            & ./scripts/Update-ReleaseChangeLog.ps1 -Version '${{ steps.determine_version.outputs.version }}' -Verbose
+            Write-Host "✅ Changelog update completed" -ForegroundColor Green
+          } catch {
+            Write-Error "❌ Failed to update changelog: $_"
+            exit 1
+          }
 
       - name: Check if changelog updated
         id: changelog_check
@@ -138,12 +145,12 @@ jobs:
         run: |
           $updated = (Get-Content ./changelog_updated.flag -Raw).Trim().ToLower()
           "updated=$updated" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          
+
       - name: Configure Git user
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
+
       - name: Commit and Push Changelog
         if: steps.changelog_check.outputs.updated == 'true'
         run: |
