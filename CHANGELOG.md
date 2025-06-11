@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.69] - 2025-06-11
+
+### Τεκμηρίωση
+
+- docs(changelog): ενημέρωση CHANGELOG.md
+
 ## [1.0.68] - 2025-06-10
 
 ### 🐛 Διορθώθηκαν
@@ -354,6 +360,7 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
+
 
 
 
