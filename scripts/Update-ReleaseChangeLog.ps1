@@ -123,9 +123,36 @@ foreach ($script in $requiredScripts) {
 # Βήμα 4: Λήψη commits
 Write-Verbose "🔍 Getting commits since last release..."
 
+# Βρίσκουμε το προηγούμενο tag για την version που δημιουργούμε
+$tags = git tag --sort=version:refname | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' }
+$versionTag = "v$Version"
+$previousTag = $null
+
+if ($tags) {
+    # Βρίσκουμε το προηγούμενο tag από την version που δημιουργούμε
+    $currentIndex = $tags.IndexOf($versionTag)
+    if ($currentIndex -gt 0) {
+        $previousTag = $tags[$currentIndex - 1]
+    } elseif ($currentIndex -eq -1 -and $tags.Count -gt 0) {
+        # Αν η version δεν υπάρχει ακόμα, παίρνουμε το τελευταίο tag
+        $previousTag = $tags[-1]
+    }
+}
+
+Write-Verbose "🏷️ Previous tag: $($previousTag ?? 'None')"
+Write-Verbose "🎯 Target version: $versionTag"
+
 $commitArgs = @{
     To                  = 'HEAD'
     ExcludeHousekeeping = $true
+}
+
+# Ορίζουμε το From ref βάσει του προηγούμενου tag
+if ($previousTag) {
+    $commitArgs.From = $previousTag
+    Write-Verbose "📍 Getting commits from $previousTag to HEAD"
+} else {
+    Write-Verbose "📍 Getting all commits (no previous tags found)"
 }
 
 if ($IncludeMergeCommits) {
