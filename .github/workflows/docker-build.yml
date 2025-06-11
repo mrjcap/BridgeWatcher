@@ -12,6 +12,20 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag for the Docker image'
+        required: true
+        type: string
+      dockerhub_username:
+        description: 'Docker Hub username'
+        required: false
+        type: string
+      dockerhub_token:
+        description: 'Docker Hub token'
+        required: false
+        type: string
 
 env:
   REGISTRY: docker.io
@@ -35,20 +49,17 @@ jobs:
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
         with:
           version: latest
-          driver-opts: network=host
-
-      - name: Log in to Docker Hub
+          driver-opts: network=host      - name: Log in to Docker Hub
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME || inputs.dockerhub_username }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || inputs.dockerhub_token }}
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804
-        with:
-          images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804        with:
+          images: ${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME || inputs.dockerhub_username }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=${{ inputs.version }}
             type=raw,value=latest
@@ -87,10 +98,8 @@ jobs:
           mkdir -p test-secrets
           echo "test-api-key" > test-secrets/API_KEY
           echo "test-po-api-key" > test-secrets/POAPI_KEY
-          echo "test-po-user-key" > test-secrets/POUSER_KEY
-
-          # Get the built image tag
-          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}"
+          echo "test-po-user-key" > test-secrets/POUSER_KEY          # Get the built image tag
+          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME || inputs.dockerhub_username }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}"
 
           # Test container startup and basic functionality
           echo "Starting container for testing..."
@@ -128,9 +137,8 @@ jobs:
           echo "✅ Basic functionality test passed"
 
       - name: Scan Docker image for vulnerabilities
-        uses: aquasecurity/trivy-action@4b9b6fb4ef28b31450391a93ade098bb00de584e
-        with:
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
+        uses: aquasecurity/trivy-action@4b9b6fb4ef28b31450391a93ade098bb00de584e        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME || inputs.dockerhub_username }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
           format: 'sarif'
           output: 'trivy-results.sarif'
 
@@ -167,14 +175,12 @@ jobs:
 
     steps:
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
-
-      - name: Log in to Docker Hub
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2      - name: Log in to Docker Hub
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME || inputs.dockerhub_username }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || inputs.dockerhub_token }}
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
@@ -185,10 +191,8 @@ jobs:
       - name: Load and push Docker image
         run: |
           # Load the image
-          docker load --input /tmp/bridgewatcher.tar
-
-          # Get image tags
-          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          docker load --input /tmp/bridgewatcher.tar          # Get image tags
+          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME || inputs.dockerhub_username }}/${{ env.IMAGE_NAME }}"
           VERSION_TAG="$IMAGE_NAME:${{ inputs.version }}"
           LATEST_TAG="$IMAGE_NAME:latest"
 
