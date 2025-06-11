@@ -1,10 +1,28 @@
-﻿FROM mcr.microsoft.com/powershell:7.5-alpine-3.20
+﻿git --no-pager diff HEADFROM mcr.microsoft.com/dotnet/runtime:9.0.6-alpine3.22
 
 ARG PUID=99
 ARG PGID=100
 
+# Install PowerShell and dependencies
 RUN apk update && \
-    apk add --no-cache tzdata=2025b-r0 && \
+    apk add --no-cache \
+        tzdata=2025b-r0 \
+        ca-certificates \
+        curl \
+        icu-libs \
+        krb5-libs \
+        libgcc \
+        libintl \
+        libssl3 \
+        libstdc++ \
+        zlib && \
+    curl -L https://github.com/PowerShell/PowerShell/releases/download/v7.5.1/powershell-7.5.1-linux-musl-x64.tar.gz \
+        -o /tmp/powershell.tar.gz && \
+    mkdir -p /opt/microsoft/powershell/7 && \
+    tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
+    chmod +x /opt/microsoft/powershell/7/pwsh && \
+    ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh && \
+    rm /tmp/powershell.tar.gz && \
     cp /usr/share/zoneinfo/Europe/Athens /etc/localtime && \
     echo "Europe/Athens" > /etc/timezone && \
     rm -rf /var/cache/apk/*
