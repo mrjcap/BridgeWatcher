@@ -106,7 +106,7 @@
             }
             # Βήμα 4: Validation
             Write-Verbose '🔍 Βήμα 4: Validation changelog format'
-            if (Test-Path './CHANGELOG.md' -and (Test-Path './scripts/Get-ChangelogFormat.ps1')) {
+            if ((Test-Path './CHANGELOG.md') -and (Test-Path './scripts/Get-ChangelogFormat.ps1')) {
                 . './scripts/Get-ChangelogFormat.ps1'
                 $validationResult = Test-ChangelogFormat -ChangelogPath './CHANGELOG.md'
 
