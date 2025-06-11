@@ -5,6 +5,22 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.70] - 2025-06-11
+
+### 🔄 Αλλαγές
+
+- refactor(scripts): βελτίωση git commit exclusion patterns
+
+### 🐛 Διορθώθηκαν
+
+- fix(scripts): διόρθωση duplicate function name και function call
+
+### 📝 Τεκμηρίωση
+
+- feat(scripts): προσθήκη demo script για changelog format validation
+- test(scripts): προσθήκη test script για changelog fixes validation
+- fix(scripts): διόρθωση syntax error στο changelog workflow test
+
 ## [Unreleased]
 
 ### 🔄 Αλλαγές
@@ -389,3 +405,4 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
+
