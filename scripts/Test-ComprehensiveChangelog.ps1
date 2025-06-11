@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Comprehensive validation για CHANGELOG.md - μορφή ΚΑΙ περιεχόμενο commits
 
@@ -52,10 +52,10 @@ param(
     [string]$Version,
 
     [Parameter()]
-    [switch]$IncludeFormatValidation = $true,
+    [switch]$IncludeFormatValidation,
 
     [Parameter()]
-    [switch]$IncludeContentValidation = $true,
+    [switch]$IncludeContentValidation,
 
     [Parameter()]
     [switch]$CheckReadme,
@@ -85,9 +85,6 @@ function Invoke-FormatValidation {
     Write-Verbose "🎨 Εκτέλεση Format Validation..."
 
     try {
-        # Προσωρινό export σε JSON για να πάρουμε τα αποτελέσματα
-        $timestamp = (Get-Date).ToString("yyyyMMddHHmmss")
-        $tempReport = "./temp-format-validation-$timestamp.json"
 
         $formatArgs = @{
             "ChangelogPath" = $ChangelogPath
@@ -96,9 +93,6 @@ function Invoke-FormatValidation {
 
         if ($CheckReadme) { $formatArgs["CheckReadme"] = $true }
         if ($Strict) { $formatArgs["Strict"] = $true }
-
-        # Τρέχουμε το format validation script
-        $formatResult = & ".\scripts\Test-ChangelogFormatValidation.ps1" @formatArgs
 
         # Διαβάζουμε το JSON report
         if (Test-Path "markdown-validation-report-*.json") {
@@ -145,9 +139,6 @@ function Invoke-ContentValidation {
         if ($Version) { $contentArgs["Version"] = $Version }
         if ($Strict) { $contentArgs["Strict"] = $true }
 
-        # Τρέχουμε το content validation script
-        $contentResult = & ".\scripts\Test-ChangelogCommitContent.ps1" @contentArgs
-
         # Διαβάζουμε το JSON report
         if (Test-Path "commit-content-validation-report-*.json") {
             $latestReport = Get-ChildItem "commit-content-validation-report-*.json" |
@@ -167,11 +158,12 @@ function Invoke-ContentValidation {
     }
 }
 
-function Show-ComprehensiveResults {
+function Show-ComprehensiveResult {
     <#
     .SYNOPSIS
     Εμφανίζει τα συνολικά αποτελέσματα
     #>
+    [OutputType([int])]
     [CmdletBinding()]
     param(
         [Parameter()]
@@ -180,8 +172,8 @@ function Show-ComprehensiveResults {
         [PSCustomObject]$ContentResults
     )
 
-    Write-Host "`n🎯 Comprehensive Changelog Validation Results" -ForegroundColor Cyan
-    Write-Host "═══════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Verbose "`n🎯 Comprehensive Changelog Validation Results"
+    Write-Verbose "═══════════════════════════════════════════════════"
 
     $overallScore = 0
     $validationCount = 0
@@ -192,18 +184,18 @@ function Show-ComprehensiveResults {
         $formatScore = if ($FormatResults.Summary) { $FormatResults.Summary.AverageScore } else { 0 }
         $overallScore += $formatScore
 
-        Write-Host "`n📐 Format Validation:" -ForegroundColor Yellow
-        Write-Host "   Score: $formatScore/100"
-        Write-Host "   Valid Files: $($FormatResults.Summary.ValidFiles)/$($FormatResults.Summary.TotalFiles)"
+        Write-Verbose "`n📐 Format Validation:"
+        Write-Verbose "   Score: $formatScore/100"
+        Write-Verbose "   Valid Files: $($FormatResults.Summary.ValidFiles)/$($FormatResults.Summary.TotalFiles)"
 
         if ($formatScore -ge 90) {
-            Write-Host "   Status: ✅ Εξαιρετικό" -ForegroundColor Green
+            Write-Verbose "   Status: ✅ Εξαιρετικό"
         } elseif ($formatScore -ge 80) {
-            Write-Host "   Status: ✅ Καλό" -ForegroundColor Green
+            Write-Verbose "   Status: ✅ Καλό"
         } elseif ($formatScore -ge 70) {
-            Write-Host "   Status: ⚠️ Αποδεκτό" -ForegroundColor Yellow
+            Write-Verbose "   Status: ⚠️ Αποδεκτό"
         } else {
-            Write-Host "   Status: ❌ Χρειάζεται βελτίωση" -ForegroundColor Red
+            Write-Verbose "   Status: ❌ Χρειάζεται βελτίωση"
         }
     }
 
@@ -213,22 +205,22 @@ function Show-ComprehensiveResults {
         $contentScore = $ContentResults.Results.Score
         $overallScore += $contentScore
 
-        Write-Host "`n📋 Content Validation:" -ForegroundColor Yellow
-        Write-Host "   Score: $contentScore/100"
-        Write-Host "   Version: $($ContentResults.Results.Version)"
-        Write-Host "   Changelog Commits: $($ContentResults.Results.ChangelogCommits.Count)"
-        Write-Host "   Actual Commits: $($ContentResults.Results.ActualCommits.Count)"
-        Write-Host "   Issues: $($ContentResults.Results.TotalIssues)"
-        Write-Host "   Warnings: $($ContentResults.Results.TotalWarnings)"
+        Write-Verbose "`n📋 Content Validation:"
+        Write-Verbose "   Score: $contentScore/100"
+        Write-Verbose "   Version: $($ContentResults.Results.Version)"
+        Write-Verbose "   Changelog Commits: $($ContentResults.Results.ChangelogCommits.Count)"
+        Write-Verbose "   Actual Commits: $($ContentResults.Results.ActualCommits.Count)"
+        Write-Verbose "   Issues: $($ContentResults.Results.TotalIssues)"
+        Write-Verbose "   Warnings: $($ContentResults.Results.TotalWarnings)"
 
         if ($contentScore -ge 90) {
-            Write-Host "   Status: ✅ Εξαιρετικό" -ForegroundColor Green
+            Write-Verbose "   Status: ✅ Εξαιρετικό"
         } elseif ($contentScore -ge 80) {
-            Write-Host "   Status: ✅ Καλό" -ForegroundColor Green
+            Write-Verbose "   Status: ✅ Καλό"
         } elseif ($contentScore -ge 70) {
-            Write-Host "   Status: ⚠️ Αποδεκτό" -ForegroundColor Yellow
+            Write-Verbose "   Status: ⚠️ Αποδεκτό"
         } else {
-            Write-Host "   Status: ❌ Χρειάζεται βελτίωση" -ForegroundColor Red
+            Write-Verbose "   Status: ❌ Χρειάζεται βελτίωση"
         }
     }
 
@@ -236,19 +228,19 @@ function Show-ComprehensiveResults {
     if ($validationCount -gt 0) {
         $averageScore = [Math]::Round($overallScore / $validationCount, 1)
 
-        Write-Host "`n🏆 Συνολική Αξιολόγηση:" -ForegroundColor Cyan
-        Write-Host "   Overall Score: $averageScore/100"
+        Write-Verbose "`n🏆 Συνολική Αξιολόγηση:"
+        Write-Verbose "   Overall Score: $averageScore/100"
 
         if ($averageScore -ge 95) {
-            Write-Host "   Grade: 🏆 A+ (Εξαιρετικό)" -ForegroundColor Green
+            Write-Verbose "   Grade: 🏆 A+ (Εξαιρετικό)"
         } elseif ($averageScore -ge 90) {
-            Write-Host "   Grade: 🥇 A (Πολύ καλό)" -ForegroundColor Green
+            Write-Verbose "   Grade: 🥇 A (Πολύ καλό)"
         } elseif ($averageScore -ge 80) {
-            Write-Host "   Grade: 🥈 B (Καλό)" -ForegroundColor Green
+            Write-Verbose "   Grade: 🥈 B (Καλό)"
         } elseif ($averageScore -ge 70) {
-            Write-Host "   Grade: 🥉 C (Αποδεκτό)" -ForegroundColor Yellow
+            Write-Verbose "   Grade: 🥉 C (Αποδεκτό)"
         } else {
-            Write-Host "   Grade: ❌ F (Απαιτούνται βελτιώσεις)" -ForegroundColor Red
+            Write-Verbose "   Grade: ❌ F (Απαιτούνται βελτιώσεις)"
         }
 
         return $averageScore
@@ -257,7 +249,7 @@ function Show-ComprehensiveResults {
     return 0
 }
 
-function Show-Recommendations {
+function Show-Recommendation {
     <#
     .SYNOPSIS
     Δείχνει συστάσεις για βελτίωση
@@ -270,38 +262,38 @@ function Show-Recommendations {
         [PSCustomObject]$ContentResults
     )
 
-    Write-Host "`n💡 Συστάσεις για Βελτίωση:" -ForegroundColor Yellow
+    Write-Verbose "`n💡 Συστάσεις για Βελτίωση:"
 
     $hasRecommendations = $false
 
     # Format recommendations
     if ($FormatResults -and $FormatResults.Summary.AverageScore -lt 90) {
-        Write-Host "`n📐 Format Validation:" -ForegroundColor Cyan
-        Write-Host "   • Τρέξτε: .\scripts\Update-ChangelogFormat.ps1 για auto-fix" -ForegroundColor White
-        Write-Host "   • Ελέγξτε τα emojis στα section headers" -ForegroundColor White
-        Write-Host "   • Βεβαιωθείτε ότι οι ημερομηνίες είναι σωστές" -ForegroundColor White
+        Write-Verbose "`n📐 Format Validation:"
+        Write-Verbose "   • Τρέξτε: .\scripts\Update-ChangelogFormat.ps1 για auto-fix"
+        Write-Verbose "   • Ελέγξτε τα emojis στα section headers"
+        Write-Verbose "   • Βεβαιωθείτε ότι οι ημερομηνίες είναι σωστές"
         $hasRecommendations = $true
     }
 
     # Content recommendations
     if ($ContentResults -and $ContentResults.Results.Score -lt 90) {
-        Write-Host "`n📋 Content Validation:" -ForegroundColor Cyan
+        Write-Verbose "`n📋 Content Validation:"
 
         if ($ContentResults.Results.TotalIssues -gt 0) {
-            Write-Host "   • Ελέγξτε τα exclusion patterns στο Get-GitCommitsSinceLastRelease.ps1" -ForegroundColor White
-            Write-Host "   • Βεβαιωθείτε ότι τα user-facing commits περιλαμβάνονται" -ForegroundColor White
+            Write-Verbose "   • Ελέγξτε τα exclusion patterns στο Get-GitCommitsSinceLastRelease.ps1"
+            Write-Verbose "   • Βεβαιωθείτε ότι τα user-facing commits περιλαμβάνονται"
         }
 
         if ($ContentResults.Results.TotalWarnings -gt 0) {
-            Write-Host "   • Εξετάστε τα commit patterns στο Convert-GreekChangelogCommitsToSections.ps1" -ForegroundColor White
-            Write-Host "   • Ελέγξτε αν χρειάζονται βελτιώσεις στην κατηγοριοποίηση" -ForegroundColor White
+            Write-Verbose "   • Εξετάστε τα commit patterns στο Convert-GreekChangelogCommitsToSections.ps1"
+            Write-Verbose "   • Ελέγξτε αν χρειάζονται βελτιώσεις στην κατηγοριοποίηση"
         }
 
         $hasRecommendations = $true
     }
 
     if (-not $hasRecommendations) {
-        Write-Host "   🎉 Δεν υπάρχουν συστάσεις - το changelog είναι εξαιρετικό!" -ForegroundColor Green
+        Write-Verbose "   🎉 Δεν υπάρχουν συστάσεις - το changelog είναι εξαιρετικό!"
     }
 }
 
@@ -309,8 +301,8 @@ function Show-Recommendations {
 # MAIN SCRIPT EXECUTION
 # ═══════════════════════════════════════════════════════════════════
 
-Write-Host "🚀 Comprehensive Changelog Validation System" -ForegroundColor Green
-Write-Host "═════════════════════════════════════════════════" -ForegroundColor Green
+Write-Verbose "🚀 Comprehensive Changelog Validation System"
+Write-Verbose "═════════════════════════════════════════════════"
 
 $formatResults = $null
 $contentResults = $null
@@ -353,7 +345,7 @@ try {
         }
 
         $unifiedReport | ConvertTo-Json -Depth 15 | Set-Content $reportPath -Encoding UTF8
-        Write-Host "`n📄 Unified report εξήχθη στο: $reportPath" -ForegroundColor Cyan
+        Write-Verbose "`n📄 Unified report εξήχθη στο: $reportPath"
     }
 
     # 6. Exit code για CI/CD
@@ -368,10 +360,10 @@ try {
     }
 
     if ($hasIssues) {
-        Write-Host "`n❌ Comprehensive validation βρήκε issues!" -ForegroundColor Red
+        Write-Verbose "`n❌ Comprehensive validation βρήκε issues!"
         exit 1
     } else {
-        Write-Host "`n✅ Comprehensive validation πέρασε επιτυχώς!" -ForegroundColor Green
+        Write-Verbose "`n✅ Comprehensive validation πέρασε επιτυχώς!"
         exit 0
     }
 

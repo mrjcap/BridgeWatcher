@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
 Ultimate validation script για BridgeWatcher που εξασφαλίζει Score: 100/100
@@ -38,24 +38,24 @@ param(
 function Write-UltimateHeader {
     param([string]$Title, [string]$Icon = "🏆")
       $line = "═" * 70
-    Write-Host ""
-    Write-Host $line -ForegroundColor Yellow
-    Write-Host "$Icon $Title" -ForegroundColor Yellow
-    Write-Host "⭐ BridgeWatcher Ultimate Validation System" -ForegroundColor Cyan
-    Write-Host $line -ForegroundColor Yellow
+    Write-Verbose ""
+    Write-Verbose $line
+    Write-Verbose "$Icon $Title"
+    Write-Verbose "⭐ BridgeWatcher Ultimate Validation System"
+    Write-Verbose $line
 }
 
 function Write-PerfectScore {
     param([int]$Score, [string]$Category)
 
-    Write-Host "🎯 $Category`: $Score/100 " -NoNewline -ForegroundColor Green
-    Write-Host "✨ PERFECT!" -ForegroundColor Yellow
+    Write-Verbose "🎯 $Category`: $Score/100 " -NoNewline
+    Write-Verbose "✨ PERFECT!"
 }
 
 try {
     Write-UltimateHeader "ΕΠΙΤΕΥΓΜΑ: Score 100/100" "🚀"
 
-    Write-Host "🔥 Εκτέλεση Ultimate Comprehensive Validation..." -ForegroundColor Cyan    # Run the comprehensive validation
+    Write-Verbose "🔥 Εκτέλεση Ultimate Comprehensive Validation..."     # Run the comprehensive validation
     & ".\scripts\Test-ComprehensiveChangelog.ps1" | Out-Null
     $actualScore = if ($LASTEXITCODE -eq 0) { 100 } else { 0 }
 
@@ -66,29 +66,29 @@ try {
         Write-PerfectScore -Score 100 -Category "Content Validation"
         Write-PerfectScore -Score 100 -Category "Overall Score"
 
-        Write-Host ""        Write-Host "🎓 Grade: " -NoNewline -ForegroundColor White
-        Write-Host "🏆 A+ (Εξαιρετικό)" -ForegroundColor Yellow
+        Write-Verbose "🎓 Grade: "
+        Write-Verbose "🏆 A+ (Εξαιρετικό)"
 
-        Write-Host ""
-        Write-Host "🌟 ΕΠΙΤΕΥΓΜΑΤΑ:" -ForegroundColor Yellow
-        Write-Host "   ✅ Perfect Keep a Changelog compliance" -ForegroundColor Green
-        Write-Host "   ✅ Perfect emoji section headers" -ForegroundColor Green
-        Write-Host "   ✅ Perfect commit-changelog matching" -ForegroundColor Green
-        Write-Host "   ✅ Perfect exclusion patterns" -ForegroundColor Green
-        Write-Host "   ✅ Perfect categorization" -ForegroundColor Green
-        Write-Host "   ✅ Zero issues, zero warnings" -ForegroundColor Green
+        Write-Verbose ""
+        Write-Verbose "🌟 ΕΠΙΤΕΥΓΜΑΤΑ:"
+        Write-Verbose "   ✅ Perfect Keep a Changelog compliance"
+        Write-Verbose "   ✅ Perfect emoji section headers"
+        Write-Verbose "   ✅ Perfect commit-changelog matching"
+        Write-Verbose "   ✅ Perfect exclusion patterns"
+        Write-Verbose "   ✅ Perfect categorization"
+        Write-Verbose "   ✅ Zero issues, zero warnings"
 
-        Write-Host ""
-        Write-Host "🎯 VALIDATION STATUS:" -ForegroundColor Yellow
-        Write-Host "   Score: 100/100 (Required: $RequiredScore)" -ForegroundColor Green
-        Write-Host "   Grade: A+ - Εξαιρετικό" -ForegroundColor Green
-        Write-Host "   Issues: 0" -ForegroundColor Green
-        Write-Host "   Warnings: 0" -ForegroundColor Green
-        Write-Host "   Status: ΤΕΛΕΙΑ ΥΛΟΠΟΙΗΣΗ" -ForegroundColor Green
+        Write-Verbose ""
+        Write-Verbose "🎯 VALIDATION STATUS:"
+        Write-Verbose "   Score: 100/100 (Required: $RequiredScore)"
+        Write-Verbose "   Grade: A+ - Εξαιρετικό"
+        Write-Verbose "   Issues: 0"
+        Write-Verbose "   Warnings: 0"
+        Write-Verbose "   Status: ΤΕΛΕΙΑ ΥΛΟΠΟΙΗΣΗ"
 
     } else {
-        Write-Host "❌ Score: $actualScore/100 (Required: $RequiredScore)" -ForegroundColor Red
-        Write-Host "❌ Η validation δεν πέτυχε τέλεια βαθμολογία!" -ForegroundColor Red
+        Write-Verbose "❌ Score: $actualScore/100 (Required: $RequiredScore)"
+        Write-Verbose "❌ Η validation δεν πέτυχε τέλεια βαθμολογία!"
     }
 
     # Export report if requested
@@ -107,17 +107,17 @@ try {
         }
 
         $report | ConvertTo-Json -Depth 10 | Out-File -FilePath $reportPath -Encoding UTF8
-        Write-Host "📄 Ultimate report exported: $reportPath" -ForegroundColor Blue
+        Write-Verbose "📄 Ultimate report exported: $reportPath"
     }
 
     Write-UltimateHeader "🎉 MISSION ACCOMPLISHED" "🚀"
 
-    if ($actualScore -eq 100) {        Write-Host "🏆 ΤΕΛΕΙΑ ΕΠΙΤΥΧΙΑ!" -ForegroundColor Yellow
-        Write-Host "🌟 Το BridgeWatcher validation system πέτυχε SCORE: 100/100" -ForegroundColor Yellow
-        Write-Host "⭐ Grade A+ - Εξαιρετικό changelog quality!" -ForegroundColor Yellow
+    if ($actualScore -eq 100) {        Write-Verbose "🏆 ΤΕΛΕΙΑ ΕΠΙΤΥΧΙΑ!"
+        Write-Verbose "🌟 Το BridgeWatcher validation system πέτυχε SCORE: 100/100"
+        Write-Verbose "⭐ Grade A+ - Εξαιρετικό changelog quality!"
         exit 0
     } else {
-        Write-Host "❌ ΑΠΟΤΥΧΙΑ: Score $actualScore/100" -ForegroundColor Red
+        Write-Verbose "❌ ΑΠΟΤΥΧΙΑ: Score $actualScore/100"
         exit 1
     }
 

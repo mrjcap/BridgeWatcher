@@ -43,27 +43,27 @@ jobs:
           Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
           $modules = @('Pester', 'PSScriptAnalyzer')
           foreach ($module in $modules) {
-            Write-Host "Installing $module..."
+            Write-Verbose "Installing $module..."
             Install-Module -Name $module -Force -Scope CurrentUser -ErrorAction Stop
           }
 
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
-          Write-Host "Running PSScriptAnalyzer..." -ForegroundColor Green
+          Write-Verbose "Running PSScriptAnalyzer..."
           $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -EnableExit
           if ($analysisResults) {
             $analysisResults | Format-Table -AutoSize
             Write-Error "PSScriptAnalyzer found $($analysisResults.Count) issues!"
             exit 1
           } else {
-            Write-Host "✅ No PSScriptAnalyzer issues found" -ForegroundColor Green
+            Write-Verbose "✅ No PSScriptAnalyzer issues found"
           }
 
       - name: Validate module manifest
         shell: pwsh
         run: |
-          Write-Host "Validating module manifest..." -ForegroundColor Green
+          Write-Verbose "Validating module manifest..."
           $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse | Where-Object { $_.Directory.Name -notmatch "Tests|\.git" } | Select-Object -First 1
           if (-not $manifestPath) {
             Write-Error "Module manifest (.psd1) not found!"
@@ -71,8 +71,8 @@ jobs:
           }
           try {
             $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
-            Write-Host "✅ Module manifest is valid" -ForegroundColor Green
-            Write-Host "Module: $($manifest.Name) v$($manifest.Version)" -ForegroundColor Cyan
+            Write-Verbose "✅ Module manifest is valid"
+            Write-Verbose "Module: $($manifest.Name) v$($manifest.Version)"
           } catch {
             Write-Error "Module manifest validation failed: $($_.Exception.Message)"
             exit 1
@@ -81,7 +81,7 @@ jobs:
       - name: Run Pester tests
         shell: pwsh
         run: |
-          Write-Host "Running Pester tests..." -ForegroundColor Green
+          Write-Verbose "Running Pester tests..."
           if (Test-Path ./Tests/PesterConfiguration.psd1) {
             $config = Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1
             $result = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1)
@@ -89,7 +89,7 @@ jobs:
               Write-Error "❌ Tests failed! $($result.FailedCount) of $($result.TotalCount) tests failed"
               exit 1
             } else {
-              Write-Host "✅ All $($result.TotalCount) tests passed" -ForegroundColor Green
+              Write-Verbose "✅ All $($result.TotalCount) tests passed"
             }
           } else {
             Write-Error "PesterConfiguration.psd1 not found!"
@@ -111,10 +111,10 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path './coverage.xml') {
-            Write-Host "✅ Coverage file found" -ForegroundColor Green
+            Write-Verbose "✅ Coverage file found"
             echo "coverage_exists=true" >> $env:GITHUB_OUTPUT
           } else {
-            Write-Host "⚠️ Coverage file not found" -ForegroundColor Yellow
+            Write-Verbose "⚠️ Coverage file not found"
             echo "coverage_exists=false" >> $env:GITHUB_OUTPUT
           }
 

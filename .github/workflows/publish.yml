@@ -46,7 +46,7 @@ jobs:
       - name: Set module version before validation
         shell: pwsh
         run: |
-          Write-Host "Setting module version to ${{ inputs.next_version }} before validation..." -ForegroundColor Green
+          Write-Verbose "Setting module version to ${{ inputs.next_version }} before validation..."
           if (Test-Path "./scripts/Set-FinalModuleVersion.ps1") {
             & ./scripts/Set-FinalModuleVersion.ps1 -Version '${{ inputs.next_version }}' -Path './BridgeWatcher/BridgeWatcher.psd1' -Verbose
           } else {
@@ -57,7 +57,7 @@ jobs:
         id: validate
         shell: pwsh
         run: |
-          Write-Host "Validating module before publish..." -ForegroundColor Green
+          Write-Verbose "Validating module before publish..."
 
           # Find module manifest
           $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse |
@@ -72,7 +72,7 @@ jobs:
           try {
             # Test module manifest
             $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
-            Write-Host "✅ Module manifest is valid: $($manifest.Name) v$($manifest.Version)" -ForegroundColor Green
+            Write-Verbose "✅ Module manifest is valid: $($manifest.Name) v$($manifest.Version)"
 
             # Validate version matches input
             if ($manifest.Version -ne '${{ inputs.next_version }}') {
@@ -95,7 +95,7 @@ jobs:
               $publicFunctions = Get-ChildItem "$moduleDir\Public\*.ps1" -ErrorAction SilentlyContinue
 
               if ($publicFunctions) {
-                Write-Host "Found $($publicFunctions.Count) public functions" -ForegroundColor Cyan
+                Write-Verbose "Found $($publicFunctions.Count) public functions"
               } else {
                 Write-Warning "No public functions found, but FunctionsToExport is specified"
               }
@@ -105,7 +105,7 @@ jobs:
             echo "validation_passed=true" >> $env:GITHUB_OUTPUT
             echo "module_name=$($manifest.Name)" >> $env:GITHUB_OUTPUT
 
-            Write-Host "✅ Pre-publish validation passed" -ForegroundColor Green
+            Write-Verbose "✅ Pre-publish validation passed"
 
           } catch {
             Write-Error "❌ Module validation failed: $($_.Exception.Message)"
@@ -132,7 +132,7 @@ jobs:
       - name: Set final module version
         shell: pwsh
         run: |
-          Write-Host "Setting final module version to ${{ inputs.next_version }}" -ForegroundColor Green
+          Write-Verbose "Setting final module version to ${{ inputs.next_version }}"
 
           if (Test-Path "./scripts/Set-FinalModuleVersion.ps1") {
             & ./scripts/Set-FinalModuleVersion.ps1 `
@@ -163,7 +163,7 @@ jobs:
         id: release_notes
         shell: pwsh
         run: |
-          Write-Host "Extracting release notes for version ${{ inputs.next_version }}" -ForegroundColor Green
+          Write-Verbose "Extracting release notes for version ${{ inputs.next_version }}"
 
           if (Test-Path "./scripts/Get-ReleaseNotes.ps1") {
             try {
@@ -172,17 +172,17 @@ jobs:
                 # Escape special characters for GitHub output
                 $escapedNotes = $notes -replace '%', '%25' -replace '\n', '%0A' -replace '\r', '%0D'
                 echo "notes=$escapedNotes" >> $env:GITHUB_OUTPUT
-                Write-Host "✅ Release notes extracted successfully" -ForegroundColor Green
+                Write-Verbose "✅ Release notes extracted successfully"
               } else {
                 echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
-                Write-Host "⚠️ No release notes found, using default" -ForegroundColor Yellow
+                Write-Verbose "⚠️ No release notes found, using default"
               }
             } catch {
-              Write-Host "⚠️ Failed to extract release notes: $($_.Exception.Message)" -ForegroundColor Yellow
+              Write-Verbose "⚠️ Failed to extract release notes: $($_.Exception.Message)"
               echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
             }
           } else {
-            Write-Host "⚠️ Get-ReleaseNotes.ps1 not found, using default notes" -ForegroundColor Yellow
+            Write-Verbose "⚠️ Get-ReleaseNotes.ps1 not found, using default notes"
             echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
           }
 
@@ -202,10 +202,10 @@ jobs:
       - name: Publish module to PowerShell Gallery
         shell: pwsh
         run: |
-          Write-Host "Publishing module to PowerShell Gallery..." -ForegroundColor Green
+          Write-Verbose "Publishing module to PowerShell Gallery..."
 
           if ('${{ inputs.dry_run }}' -eq 'true') {
-            Write-Host "🔄 DRY RUN MODE - Skipping actual publish" -ForegroundColor Yellow
+            Write-Verbose "🔄 DRY RUN MODE - Skipping actual publish"
 
             # Validate the module would be publishable
             try {
@@ -218,7 +218,7 @@ jobs:
                 ErrorAction    = 'Stop'
               }
               Publish-Module @publishSplat
-              Write-Host "✅ Module validation for publish passed" -ForegroundColor Green
+              Write-Verbose "✅ Module validation for publish passed"
             } catch {
               Write-Error "❌ Module would fail to publish: $_"
               exit 1
@@ -235,19 +235,19 @@ jobs:
                 Force          = $true
               }
               Publish-Module @publishSplat
-              Write-Host "✅ Module published successfully to PowerShell Gallery" -ForegroundColor Green
+              Write-Verbose "✅ Module published successfully to PowerShell Gallery"
             } catch {
               Write-Error "❌ Failed to publish module: $_"
 
               # Try to delete the release if publish failed
               if ('${{ steps.create_release.outputs.id }}') {
-                Write-Host "Attempting to clean up failed release..." -ForegroundColor Yellow
+                Write-Verbose "Attempting to clean up failed release..."
                 try {
                   gh release delete "v${{ inputs.next_version }}" --yes 2>/dev/null || true
                   git tag -d "v${{ inputs.next_version }}" 2>/dev/null || true
                   git push origin --delete "v${{ inputs.next_version }}" 2>/dev/null || true
                 } catch {
-                  Write-Host "Could not clean up release artifacts" -ForegroundColor Yellow
+                  Write-Verbose "Could not clean up release artifacts"
                 }
               }
               exit 1
@@ -258,7 +258,7 @@ jobs:
         if: inputs.dry_run == false
         shell: pwsh
         run: |
-          Write-Host "Verifying module publication..." -ForegroundColor Green
+          Write-Verbose "Verifying module publication..."
 
           # Wait a bit for the gallery to update
           Start-Sleep -Seconds 30
@@ -269,19 +269,19 @@ jobs:
 
           do {
             try {
-              Write-Host "Attempt $attempt of $maxAttempts to find published module..." -ForegroundColor Cyan
+              Write-Verbose "Attempt $attempt of $maxAttempts to find published module..."
               $module = Find-Module -Name '${{ needs.pre-publish-validation.outputs.module_name }}' -RequiredVersion '${{ inputs.next_version }}' -Repository PSGallery -ErrorAction Stop
 
               if ($module) {
-                Write-Host "✅ Module successfully found in PowerShell Gallery" -ForegroundColor Green
-                Write-Host "   Name: $($module.Name)" -ForegroundColor Cyan
-                Write-Host "   Version: $($module.Version)" -ForegroundColor Cyan
-                Write-Host "   Published: $($module.PublishedDate)" -ForegroundColor Cyan
+                Write-Verbose "✅ Module successfully found in PowerShell Gallery"
+                Write-Verbose "   Name: $($module.Name)"
+                Write-Verbose "   Version: $($module.Version)"
+                Write-Verbose "   Published: $($module.PublishedDate)"
                 $found = $true
                 break
               }
             } catch {
-              Write-Host "⏳ Module not yet available, waiting... (Attempt $attempt)" -ForegroundColor Yellow
+              Write-Verbose "⏳ Module not yet available, waiting... (Attempt $attempt)"
               Start-Sleep -Seconds 30
               $attempt++
             }
@@ -310,13 +310,13 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          Write-Host "📦 Publish Summary" -ForegroundColor Green
-          Write-Host "==================" -ForegroundColor Green
-          Write-Host "Module: ${{ needs.pre-publish-validation.outputs.module_name }}" -ForegroundColor Cyan
-          Write-Host "Version: ${{ inputs.next_version }}" -ForegroundColor Cyan
-          Write-Host "Dry Run: ${{ inputs.dry_run }}" -ForegroundColor Cyan
-          Write-Host "Published: ${{ steps.set_output.outputs.published }}" -ForegroundColor Cyan
-          Write-Host "Release Created: ${{ steps.create_release.outputs.url || 'N/A' }}" -ForegroundColor Cyan
+          Write-Verbose "📦 Publish Summary"
+          Write-Verbose "=================="
+          Write-Verbose "Module: ${{ needs.pre-publish-validation.outputs.module_name }}"
+          Write-Verbose "Version: ${{ inputs.next_version }}"
+          Write-Verbose "Dry Run: ${{ inputs.dry_run }}"
+          Write-Verbose "Published: ${{ steps.set_output.outputs.published }}"
+          Write-Verbose "Release Created: ${{ steps.create_release.outputs.url || 'N/A' }}"
 
       - name: Set failure output
         if: failure()

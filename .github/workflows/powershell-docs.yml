@@ -40,23 +40,23 @@ jobs:
         run: |
           Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 
-          Write-Host "Installing required modules..." -ForegroundColor Green
+          Write-Verbose "Installing required modules..."
           $modules = @(
             @{ Name = 'platyPS'; MinimumVersion = '0.14.2' }
             @{ Name = 'PSScriptAnalyzer'; MinimumVersion = '1.21.0' }
           )
 
           foreach ($module in $modules) {
-            Write-Host "Installing $($module.Name)..." -ForegroundColor Cyan
+            Write-Verbose "Installing $($module.Name)..."
             Install-Module -Name $module.Name -MinimumVersion $module.MinimumVersion -Force -Scope CurrentUser -AllowClobber
           }
 
-          Write-Host "✅ All modules installed successfully" -ForegroundColor Green
+          Write-Verbose "✅ All modules installed successfully"
 
       - name: Run PSScriptAnalyzer for documentation
         shell: pwsh
         run: |
-          Write-Host "Running PSScriptAnalyzer for documentation compliance..." -ForegroundColor Green
+          Write-Verbose "Running PSScriptAnalyzer for documentation compliance..."
 
           $results = Invoke-ScriptAnalyzer -Path . -Recurse -Severity @('Error', 'Warning') -IncludeRule @(
             'PSProvideCommentHelp',
@@ -66,7 +66,7 @@ jobs:
           )
 
           if ($results) {
-            Write-Host "Documentation-related issues found:" -ForegroundColor Yellow
+            Write-Verbose "Documentation-related issues found:"
             $results | Format-Table -AutoSize
 
             $errors = $results | Where-Object { $_.Severity -eq 'Error' }
@@ -75,13 +75,13 @@ jobs:
               exit 1
             }
           } else {
-            Write-Host "✅ No documentation issues found" -ForegroundColor Green
+            Write-Verbose "✅ No documentation issues found"
           }
 
       - name: Validate module manifest
         shell: pwsh
         run: |
-          Write-Host "Validating module manifest..." -ForegroundColor Green
+          Write-Verbose "Validating module manifest..."
 
           $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse |
             Where-Object { $_.Directory.Name -notmatch 'Tests|\.git|config' } |
@@ -94,7 +94,7 @@ jobs:
 
           try {
             $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
-            Write-Host "✅ Module manifest is valid: $($manifest.Name) v$($manifest.Version)" -ForegroundColor Green
+            Write-Verbose "✅ Module manifest is valid: $($manifest.Name) v$($manifest.Version)"
 
             # Store manifest info for later use
             echo "MANIFEST_PATH=$($manifestPath.FullName)" >> $env:GITHUB_ENV
@@ -108,7 +108,7 @@ jobs:
       - name: Generate documentation with platyPS
         shell: pwsh
         run: |
-          Write-Host "Generating PowerShell documentation with platyPS..." -ForegroundColor Green
+          Write-Verbose "Generating PowerShell documentation with platyPS..."
 
           $manifestPath = $env:MANIFEST_PATH
           $moduleName = $env:MODULE_NAME
@@ -117,40 +117,40 @@ jobs:
           # Ensure docs directory exists
           if (-not (Test-Path $docsPath)) {
             New-Item -ItemType Directory -Path $docsPath -Force
-            Write-Host "Created docs directory" -ForegroundColor Cyan
+            Write-Verbose "Created docs directory"
           }
 
           try {
             # Import the module
-            Write-Host "Importing module: $moduleName" -ForegroundColor Cyan
+            Write-Verbose "Importing module: $moduleName"
             Import-Module $manifestPath -Force -Verbose:$false
 
             # Check if documentation already exists
             $existingDocs = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
 
             if ($existingDocs) {
-              Write-Host "Updating existing documentation..." -ForegroundColor Cyan
+              Write-Verbose "Updating existing documentation..."
               Update-MarkdownHelp -Path $docsPath -Force -Verbose:$false
             } else {
-              Write-Host "Creating new documentation..." -ForegroundColor Cyan
+              Write-Verbose "Creating new documentation..."
               New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force -Verbose:$false
             }
 
             # Generate module page if it doesn't exist
             $modulePagePath = Join-Path $docsPath "about_$($moduleName).md"
             if (-not (Test-Path $modulePagePath)) {
-              Write-Host "Creating module overview page..." -ForegroundColor Cyan
+              Write-Verbose "Creating module overview page..."
               New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName "about_$($moduleName).md"
-              Write-Host "✅ Documentation generated successfully" -ForegroundColor Green
+              Write-Verbose "✅ Documentation generated successfully"
             }
             # List generated files
             $generatedFiles = Get-ChildItem $docsPath -Filter "*.md"
-            Write-Host "Generated documentation files:" -ForegroundColor Cyan
-            $generatedFiles | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor Gray }
+            Write-Verbose "Generated documentation files:"
+            $generatedFiles | ForEach-Object { Write-Verbose "  - $($_.Name)"  }
 
           } catch {
             Write-Error "Documentation generation failed: $($_.Exception.Message)"
-            Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Red
+            Write-Verbose "Stack trace: $($_.ScriptStackTrace)"
             exit 1
           }
 
@@ -176,7 +176,7 @@ jobs:
       - name: Validate generated documentation
         shell: pwsh
         run: |
-          Write-Host "Validating generated documentation..." -ForegroundColor Green
+          Write-Verbose "Validating generated documentation..."
 
           $docsPath = 'docs'
           $markdownFiles = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
@@ -202,10 +202,10 @@ jobs:
           }
 
           if ($issues) {
-            Write-Host "Documentation validation issues:" -ForegroundColor Yellow
-            $issues | ForEach-Object { Write-Host "  ⚠️ $_" -ForegroundColor Yellow }
+            Write-Verbose "Documentation validation issues:"
+            $issues | ForEach-Object { Write-Verbose "  ⚠️ $_"  }
           } else {
-            Write-Host "✅ Documentation validation passed" -ForegroundColor Green
+            Write-Verbose "✅ Documentation validation passed"
           }
 
       - name: Check for documentation changes
@@ -246,23 +246,23 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          Write-Host "📖 Documentation Generation Summary" -ForegroundColor Green
-          Write-Host "=================================" -ForegroundColor Green
-          Write-Host "Module: $env:MODULE_NAME v$env:MODULE_VERSION" -ForegroundColor Cyan
-          Write-Host "Changes detected: ${{ steps.docs_changes.outputs.changes_detected }}" -ForegroundColor Cyan
+          Write-Verbose "📖 Documentation Generation Summary"
+          Write-Verbose "================================="
+          Write-Verbose "Module: $env:MODULE_NAME v$env:MODULE_VERSION"
+          Write-Verbose "Changes detected: ${{ steps.docs_changes.outputs.changes_detected }}"
 
           $docsPath = 'docs'
           if (Test-Path $docsPath) {
             $docFiles = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
-            Write-Host "Documentation files: $($docFiles.Count)" -ForegroundColor Cyan
+            Write-Verbose "Documentation files: $($docFiles.Count)"
 
             if ($docFiles) {
-              Write-Host "Files generated:" -ForegroundColor Cyan
+              Write-Verbose "Files generated:"
               $docFiles | ForEach-Object {
                 $size = [math]::Round((Get-Item $_.FullName).Length / 1KB, 2)
-                Write-Host "  📄 $($_.Name) (${size}KB)" -ForegroundColor Gray
+                Write-Verbose "  📄 $($_.Name) (${size}KB)"
               }
             }
           }
 
-          Write-Host "✅ Documentation workflow completed" -ForegroundColor Green
+          Write-Verbose "✅ Documentation workflow completed"

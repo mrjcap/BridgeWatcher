@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Τελικό validation script για BridgeWatcher που εξασφαλίζει τέλεια ποιότητα changelog
 
@@ -36,42 +36,42 @@
 [CmdletBinding()]
 param()
 
-Write-Host "🎯 Final Test: Comprehensive Changelog Format Validation System" -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Verbose "🎯 Final Test: Comprehensive Changelog Format Validation System"
+Write-Verbose "═══════════════════════════════════════════════════════════════════"
 
-Write-Host "`n🧪 Test 1: Βασικός έλεγχος CHANGELOG.md" -ForegroundColor Green
+Write-Verbose "`n🧪 Test 1: Βασικός έλεγχος CHANGELOG.md"
 & ".\scripts\Test-ChangelogFormatValidation.ps1"
 
-Write-Host "`n🧪 Test 2: Έλεγχος με README.md" -ForegroundColor Green
+Write-Verbose "`n🧪 Test 2: Έλεγχος με README.md"
 & ".\scripts\Test-ChangelogFormatValidation.ps1" -CheckReadme
 
-Write-Host "`n🧪 Test 3: Strict mode με όλα τα markdown αρχεία" -ForegroundColor Green
+Write-Verbose "`n🧪 Test 3: Strict mode με όλα τα markdown αρχεία"
 & ".\scripts\Test-ChangelogFormatValidation.ps1" -CheckAllMarkdown -Strict
 
-Write-Host "`n🧪 Test 4: Export JSON αναφοράς" -ForegroundColor Green
+Write-Verbose "`n🧪 Test 4: Export JSON αναφοράς"
 & ".\scripts\Test-ChangelogFormatValidation.ps1" -ExportReport
 
 # Εμφάνιση των JSON αναφορών που δημιουργήθηκαν
 $reports = Get-ChildItem -Filter "markdown-validation-report-*.json" | Sort-Object LastWriteTime -Descending
 if ($reports) {
-    Write-Host "`n📄 Δημιουργημένες αναφορές:" -ForegroundColor Cyan
+    Write-Verbose "`n📄 Δημιουργημένες αναφορές:"
     $reports | Select-Object -First 3 | ForEach-Object {
-        Write-Host "  • $($_.Name) ($(Get-Date $_.LastWriteTime -Format 'HH:mm:ss'))" -ForegroundColor White
+        Write-Verbose "  • $($_.Name) ($(Get-Date $_.LastWriteTime -Format 'HH:mm:ss'))"
     }
 }
 
-Write-Host "`n📋 Περίληψη λειτουργιών του Validation System:" -ForegroundColor Yellow
-Write-Host "✅ Ελέγχει CHANGELOG.md για Keep a Changelog compliance" -ForegroundColor White
-Write-Host "✅ Επαληθεύει Semantic Versioning format" -ForegroundColor White
-Write-Host "✅ Ελέγχει για ελληνικούς τίτλους με emojis" -ForegroundColor White
-Write-Host "✅ Validation README.md και άλλων markdown αρχείων" -ForegroundColor White
-Write-Host "✅ Strict mode με επιπλέον ελέγχους" -ForegroundColor White
-Write-Host "✅ JSON export για CI/CD integration" -ForegroundColor White
-Write-Host "✅ Exit codes για automated workflows" -ForegroundColor White
+Write-Verbose "`n📋 Περίληψη λειτουργιών του Validation System:"
+Write-Verbose "✅ Ελέγχει CHANGELOG.md για Keep a Changelog compliance"
+Write-Verbose "✅ Επαληθεύει Semantic Versioning format"
+Write-Verbose "✅ Ελέγχει για ελληνικούς τίτλους με emojis"
+Write-Verbose "✅ Validation README.md και άλλων markdown αρχείων"
+Write-Verbose "✅ Strict mode με επιπλέον ελέγχους"
+Write-Verbose "✅ JSON export για CI/CD integration"
+Write-Verbose "✅ Exit codes για automated workflows"
 
-Write-Host "`n🛠️ Διαθέσιμα scripts:" -ForegroundColor Yellow
-Write-Host "  • Test-ChangelogFormatValidation.ps1 - Κύριο validation script" -ForegroundColor White
-Write-Host "  • Demo-ChangelogValidation.ps1 - Διαδραστικό demo" -ForegroundColor White
-Write-Host "  • Test-ChangelogFixes.ps1 - Tests για διορθώσεις" -ForegroundColor White
+Write-Verbose "`n🛠️ Διαθέσιμα scripts:"
+Write-Verbose "  • Test-ChangelogFormatValidation.ps1 - Κύριο validation script"
+Write-Verbose "  • Demo-ChangelogValidation.ps1 - Διαδραστικό demo"
+Write-Verbose "  • Test-ChangelogFixes.ps1 - Tests για διορθώσεις"
 
-Write-Host "`n✨ Το validation system είναι έτοιμο για χρήση!" -ForegroundColor Green
+Write-Verbose "`n✨ Το validation system είναι έτοιμο για χρήση!"

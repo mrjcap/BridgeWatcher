@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Bumps the patch version in a PowerShell module manifest (.psd1).
 .DESCRIPTION
@@ -30,13 +30,18 @@ function Get-ModuleVersion {
     }
 }
 
-function Set-ModuleVersion {
+function Update-ModuleVersionContent {
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [string]$Content,
         [string]$OldVersion,
         [string]$NewVersion
     )
-    return $Content -replace "ModuleVersion\s*=\s*'$OldVersion'", "ModuleVersion = '$NewVersion'"
+
+    if ($PSCmdlet.ShouldProcess("Module version", "Update from '$OldVersion' to '$NewVersion'")) {
+        return $Content -replace "ModuleVersion\s*=\s*'$OldVersion'", "ModuleVersion = '$NewVersion'"
+    }
+    return $Content
 }
 try {
     $content = Get-Content $Path -Raw
@@ -45,7 +50,7 @@ try {
     $versionParts = $currentVersion -split '\.'
     $versionParts[2] = [int]$versionParts[2] + 1
     $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
-    $newContent = Set-ModuleVersion -Content $content -OldVersion $currentVersion -NewVersion $newVersion
+    $newContent = Update-ModuleVersionContent -Content $content -OldVersion $currentVersion -NewVersion $newVersion
     Set-Content $Path -Value $newContent
     Write-Output "Updated version to: $newVersion"
     if ($GitHubEnv) {

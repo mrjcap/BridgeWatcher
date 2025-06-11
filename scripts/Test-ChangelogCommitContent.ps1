@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Ελέγχει το περιεχόμενο των commits που περιλαμβάνονται στο CHANGELOG.md
 
@@ -106,6 +106,7 @@ function Get-ActualCommitsForVersion {
     .SYNOPSIS
     Παίρνει τα πραγματικά commits από το git για μια έκδοση
     #>
+    [OutputType([System.Object[]])]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -301,7 +302,7 @@ function Test-HousekeepingExclusion {
     }
 }
 
-function Show-CommitContentResults {
+function Show-CommitContentResult {
     <#
     .SYNOPSIS
     Εμφανίζει τα αποτελέσματα του commit content validation
@@ -312,47 +313,44 @@ function Show-CommitContentResults {
         [PSCustomObject]$Results
     )
 
-    Write-Host "`n📋 Αποτελέσματα Ελέγχου Περιεχομένου Commits" -ForegroundColor Cyan
-    Write-Host "════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Verbose "`n📋 Αποτελέσματα Ελέγχου Περιεχομένου Commits"
+    Write-Verbose "════════════════════════════════════════════════════"
 
-    Write-Host "`n📊 Περίληψη:" -ForegroundColor Yellow
-    Write-Host "  • Έκδοση: $($Results.Version)"
-    Write-Host "  • Commits στο changelog: $($Results.ChangelogCommits.Count)"
-    Write-Host "  • Actual commits: $($Results.ActualCommits.Count)"
-    Write-Host "  • Issues: $($Results.TotalIssues)"
-    Write-Host "  • Warnings: $($Results.TotalWarnings)"
-    Write-Host "  • Score: $($Results.Score)/100"
+    Write-Verbose "`n📊 Περίληψη:"
+    Write-Verbose "  • Έκδοση: $($Results.Version)"
+    Write-Verbose "  • Commits στο changelog: $($Results.ChangelogCommits.Count)"
+    Write-Verbose "  • Actual commits: $($Results.ActualCommits.Count)"
+    Write-Verbose "  • Issues: $($Results.TotalIssues)"
+    Write-Verbose "  • Warnings: $($Results.TotalWarnings)"
+    Write-Verbose "  • Score: $($Results.Score)/100"
 
     $statusIcon = if ($Results.IsValid) { "✅" } else { "❌" }
-    $scoreColor = if ($Results.Score -ge 90) { "Green" }
-                 elseif ($Results.Score -ge 70) { "Yellow" }
-                 else { "Red" }
 
-    Write-Host "`n$statusIcon Συνολική Αξιολόγηση: " -NoNewline
-    Write-Host "$($Results.Score)/100" -ForegroundColor $scoreColor
+    Write-Verbose "`n$statusIcon Συνολική Αξιολόγηση: " -NoNewline
+    Write-Verbose "$($Results.Score)/100"
 
     # Εμφάνιση issues
     if ($Results.CategorizationTest.Issues.Count -gt 0) {
-        Write-Host "`n❌ Κατηγοριοποίηση Issues:" -ForegroundColor Red
-        $Results.CategorizationTest.Issues | ForEach-Object { Write-Host "   $_" -ForegroundColor Red }
+        Write-Verbose "`n❌ Κατηγοριοποίηση Issues:"
+        $Results.CategorizationTest.Issues | ForEach-Object { Write-Verbose "   $_"  }
     }
 
     if ($Results.HousekeepingTest.Issues.Count -gt 0) {
-        Write-Host "`n❌ Housekeeping Issues:" -ForegroundColor Red
-        $Results.HousekeepingTest.Issues | ForEach-Object { Write-Host "   $_" -ForegroundColor Red }
+        Write-Verbose "`n❌ Housekeeping Issues:"
+        $Results.HousekeepingTest.Issues | ForEach-Object { Write-Verbose "   $_"  }
     }
 
     # Εμφάνιση warnings
     if ($Results.CategorizationTest.Warnings.Count -gt 0) {
-        Write-Host "`n⚠️ Κατηγοριοποίηση Warnings:" -ForegroundColor Yellow
-        $Results.CategorizationTest.Warnings | ForEach-Object { Write-Host "   $_" -ForegroundColor Yellow }
+        Write-Verbose "`n⚠️ Κατηγοριοποίηση Warnings:"
+        $Results.CategorizationTest.Warnings | ForEach-Object { Write-Verbose "   $_"  }
     }
 
     # Εμφάνιση passes (μόνο σε verbose mode)
     if ($VerbosePreference -eq 'Continue') {
         if ($Results.CategorizationTest.Passes.Count -gt 0) {
-            Write-Host "`n✅ Επιτυχείς Ελέγχοι:" -ForegroundColor Green
-            $Results.CategorizationTest.Passes | ForEach-Object { Write-Host "   $_" -ForegroundColor Green }
+            Write-Verbose "`n✅ Επιτυχείς Ελέγχοι:"
+            $Results.CategorizationTest.Passes | ForEach-Object { Write-Verbose "   $_"  }
         }
     }
 }
@@ -361,8 +359,8 @@ function Show-CommitContentResults {
 # MAIN SCRIPT EXECUTION
 # ═══════════════════════════════════════════════════════════════════
 
-Write-Host "🧪 Έναρξη Commit Content Validation" -ForegroundColor Green
-Write-Host "═══════════════════════════════════════" -ForegroundColor Green
+Write-Verbose "🧪 Έναρξη Commit Content Validation"
+Write-Verbose "═══════════════════════════════════════"
 
 try {
     # 1. Προσδιορισμός έκδοσης
@@ -439,15 +437,15 @@ try {
         }
 
         $report | ConvertTo-Json -Depth 10 | Set-Content $reportPath -Encoding UTF8
-        Write-Host "`n📄 Αναφορά εξήχθη στο: $reportPath" -ForegroundColor Cyan
+        Write-Verbose "`n📄 Αναφορά εξήχθη στο: $reportPath"
     }
 
     # 9. Exit code για CI/CD
     if ($results.IsValid) {
-        Write-Host "`n✅ Commit content validation πέρασε!" -ForegroundColor Green
+        Write-Verbose "`n✅ Commit content validation πέρασε!"
         exit 0
     } else {
-        Write-Host "`n❌ Commit content validation απέτυχε!" -ForegroundColor Red
+        Write-Verbose "`n❌ Commit content validation απέτυχε!"
         exit 1
     }
 

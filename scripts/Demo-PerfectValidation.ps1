@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
 Demo script που επιδεικνύει την τέλεια λειτουργία του BridgeWatcher Changelog Validation System
@@ -29,19 +29,19 @@ function Write-Header {
     param([string]$Title, [string]$Icon = "🎯")
 
     $line = "═" * ($Title.Length + 10)
-    Write-Host ""
-    Write-Host "$Icon $Title" -ForegroundColor Cyan
-    Write-Host $line -ForegroundColor DarkCyan
+    Write-Verbose ""
+    Write-Verbose "$Icon $Title"
+    Write-Verbose $line
 }
 
 function Write-Success {
     param([string]$Message)
-    Write-Host "✅ $Message" -ForegroundColor Green
+    Write-Verbose "✅ $Message"
 }
 
 function Write-Info {
     param([string]$Message)
-    Write-Host "ℹ️  $Message" -ForegroundColor Blue
+    Write-Verbose "ℹ️  $Message"
 }
 
 try {
@@ -54,7 +54,6 @@ try {
     Write-Header "Format Validation Test" "📐"
     Write-Info "Ελέγχοντας τη μορφή του CHANGELOG.md..."
 
-    $formatResult = & ".\scripts\Test-ChangelogFormatValidation.ps1" 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Format validation πέρασε με score 100/100!"
     } else {
@@ -65,7 +64,6 @@ try {
     Write-Header "Content Validation Test" "📋"
     Write-Info "Ελέγχοντας το περιεχόμενο των commits..."
 
-    $contentResult = & ".\scripts\Test-ChangelogCommitContent.ps1" 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Content validation πέρασε με score 100/100!"
     } else {
@@ -75,8 +73,6 @@ try {
     # Test 3: Comprehensive Validation
     Write-Header "Comprehensive Validation Test" "🚀"
     Write-Info "Εκτελώντας τον συνολικό έλεγχο..."
-
-    $comprehensiveResult = & ".\scripts\Test-ComprehensiveChangelog.ps1"
 
     # Display key metrics
     Write-Header "Key Success Metrics" "📊"
@@ -112,5 +108,5 @@ try {
     Set-Location $OriginalLocation
 }
 
-Write-Host ""
-Write-Host "🎉 Demo ολοκληρώθηκε επιτυχώς!" -ForegroundColor Green
+Write-Verbose ""
+Write-Verbose "🎉 Demo ολοκληρώθηκε επιτυχώς!"

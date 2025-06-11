@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Comprehensive test script για έλεγχο της μορφής του CHANGELOG.md και άλλων markdown αρχείων.
 
@@ -329,7 +329,7 @@ function Test-ReadmeStructure {
     }
 }
 
-function Test-AllMarkdownFiles {
+function Test-AllMarkdownFile {
     <#
     .SYNOPSIS
     Ελέγχει όλα τα markdown αρχεία στο workspace
@@ -393,7 +393,7 @@ function Test-AllMarkdownFiles {
     return $results
 }
 
-function Show-TestResults {
+function Show-TestResult {
     <#
     .SYNOPSIS
     Εμφανίζει τα αποτελέσματα των tests με χρώματα
@@ -406,43 +406,40 @@ function Show-TestResults {
         [switch]$ShowDetails
     )
 
-    Write-Host "`n🎯 Αποτελέσματα Ελέγχου Markdown Format" -ForegroundColor Cyan
-    Write-Host "═══════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Verbose "`n🎯 Αποτελέσματα Ελέγχου Markdown Format"
+    Write-Verbose "═══════════════════════════════════════════════"
 
     $totalFiles = $Results.Count
     $validFiles = ($Results | Where-Object { $_.IsValid }).Count
     $avgScore = if ($totalFiles -gt 0) { [Math]::Round(($Results | Measure-Object Score -Average).Average, 1) } else { 0 }
 
-    Write-Host "`n📊 Περίληψη:" -ForegroundColor Yellow
-    Write-Host "  • Συνολικά αρχεία: $totalFiles"
-    Write-Host "  • Έγκυρα αρχεία: $validFiles"
-    Write-Host "  • Ποσοστό επιτυχίας: $([Math]::Round($validFiles / $totalFiles * 100, 1))%"
-    Write-Host "  • Μέσος όρος score: $avgScore/100"
+    Write-Verbose "`n📊 Περίληψη:"
+    Write-Verbose "  • Συνολικά αρχεία: $totalFiles"
+    Write-Verbose "  • Έγκυρα αρχεία: $validFiles"
+    Write-Verbose "  • Ποσοστό επιτυχίας: $([Math]::Round($validFiles / $totalFiles * 100, 1))%"
+    Write-Verbose "  • Μέσος όρος score: $avgScore/100"
 
     foreach ($result in $Results) {
         $fileName = Split-Path $result.FilePath -Leaf
         $statusIcon = if ($result.IsValid) { "✅" } else { "❌" }
-        $scoreColor = if ($result.Score -ge 90) { "Green" }
-                     elseif ($result.Score -ge 70) { "Yellow" }
-                     else { "Red" }
 
-        Write-Host "`n$statusIcon $fileName " -NoNewline
-        Write-Host "($($result.Score)/100)" -ForegroundColor $scoreColor
+        Write-Verbose "`n$statusIcon $fileName " -NoNewline
+        Write-Verbose "($($result.Score)/100)"
 
         if ($ShowDetails -or -not $result.IsValid) {
             if ($result.Issues.Count -gt 0) {
-                Write-Host "   Issues:" -ForegroundColor Red
-                $result.Issues | ForEach-Object { Write-Host "     $_" -ForegroundColor Red }
+                Write-Verbose "   Issues:"
+                $result.Issues | ForEach-Object { Write-Verbose "     $_"  }
             }
 
             if ($result.Warnings.Count -gt 0) {
-                Write-Host "   Warnings:" -ForegroundColor Yellow
-                $result.Warnings | ForEach-Object { Write-Host "     $_" -ForegroundColor Yellow }
+                Write-Verbose "   Warnings:"
+                $result.Warnings | ForEach-Object { Write-Verbose "     $_"  }
             }
 
             if ($ShowDetails -and $result.Passes.Count -gt 0) {
-                Write-Host "   Passes:" -ForegroundColor Green
-                $result.Passes | ForEach-Object { Write-Host "     $_" -ForegroundColor Green }
+                Write-Verbose "   Passes:"
+                $result.Passes | ForEach-Object { Write-Verbose "     $_"  }
             }
         }
     }
@@ -452,8 +449,8 @@ function Show-TestResults {
 # MAIN SCRIPT EXECUTION
 # ═══════════════════════════════════════════════════════════════════
 
-Write-Host "🧪 Έναρξη Comprehensive Markdown Format Validation" -ForegroundColor Green
-Write-Host "══════════════════════════════════════════════════════" -ForegroundColor Green
+Write-Verbose "🧪 Έναρξη Comprehensive Markdown Format Validation"
+Write-Verbose "══════════════════════════════════════════════════════"
 
 $allResults = @()
 
@@ -512,15 +509,15 @@ if ($ExportReport) {
     }
 
     $report | ConvertTo-Json -Depth 10 | Set-Content $reportPath -Encoding UTF8
-    Write-Host "`n📄 Αναφορά εξήχθη στο: $reportPath" -ForegroundColor Cyan
+    Write-Verbose "`n📄 Αναφορά εξήχθη στο: $reportPath"
 }
 
 # 6. Return code για CI/CD
 $hasErrors = ($allResults | Where-Object { -not $_.IsValid }).Count -gt 0
 if ($hasErrors) {
-    Write-Host "`n❌ Validation απέτυχε!" -ForegroundColor Red
+    Write-Verbose "`n❌ Validation απέτυχε!"
     exit 1
 } else {
-    Write-Host "`n✅ Όλοι οι έλεγχοι πέρασαν επιτυχώς!" -ForegroundColor Green
+    Write-Verbose "`n✅ Όλοι οι έλεγχοι πέρασαν επιτυχώς!"
     exit 0
 }

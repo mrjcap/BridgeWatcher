@@ -111,12 +111,12 @@ jobs:
         id: determine_version
         shell: pwsh
         run: |
-          Write-Host "Calculating next version..." -ForegroundColor Green
+          Write-Verbose "Calculating next version..."
 
           if (Test-Path "./scripts/Get-PotentialNextVersion.ps1") {
             try {
               $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType '${{ inputs.version_bump_type }}' -Verbose
-              Write-Host "✅ Calculated version: $version" -ForegroundColor Green
+              Write-Verbose "✅ Calculated version: $version"
               echo "version=$version" >> $env:GITHUB_OUTPUT
             } catch {
               Write-Error "❌ Failed to calculate version: $_"
@@ -131,9 +131,9 @@ jobs:
         shell: pwsh
         run: |
           try {
-            Write-Host "🔄 Updating changelog for version ${{ steps.determine_version.outputs.version }}" -ForegroundColor Green
+            Write-Verbose "🔄 Updating changelog for version ${{ steps.determine_version.outputs.version }}"
             & ./scripts/Update-ReleaseChangeLog.ps1 -Version '${{ steps.determine_version.outputs.version }}' -Verbose
-            Write-Host "✅ Changelog update completed" -ForegroundColor Green
+            Write-Verbose "✅ Changelog update completed"
           } catch {
             Write-Error "❌ Failed to update changelog: $_"
             exit 1
