@@ -19,6 +19,17 @@ on:
       published_version:
         description: 'The version that was published'
         value: ${{ jobs.publish.outputs.published_version }}
+  workflow_dispatch:
+    inputs:
+      next_version:
+        description: 'The version to publish'
+        required: true
+        type: string
+      dry_run:
+        description: 'Perform a dry run without actually publishing'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
