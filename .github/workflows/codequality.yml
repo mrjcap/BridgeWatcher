@@ -5,6 +5,12 @@ on:
     secrets:
       CODACY_PROJECT_TOKEN:
         required: true
+  workflow_dispatch:
+    inputs:
+      codacy_token:
+        description: 'Codacy project token for analysis'
+        required: false
+        type: string
 
 jobs:
   codacy-analysis:
@@ -15,6 +21,5 @@ jobs:
       - name: Run Codacy Analysis CLI
         uses: codacy/codacy-analysis-cli-action@97bf5df3c09e75f5bcd72695998f96ebd701846e
         with:
-          output: text
-        env:
-          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          output: text        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN || inputs.codacy_token }}
