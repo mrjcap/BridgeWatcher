@@ -77,15 +77,15 @@ param (
     [datetime]$Date = (Get-Date)
 )
 
-# Αντιστοίχιση section key -> ελληνικός τίτλος, σειρά εμφάνισης
+# Αντιστοίχιση section key -> ελληνικός τίτλος με emojis, σειρά εμφάνισης
 $sectionTitles = @{
-    Added         = 'Προστέθηκαν'
-    Changed       = 'Αλλαγές'
-    Deprecated    = 'Υποψήφια προς απόσυρση'
-    Removed       = 'Αφαιρέθηκαν'
-    Fixed         = 'Διορθώθηκαν'
-    Security      = 'Ασφάλεια'
-    Documentation = 'Τεκμηρίωση'
+    Added         = '✨ Προστέθηκαν'
+    Changed       = '🔄 Αλλαγές'
+    Deprecated    = '⚠️ Υποψήφια προς απόσυρση'
+    Removed       = '❌ Αφαιρέθηκαν'
+    Fixed         = '🐛 Διορθώθηκαν'
+    Security      = '🔒 Ασφάλεια'
+    Documentation = '📝 Τεκμηρίωση'
 }
 
 $sections = @(
