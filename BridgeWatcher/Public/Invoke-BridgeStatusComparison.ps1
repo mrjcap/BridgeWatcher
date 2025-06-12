@@ -115,13 +115,6 @@
                         PoApiKey  = $PoApiKey
                     }
                     Send-BridgeNotification @sendBridgeNotificationSplat
-                } else {
-                    $writeBridgeStageSplat = @{
-                        Stage   = 'Σφάλμα'
-                        Message = "❓ Δεν βρέθηκε bridge state για $($change.gefyraName) στο CurrentState."
-                        Level   = 'Warning'
-                    }
-                    Write-BridgeStage @writeBridgeStageSplat
                 }
                 continue
             } else {
