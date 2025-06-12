@@ -78,7 +78,8 @@ jobs:
 
       - name: Load Docker image for testing
         run: |
-          docker load --input /tmp/bridgewatcher.tar      - name: Test Docker image
+          docker load --input /tmp/bridgewatcher.tar
+      - name: Test Docker image
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           VERSION: ${{ inputs.version }}
@@ -182,7 +183,8 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: docker-image
-          path: /tmp      - name: Load and push Docker image
+          path: /tmp
+      - name: Load and push Docker image
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           VERSION: ${{ inputs.version }}
