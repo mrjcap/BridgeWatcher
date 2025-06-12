@@ -156,18 +156,15 @@ switch ($Action) {
             } else {
                 $header = ""
                 $body = $changelog
-            }        }
-        
-        # Create new entry
+            }
+        }
         $Date = Get-Date
         $newEntry = "## [$Version] - $($Date.ToString('yyyy-MM-dd'))`r`n"
-        
         foreach ($section in $sectionData) {
             $items = @()
             if ($section.Items) {
                 $items = @($section.Items | Where-Object { $_ -and $_.Trim() -ne '' })
             }
-            
             if ($items.Count -gt 0) {
                 $newEntry += "`r`n### $($section.Title)`r`n`r`n"
                 foreach ($item in $items) {
@@ -175,7 +172,6 @@ switch ($Action) {
                 }
             }
         }$newEntry += "`r`n"
-
         # Combine and save
         $finalChangelog = "$header$newEntry$body"
         Set-Content -Path $ChangelogPath -Value $finalChangelog -Encoding UTF8
