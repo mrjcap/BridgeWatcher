@@ -7,15 +7,15 @@ ARG PGID=100
 RUN apk update && \
     apk add --no-cache \
         tzdata=2025b-r0 \
-        ca-certificates \
-        curl \
-        icu-libs \
-        krb5-libs \
-        libgcc \
-        libintl \
-        libssl3 \
-        libstdc++ \
-        zlib && \
+        ca-certificates=20241121-r2 \
+        curl=8.14.1-r1 \
+        icu-libs=76.1-r0\
+        krb5-libs=1.21.3-r0 \
+        libgcc=14.2.0-r6 \
+        libintl=0.24.1-r0 \
+        libssl3=3.5.0-r0 \
+        libstdc++=14.2.0-r6 \
+        zlib=1.3.1-r2 && \
     curl -L https://github.com/PowerShell/PowerShell/releases/download/v7.5.1/powershell-7.5.1-linux-musl-x64.tar.gz \
         -o /tmp/powershell.tar.gz && \
     mkdir -p /opt/microsoft/powershell/7 && \
