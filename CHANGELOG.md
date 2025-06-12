@@ -21,7 +21,7 @@
 
 ## [1.0.71] - 2025-06-11
 
-### ✨ Νέα Χαρακτηριστικά
+### ✨ Προστέθηκαν
 
 - feat(docker): προσθήκη Docker container για BridgeWatcher
   - Base image: .NET Runtime 9.0.6 Alpine 3.22
@@ -34,7 +34,7 @@
 
 ## [1.0.70] - 2025-06-11
 
-### ✨ Νέα Χαρακτηριστικά
+### ✨ Προστέθηκαν
 
 - feat(scripts): προσθήκη demo script για changelog format validation
 - feat(scripts): προσθήκη perfect validation demo script
@@ -452,6 +452,3 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
-
-
-
