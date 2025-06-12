@@ -108,7 +108,7 @@ if (-not $wasInitialized) {
 $requiredScripts = @(
     'Get-GitCommitsSinceLastRelease.ps1',
     'Convert-GreekChangelogCommitsToSections.ps1',
-    'Update-Changelog.ps1'
+    'Manage-Changelog.ps1'
 )
 
 foreach ($script in $requiredScripts) {
@@ -193,34 +193,19 @@ Write-Verbose "📝 Updating CHANGELOG.md..."
 
 try {
     $updateArgs = @{
-        ChangelogPath = $changelogPath
         Version       = $Version
+        Action        = 'Update'
+        ChangelogPath = $changelogPath
+        Added         = $sections.'Προστέθηκαν'
+        Changed       = $sections.'Αλλαγές'
+        Deprecated    = $sections.'Υποψήφια προς απόσυρση'
+        Removed       = $sections.'Αφαιρέθηκαν'
+        Fixed         = $sections.'Διορθώθηκαν'
+        Security      = $sections.'Ασφάλεια'
+        Documentation = $sections.'Τεκμηρίωση'
     }
 
-    # Προσθήκη sections αν υπάρχουν
-    if ($sections.'Προστέθηκαν' -and $sections.'Προστέθηκαν'.Count -gt 0) {
-        $updateArgs.Added = $sections.'Προστέθηκαν'
-    }
-    if ($sections.'Αλλαγές' -and $sections.'Αλλαγές'.Count -gt 0) {
-        $updateArgs.Changed = $sections.'Αλλαγές'
-    }
-    if ($sections.'Υποψήφια προς απόσυρση' -and $sections.'Υποψήφια προς απόσυρση'.Count -gt 0) {
-        $updateArgs.Deprecated = $sections.'Υποψήφια προς απόσυρση'
-    }
-    if ($sections.'Αφαιρέθηκαν' -and $sections.'Αφαιρέθηκαν'.Count -gt 0) {
-        $updateArgs.Removed = $sections.'Αφαιρέθηκαν'
-    }
-    if ($sections.'Διορθώθηκαν' -and $sections.'Διορθώθηκαν'.Count -gt 0) {
-        $updateArgs.Fixed = $sections.'Διορθώθηκαν'
-    }
-    if ($sections.'Ασφάλεια' -and $sections.'Ασφάλεια'.Count -gt 0) {
-        $updateArgs.Security = $sections.'Ασφάλεια'
-    }
-    if ($sections.'Τεκμηρίωση' -and $sections.'Τεκμηρίωση'.Count -gt 0) {
-        $updateArgs.Documentation = $sections.'Τεκμηρίωση'
-    }
-
-    & "$scriptRoot\Update-Changelog.ps1" @updateArgs
+    & "$scriptRoot\Manage-Changelog.ps1" @updateArgs
 
 } catch {
     Write-Error "Failed to update changelog: $_"
