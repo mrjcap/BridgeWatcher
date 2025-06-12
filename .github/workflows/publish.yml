@@ -47,10 +47,12 @@ jobs:
       - name: Set module version before validation
         # nosemgrep: yaml.github-actions.security.curl-eval.curl-eval
         shell: pwsh
+        env:
+          NEXT_VERSION: ${{ inputs.next_version }}
         run: |
-          Write-Verbose "Setting module version to ${{ inputs.next_version }} before validation..."
+          Write-Verbose "Setting module version to $env:NEXT_VERSION before validation..."
           if (Test-Path "./scripts/Update-ModuleVersion.ps1") {
-            & ./scripts/Update-ModuleVersion.ps1 -Version '${{ inputs.next_version }}' -Path './BridgeWatcher/BridgeWatcher.psd1' -Verbose
+            & ./scripts/Update-ModuleVersion.ps1 -Version $env:NEXT_VERSION -Path './BridgeWatcher/BridgeWatcher.psd1' -Verbose
           } else {
             Write-Error "Update-ModuleVersion.ps1 script not found!"
             exit 1
@@ -133,12 +135,14 @@ jobs:
 
       - name: Set final module version
         shell: pwsh
+        env:
+          NEXT_VERSION: ${{ inputs.next_version }}
         run: |
-          Write-Verbose "Setting final module version to ${{ inputs.next_version }}"
+          Write-Verbose "Setting final module version to $env:NEXT_VERSION"
 
           if (Test-Path "./scripts/Update-ModuleVersion.ps1") {
             & ./scripts/Update-ModuleVersion.ps1 `
-              -Version '${{ inputs.next_version }}' `
+              -Version $env:NEXT_VERSION `
               -Path './BridgeWatcher/BridgeWatcher.psd1' `
               -Verbose
           } else {
@@ -152,40 +156,46 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Commit version update
+        env:
+          NEXT_VERSION: ${{ inputs.next_version }}
         run: |
           git add BridgeWatcher/BridgeWatcher.psd1
-          git commit -m "chore: bump version to ${{ inputs.next_version }} [skip ci]" || echo "No changes to commit"
+          git commit -m "chore: bump version to $NEXT_VERSION [skip ci]" || echo "No changes to commit"
 
       - name: Push changes
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          git pull --rebase origin ${{ github.ref_name }}
-          git push origin HEAD:${{ github.ref_name }}
+          git pull --rebase origin "$REF_NAME"
+          git push origin "HEAD:$REF_NAME"
 
       - name: Extract release notes
         id: release_notes
         shell: pwsh
+        env:
+          NEXT_VERSION: ${{ inputs.next_version }}
         run: |
-          Write-Verbose "Extracting release notes for version ${{ inputs.next_version }}"
+          Write-Verbose "Extracting release notes for version $env:NEXT_VERSION"
 
           if (Test-Path "./scripts/Get-ReleaseNotes.ps1") {
             try {
-              $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version 'v${{ inputs.next_version }}' -ErrorAction Stop
+              $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v$env:NEXT_VERSION" -ErrorAction Stop
               if ($notes) {
                 # Escape special characters for GitHub output
                 $escapedNotes = $notes -replace '%', '%25' -replace '\n', '%0A' -replace '\r', '%0D'
                 echo "notes=$escapedNotes" >> $env:GITHUB_OUTPUT
                 Write-Verbose " Release notes extracted successfully"
               } else {
-                echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
+                echo "notes=Release $env:NEXT_VERSION" >> $env:GITHUB_OUTPUT
                 Write-Verbose " No release notes found, using default"
               }
             } catch {
               Write-Verbose " Failed to extract release notes: $($_.Exception.Message)"
-              echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
+              echo "notes=Release $env:NEXT_VERSION" >> $env:GITHUB_OUTPUT
             }
           } else {
             Write-Verbose " Get-ReleaseNotes.ps1 not found, using default notes"
-            echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
+            echo "notes=Release $env:NEXT_VERSION" >> $env:GITHUB_OUTPUT
           }
 
       - name: Create GitHub Release

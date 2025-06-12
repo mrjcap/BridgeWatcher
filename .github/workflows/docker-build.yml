@@ -78,9 +78,10 @@ jobs:
 
       - name: Load Docker image for testing
         run: |
-          docker load --input /tmp/bridgewatcher.tar
-
-      - name: Test Docker image
+          docker load --input /tmp/bridgewatcher.tar      - name: Test Docker image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          VERSION: ${{ inputs.version }}
         run: |
           echo "Testing Docker image functionality..."
 
@@ -91,7 +92,7 @@ jobs:
           echo "test-po-user-key" > test-secrets/POUSER_KEY
 
           # Get the built image tag
-          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}"
+          IMAGE_TAG="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}:$VERSION"
 
           # Test container startup and basic functionality
           echo "Starting container for testing..."
@@ -181,16 +182,17 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: docker-image
-          path: /tmp
-
-      - name: Load and push Docker image
+          path: /tmp      - name: Load and push Docker image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          VERSION: ${{ inputs.version }}
         run: |
           # Load the image
           docker load --input /tmp/bridgewatcher.tar
 
           # Get image tags
-          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
-          VERSION_TAG="$IMAGE_NAME:${{ inputs.version }}"
+          IMAGE_NAME="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}"
+          VERSION_TAG="$IMAGE_NAME:$VERSION"
           LATEST_TAG="$IMAGE_NAME:latest"
 
           # Tag as latest
