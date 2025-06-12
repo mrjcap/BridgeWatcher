@@ -92,8 +92,20 @@
             $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
             if ($handlerMap.ContainsKey($key)) {
                 $type = $handlerMap[$key]
-                # Βρες το αντικείμενο που άλλαξε στο CurrentState
-                $changedBridgeState = @($CurrentState | Where-Object { $_.GefyraName -eq $change.GefyraName })
+                # ΔΙΟΡΘΩΣΗ: Βρες το αντικείμενο που άλλαξε από το σωστό state ανάλογα με το SideIndicator
+                if ($change.SideIndicator -eq '=>') {
+                    # Νέα κατάσταση - ψάχνε στο CurrentState
+                    $changedBridgeState = @($CurrentState | Where-Object { $_.GefyraName -eq $change.GefyraName })
+                } else {
+                    # Παλιά κατάσταση (<=) - ψάχνε στο PreviousState αλλά στείλε τη νέα από CurrentState
+                    $bridgeInCurrent = @($CurrentState | Where-Object { $_.GefyraName -eq $change.GefyraName })
+                    if ($bridgeInCurrent.Count -gt 0) {
+                        $changedBridgeState = $bridgeInCurrent
+                    } else {
+                        # Fallback: χρήση PreviousState αν δεν υπάρχει στο Current
+                        $changedBridgeState = @($PreviousState | Where-Object { $_.GefyraName -eq $change.GefyraName })
+                    }
+                }
                 if ($changedBridgeState.Count -gt 0) {
                     $sendBridgeNotificationSplat = @{
                         Type      = $type
