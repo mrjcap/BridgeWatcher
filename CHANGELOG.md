@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.74] - 2025-06-12
+
+### 🐛 Διορθώθηκαν
+
+- fix(dockerfile): αλλαγή έκδοσης curl σε 8.14.1-r0
+
 ## [1.0.73] - 2025-06-12
 
 ### 🐛 Διορθώθηκαν
@@ -449,4 +455,5 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
+
 
