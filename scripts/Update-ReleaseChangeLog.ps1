@@ -124,16 +124,17 @@ foreach ($script in $requiredScripts) {
 Write-Verbose "🔍 Getting commits since last release..."
 
 # Βρίσκουμε το προηγούμενο tag για την version που δημιουργούμε
-$tags = git tag --sort=version:refname | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' }
+$tagOutput = git tag --sort=version:refname 2>$null
+$tags = @($tagOutput | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' })
 $versionTag = "v$Version"
 $previousTag = $null
 
-if ($tags) {
+if ($tags -and $tags.Count -gt 0) {
     # Βρίσκουμε το προηγούμενο tag από την version που δημιουργούμε
-    $currentIndex = $tags.IndexOf($versionTag)
+    $currentIndex = [array]::IndexOf($tags, $versionTag)
     if ($currentIndex -gt 0) {
         $previousTag = $tags[$currentIndex - 1]
-    } elseif ($currentIndex -eq -1 -and $tags.Count -gt 0) {
+    } elseif ($currentIndex -eq -1) {
         # Αν η version δεν υπάρχει ακόμα, παίρνουμε το τελευταίο tag
         $previousTag = $tags[-1]
     }
@@ -181,7 +182,33 @@ try {
 Write-Verbose "📊 Converting commits to changelog sections..."
 
 try {
-    $sections = & "$scriptRoot\Convert-GreekChangelogCommitsToSections.ps1" -Commits $commits
+    $sectionsObject = & "$scriptRoot\Convert-GreekChangelogCommitsToSections.ps1" -Commits $commits
+    
+    # Μετατρέπουμε το PSCustomObject σε hashtable
+    $sections = @{}
+    if ($sectionsObject) {
+        $sectionsObject.PSObject.Properties | ForEach-Object {
+            $sections[$_.Name] = $_.Value
+        }
+    }
+    
+    # Διασφαλίζουμε ότι όλες οι απαραίτητες κατηγορίες υπάρχουν
+    $defaultSections = @{
+        'Προστέθηκαν' = @()
+        'Αλλαγές' = @()
+        'Υποψήφια προς απόσυρση' = @()
+        'Αφαιρέθηκαν' = @()
+        'Διορθώθηκαν' = @()
+        'Ασφάλεια' = @()
+        'Τεκμηρίωση' = @()
+    }
+    
+    foreach ($key in $defaultSections.Keys) {
+        if (-not $sections.ContainsKey($key) -or -not $sections[$key]) {
+            $sections[$key] = @()
+        }
+    }
+    
 } catch {
     Write-Error "Failed to convert commits to sections: $_"
     'false' | Set-Content './changelog_updated.flag'
@@ -196,13 +223,13 @@ try {
         Version       = $Version
         Action        = 'Update'
         ChangelogPath = $changelogPath
-        Added         = $sections.'Προστέθηκαν'
-        Changed       = $sections.'Αλλαγές'
-        Deprecated    = $sections.'Υποψήφια προς απόσυρση'
-        Removed       = $sections.'Αφαιρέθηκαν'
-        Fixed         = $sections.'Διορθώθηκαν'
-        Security      = $sections.'Ασφάλεια'
-        Documentation = $sections.'Τεκμηρίωση'
+        Added         = if ($sections['Προστέθηκαν']) { $sections['Προστέθηκαν'] } else { @() }
+        Changed       = if ($sections['Αλλαγές']) { $sections['Αλλαγές'] } else { @() }
+        Deprecated    = if ($sections['Υποψήφια προς απόσυρση']) { $sections['Υποψήφια προς απόσυρση'] } else { @() }
+        Removed       = if ($sections['Αφαιρέθηκαν']) { $sections['Αφαιρέθηκαν'] } else { @() }
+        Fixed         = if ($sections['Διορθώθηκαν']) { $sections['Διορθώθηκαν'] } else { @() }
+        Security      = if ($sections['Ασφάλεια']) { $sections['Ασφάλεια'] } else { @() }
+        Documentation = if ($sections['Τεκμηρίωση']) { $sections['Τεκμηρίωση'] } else { @() }
     }
 
     & "$scriptRoot\Manage-Changelog.ps1" @updateArgs
