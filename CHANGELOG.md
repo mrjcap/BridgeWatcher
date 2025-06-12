@@ -7,16 +7,16 @@
 
 ## [1.0.72] - 2025-06-12
 
+### ✨ Προστέθηκαν
+
+- feat: ενημέρωση Update-ReleaseChangeLog.ps1 για χρήση Manage-Changelog.ps1
+- feat: δημιουργία Manage-Changelog.ps1 για consolidated changelog operations
+
 ### 🐛 Διορθώθηκαν
 
 - fix: αντικατάσταση null-coalescing operator για PowerShell compatibility
-
-### 📝 Τεκμηρίωση
-
 - fix(scripts): διόρθωση syntax errors και αφαίρεση duplicate κώδικα στο Manage-Changelog.ps1
 - fix(scripts): διόρθωση σφάλματος 'Cannot index into a null array' στο Update-ReleaseChangeLog.ps1
-- feat: ενημέρωση Update-ReleaseChangeLog.ps1 για χρήση Manage-Changelog.ps1
-- feat: δημιουργία Manage-Changelog.ps1 για consolidated changelog operations
 - fix(scripts): διόρθωση empty changelog generation στο Update-ReleaseChangeLog.ps1
 
 ## [1.0.71] - 2025-06-11
