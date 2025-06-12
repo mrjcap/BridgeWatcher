@@ -160,8 +160,20 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install markdownlint-cli2
-        run: npm install --no-save markdownlint-cli2
+      - name: Install markdownlint-cli2 with retries
+        run: |
+          echo "Installing markdownlint-cli2 with retries..."
+          for attempt in 1 2 3; do
+            npm install --no-save markdownlint-cli2 && break
+            echo "npm install failed, retrying (attempt $attempt)..."
+            sleep 5
+          done
+      # Show npm debug logs on failure
+      - name: Show npm debug log
+        if: failure()
+        run: |
+          echo "==== NPM DEBUG LOG ===="
+          cat /home/runner/.npm/_logs/*.log
 
       - name: Lint & auto-fix Markdown (warn-only)
         run: |
