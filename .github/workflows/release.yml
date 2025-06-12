@@ -47,6 +47,8 @@ jobs:
       - name: Validate release conditions
         id: validation
         shell: bash
+        env:
+          FORCE_RELEASE: ${{ inputs.force_release }}
         run: |
           echo " Validating release conditions..."
 
@@ -68,18 +70,15 @@ jobs:
           fi
 
           # Check for recent commits (unless force_release is true)
-          env:
-            FORCE_RELEASE: ${{ inputs.force_release }}
-          run: |
-            if [[ "$FORCE_RELEASE" != "true" ]]; then
-              COMMITS_SINCE_LAST_TAG=$(git rev-list --count $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD 2>/dev/null || echo "10")
-              if [[ "$COMMITS_SINCE_LAST_TAG" -lt "1" ]]; then
-                echo " No new commits since last release"
-                echo "can_proceed=false" >> $GITHUB_OUTPUT
-                echo "summary=No new commits since last release" >> $GITHUB_OUTPUT
-                exit 1
-              fi
+          if [[ "$FORCE_RELEASE" != "true" ]]; then
+            COMMITS_SINCE_LAST_TAG=$(git rev-list --count $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD 2>/dev/null || echo "10")
+            if [[ "$COMMITS_SINCE_LAST_TAG" -lt "1" ]]; then
+              echo " No new commits since last release"
+              echo "can_proceed=false" >> $GITHUB_OUTPUT
+              echo "summary=No new commits since last release" >> $GITHUB_OUTPUT
+              exit 1
             fi
+          fi
 
           echo " Pre-release validation passed"
           echo "can_proceed=true" >> $GITHUB_OUTPUT
