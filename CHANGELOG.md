@@ -68,16 +68,6 @@
 
 - docs(changelog): ενημέρωση CHANGELOG.md με unreleased sections
 
-### 🐛 Διορθώθηκαν
-
-- fix(scripts): διόρθωση duplicate function name και function call
-
-### 📝 Τεκμηρίωση
-
-- feat(scripts): προσθήκη demo script για changelog format validation
-- test(scripts): προσθήκη test script για changelog fixes validation
-- fix(scripts): διόρθωση syntax error στο changelog workflow test
-
 ## [1.0.69] - 2025-06-11
 
 ### 🔄 Αλλαγές
@@ -452,4 +442,3 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
-
