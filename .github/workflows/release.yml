@@ -30,10 +30,6 @@ permissions:
   issues: write
   security-events: write
 
-env:
-  POWERSHELL_TELEMETRY_OPTOUT: 1
-  DOTNET_CLI_TELEMETRY_OPTOUT: 1
-
 jobs:
   pre-release:
     name: Pre-release Validation
