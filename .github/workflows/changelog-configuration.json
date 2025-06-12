@@ -1,4 +1,4 @@
-{
+﻿{
   "template": "## [#{{TO_TAG}}] - #{{TO_TAG_DATE}}\n\n#{{CHANGELOG}}\n\n---\n",
   "categories": [
     {
@@ -37,3 +37,4 @@
   "empty_template": "- Καμία σημαντική αλλαγή σε αυτή την έκδοση 🎉",
   "max_tags_to_fetch": 50
 }
+

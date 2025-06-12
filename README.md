@@ -1,4 +1,4 @@
-# 🌉 BridgeWatcher: Προηγμένη Παρακολούθηση Γεφυρών Ισθμού
+﻿# 🌉 BridgeWatcher: Προηγμένη Παρακολούθηση Γεφυρών Ισθμού
 
 [![Κατάσταση CI](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml)
 [![Κατασκευή Docker](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml)
@@ -308,3 +308,4 @@ Set-Secret -Name "GoogleVisionKey" -Secret "your-key"
 ---
 
 Made with ❤️ in Greece
+

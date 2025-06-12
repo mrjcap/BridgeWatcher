@@ -1,4 +1,4 @@
----
+﻿---
 external help file: BridgeWatcher-help.xml
 Module Name: BridgeWatcher
 online version:
@@ -144,3 +144,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 Καταγράφει αλλαγές και ενεργοποιεί κατάλληλες ειδοποιήσεις.
 
 ## RELATED LINKS
+

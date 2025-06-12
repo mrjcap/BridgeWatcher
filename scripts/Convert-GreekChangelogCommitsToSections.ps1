@@ -104,9 +104,12 @@ $sections = @{
 
 foreach ($msg in $Commits) {
     $matched = $false
+    Write-Verbose "Processing commit: $msg"
+
     foreach ($section in $patterns.Keys) {
         foreach ($pat in $patterns[$section]) {
             if ($msg.ToLower() -match $pat) {
+                Write-Verbose "  Matched pattern '$pat' in section '$section'"
                 $sections[$section] += $msg
                 $matched = $true
                 break
@@ -115,6 +118,7 @@ foreach ($msg in $Commits) {
         if ($matched) { break }
     }
     if (-not $matched) {
+        Write-Verbose "  No match found, adding to 'Άλλο'"
         $sections['Άλλο'] += $msg
     }
 }

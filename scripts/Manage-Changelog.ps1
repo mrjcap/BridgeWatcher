@@ -156,25 +156,25 @@ switch ($Action) {
             } else {
                 $header = ""
                 $body = $changelog
-            }
-        }
+            } }
         $Date = Get-Date
-        $newEntry = "## [$Version] - $($Date.ToString('yyyy-MM-dd'))`r`n"
+        $newEntry = "## [$Version] - $($Date.ToString('yyyy-MM-dd'))`n"
         foreach ($section in $sectionData) {
             $items = @()
             if ($section.Items) {
                 $items = @($section.Items | Where-Object { $_ -and $_.Trim() -ne '' })
             }
             if ($items.Count -gt 0) {
-                $newEntry += "`r`n### $($section.Title)`r`n`r`n"
+                $newEntry += "`n### $($section.Title)`n`n"
                 foreach ($item in $items) {
-                    $newEntry += "- $item`r`n"
+                    $newEntry += "- $item`n"
                 }
             }
-        }$newEntry += "`r`n"
-        # Combine and save
+        }
+        $newEntry += "`n"        # Combine and save
         $finalChangelog = "$header$newEntry$body"
-        Set-Content -Path $ChangelogPath -Value $finalChangelog -Encoding UTF8
+        Set-Content -Path $ChangelogPath -Value $finalChangelog -Encoding UTF8BOM -NoNewline
+        Add-Content -Path $ChangelogPath -Value "" -Encoding UTF8BOM  # Add final newline
         Write-Verbose "CHANGELOG.md updated for version $Version"
     }
 

@@ -1,4 +1,4 @@
-name: PowerShell Module Publish
+﻿name: PowerShell Module Publish
 
 on:
   workflow_call:
