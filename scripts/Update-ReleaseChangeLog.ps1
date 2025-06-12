@@ -139,7 +139,7 @@ if ($tags) {
     }
 }
 
-Write-Verbose "🏷️ Previous tag: $($previousTag ?? 'None')"
+Write-Verbose "🏷️ Previous tag: $(if ($previousTag) { $previousTag } else { 'None' })"
 Write-Verbose "🎯 Target version: $versionTag"
 
 $commitArgs = @{
