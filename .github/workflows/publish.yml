@@ -47,10 +47,10 @@ jobs:
         shell: pwsh
         run: |
           Write-Verbose "Setting module version to ${{ inputs.next_version }} before validation..."
-          if (Test-Path "./scripts/Set-FinalModuleVersion.ps1") {
-            & ./scripts/Set-FinalModuleVersion.ps1 -Version '${{ inputs.next_version }}' -Path './BridgeWatcher/BridgeWatcher.psd1' -Verbose
+          if (Test-Path "./scripts/Update-ModuleVersion.ps1") {
+            & ./scripts/Update-ModuleVersion.ps1 -Version '${{ inputs.next_version }}' -Path './BridgeWatcher/BridgeWatcher.psd1' -Verbose
           } else {
-            Write-Error "Set-FinalModuleVersion.ps1 script not found!"
+            Write-Error "Update-ModuleVersion.ps1 script not found!"
             exit 1
           }
       - name: Validate module before publish
@@ -134,13 +134,13 @@ jobs:
         run: |
           Write-Verbose "Setting final module version to ${{ inputs.next_version }}"
 
-          if (Test-Path "./scripts/Set-FinalModuleVersion.ps1") {
-            & ./scripts/Set-FinalModuleVersion.ps1 `
+          if (Test-Path "./scripts/Update-ModuleVersion.ps1") {
+            & ./scripts/Update-ModuleVersion.ps1 `
               -Version '${{ inputs.next_version }}' `
               -Path './BridgeWatcher/BridgeWatcher.psd1' `
               -Verbose
           } else {
-            Write-Error "Set-FinalModuleVersion.ps1 script not found!"
+            Write-Error "Update-ModuleVersion.ps1 script not found!"
             exit 1
           }
 
