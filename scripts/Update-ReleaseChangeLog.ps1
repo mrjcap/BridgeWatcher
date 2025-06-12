@@ -183,32 +183,29 @@ Write-Verbose "📊 Converting commits to changelog sections..."
 
 try {
     $sectionsObject = & "$scriptRoot\Convert-GreekChangelogCommitsToSections.ps1" -Commits $commits
-    
-    # Μετατρέπουμε το PSCustomObject σε hashtable
     $sections = @{}
     if ($sectionsObject) {
         $sectionsObject.PSObject.Properties | ForEach-Object {
             $sections[$_.Name] = $_.Value
         }
     }
-    
-    # Διασφαλίζουμε ότι όλες οι απαραίτητες κατηγορίες υπάρχουν
+
     $defaultSections = @{
-        'Προστέθηκαν' = @()
-        'Αλλαγές' = @()
+        'Προστέθηκαν'            = @()
+        'Αλλαγές'                = @()
         'Υποψήφια προς απόσυρση' = @()
-        'Αφαιρέθηκαν' = @()
-        'Διορθώθηκαν' = @()
-        'Ασφάλεια' = @()
-        'Τεκμηρίωση' = @()
+        'Αφαιρέθηκαν'            = @()
+        'Διορθώθηκαν'            = @()
+        'Ασφάλεια'               = @()
+        'Τεκμηρίωση'             = @()
     }
-    
+
     foreach ($key in $defaultSections.Keys) {
         if (-not $sections.ContainsKey($key) -or -not $sections[$key]) {
-            $sections[$key] = @()
+            $sections[$key] = @(
         }
     }
-    
+
 } catch {
     Write-Error "Failed to convert commits to sections: $_"
     'false' | Set-Content './changelog_updated.flag'
