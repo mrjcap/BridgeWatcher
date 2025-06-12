@@ -5,6 +5,20 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.72] - 2025-06-12
+
+### 🐛 Διορθώθηκαν
+
+- fix: αντικατάσταση null-coalescing operator για PowerShell compatibility
+
+### 📝 Τεκμηρίωση
+
+- fix(scripts): διόρθωση syntax errors και αφαίρεση duplicate κώδικα στο Manage-Changelog.ps1
+- fix(scripts): διόρθωση σφάλματος 'Cannot index into a null array' στο Update-ReleaseChangeLog.ps1
+- feat: ενημέρωση Update-ReleaseChangeLog.ps1 για χρήση Manage-Changelog.ps1
+- feat: δημιουργία Manage-Changelog.ps1 για consolidated changelog operations
+- fix(scripts): διόρθωση empty changelog generation στο Update-ReleaseChangeLog.ps1
+
 ## [1.0.71] - 2025-06-11
 
 ### ✨ Νέα Χαρακτηριστικά
@@ -438,5 +452,6 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
+
 
 
