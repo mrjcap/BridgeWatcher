@@ -1,4 +1,4 @@
-﻿name: Release Orchestrator
+name: Release Orchestrator
 
 on:
   workflow_dispatch:

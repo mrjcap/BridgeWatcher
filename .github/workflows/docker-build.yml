@@ -1,4 +1,4 @@
-﻿name: Docker Build, Test and Push
+ame: Docker Build, Test and Push
 
 on:
   workflow_call:

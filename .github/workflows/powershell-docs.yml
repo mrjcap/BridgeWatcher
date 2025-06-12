@@ -1,4 +1,4 @@
-﻿name: PowerShell Documentation
+ame: PowerShell Documentation
 
 on:
   workflow_call:

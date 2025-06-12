@@ -1,4 +1,4 @@
-﻿name: Codacy Analysis
+ame: Codacy Analysis
 
 on:
   workflow_call:
