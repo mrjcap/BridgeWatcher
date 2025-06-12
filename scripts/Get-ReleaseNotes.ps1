@@ -1,83 +1,57 @@
 ﻿<#
 .SYNOPSIS
-  Εξάγει και μορφοποιεί (με emojis) το changelog section για συγκεκριμένη έκδοση.
+  Extracts release notes from CHANGELOG.md for a specific version.
 
 .DESCRIPTION
-  1) Διαβάζει το CHANGELOG.md από το καθορισμένο path.
-  2) Εξάγει το section για το δοσμένο version tag (π.χ. v1.0.22).
-  3) Αντικαθιστά headers με τα αντίστοιχα emojis.
-  4) Επιστρέφει το αποτέλεσμα ή warning/empty αν δεν βρεθεί.
+  Reads CHANGELOG.md and extracts the section for the specified version,
+  formatted with emojis for GitHub releases.
 
 .PARAMETER Version
-  Το version tag (π.χ. v1.0.22) που θέλεις να εξάγεις.
+  The version tag (e.g., v1.2.3) to extract from changelog.
 
 .PARAMETER Path
-  (Προαιρετικό) Path προς το CHANGELOG.md. Default: ./CHANGELOG.md
+  Path to CHANGELOG.md (default: ./CHANGELOG.md).
 
 .EXAMPLE
-  Get-FormattedReleaseNotes -Version v1.2.3
-
-  # Επιστρέφει formatted κείμενο με emojis:
-  ## [1.2.3] - 2025-05-01
-  ✨ Προστέθηκαν
-  - Νέα δυνατότητα X
-  🐛 Διορθώσεις
-  - Fixed bug Y
+  Get-ReleaseNotes -Version v1.2.3
 #>
-
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory)]
     [string]$Version,
 
     [string]$Path = './CHANGELOG.md'
 )
 
-# 1. Έλεγχος αρχείου
+# Check if file exists
 if (-not (Test-Path $Path)) {
-    throw "Το αρχείο '$Path' δεν βρέθηκε."
+    Write-Warning "CHANGELOG.md not found at $Path"
+    return "Release $Version"
 }
 
-# 2. Κανονικοποίηση version (αφαίρεση προθέματος 'v')
+# Normalize version (remove 'v' prefix)
 $normalizedVersion = $Version -replace '^v', ''
 
-# 3. Ανάγνωση changelog
+# Read changelog
 $changelog = Get-Content $Path -Raw
 
-# 4. Regex για extraction του section
+# Extract section for this version
 $sectionPattern = "(## \[$normalizedVersion\][^\r\n]*\r?\n(?:.*?\r?\n)*?)(?=\r?\n## |\Z)"
 if ($changelog -notmatch $sectionPattern) {
-    Write-Warning "Δεν βρέθηκε changelog entry για '$Version'."
-    return ''
+    Write-Warning "No changelog entry found for '$Version'"
+    return "Release $Version"
 }
+
 $section = $matches[1].Trim()
 
-# 5. Mapping headers → emojis
-$headerEmojis = @{
-    'Προστέθηκαν'            = '✨'
-    'Αλλαγές'                = '🔄'
-    'Διορθώθηκαν'            = '🐛'
-    'Τεκμηρίωση'             = '📝'
-    'Καταργήθηκαν'           = '❌'
-    'Ασφάλεια'               = '🔒'
-    'Βελτιώσεις'             = '⚡'
-    'Αφαιρέθηκαν'            = '❌'
-    'Υποψήφια προς απόσυρση' = '⚠️'
-}
+# Simple emoji mapping for common Greek headers
+$section = $section -replace '### Προστέθηκαν\b', '### ✨ Προστέθηκαν'
+$section = $section -replace '### Αλλαγές\b', '### 🔄 Αλλαγές'
+$section = $section -replace '### Διορθώθηκαν\b', '### 🐛 Διορθώθηκαν'
+$section = $section -replace '### Τεκμηρίωση\b', '### 📝 Τεκμηρίωση'
+$section = $section -replace '### Αφαιρέθηκαν\b', '### ❌ Αφαιρέθηκαν'
+$section = $section -replace '### Ασφάλεια\b', '### 🔒 Ασφάλεια'
+$section = $section -replace '### Υποψήφια προς απόσυρση\b', '### ⚠️ Υποψήφια προς απόσυρση'
 
-# 6. Εφαρμογή formatting
-foreach ($header in $headerEmojis.Keys) {
-    $emoji = [regex]::Escape($headerEmojis[$header])
-    # Μόνο αν δεν υπάρχει ήδη το emoji
-    $pattern = "(^###\s*)(?!$emoji\s)($header)"
-    $section = [regex]::Replace(
-        $section,
-        $pattern,
-        "`$1$emoji $header",
-        'Multiline'
-    )
-}
-
-# 7. Επιστροφή αποτελέσματος
 return $section
 
