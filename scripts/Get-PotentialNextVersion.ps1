@@ -1,15 +1,30 @@
-﻿param (
+﻿<#
+.SYNOPSIS
+  Calculates the next version based on git tags and bump type.
+
+.DESCRIPTION
+  Gets the latest version tag from git and calculates the next version
+  based on the specified bump type (major, minor, patch).
+
+.PARAMETER BumpType
+  The type of version bump: major, minor, or patch.
+
+.EXAMPLE
+  Get-PotentialNextVersion -BumpType patch
+#>
+[CmdletBinding()]
+param (
     [Parameter(Mandatory)]
     [ValidateSet('major', 'minor', 'patch')]
     [string]$BumpType
 )
 
-# Ultra-simple implementation for testing
 try {
-    # Get latest tag
-    $tags = @(git tag | Where-Object { $_ -match '^v?\d+\.\d+\.\d+$' })
+    # Get all version tags
+    $tags = @(git tag --sort=version:refname | Where-Object { $_ -match '^v?\d+\.\d+\.\d+$' })
+
     if ($tags.Count -eq 0) {
-        # No tags, return default
+        # No tags exist, return default based on bump type
         switch ($BumpType) {
             'major' { Write-Output '1.0.0'; return }
             'minor' { Write-Output '0.1.0'; return }
@@ -17,37 +32,35 @@ try {
         }
     }
 
-    # Sort manually to avoid issues
-    $sorted = $tags | ForEach-Object {
-        $clean = $_ -replace '^v', ''
-        $parts = $clean -split '\.'
-        [PSCustomObject]@{
-            Tag   = $_
-            Major = [int]$parts[0]
-            Minor = [int]$parts[1]
-            Patch = [int]$parts[2]
-            Clean = $clean
-        }
-    } | Sort-Object -Property Major, Minor, Patch -Descending
+    # Get the latest tag
+    $latestTag = $tags[-1]
+    $cleanVersion = $latestTag -replace '^v', ''
+    $parts = $cleanVersion -split '\.'
 
-    $latest = $sorted | Select-Object -First 1
+    [int]$major = $parts[0]
+    [int]$minor = $parts[1]
+    [int]$patch = $parts[2]
 
     # Calculate new version
     switch ($BumpType) {
         'major' {
-            $new = "$($latest.Major + 1).0.0"
+            $newVersion = "$($major + 1).0.0"
         }
         'minor' {
-            $new = "$($latest.Major).$($latest.Minor + 1).0"
+            $newVersion = "$major.$($minor + 1).0"
         }
         'patch' {
-            $new = "$($latest.Major).$($latest.Minor).$($latest.Patch + 1)"
+            $newVersion = "$major.$minor.$($patch + 1)"
         }
     }
 
-    Write-Output $new
+    Write-Verbose "Current version: $cleanVersion"
+    Write-Verbose "Bump type: $BumpType"
+    Write-Verbose "Next version: $newVersion"
+
+    Write-Output $newVersion
 
 } catch {
-    Write-Error $_
+    Write-Error "Failed to calculate next version: $_"
     exit 1
 }
