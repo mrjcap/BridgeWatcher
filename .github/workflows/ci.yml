@@ -1,4 +1,4 @@
-ame: PowerShell Module CI
+name: PowerShell Module CI
 
 on:
   workflow_call:
