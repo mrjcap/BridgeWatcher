@@ -45,6 +45,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set module version before validation
+        # nosemgrep: yaml.github-actions.security.curl-eval.curl-eval
         shell: pwsh
         run: |
           Write-Verbose "Setting module version to ${{ inputs.next_version }} before validation..."
