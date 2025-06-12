@@ -307,5 +307,4 @@ Set-Secret -Name "GoogleVisionKey" -Secret "your-key"
 
 ---
 
-Made with ❤️ in Greece
-
+Φτιαγμένο με ❤️ στην Ελλάδα
