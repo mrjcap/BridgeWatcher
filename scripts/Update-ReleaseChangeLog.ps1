@@ -45,8 +45,7 @@ function Initialize-ChangelogIfNeeded {
     if (-not (Test-Path $ChangelogPath)) {
         Write-Verbose "📝 Creating new CHANGELOG.md file"
         $initialized = $true
-    }
-    else {
+    } else {
         # Check if file is essentially empty
         $content = Get-Content $ChangelogPath -Raw
         if ([string]::IsNullOrWhiteSpace($content) -or $content.Length -lt 100) {
@@ -203,8 +202,8 @@ try {
     foreach ($key in $defaultSections.Keys) {
         if (-not $sections.ContainsKey($key) -or -not $sections[$key]) {
             $sections[$key] = @()
+        }
     }
-
 } catch {
     Write-Error "Failed to convert commits to sections: $_"
     'false' | Set-Content './changelog_updated.flag'
