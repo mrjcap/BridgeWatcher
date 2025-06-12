@@ -8,7 +8,7 @@ RUN apk update && \
     apk add --no-cache \
         tzdata=2025b-r0 \
         ca-certificates=20241121-r2 \
-        curl=8.14.1-r1 \
+        curl=8.14.1-r0 \
         icu-libs=76.1-r0\
         krb5-libs=1.21.3-r0 \
         libgcc=14.2.0-r6 \
