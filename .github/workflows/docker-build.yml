@@ -107,12 +107,12 @@ jobs:
 
           # Check if container is running
           if ! docker ps | grep bridgewatcher-test; then
-            echo "❌ Container failed to start"
+            echo " Container failed to start"
             docker logs bridgewatcher-test 2>&1 || true
             exit 1
           fi
 
-          echo "✅ Container started successfully"
+          echo " Container started successfully"
 
           # Check container health (if healthcheck is defined)
           HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bridgewatcher-test 2>/dev/null || echo "none")
@@ -121,11 +121,11 @@ jobs:
           # Test basic functionality
           echo "Testing basic module functionality..."
           docker exec bridgewatcher-test pwsh -Command "Get-Module BridgeWatcher -ListAvailable" || {
-            echo "❌ BridgeWatcher module not found"
+            echo " BridgeWatcher module not found"
             exit 1
           }
 
-          echo "✅ Basic functionality test passed"
+          echo " Basic functionality test passed"
 
       - name: Scan Docker image for vulnerabilities
         uses: aquasecurity/trivy-action@4b9b6fb4ef28b31450391a93ade098bb00de584e
@@ -202,7 +202,7 @@ jobs:
           echo "Pushing $LATEST_TAG..."
           docker push "$LATEST_TAG"
 
-          echo "✅ Successfully pushed Docker images"
+          echo " Successfully pushed Docker images"
   
       - name: Clean up
         if: always()

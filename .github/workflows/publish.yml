@@ -72,11 +72,11 @@ jobs:
           try {
             # Test module manifest
             $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
-            Write-Verbose "✅ Module manifest is valid: $($manifest.Name) v$($manifest.Version)"
+            Write-Verbose " Module manifest is valid: $($manifest.Name) v$($manifest.Version)"
 
             # Validate version matches input
             if ($manifest.Version -ne '${{ inputs.next_version }}') {
-              Write-Error "❌ Module version ($($manifest.Version)) doesn't match expected version (${{ inputs.next_version }})"
+              Write-Error " Module version ($($manifest.Version)) doesn't match expected version (${{ inputs.next_version }})"
               exit 1
             }
 
@@ -84,7 +84,7 @@ jobs:
             $requiredFields = @('Author', 'Description', 'PowerShellVersion')
             foreach ($field in $requiredFields) {
               if (-not $manifest.$field) {
-                Write-Error "❌ Required field '$field' is missing from manifest"
+                Write-Error " Required field '$field' is missing from manifest"
                 exit 1
               }
             }
@@ -105,10 +105,10 @@ jobs:
             echo "validation_passed=true" >> $env:GITHUB_OUTPUT
             echo "module_name=$($manifest.Name)" >> $env:GITHUB_OUTPUT
 
-            Write-Verbose "✅ Pre-publish validation passed"
+            Write-Verbose " Pre-publish validation passed"
 
           } catch {
-            Write-Error "❌ Module validation failed: $($_.Exception.Message)"
+            Write-Error " Module validation failed: $($_.Exception.Message)"
             echo "validation_passed=false" >> $env:GITHUB_OUTPUT
             exit 1
           }
@@ -172,17 +172,17 @@ jobs:
                 # Escape special characters for GitHub output
                 $escapedNotes = $notes -replace '%', '%25' -replace '\n', '%0A' -replace '\r', '%0D'
                 echo "notes=$escapedNotes" >> $env:GITHUB_OUTPUT
-                Write-Verbose "✅ Release notes extracted successfully"
+                Write-Verbose " Release notes extracted successfully"
               } else {
                 echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
-                Write-Verbose "⚠️ No release notes found, using default"
+                Write-Verbose " No release notes found, using default"
               }
             } catch {
-              Write-Verbose "⚠️ Failed to extract release notes: $($_.Exception.Message)"
+              Write-Verbose " Failed to extract release notes: $($_.Exception.Message)"
               echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
             }
           } else {
-            Write-Verbose "⚠️ Get-ReleaseNotes.ps1 not found, using default notes"
+            Write-Verbose " Get-ReleaseNotes.ps1 not found, using default notes"
             echo "notes=Release ${{ inputs.next_version }}" >> $env:GITHUB_OUTPUT
           }
 
@@ -205,7 +205,7 @@ jobs:
           Write-Verbose "Publishing module to PowerShell Gallery..."
 
           if ('${{ inputs.dry_run }}' -eq 'true') {
-            Write-Verbose "🔄 DRY RUN MODE - Skipping actual publish"
+            Write-Verbose " DRY RUN MODE - Skipping actual publish"
 
             # Validate the module would be publishable
             try {
@@ -218,9 +218,9 @@ jobs:
                 ErrorAction    = 'Stop'
               }
               Publish-Module @publishSplat
-              Write-Verbose "✅ Module validation for publish passed"
+              Write-Verbose " Module validation for publish passed"
             } catch {
-              Write-Error "❌ Module would fail to publish: $_"
+              Write-Error " Module would fail to publish: $_"
               exit 1
             }
           } else {
@@ -235,9 +235,9 @@ jobs:
                 Force          = $true
               }
               Publish-Module @publishSplat
-              Write-Verbose "✅ Module published successfully to PowerShell Gallery"
+              Write-Verbose " Module published successfully to PowerShell Gallery"
             } catch {
-              Write-Error "❌ Failed to publish module: $_"
+              Write-Error " Failed to publish module: $_"
 
               # Try to delete the release if publish failed
               if ('${{ steps.create_release.outputs.id }}') {
@@ -273,7 +273,7 @@ jobs:
               $module = Find-Module -Name '${{ needs.pre-publish-validation.outputs.module_name }}' -RequiredVersion '${{ inputs.next_version }}' -Repository PSGallery -ErrorAction Stop
 
               if ($module) {
-                Write-Verbose "✅ Module successfully found in PowerShell Gallery"
+                Write-Verbose " Module successfully found in PowerShell Gallery"
                 Write-Verbose "   Name: $($module.Name)"
                 Write-Verbose "   Version: $($module.Version)"
                 Write-Verbose "   Published: $($module.PublishedDate)"
@@ -288,7 +288,7 @@ jobs:
           } while ($attempt -le $maxAttempts -and -not $found)
 
           if (-not $found) {
-            Write-Error "❌ Module verification failed - not found in PowerShell Gallery after $maxAttempts attempts"
+            Write-Error " Module verification failed - not found in PowerShell Gallery after $maxAttempts attempts"
             exit 1
           }
 
@@ -310,7 +310,7 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          Write-Verbose "📦 Publish Summary"
+          Write-Verbose "� Publish Summary"
           Write-Verbose "=================="
           Write-Verbose "Module: ${{ needs.pre-publish-validation.outputs.module_name }}"
           Write-Verbose "Version: ${{ inputs.next_version }}"

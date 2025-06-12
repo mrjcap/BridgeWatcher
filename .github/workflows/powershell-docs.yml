@@ -51,7 +51,7 @@ jobs:
             Install-Module -Name $module.Name -MinimumVersion $module.MinimumVersion -Force -Scope CurrentUser -AllowClobber
           }
 
-          Write-Verbose "✅ All modules installed successfully"
+          Write-Verbose " All modules installed successfully"
 
       - name: Run PSScriptAnalyzer for documentation
         shell: pwsh
@@ -71,11 +71,11 @@ jobs:
 
             $errors = $results | Where-Object { $_.Severity -eq 'Error' }
             if ($errors) {
-              Write-Error "❌ Critical documentation issues found that must be fixed!"
+              Write-Error " Critical documentation issues found that must be fixed!"
               exit 1
             }
           } else {
-            Write-Verbose "✅ No documentation issues found"
+            Write-Verbose " No documentation issues found"
           }
 
       - name: Validate module manifest
@@ -94,7 +94,7 @@ jobs:
 
           try {
             $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
-            Write-Verbose "✅ Module manifest is valid: $($manifest.Name) v$($manifest.Version)"
+            Write-Verbose " Module manifest is valid: $($manifest.Name) v$($manifest.Version)"
 
             # Store manifest info for later use
             echo "MANIFEST_PATH=$($manifestPath.FullName)" >> $env:GITHUB_ENV
@@ -141,7 +141,7 @@ jobs:
             if (-not (Test-Path $modulePagePath)) {
               Write-Verbose "Creating module overview page..."
               New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName "about_$($moduleName).md"
-              Write-Verbose "✅ Documentation generated successfully"
+              Write-Verbose " Documentation generated successfully"
             }
             # List generated files
             $generatedFiles = Get-ChildItem $docsPath -Filter "*.md"
@@ -203,9 +203,9 @@ jobs:
 
           if ($issues) {
             Write-Verbose "Documentation validation issues:"
-            $issues | ForEach-Object { Write-Verbose "  ⚠️ $_"  }
+            $issues | ForEach-Object { Write-Verbose "   $_"  }
           } else {
-            Write-Verbose "✅ Documentation validation passed"
+            Write-Verbose " Documentation validation passed"
           }
 
       - name: Check for documentation changes
@@ -246,7 +246,7 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          Write-Verbose "📖 Documentation Generation Summary"
+          Write-Verbose "� Documentation Generation Summary"
           Write-Verbose "================================="
           Write-Verbose "Module: $env:MODULE_NAME v$env:MODULE_VERSION"
           Write-Verbose "Changes detected: ${{ steps.docs_changes.outputs.changes_detected }}"
@@ -260,9 +260,9 @@ jobs:
               Write-Verbose "Files generated:"
               $docFiles | ForEach-Object {
                 $size = [math]::Round((Get-Item $_.FullName).Length / 1KB, 2)
-                Write-Verbose "  📄 $($_.Name) (${size}KB)"
+                Write-Verbose "  � $($_.Name) (${size}KB)"
               }
             }
           }
 
-          Write-Verbose "✅ Documentation workflow completed"
+          Write-Verbose " Documentation workflow completed"

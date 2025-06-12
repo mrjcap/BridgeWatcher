@@ -51,11 +51,11 @@ jobs:
         id: validation
         shell: bash
         run: |
-          echo "🔍 Validating release conditions..."
+          echo " Validating release conditions..."
 
           # Check if there are uncommitted changes
           if ! git diff --quiet; then
-            echo "❌ Uncommitted changes detected"
+            echo " Uncommitted changes detected"
             echo "can_proceed=false" >> $GITHUB_OUTPUT
             echo "summary=Uncommitted changes detected" >> $GITHUB_OUTPUT
             exit 1
@@ -64,7 +64,7 @@ jobs:
           # Check if we're on main/master branch
           CURRENT_BRANCH=$(git branch --show-current)
           if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "master" ]]; then
-            echo "❌ Release must be run from main/master branch (current: $CURRENT_BRANCH)"
+            echo " Release must be run from main/master branch (current: $CURRENT_BRANCH)"
             echo "can_proceed=false" >> $GITHUB_OUTPUT
             echo "summary=Not on main branch" >> $GITHUB_OUTPUT
             exit 1
@@ -74,14 +74,14 @@ jobs:
           if [[ "${{ inputs.force_release }}" != "true" ]]; then
             COMMITS_SINCE_LAST_TAG=$(git rev-list --count $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD 2>/dev/null || echo "10")
             if [[ "$COMMITS_SINCE_LAST_TAG" -lt "1" ]]; then
-              echo "⚠️ No new commits since last release"
+              echo " No new commits since last release"
               echo "can_proceed=false" >> $GITHUB_OUTPUT
               echo "summary=No new commits since last release" >> $GITHUB_OUTPUT
               exit 1
             fi
           fi
 
-          echo "✅ Pre-release validation passed"
+          echo " Pre-release validation passed"
           echo "can_proceed=true" >> $GITHUB_OUTPUT
           echo "summary=All validations passed" >> $GITHUB_OUTPUT
   ci:
@@ -116,14 +116,14 @@ jobs:
           if (Test-Path "./scripts/Get-PotentialNextVersion.ps1") {
             try {
               $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType '${{ inputs.version_bump_type }}' -Verbose
-              Write-Verbose "✅ Calculated version: $version"
+              Write-Verbose " Calculated version: $version"
               echo "version=$version" >> $env:GITHUB_OUTPUT
             } catch {
-              Write-Error "❌ Failed to calculate version: $_"
+              Write-Error " Failed to calculate version: $_"
               exit 1
             }
           } else {
-            Write-Error "❌ Get-PotentialNextVersion.ps1 script not found!"
+            Write-Error " Get-PotentialNextVersion.ps1 script not found!"
             exit 1
           }
 
@@ -131,11 +131,11 @@ jobs:
         shell: pwsh
         run: |
           try {
-            Write-Verbose "🔄 Updating changelog for version ${{ steps.determine_version.outputs.version }}"
+            Write-Verbose " Updating changelog for version ${{ steps.determine_version.outputs.version }}"
             & ./scripts/Update-ReleaseChangeLog.ps1 -Version '${{ steps.determine_version.outputs.version }}' -Verbose
-            Write-Verbose "✅ Changelog update completed"
+            Write-Verbose " Changelog update completed"
           } catch {
-            Write-Error "❌ Failed to update changelog: $_"
+            Write-Error " Failed to update changelog: $_"
             exit 1
           }
 
@@ -164,10 +164,10 @@ jobs:
         run: |
           if [[ "${{ steps.changelog_check.outputs.updated }}" == "true" || "${{ inputs.force_release }}" == "true" ]]; then
             echo "proceed=true" >> $GITHUB_OUTPUT
-            echo "🚀 Proceeding with release"
+            echo " Proceeding with release"
           else
             echo "proceed=false" >> $GITHUB_OUTPUT
-            echo "⏸️ No significant changes detected, skipping release"
+            echo " No significant changes detected, skipping release"
           fi
 
   security-analysis:
@@ -219,29 +219,29 @@ jobs:
       - name: Generate release summary
         shell: bash
         run: |
-          echo "# 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "#  Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📊 Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "##  Release Details" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ needs.gatekeeper.outputs.next_version || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Version Bump:** ${{ inputs.version_bump_type }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Dry Run:** ${{ inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Force Release:** ${{ inputs.force_release }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          echo "## 📋 Workflow Results" >> $GITHUB_STEP_SUMMARY
+          echo "##  Workflow Results" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Status | Result |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Gatekeeper | ${{ needs.gatekeeper.result }} | ${{ needs.gatekeeper.outputs.proceed_with_release == 'true' && '✅ Proceed' || '⏸️ Skip' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gatekeeper | ${{ needs.gatekeeper.result }} | ${{ needs.gatekeeper.outputs.proceed_with_release == 'true' && ' Proceed' || ' Skip' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Changelog | auto | Updated by script |" >> $GITHUB_STEP_SUMMARY
           echo "| Module Publish | ${{ needs.publish-module.result || 'skipped' }} | ${{ needs.publish-module.outputs.module_published || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Docker Build | ${{ needs.docker-build.result || 'skipped' }} | ${{ needs.docker-build.result == 'success' && '✅ Built' || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker Build | ${{ needs.docker-build.result || 'skipped' }} | ${{ needs.docker-build.result == 'success' && ' Built' || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Determine overall status
           if [[ "${{ needs.gatekeeper.outputs.proceed_with_release }}" == "true" && "${{ needs.publish-module.result }}" == "success" ]]; then
-            echo "## ✅ Release Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
+            echo "##  Release Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
           else
-            echo "## ❌ Release Status: FAILED or SKIPPED" >> $GITHUB_STEP_SUMMARY
+            echo "##  Release Status: FAILED or SKIPPED" >> $GITHUB_STEP_SUMMARY
           fi
   cleanup:
     name: Cleanup
@@ -253,7 +253,7 @@ jobs:
       - name: Cleanup artifacts
         if: always()
         run: |
-          echo "🧹 Performing cleanup..."
+          echo " Performing cleanup..."
           rm -rf test-secrets/ || true
           rm -f .env* || true
           rm -f coverage.xml testResults.xml || true
@@ -264,5 +264,5 @@ jobs:
           docker logout || true
           git clean -fdx || true
           git reset --hard || true
-          echo "✅ Cleanup completed"
+          echo " Cleanup completed"
 

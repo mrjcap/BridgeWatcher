@@ -57,7 +57,7 @@ jobs:
             Write-Error "PSScriptAnalyzer found $($analysisResults.Count) issues!"
             exit 1
           } else {
-            Write-Verbose "✅ No PSScriptAnalyzer issues found"
+            Write-Verbose " No PSScriptAnalyzer issues found"
           }
 
       - name: Validate module manifest
@@ -71,7 +71,7 @@ jobs:
           }
           try {
             $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
-            Write-Verbose "✅ Module manifest is valid"
+            Write-Verbose " Module manifest is valid"
             Write-Verbose "Module: $($manifest.Name) v$($manifest.Version)"
           } catch {
             Write-Error "Module manifest validation failed: $($_.Exception.Message)"
@@ -86,10 +86,10 @@ jobs:
             $config = Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1
             $result = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1)
             if ($result.Result -ne 'Passed') {
-              Write-Error "❌ Tests failed! $($result.FailedCount) of $($result.TotalCount) tests failed"
+              Write-Error " Tests failed! $($result.FailedCount) of $($result.TotalCount) tests failed"
               exit 1
             } else {
-              Write-Verbose "✅ All $($result.TotalCount) tests passed"
+              Write-Verbose " All $($result.TotalCount) tests passed"
             }
           } else {
             Write-Error "PesterConfiguration.psd1 not found!"
@@ -111,10 +111,10 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path './coverage.xml') {
-            Write-Verbose "✅ Coverage file found"
+            Write-Verbose " Coverage file found"
             echo "coverage_exists=true" >> $env:GITHUB_OUTPUT
           } else {
-            Write-Verbose "⚠️ Coverage file not found"
+            Write-Verbose " Coverage file not found"
             echo "coverage_exists=false" >> $env:GITHUB_OUTPUT
           }
 
