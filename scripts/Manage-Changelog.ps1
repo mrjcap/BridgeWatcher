@@ -156,71 +156,30 @@ switch ($Action) {
             } else {
                 $header = ""
                 $body = $changelog
-            }
-        }
-
+            }        }
+        
         # Create new entry
         $Date = Get-Date
         $newEntry = "## [$Version] - $($Date.ToString('yyyy-MM-dd'))`r`n"
-
+        
         foreach ($section in $sectionData) {
-            $items = $section.Items | Where-Object { $_ -and $_.Trim() -ne '' }
+            $items = @()
+            if ($section.Items) {
+                $items = @($section.Items | Where-Object { $_ -and $_.Trim() -ne '' })
+            }
+            
             if ($items.Count -gt 0) {
                 $newEntry += "`r`n### $($section.Title)`r`n`r`n"
                 foreach ($item in $items) {
                     $newEntry += "- $item`r`n"
                 }
             }
-        }
-        $newEntry += "`r`n"
+        }$newEntry += "`r`n"
 
         # Combine and save
         $finalChangelog = "$header$newEntry$body"
         Set-Content -Path $ChangelogPath -Value $finalChangelog -Encoding UTF8
         Write-Verbose "CHANGELOG.md updated for version $Version"
-
-        foreach ($section in @('Added', 'Changed', 'Fixed', 'Removed', 'Security', 'Deprecated', 'Documentation', 'Other')) {
-            $items = $updateArgs[$section]
-            if ($items -and $items.Count -gt 0) {
-                $title = $sectionTitles[$section]
-                $newEntry += "`r`n### $title`r`n`r`n"
-                foreach ($item in $items) {
-                    $newEntry += "- $item`r`n"
-                }
-            }
-        }
-        $newEntry += "`r`n"
-
-        # Read existing changelog
-        $changelog = Get-Content $ChangelogPath -Raw -ErrorAction SilentlyContinue
-        if (-not $changelog) {
-            $changelog = "# Αρχείο Αλλαγών (Changelog)`r`n`r`n"
-        }        # Find insertion point (after introduction)
-        $introPattern = '(# Αρχείο Αλλαγών.*?και το έργο αυτό ακολουθεί το \[Semantic Versioning\]\(.*?\)\.)'
-        $introMatch = [regex]::Match($changelog, $introPattern, 'Singleline')
-
-        if ($introMatch.Success) {
-            $intro = $introMatch.Groups[1].Value
-            $restStart = $introMatch.Index + $introMatch.Length
-            $rest = $changelog.Substring($restStart)
-
-            # Αφαίρεση τυχόν extra newlines από την αρχή του rest
-            $rest = $rest -replace '^\s*\r?\n\s*', "`r`n`r`n"
-
-            $finalChangelog = "$intro`r`n`r`n$newEntry$rest"
-        } else {
-            # Fallback: just add after the first ## if found, or at the end
-            if ($changelog -match '(.*?)(## \[.*?\].*?)') {
-                $beforeFirst = $matches[1]
-                $afterFirst = $matches[2]
-                $finalChangelog = "$beforeFirst$newEntry$afterFirst"
-            } else {
-                $finalChangelog = "$changelog`r`n$newEntry"
-            }
-        }
-
-        Set-Content -Path $ChangelogPath -Value $finalChangelog -Encoding UTF8
-        Write-Output "✅ Changelog updated for version $Version"
     }
 
     'Format' {
