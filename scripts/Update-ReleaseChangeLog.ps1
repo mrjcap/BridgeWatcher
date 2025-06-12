@@ -202,8 +202,7 @@ try {
 
     foreach ($key in $defaultSections.Keys) {
         if (-not $sections.ContainsKey($key) -or -not $sections[$key]) {
-            $sections[$key] = @(
-        }
+            $sections[$key] = @()
     }
 
 } catch {
