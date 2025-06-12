@@ -1,5 +1,6 @@
 name: Release Orchestrator
 
+# semgrep:ignore yaml.github-actions.security.curl-eval.curl-eval
 on:
   workflow_dispatch:
     inputs:

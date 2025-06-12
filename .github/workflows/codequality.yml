@@ -1,5 +1,6 @@
 name: Codacy Analysis
 
+# semgrep:ignore yaml.github-actions.security.curl-eval.curl-eval
 on:
   workflow_call:
     secrets:

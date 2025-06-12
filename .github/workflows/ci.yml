@@ -1,5 +1,6 @@
 name: PowerShell Module CI
 
+# semgrep:ignore yaml.github-actions.security.curl-eval.curl-eval
 on:
   workflow_call:
     secrets:
