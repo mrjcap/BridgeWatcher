@@ -1,4 +1,4 @@
-﻿---
+---
 external help file: BridgeWatcher-help.xml
 Module Name: BridgeWatcher
 online version:
