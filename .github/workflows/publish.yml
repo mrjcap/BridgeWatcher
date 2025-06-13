@@ -211,7 +211,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check if version already exists on PSGallery
+        id: version_check
+        shell: pwsh
+        env:
+          NEXT_VERSION: ${{ inputs.next_version }}
+        run: |
+          Write-Verbose "Checking if module v$env:NEXT_VERSION is already in PSGallery…"
+          $existing = Find-Module -Name '${{ needs.pre-publish-validation.outputs.module_name }}' -RequiredVersion $env:NEXT_VERSION -Repository PSGallery -ErrorAction SilentlyContinue
+          if ($existing) {
+            Write-Host "Module v$env:NEXT_VERSION already exists. Skipping publish."
+            echo "exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "exists=false" >> $env:GITHUB_OUTPUT
+          }
       - name: Publish module to PowerShell Gallery
+        if: steps.version_check.outputs.exists == 'false'
         shell: pwsh
         run: |
           Write-Verbose "Publishing module to PowerShell Gallery..."
