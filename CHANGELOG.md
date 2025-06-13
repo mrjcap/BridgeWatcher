@@ -461,6 +461,3 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
-
-
-
