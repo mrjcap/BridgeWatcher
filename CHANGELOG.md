@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.75] - 2025-06-13
+
+### 🐛 Διορθώθηκαν
+
+- fix(BridgeStatusComparison): Ενημέρωση λογικής για μη εύρεση bridge state
+
 ## [1.0.74] - 2025-06-12
 
 ### 🐛 Διορθώθηκαν
@@ -455,5 +461,6 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
+
 
 
