@@ -6,7 +6,7 @@
 [![Δημοσίευση](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml)
 [![Release Orchestrator](https://github.com/mrjcap/BridgeWatcher/actions/workflows/release.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/release.yml)
 [![GitHub issues](https://img.shields.io/github/issues/mrjcap/BridgeWatcher)](https://github.com/mrjcap/BridgeWatcher/issues)
-[![Κάλυψη Κώδικα](https://codecov.io/gh/mrjcap/BridgeWatcher/branch/main/graph/badge.svg)](https://app.codecov.io/gh/mrjcap/BridgeWatcher)
+[![Κάλυψη Κώδικα](https://img.shields.io/codecov/c/github/mrjcap/BridgeWatcher?logo=codecov)](https://codecov.io/gh/mrjcap/BridgeWatcher)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/38461665d3a642cf9574522e1713afa7)](https://app.codacy.com/gh/mrjcap/BridgeWatcher/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Pester Tests](https://img.shields.io/badge/Pester-v5-blue)](https://pester.dev/)
 [![Έκδοση PowerShell Gallery](https://img.shields.io/powershellgallery/v/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
