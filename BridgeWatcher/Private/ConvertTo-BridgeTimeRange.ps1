@@ -2,26 +2,26 @@
     [CmdletBinding()]
     <#
     .SYNOPSIS
-    Μετατρέπει χρονικό διάστημα σε αναγνώσιμο εύρος ώρας.
+    Εξάγει χρονικό εύρος από κείμενο OCR.
 
     .DESCRIPTION
-    Η ConvertTo-BridgeTimeRange λαμβάνει αρχικό και τελικό timestamp και επιστρέφει
-    μία φιλική αναπαράσταση εύρους ώρας.
+    Η ConvertTo-BridgeTimeRange αναλύει γραμμές κειμένου από OCR
+    και εξάγει ημερομηνίες/ώρες για να δημιουργήσει χρονικό εύρος
+    κλεισίματος γέφυρας.
 
-    .PARAMETER StartTimestamp
-    Η ώρα έναρξης.
-
-    .PARAMETER EndTimestamp
-    Η ώρα λήξης.
+    .PARAMETER Lines
+    Πίνακας με γραμμές κειμένου από OCR ανάλυση.
 
     .OUTPUTS
-    [string] - Φιλικό χρονικό εύρος.
+    [PSCustomObject] - Αντικείμενο με From, To και ClosedFor properties.
 
     .EXAMPLE
-    ConvertTo-BridgeTimeRange -StartTimestamp (Get-Date) -EndTimestamp (Get-Date)
+    ConvertTo-BridgeTimeRange -Lines @('Από 25/04/2025 14:00', 'Έως 25/04/2025 14:30')
+    # Returns:@{From=[datetime]; To=[datetime]; ClosedFor=[timespan]}
 
     .NOTES
-    Το αποτέλεσμα μορφοποιείται σε τοπική ώρα (HH:mm).
+    Χρησιμοποιεί regex pattern matching για εξαγωγή ημερομηνιών
+    με μορφή dd/MM/yyyy HH:mm από το κείμενο.
     #>
 
     [OutputType([PSCustomObject])]

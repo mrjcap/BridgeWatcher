@@ -8,17 +8,21 @@
     Η Get-BridgeImage αναλύει HTML δεδομένα και επιστρέφει αντικείμενα
     με τα links εικόνων που σχετίζονται με την κατάσταση γέφυρας.
 
-    .PARAMETER Html
-    Το HTML περιεχόμενο της σελίδας.
+    .PARAMETER HtmlContent
+    Το HTML περιεχόμενο της σελίδας ως string.
+
+    .PARAMETER Location
+    Η τοποθεσία της γέφυρας ('poseidonia' ή 'isthmia').
 
     .OUTPUTS
-    [pscustomobject[]] - Λίστα από αντικείμενα εικόνων.
+    [System.Collections.ArrayList] - Λίστα από αντικείμενα εικόνων με property 'src'.
 
     .EXAMPLE
-    Get-BridgeImage -Html $htmlContent
+    Get-BridgeImage -HtmlContent $html -Location 'isthmia'
 
     .NOTES
     Η ανάλυση βασίζεται σε regex για ανεύρεση εικόνων.
+    Φιλτράρει μόνο εικόνες που περιέχουν 'image-bridge' στο URL.
     #>
 
     [OutputType([System.Collections.ArrayList])]

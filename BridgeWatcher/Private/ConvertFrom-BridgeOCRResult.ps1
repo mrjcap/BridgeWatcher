@@ -8,14 +8,17 @@
     Η ConvertFrom-BridgeOCRResult λαμβάνει τα αποτελέσματα OCR και επιστρέφει αντικείμενα
     που περιγράφουν αν η γέφυρα είναι κλειστή, ανοιχτή ή άγνωστη.
 
-    .PARAMETER OcrResult
-    Το αντικείμενο αποτελεσμάτων από το OCR API.
+    .PARAMETER ApiResponse
+    Το αντικείμενο απόκρισης από το Google Vision API.
+
+    .PARAMETER ImageUri
+    Το URI της εικόνας που αναλύθηκε με OCR.
 
     .OUTPUTS
     [pscustomobject[]] - Αντικείμενα κατάστασης γέφυρας.
 
     .EXAMPLE
-    ConvertFrom-BridgeOCRResult -OcrResult $result
+    ConvertFrom-BridgeOCRResult -ApiResponse $response -ImageUri 'https://example.com/bridge.jpg'
 
     .NOTES
     Χρησιμοποιείται για να αναλυθούν OCR responses και να εξαχθούν status.

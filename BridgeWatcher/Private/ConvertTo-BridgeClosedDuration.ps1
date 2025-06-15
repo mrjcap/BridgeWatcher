@@ -2,26 +2,29 @@
     [CmdletBinding()]
     <#
     .SYNOPSIS
-    Υπολογίζει τη διάρκεια κλεισίματος γέφυρας.
+    Μετατρέπει TimeSpan σε ελληνική περιγραφή διάρκειας.
 
     .DESCRIPTION
-    Η ConvertTo-BridgeClosedDuration υπολογίζει πόσο χρονικό διάστημα παραμένει κλειστή η γέφυρα
-    με βάση την ώρα ανοίγματος και κλεισίματος.
+    Η ConvertTo-BridgeClosedDuration μετατρέπει ένα TimeSpan object
+    σε φιλική ελληνική περιγραφή (π.χ. "2 ώρες, 30 λεπτά").
 
-    .PARAMETER CloseTimestamp
-    Η χρονική στιγμή κλεισίματος της γέφυρας.
-
-    .PARAMETER OpenTimestamp
-    Η χρονική στιγμή ανοίγματος της γέφυρας.
+    .PARAMETER Duration
+    Η διάρκεια ως TimeSpan object προς μετατροπή σε ελληνική περιγραφή.
 
     .OUTPUTS
-    [Timespan] - Η διάρκεια κλεισίματος.
+    [string] - Η διάρκεια σε ελληνική περιγραφή.
 
     .EXAMPLE
-    ConvertTo-BridgeClosedDuration -CloseTimestamp (Get-Date) -OpenTimestamp (Get-Date)
+    ConvertTo-BridgeClosedDuration -Duration ([timespan]::FromHours(2.5))
+    # Returns:"2 ώρες, 30 λεπτά"
+
+    .EXAMPLE
+    ConvertTo-BridgeClosedDuration -Duration ([timespan]::FromDays(1).Add([timespan]::FromHours(3)))
+    # Returns:"1 ημέρα, 3 ώρες"
 
     .NOTES
-    Απαιτεί έγκυρες χρονικές σφραγίδες.
+    Χειρίζεται ημέρες, ώρες και λεπτά με σωστή πληθυντική μορφή στα ελληνικά.
+    Δεν εμφανίζει μηδενικές τιμές (π.χ. αν είναι 0 ώρες, παραλείπεται).
     #>
 
     [OutputType([string])]

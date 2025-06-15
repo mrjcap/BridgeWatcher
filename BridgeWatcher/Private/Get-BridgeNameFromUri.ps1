@@ -8,17 +8,23 @@
     Η Get-BridgeNameFromUri αναλύει το URI μιας εικόνας και επιστρέφει
     το αναγνωριστικό της γέφυρας (π.χ. Ποσειδωνία ή Ισθμία).
 
-    .PARAMETER Uri
-    Η διεύθυνση URI της εικόνας.
+    .PARAMETER ImageUri
+    Η διεύθυνση URI της εικόνας προς ανάλυση.
 
     .OUTPUTS
-    [string] - Το αναγνωριστικό της γέφυρας.
+    [string] - Το όνομα της γέφυρας ('Ισθμία', 'Ποσειδωνία' ή 'Άγνωστη').
 
     .EXAMPLE
-    Get-BridgeNameFromUri -Uri 'https://example.com/poseidonia.jpg'
+    Get-BridgeNameFromUri -ImageUri 'https://example.com/image-bridge-posidonia.jpg'
+    # Returns: 'Ποσειδωνία'
+
+    .EXAMPLE
+    Get-BridgeNameFromUri -ImageUri 'https://example.com/bridge-isthmia-status.png'
+    # Returns: 'Ισθμία'
 
     .NOTES
-    Χρησιμοποιεί regex patterns για αναγνώριση ονόματος.
+    Χρησιμοποιεί case-insensitive regex matching για αναγνώριση ονόματος.
+    Επιστρέφει 'Άγνωστη' αν δεν αναγνωριστεί η γέφυρα.
     #>
     [OutputType([string])]
     param (
