@@ -1,4 +1,5 @@
 ﻿function Send-BridgeNotification {
+    [OutputType([void])]
     <#
     .SYNOPSIS
     Στέλνει ειδοποίηση ανάλογα με την κατάσταση της γέφυρας (άνοιγμα ή κλείσιμο).

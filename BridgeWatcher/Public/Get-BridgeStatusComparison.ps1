@@ -1,5 +1,6 @@
 ﻿function Get-BridgeStatusComparison {
     [CmdletBinding()]
+    [OutputType([void])]
     <#
     .SYNOPSIS
     Συγκρίνει προηγούμενη και τρέχουσα κατάσταση γεφυρών.

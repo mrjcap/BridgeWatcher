@@ -1,4 +1,5 @@
 ﻿function Write-BridgeStage {
+    [OutputType([void])]
     <#
     .SYNOPSIS
     Εμφανίζει μήνυμα στα logs με καθορισμένο επίπεδο και στάδιο.

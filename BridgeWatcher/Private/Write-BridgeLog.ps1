@@ -1,5 +1,6 @@
 ﻿function Write-BridgeLog {
     [CmdletBinding()]
+    [OutputType([void])]
     <#
 .SYNOPSIS
 Καταγράφει μηνύματα λειτουργίας του συστήματος.
