@@ -55,27 +55,6 @@
     )
     Set-StrictMode -Version Latest
 
-    # Helper function για επίλυση της κατάστασης γέφυρας βάσει SideIndicator
-    function Resolve-BridgeStateForChange {
-        param(
-            [Parameter(Mandatory)]$Change,
-            [Parameter(Mandatory)][object[]]$PreviousState,
-            [Parameter(Mandatory)][object[]]$CurrentState
-        )
-
-        if ($Change.SideIndicator -eq '=>') {
-            # Νέα κατάσταση - ψάχνε στο CurrentState
-            $foundState = @($CurrentState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
-        } else {
-            # Παλιά κατάσταση (<=) - ψάχνε στο CurrentState πρώτα
-            $foundState = @($CurrentState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
-            if ($foundState.Count -eq 0) {
-                # Fallback: χρήση PreviousState αν δεν υπάρχει στο Current
-                $foundState = @($PreviousState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
-            }
-        }        return $foundState
-    }
-
     try {
         $compareSplat = @{
             ReferenceObject  = $PreviousState
@@ -125,8 +104,12 @@
             if ($handlerMap.ContainsKey($key)) {
                 $type = $handlerMap[$key]
                 # Χρήση helper function για επίλυση bridge state
-                $changedBridgeState = Resolve-BridgeStateForChange -Change $change -PreviousState $PreviousState -CurrentState $CurrentState
-
+                $resolveBridgeStateForChangeSplat = @{
+                    Change = $change
+                    PreviousState = $PreviousState
+                    CurrentState = $CurrentState
+                }
+                $changedBridgeState    = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
                 if ($changedBridgeState.Count -gt 0) {
                     $sendBridgeNotificationSplat = @{
                         Type      = $type
