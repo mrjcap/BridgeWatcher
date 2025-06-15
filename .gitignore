@@ -1,0 +1,25 @@
+# Test Results
+coverage.xml
+testResults.xml
+
+# Logs
+logs/
+*.log
+
+# PowerShell
+*.ps1xml~
+*.psc1
+*.psd1~
+*.psm1~
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp

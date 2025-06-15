@@ -40,6 +40,7 @@
         $setContentSplat = @{
             Path  = $Path
             Value = $json
+            Encoding = 'utf8BOM'
         }
         Set-Content @setContentSplat
         $writeBridgeLogSplat = @{

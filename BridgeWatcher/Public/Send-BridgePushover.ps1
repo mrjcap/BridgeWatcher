@@ -47,14 +47,16 @@
 
     [OutputType([void])]
     param (
-        [Parameter(Mandatory)][string]$PoUserKey,
-        [Parameter(Mandatory)][string]$PoApiKey,
-        [Parameter(Mandatory)][string]$Message,
-        [string]$Device,
-        [string]$Title,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
+        [ValidateNotNullOrEmpty()][string]$Device,
+        [ValidateNotNullOrEmpty()][string]$Title,
+        [ValidateScript({$_ -match '^https?://'})]
         [string]$Url,
-        [string]$UrlTitle,
-        [int]$Priority,
+        [ValidateNotNullOrEmpty()][string]$UrlTitle,
+        [ValidateRange(0, 2)][int]$Priority,
+        [ValidateSet('pushover', 'bike', 'bugle', 'cashregister', 'classical', 'cosmic', 'falling', 'gamelan', 'incoming', 'intermission', 'magic', 'mechanical', 'pianobar', 'siren', 'spacealarm', 'tugboat', 'alien', 'climb', 'persistent', 'echo', 'updown', 'none')]
         [string]$Sound
     )
     $writeBridgeLogSplat = @{
@@ -74,15 +76,34 @@
         Priority  = $Priority
         Sound     = $Sound
     }
-    $payload = Get-BridgePushoverPayload @newPushoverPayloadSplat
-    $sendPushoverRequestSplat = @{
-        Payload    = $payload
+    try {
+        $payload = Get-BridgePushoverPayload @newPushoverPayloadSplat
+        $sendPushoverRequestSplat = @{
+            Payload    = $payload
+            ErrorAction = 'Stop'
+        }
+        Send-BridgePushoverRequest @sendPushoverRequestSplat | Out-Null
+        $writeBridgeLogSplat = @{
+            Stage   = 'Ειδοποίηση'
+            Message = 'Pushover ✅ Sent successfully'
+            Level   = 'Verbose'
+        }
+        Write-BridgeLog @writeBridgeLogSplat
+    } catch {
+        $writeBridgeLogSplat = @{
+            Stage   = 'Σφάλμα'
+            Message = "❌ Αποτυχία αποστολής Pushover: $($_.Exception.Message)"
+            Level   = 'Warning'
+        }
+        Write-BridgeLog @writeBridgeLogSplat
+
+        $PSCmdlet.ThrowTerminatingError(
+            [System.Management.Automation.ErrorRecord]::new(
+                ([System.Exception]::new("Αποτυχία αποστολής Pushover: $($_.Exception.Message)")),
+                'PushoverSendError',
+                [System.Management.Automation.ErrorCategory]::ConnectionError,
+                $Message
+            )
+        )
     }
-    Send-BridgePushoverRequest @sendPushoverRequestSplat | Out-Null
-    $writeBridgeLogSplat = @{
-        Stage   = 'Ειδοποίηση'
-        Message = 'Pushover ✅ Sent successfully'
-        Level   = 'Verbose'
-    }
-    Write-BridgeLog @writeBridgeLogSplat
 }
