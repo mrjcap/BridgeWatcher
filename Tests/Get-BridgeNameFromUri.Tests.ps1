@@ -2,24 +2,26 @@
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Get-BridgeNameFromUri' {
-        Context 'Όταν το URI περιέχει isthmia' {            It "Επιστρέφει 'Ισθμία' για URI με 'isthmia'" {
+        Context 'Όταν το URI περιέχει isthmia' {
+            It "Επιστρέφει 'Ισθμία' για URI με 'isthmia'" {
                 $uri = 'https://somehost.com/images/bridge_isthmia_01.jpg'
                 $result = Get-BridgeNameFromUri -ImageUri $uri
                 $result | Should -Be 'Ισθμία'
             }
-            
+
             It "Επιστρέφει 'Ισθμία' για κεφαλαία 'ISTHMIA'" {
                 $uri = 'https://example.com/BRIDGE_ISTHMIA_02.JPG'
                 $result = Get-BridgeNameFromUri -ImageUri $uri
                 $result | Should -Be 'Ισθμία'
             }
         }
-        Context 'Όταν το URI περιέχει posidonia' {            It "Επιστρέφει 'Ποσειδωνία' για URI με 'posidonia'" {
+        Context 'Όταν το URI περιέχει posidonia' {
+            It "Επιστρέφει 'Ποσειδωνία' για URI με 'posidonia'" {
                 $uri = 'https://topvision.gr/img/bridge_posidonia_03.png'
                 $result = Get-BridgeNameFromUri -ImageUri $uri
                 $result | Should -Be 'Ποσειδωνία'
             }
-            
+
             It "Επιστρέφει 'Ποσειδωνία' για κεφαλαία 'POSIDONIA'" {
                 $uri = 'https://example.com/BRIDGE_POSIDONIA_04.JPG'
                 $result = Get-BridgeNameFromUri -ImageUri $uri

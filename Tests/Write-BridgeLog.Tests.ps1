@@ -41,9 +41,11 @@ InModuleScope 'BridgeWatcher' {
             It 'Δέχεται όλα τα έγκυρα Stages' {
                 $validStages = @('Ανάλυση', 'Απόφαση', 'Ειδοποίηση', 'Σφάλμα')
                 foreach ($stage in $validStages) {
-                    { Write-BridgeLog -Stage $stage -Message 'test' -Level 'Verbose' } | Should -Not -Throw                }
+                    {
+                        Write-BridgeLog -Stage $stage -Message 'test' -Level 'Verbose' } | Should -Not -Throw
+                    }
             }
-            
+
             It 'Δέχεται όλα τα έγκυρα Levels' {
                 $validLevels = @('Verbose', 'Debug', 'Warning')
                 foreach ($level in $validLevels) {
@@ -51,16 +53,16 @@ InModuleScope 'BridgeWatcher' {
                 }
             }
         }
-        
+
         Context 'Error Handling για File Operations' {
             It 'Γράφει Write-Warning όταν αποτυγχάνει το Add-Content' {
                 # Mock το Add-Content για να προκαλέσουμε σφάλμα
                 Mock Add-Content { throw [System.IO.IOException]::new("Access denied") }
                 Mock Write-Warning {}
-                
+
                 # Εκτέλεση - δεν πρέπει να ρίξει exception αλλά να καλέσει Write-Warning
                 { Write-BridgeLog -Stage 'Ανάλυση' -Message 'Test message' } | Should -Not -Throw
-                
+
                 # Επιβεβαίωση ότι καλέστηκε το Write-Warning με το σωστό μήνυμα
                 Should -Invoke Write-Warning -Exactly 1 -ParameterFilter {
                     $Message -like "*Failed to write to log file*Access denied*"
