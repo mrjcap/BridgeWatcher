@@ -31,15 +31,19 @@
 
     .NOTES
     Επιστρέφει πάντα πλήρες αντικείμενο με σωστά πεδία.
-    #>
-
-    [OutputType([pscustomobject])]
+    #>    [OutputType([pscustomobject])]
     param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Location,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Status,
-        [Parameter(Mandatory)][string]$Timestamp,
-        [Parameter(Mandatory)][string]$ImageSrc,
-        [Parameter()][string]$BaseUrl = 'https://www.topvision.gr/dioriga/'
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Timestamp,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ImageSrc,
+        [Parameter()][ValidateScript({
+                if ([string]::IsNullOrEmpty($_) -or [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
+                    $true
+                } else {
+                    throw "The parameter '$_' is not a valid absolute URI."
+                }
+            })][string]$BaseUrl = 'https://www.topvision.gr/dioriga/'
     )
     return [pscustomobject]@{
         PSTypeName   = 'Bridge.Status'

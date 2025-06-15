@@ -52,7 +52,7 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [ValidateNotNullOrEmpty()][string]$Device,
         [ValidateNotNullOrEmpty()][string]$Title,
-        [ValidateScript({$_ -match '^https?://'})]
+        [ValidateScript({ $_ -match '^https?://' })]
         [string]$Url,
         [ValidateNotNullOrEmpty()][string]$UrlTitle,
         [ValidateRange(0, 2)][int]$Priority,
@@ -79,7 +79,7 @@
     try {
         $payload = Get-BridgePushoverPayload @newPushoverPayloadSplat
         $sendPushoverRequestSplat = @{
-            Payload    = $payload
+            Payload     = $payload
             ErrorAction = 'Stop'
         }
         Send-BridgePushoverRequest @sendPushoverRequestSplat | Out-Null

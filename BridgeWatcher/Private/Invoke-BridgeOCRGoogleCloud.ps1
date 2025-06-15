@@ -21,22 +21,24 @@
     Invoke-BridgeOCRGoogleCloud -ApiKey 'your-api-key' -ImageUri 'https://example.com/image.jpg'
 
     .NOTES
-    Απαιτεί έγκυρο API Key και δημόσια προσβάσιμες εικόνες.
-    #>
+    Απαιτεί έγκυρο API Key και δημόσια προσβάσιμες εικόνες.    #>
 
-    [OutputType([pscustomobject[]])]
-    param (
-        [Parameter(Mandatory)][string]$ApiKey,
-        [Parameter(Mandatory)][string]$ImageUri
+    [OutputType([pscustomobject[]])]    param (
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter(Mandatory)][ValidateScript({
+                if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
+                    $true
+                } else {
+                    throw "The parameter '$_' is not a valid absolute URI."
+                }
+            })][string]$ImageUri
     )
+
     $writeBridgeLogSplat = @{
         Stage   = 'Ανάλυση'
         Message = "📥 [BEGIN] OCR for: $ImageUri"
     }
     Write-BridgeLog @writeBridgeLogSplat
-    if (-not [Uri]::IsWellFormedUriString($ImageUri, [UriKind]::Absolute)) {
-        throw "The provided ImageUri is not a valid absolute URI: '$ImageUri'"
-    }
     try {
         $newOCRRequestBodySplat = @{
             ImageUri    = $ImageUri

@@ -29,11 +29,10 @@
 
     .NOTES
     Βασική helper function για logging στα modules του BridgeWatcher.
-    #>
-    [CmdletBinding()]
+    #>    [CmdletBinding()]
     param(
         [Parameter(Mandatory)][ValidateSet('Ανάλυση', 'Σφάλμα')][string]$Stage,
-        [Parameter(Mandatory)][string]$Message,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [ValidateSet('Verbose', 'Warning', 'Error')][string]$Level = 'Verbose'
     )
     $writeBridgeLogSplat = @{

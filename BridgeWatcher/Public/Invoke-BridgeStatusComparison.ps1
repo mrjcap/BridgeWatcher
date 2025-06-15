@@ -33,13 +33,12 @@
     #>
 
     [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param (
+    [OutputType([System.Boolean])]    param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$PreviousState,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$CurrentState,
-        [Parameter(Mandatory)][string]$ApiKey,
-        [Parameter(Mandatory)][string]$PoUserKey,
-        [Parameter(Mandatory)][string]$PoApiKey
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey
     )
     Set-StrictMode -Version Latest
     try {

@@ -27,14 +27,13 @@
     .NOTES
     Οι μεταβλητές $PoUserKey, $PoApiKey και (για 'Closed') $ApiKey πρέπει να υπάρχουν στο scope της function.
     Η function χρησιμοποιεί splatting για καθαρότητα και ευκολία επεκτασιμότητας.
-    #>
-    [CmdletBinding()]
+    #>    [CmdletBinding()]
     param(
         [Parameter(Mandatory)][ValidateSet('Closed', 'Opened')]$Type,
-        [Parameter(Mandatory)][object[]]$State,
-        [Parameter(Mandatory)][string]$ApiKey,
-        [Parameter(Mandatory)][string]$PoUserKey,
-        [Parameter(Mandatory)][string]$PoApiKey
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$State,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey
     )
     $splat = @{
         CurrentState = $State

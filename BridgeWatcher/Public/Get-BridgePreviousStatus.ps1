@@ -19,10 +19,9 @@
 
     .NOTES
     Ασφαλής ανάγνωση με structured error handling και fallback.
-    #>
-    [OutputType([object[]])]
+    #>    [OutputType([object[]])]
     param (
-        [Parameter(Mandatory)][string]$InputFile
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$InputFile
     )
     if (-not (Test-Path $InputFile)) {
         $writeBridgeLogSplat = @{

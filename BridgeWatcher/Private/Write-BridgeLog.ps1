@@ -25,12 +25,10 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
 
 .NOTES
 Δημιουργεί log directory αν δεν υπάρχει και καταγράφει ημερήσια αρχεία.
-#>
-
-    param (
+#>    param (
         [Parameter(Mandatory)][ValidateSet('Ανάλυση', 'Απόφαση', 'Ειδοποίηση', 'Σφάλμα')]
         [string]$Stage,
-        [Parameter(Mandatory)][string]$Message,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [Parameter()][ValidateSet('Verbose', 'Debug', 'Warning')]
         [string]$Level = 'Verbose'
     )

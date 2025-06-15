@@ -24,5 +24,33 @@ InModuleScope 'BridgeWatcher' {
             Write-BridgeLog -Stage 'Σφάλμα' -Message 'κάτι πήγε στραβά' -Level 'Warning'
             Assert-MockCalled Write-Warning -Exactly 1
         }
+
+        Context 'Parameter Validation' {
+            It 'Ρίχνει σφάλμα για άκυρο Stage' {
+                { Write-BridgeLog -Stage 'InvalidStage' -Message 'test' -Level 'Verbose' } | Should -Throw
+            }
+
+            It 'Ρίχνει σφάλμα για άκυρο Level' {
+                { Write-BridgeLog -Stage 'Ανάλυση' -Message 'test' -Level 'InvalidLevel' } | Should -Throw
+            }
+
+            It 'Ρίχνει σφάλμα για κενό Message' {
+                { Write-BridgeLog -Stage 'Ανάλυση' -Message '' -Level 'Verbose' } | Should -Throw
+            }
+
+            It 'Δέχεται όλα τα έγκυρα Stages' {
+                $validStages = @('Ανάλυση', 'Απόφαση', 'Ειδοποίηση', 'Σφάλμα')
+                foreach ($stage in $validStages) {
+                    { Write-BridgeLog -Stage $stage -Message 'test' -Level 'Verbose' } | Should -Not -Throw
+                }
+            }
+
+            It 'Δέχεται όλα τα έγκυρα Levels' {
+                $validLevels = @('Verbose', 'Debug', 'Warning')
+                foreach ($level in $validLevels) {
+                    { Write-BridgeLog -Stage 'Ανάλυση' -Message 'test' -Level $level } | Should -Not -Throw
+                }
+            }
+        }
     }
 }

@@ -10,7 +10,7 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Send-BridgePushover -MockWith { }
                 $params = @{
                     CurrentState = @(
-                        @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
+                        @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; imageUrl = 'https://example.com/img.jpg'; timestamp = (Get-Date) }
                     )
                     ApiKey       = 'dummy'
                     PoUserKey    = 'dummy'
@@ -47,7 +47,7 @@ InModuleScope 'BridgeWatcher' {
             }
             It 'Γράφει warning όταν αποτυγχάνει η OCR' {
                 Mock Invoke-BridgeOCRGoogleCloud { throw 'Fake OCR failure' }
-                $entry = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'x.jpg' }
+                $entry = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
                 { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
             }
             It 'Γράφει debug και δεν καλεί Send-BridgePushover για άγνωστη κατάσταση' {
