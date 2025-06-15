@@ -26,25 +26,22 @@ InModuleScope 'BridgeWatcher' {
                 Mock Write-Warning { }
                 # Εκτέλεση
                 Get-BridgeStatus -OutputFile $OutputFile
-                # Έλεγχοι
-                Assert-MockCalled Get-BridgeHtml -Exactly 1 -Scope It
+                # Έλεγχοι                Assert-MockCalled Get-BridgeHtml -Exactly 1 -Scope It
                 Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 1 -Scope It
                 Assert-MockCalled Export-BridgeStatusJson -Exactly 1 -Scope It
                 Assert-MockCalled Write-Warning -Exactly 0 -Scope It
             }
         }
         Context 'Αποτυχία ανάκτησης HTML' {
-            It 'Πρέπει να καλείται Write-Warning με το μήνυμα: [BridgeWatcher] ❌ Αποτυχία ανάκτησης HTML' {
+            It 'Πρέπει να ρίχνει terminating error όταν το Get-BridgeHtml επιστρέφει $null' {
                 # Ρύθμιση
                 Mock Get-BridgeHtml { $null }
-                # Εκτέλεση
-                $result = Get-BridgeStatus
+                # Εκτέλεση & Έλεγχος
+                { Get-BridgeStatus } | Should -Throw -ExpectedMessage "*Αποτυχία ανάκτησης HTML από τον server*"
                 # Έλεγχος κλήσεων
                 Assert-MockCalled Get-BridgeHtml -Exactly 1 -Scope It
-                Assert-MockCalled Write-Warning -Exactly 2 -Scope It
                 Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 0 -Scope It
                 Assert-MockCalled Set-Content -Exactly 0 -Scope It
-                $result | Should -BeNullOrEmpty
             }
         }
         Context 'Get-BridgeStatusFromHtml επιστρέφει κενό' {

@@ -30,17 +30,54 @@
 
     .NOTES
     Καταγράφει αλλαγές και ενεργοποιεί κατάλληλες ειδοποιήσεις.
-    #>
+    #>    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [object[]]$PreviousState,
 
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]    param (
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$PreviousState,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$CurrentState,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [object[]]$CurrentState,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ApiKey,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PoUserKey,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PoApiKey
     )
     Set-StrictMode -Version Latest
+
+    # Helper function για επίλυση της κατάστασης γέφυρας βάσει SideIndicator
+    function Resolve-BridgeStateForChange {
+        param(
+            [Parameter(Mandatory)]$Change,
+            [Parameter(Mandatory)][object[]]$PreviousState,
+            [Parameter(Mandatory)][object[]]$CurrentState
+        )
+
+        if ($Change.SideIndicator -eq '=>') {
+            # Νέα κατάσταση - ψάχνε στο CurrentState
+            $foundState = @($CurrentState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
+        } else {
+            # Παλιά κατάσταση (<=) - ψάχνε στο CurrentState πρώτα
+            $foundState = @($CurrentState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
+            if ($foundState.Count -eq 0) {
+                # Fallback: χρήση PreviousState αν δεν υπάρχει στο Current
+                $foundState = @($PreviousState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
+            }
+        }
+
+        return $foundState
+    }
+    
     try {
         $compareSplat = @{
             ReferenceObject  = $PreviousState
@@ -86,25 +123,12 @@
                 }
                 Write-BridgeStage @writeBridgeStageSplat
                 continue
-            }
-
-            $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
+            }            $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
             if ($handlerMap.ContainsKey($key)) {
                 $type = $handlerMap[$key]
-                # ΔΙΟΡΘΩΣΗ: Βρες το αντικείμενο που άλλαξε από το σωστό state ανάλογα με το SideIndicator
-                if ($change.SideIndicator -eq '=>') {
-                    # Νέα κατάσταση - ψάχνε στο CurrentState
-                    $changedBridgeState = @($CurrentState | Where-Object { $_.GefyraName -eq $change.GefyraName })
-                } else {
-                    # Παλιά κατάσταση (<=) - ψάχνε στο PreviousState αλλά στείλε τη νέα από CurrentState
-                    $bridgeInCurrent = @($CurrentState | Where-Object { $_.GefyraName -eq $change.GefyraName })
-                    if ($bridgeInCurrent.Count -gt 0) {
-                        $changedBridgeState = $bridgeInCurrent
-                    } else {
-                        # Fallback: χρήση PreviousState αν δεν υπάρχει στο Current
-                        $changedBridgeState = @($PreviousState | Where-Object { $_.GefyraName -eq $change.GefyraName })
-                    }
-                }
+                # Χρήση helper function για επίλυση bridge state
+                $changedBridgeState = Resolve-BridgeStateForChange -Change $change -PreviousState $PreviousState -CurrentState $CurrentState
+                
                 if ($changedBridgeState.Count -gt 0) {
                     $sendBridgeNotificationSplat = @{
                         Type      = $type

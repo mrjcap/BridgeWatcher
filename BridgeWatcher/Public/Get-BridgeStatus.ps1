@@ -19,26 +19,25 @@
 
     .NOTES
     Αν αποτύχει η ανάκτηση HTML, επιστρέφεται κενό array.
-    #>
-
-    [OutputType([pscustomobject])]
+    #>    [OutputType([pscustomobject[]])]
     param (
-        [Parameter()][string]$OutputFile
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$OutputFile
     )
     begin {
         $timestamp = Get-Date -Format o
         $result = @()
         $html = Get-BridgeHtml
-    }
-    process {
+    }    process {
         if (-not $html) {
-            $writeBridgeLogSplat = @{
-                Stage   = 'Σφάλμα'
-                Message = '❌ Αποτυχία ανάκτησης HTML.'
-                Level   = 'Warning'
-            }
-            Write-BridgeLog @writeBridgeLogSplat
-            return
+            $errorRecord = [System.Management.Automation.ErrorRecord]::new(
+                [System.InvalidOperationException]::new('Αποτυχία ανάκτησης HTML από τον server.'),
+                'BridgeHtmlRetrievalFailure',
+                [System.Management.Automation.ErrorCategory]::ConnectionError,
+                $null
+            )
+            $PSCmdlet.ThrowTerminatingError($errorRecord)
         }
         $getBridgeStatusFromHtmlSplat = @{
             Html      = $html
