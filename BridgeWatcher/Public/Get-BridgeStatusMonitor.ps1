@@ -9,10 +9,8 @@
     κάνοντας περιοδικά λήψη και ανάλυση της κατάστασης και αποθηκεύοντας αποτελέσματα.
 
     .PARAMETER MaxIterations
-    Ο μέγιστος αριθμός επαναλήψεων πριν τερματιστεί (0 για άπειρες).
-
-    .PARAMETER IntervalSeconds
-    Το διάστημα (σε δευτερόλεπτα) ανάμεσα σε κάθε έλεγχο.
+    Ο μέγιστος αριθμός επαναλήψεων πριν τερματιστεί (0 για άπειρες).    .PARAMETER IntervalSeconds
+    Το διάστημα (σε δευτερόλεπτα) ανάμεσα σε κάθε έλεγχο (1-3600 δευτερόλεπτα, μέγιστο 1 ώρα).
 
     .PARAMETER OutputFile
     Η διαδρομή αποθήκευσης των τρεχουσών καταστάσεων.
@@ -34,12 +32,10 @@
 
     .NOTES
     Το monitoring συνεχίζει μέχρι να ολοκληρωθούν οι επαναλήψεις ή να τερματιστεί χειροκίνητα.
-    #>
-
-    [OutputType([void])]
+    #>    [OutputType([void])]
     param (
         [Parameter(Mandatory)][ValidateRange(0, [int]::MaxValue)][int]$MaxIterations,
-        [Parameter(Mandatory)][ValidateRange(1, 3600)][int]$IntervalSeconds,
+        [Parameter(Mandatory)][ValidateRange(1, 3600)][int]$IntervalSeconds, # Max 1 hour (3600 seconds)
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$OutputFile,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,

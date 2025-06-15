@@ -9,10 +9,11 @@
     σε καθορισμένη διαδρομή.
 
     .PARAMETER Data
-    Το αντικείμενο ή η λίστα αντικειμένων που θα εξαχθεί.
-
-    .PARAMETER Path
+    Το αντικείμενο ή η λίστα αντικειμένων που θα εξαχθεί.    .PARAMETER Path
     Η πλήρης διαδρομή του αρχείου εξόδου.
+
+    .PARAMETER JsonDepth
+    Το βάθος serialization του JSON (προεπιλογή: 10).
 
     .OUTPUTS
     None.
@@ -23,14 +24,13 @@
     .NOTES
     Χρησιμοποιεί ConvertTo-Json και Set-Content για ασφαλή αποθήκευση.
     #>
-    [OutputType([void])]
-    param (
+    [OutputType([void])]    param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$Data,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Path
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Path,
+        [Parameter()][ValidateRange(1, 20)][int]$JsonDepth = 10
     )
-    try {
-        $convertToJsonSplat = @{
-            Depth    = 10
+    try {        $convertToJsonSplat = @{
+            Depth    = $JsonDepth
             Compress = $true
         }
         if (-not (Test-Path -Path (Split-Path -Parent $Path))) {

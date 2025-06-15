@@ -6,10 +6,11 @@
 
     .DESCRIPTION
     Η Get-BridgePreviousStatus διαβάζει αρχείο JSON που περιέχει
-    καταγεγραμμένη κατάσταση γεφυρών.
-
-    .PARAMETER InputFile
+    καταγεγραμμένη κατάσταση γεφυρών.    .PARAMETER InputFile
     Η διαδρομή του αρχείου JSON.
+
+    .PARAMETER JsonDepth
+    Το βάθος deserialization του JSON (προεπιλογή: 10).
 
     .OUTPUTS
     [object[]] - Λίστα καταστάσεων ή κενό array αν δεν υπάρχει.
@@ -17,11 +18,15 @@
     .EXAMPLE
     Get-BridgePreviousStatus -InputFile 'C:\Logs\previous-status.json'
 
+    .EXAMPLE
+    Get-BridgePreviousStatus -InputFile 'C:\Logs\previous-status.json' -JsonDepth 5
+
     .NOTES
     Ασφαλής ανάγνωση με structured error handling και fallback.
     #>    [OutputType([object[]])]
     param (
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$InputFile
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$InputFile,
+        [Parameter()][ValidateRange(1, 20)][int]$JsonDepth = 10
     )
     if (-not (Test-Path $InputFile)) {
         $writeBridgeLogSplat = @{
@@ -31,15 +36,14 @@
         }
         Write-BridgeLog @writeBridgeLogSplat
         return @()
-    }
-    try {
+    }    try {
         $getContentSplat = @{
             Path     = $InputFile
             Raw      = $true
             Encoding = 'utf8BOM'
         }
         $convertFromJsonSplat = @{
-            Depth = 10
+            Depth = $JsonDepth
         }
         return Get-Content @getContentSplat | ConvertFrom-Json @convertFromJsonSplat
     } catch {
