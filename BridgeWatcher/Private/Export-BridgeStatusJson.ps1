@@ -29,7 +29,8 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Path,
         [Parameter()][ValidateRange(1, 20)][int]$JsonDepth = 10
     )
-    try {        $convertToJsonSplat = @{
+    try {
+        $convertToJsonSplat = @{
             Depth    = $JsonDepth
             Compress = $true
         }

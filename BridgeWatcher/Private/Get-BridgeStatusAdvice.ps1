@@ -24,8 +24,7 @@
     Get-BridgeStatusAdvice -MinutesUntilOpen 8 -MaxWaitTimeMinutes 10
 
     .NOTES
-    Αν τα λεπτά είναι περισσότερα από το MaxWaitTimeMinutes επιστρέφεται 
-    σύσταση να μην περιμένετε.
+    Αν τα λεπτά είναι περισσότερα από το MaxWaitTimeMinutes επιστρέφεται σύσταση να μην περιμένετε.
     #>
     [OutputType([string])]
     param (
