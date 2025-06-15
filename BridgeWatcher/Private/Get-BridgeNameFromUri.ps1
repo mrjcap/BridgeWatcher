@@ -25,10 +25,11 @@
     .NOTES
     Χρησιμοποιεί case-insensitive regex matching για αναγνώριση ονόματος.
     Επιστρέφει 'Άγνωστη' αν δεν αναγνωριστεί η γέφυρα.
-    #>
-    [OutputType([string])]
+    #>    [OutputType([string])]
     param (
-        [Parameter(Mandatory)][string]$ImageUri
+        [Parameter(Mandatory)]
+        [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
+        [string]$ImageUri
     )
     switch -Regex ($ImageUri.ToLowerInvariant()) {
         'isthmia' { return 'Ισθμία' }

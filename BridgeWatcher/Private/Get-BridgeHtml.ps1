@@ -16,9 +16,9 @@
 
     .NOTES
     Χρησιμοποιείται από άλλες functions για ανάλυση περιεχομένου.
-    #>
-    [OutputType([string])]
+    #>    [OutputType([string])]
     param (
+        [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
         [string]$Uri = 'https://www.topvision.gr/dioriga/'
     )
     try {

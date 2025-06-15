@@ -62,15 +62,25 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
     }
     $dateStr = (Get-Date).ToString('yyyy-MM-dd')
     $timeStr = (Get-Date).ToString('HH:mm:ss')
+
     $joinPathSplat = @{
         Path      = $logDir
         ChildPath = "BridgeWatcher-$dateStr.log"
     }
     $logPath = Join-Path @joinPathSplat
     $logLine = "[$timeStr] [$Stage] $Message"
-    $addContentSplat = @{
-        Path  = $logPath
-        Value = $logLine
+
+    try {
+        $addContentSplat = @{
+            Path        = $logPath
+            Value       = $logLine
+            Encoding    = 'utf8BOM'
+            ErrorAction = 'Stop'
+        }
+        Add-Content @addContentSplat
     }
-    Add-Content @addContentSplat
+    catch {
+        # Fallback: write only to console if file logging fails
+        Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
+    }
 }

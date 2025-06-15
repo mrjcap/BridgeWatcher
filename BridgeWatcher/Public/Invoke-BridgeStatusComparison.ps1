@@ -73,11 +73,9 @@
                 # Fallback: χρήση PreviousState αν δεν υπάρχει στο Current
                 $foundState = @($PreviousState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
             }
-        }
-
-        return $foundState
+        }        return $foundState
     }
-    
+
     try {
         $compareSplat = @{
             ReferenceObject  = $PreviousState
@@ -114,7 +112,6 @@
                 Message = "🌉 $($change.gefyraName) ➜ $($change.gefyraStatus) ($($change.SideIndicator))"
             }
             Write-BridgeStage @writeBridgeStageSplat
-
             if ($change.SideIndicator -eq '==') {
                 $writeBridgeStageSplat = @{
                     Level   = 'Verbose'
@@ -123,12 +120,13 @@
                 }
                 Write-BridgeStage @writeBridgeStageSplat
                 continue
-            }            $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
+            }
+            $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
             if ($handlerMap.ContainsKey($key)) {
                 $type = $handlerMap[$key]
                 # Χρήση helper function για επίλυση bridge state
                 $changedBridgeState = Resolve-BridgeStateForChange -Change $change -PreviousState $PreviousState -CurrentState $CurrentState
-                
+
                 if ($changedBridgeState.Count -gt 0) {
                     $sendBridgeNotificationSplat = @{
                         Type      = $type

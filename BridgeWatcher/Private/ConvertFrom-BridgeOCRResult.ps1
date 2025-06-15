@@ -21,21 +21,34 @@
     ConvertFrom-BridgeOCRResult -ApiResponse $response -ImageUri 'https://example.com/bridge.jpg'
 
     .NOTES
-    Χρησιμοποιείται για να αναλυθούν OCR responses και να εξαχθούν status.
-    #>
-
-    [OutputType([PSCustomObject])]
+    Χρησιμοποιείται για να αναλυθούν OCR responses και να εξαχθούν status.    #>
     param (
-        [Parameter(Mandatory)][object]$ApiResponse,
-        [Parameter(Mandatory)][string]$ImageUri
-    )
+        [Parameter(Mandatory)]
+        [ValidateScript({
+                $null -ne $_ -and
+                $null -ne $_.responses -and
+                $_.responses.Count -gt 0 -and
+                $null -ne $_.responses[0] -and
+                $null -ne $_.responses[0].textAnnotations
+            })]
+        [PSCustomObject]$ApiResponse,
+
+        [Parameter(Mandatory)]
+        [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
+        [string]$ImageUri    )
+
+    # Safe property access with validation (already validated in parameter)
+    $textAnnotations = $ApiResponse.responses[0].textAnnotations
+    $ocrText = $textAnnotations[0].description
+
     $writeBridgeLogSplat = @{
         Stage   = 'Ανάλυση'
-        Message = "OCR ApiResponse: $($ApiResponse.responses[0].textAnnotations[0].description)"
+        Message = "OCR ApiResponse: $ocrText"
     }
     Write-BridgeLog @writeBridgeLogSplat
-    # Έλεγχος για κενό κείμενο OCR
-    if (-not $ApiResponse.responses[0].textAnnotations[0].description) {
+
+    # Additional validation for empty OCR text
+    if ([string]::IsNullOrWhiteSpace($ocrText)) {
         $writeBridgeLogSplat = @{
             Stage   = 'Σφάλμα'
             Message = 'Δεν κατέστη δυνατή η ανάλυση του κειμένου.'
@@ -44,12 +57,16 @@
         Write-BridgeLog @writeBridgeLogSplat
         throw [System.Management.Automation.ErrorRecord]::new(([System.Exception]::new('Δεν βρέθηκε κείμενο OCR στην απόκριση.')), 'OCRTextNotFound', [System.Management.Automation.ErrorCategory]::InvalidData, $ApiResponse)
     }
-    $rawText = $ApiResponse.responses[0].textAnnotations[0].description
+
+    # Use already extracted safe text
+    $rawText = $ocrText
     $Lines = $rawText
+
     $getBridgeNameFromUriSplat = @{
         ImageUri = $ImageUri
     }
     $bridgeName = Get-BridgeNameFromUri @getBridgeNameFromUriSplat
+
     $convertToBridgeTimeRangeSplat = @{
         Lines = $Lines
     }

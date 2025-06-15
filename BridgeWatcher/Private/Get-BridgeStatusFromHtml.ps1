@@ -21,13 +21,16 @@
     Get-BridgeStatusFromHtml -Html $htmlContent -Timestamp (Get-Date)
 
     .NOTES
-    Χρησιμοποιεί regex και structured parsing για ανάλυση.
-    #>
-
+    Χρησιμοποιεί regex και structured parsing για ανάλυση.    #>
     [OutputType([pscustomobject[]])]
     param (
-        [Parameter(Mandatory)][string]$Html,
-        [Parameter(Mandatory)][string]$Timestamp
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Html,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Timestamp
     )
     $baseUrl = 'https://www.topvision.gr/dioriga/'
     $patterns = @{
@@ -64,6 +67,7 @@
                 Level   = 'Warning'
             }
             Write-BridgeLog @writeBridgeLogSplat
+
             $errorRecord = [System.Management.Automation.ErrorRecord]::new(
                 ([System.Exception]::new("Δεν βρέθηκαν εικόνες για το $location.")),
                 'BridgeImagesNotFound',
@@ -71,7 +75,6 @@
                 $location
             )
             $PSCmdlet.ThrowTerminatingError($errorRecord)
-            continue
         }
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
