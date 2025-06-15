@@ -79,12 +79,14 @@
             Level   = 'Debug'
         }
         Write-BridgeLog @writeBridgeLogSplat
+        $imageList = ($bridgeImages | ForEach-Object { "  • $($_.src)" }) -join "`n"
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
-            Message = "  • $($_.src)"
+            Message = $imageList
             Level   = 'Debug'
         }
-        $bridgeImages | ForEach-Object { Write-BridgeLog @writeBridgeLogSplat }
+        Write-BridgeLog @writeBridgeLogSplat
+
         foreach ($statusEntry in $patterns[$location].GetEnumerator()) {
             $status = $statusEntry.Key
             $pattern = $statusEntry.Value
@@ -113,13 +115,6 @@
                 $object = Get-BridgeStatusObject @newBridgeStatusObjectSplat
                 $result += $object
                 break
-            } else {
-                $writeBridgeLogSplat = @{
-                    Stage   = 'Ανάλυση'
-                    Message = "⏭ Δεν ταιριάζει: $status"
-                    Level   = 'Debug'
-                }
-                Write-BridgeLog @writeBridgeLogSplat
             }
         }
     }

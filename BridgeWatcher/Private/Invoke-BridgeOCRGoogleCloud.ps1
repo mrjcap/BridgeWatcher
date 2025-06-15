@@ -23,7 +23,8 @@
     .NOTES
     Απαιτεί έγκυρο API Key και δημόσια προσβάσιμες εικόνες.    #>
 
-    [OutputType([pscustomobject[]])]    param (
+    [OutputType([pscustomobject[]])]
+    param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
         [Parameter(Mandatory)][ValidateScript({
                 if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
@@ -34,14 +35,9 @@
             })][string]$ImageUri
     )
 
-    $writeBridgeLogSplat = @{
-        Stage   = 'Ανάλυση'
-        Message = "📥 [BEGIN] OCR for: $ImageUri"
-    }
-    Write-BridgeLog @writeBridgeLogSplat
     try {
         $newOCRRequestBodySplat = @{
-            ImageUri    = $ImageUri
+            ImageUri = $ImageUri
         }
         $requestBody = Get-BridgeOCRRequestBody @newOCRRequestBodySplat
         $invokeOCRRequestSplat = @{
@@ -63,11 +59,6 @@
         }
         Write-BridgeLog @writeBridgeLogSplat
         throw
-    } finally {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Ανάλυση'
-            Message = "📤 [END] OCR process completed"
-        }
-        Write-BridgeLog @writeBridgeLogSplat
     }
+    # Removed verbose END log in finally block to reduce spam - completion is implied by return or exception
 }

@@ -37,9 +37,16 @@
     foreach ($entry in $CurrentState) {
         switch ($entry.gefyraStatus) {
             'Κλειστή για συντήρηση' {
+
+                $logDetails = @(
+                    "🛑 Κλειστή για συντήρηση: $($entry.gefyraName)",
+                    "Χρονική στιγμή: $($entry.timestamp)",
+                    "Εικόνα: $($entry.imageUrl)",
+                    "Μέθοδος: Άμεση ειδοποίηση (χωρίς OCR)"
+                ) -join "`n"
                 $writeBridgeLogSplat = @{
                     Stage   = 'Ειδοποίηση'
-                    Message = "🛑 Ειδοποίηση: $($entry.gefyraName)ς είναι κλειστή για συντήρηση (χωρίς OCR)."
+                    Message = $logDetails
                     Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
@@ -52,9 +59,16 @@
                 Send-BridgePushover @pushoverSplat
             }
             'Μόνιμα κλειστή' {
+
+                $logDetails = @(
+                    "🛑 Μόνιμα κλειστή: $($entry.gefyraName)",
+                    "Χρονική στιγμή: $($entry.timestamp)",
+                    "Εικόνα: $($entry.imageUrl)",
+                    "Μέθοδος: Άμεση ειδοποίηση (χωρίς OCR)"
+                ) -join "`n"
                 $writeBridgeLogSplat = @{
                     Stage   = 'Ειδοποίηση'
-                    Message = "🛑 Ειδοποίηση: $($entry.gefyraName)ς είναι μόνιμα κλειστή (χωρίς OCR)."
+                    Message = $logDetails
                     Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
@@ -67,15 +81,16 @@
                 Send-BridgePushover @pushoverSplat
             }
             'Κλειστή με πρόγραμμα' {
+
+                $logDetails = @(
+                    "📸 Κλειστή με πρόγραμμα: $($entry.gefyraName)",
+                    "Χρονική στιγμή: $($entry.timestamp)",
+                    "📷 Εικόνα προς OCR: $($entry.imageUrl)",
+                    "Μέθοδος: OCR + Ειδοποίηση"
+                ) -join "`n"
                 $writeBridgeLogSplat = @{
                     Stage   = 'Ειδοποίηση'
-                    Message = "📸 Ειδοποίηση: $($entry.gefyraName) είναι κλειστή με πρόγραμμα (θα γίνει OCR)."
-                    Level   = 'Debug'
-                }
-                Write-BridgeLog @writeBridgeLogSplat
-                $writeBridgeLogSplat = @{
-                    Stage   = 'Ανάλυση'
-                    Message = "📷 Εικόνα προς OCR: $($entry.imageUrl)"
+                    Message = $logDetails
                     Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat

@@ -32,12 +32,6 @@
             Body        = $Payload
             ErrorAction = 'Stop'
         }
-        $writeBridgeLogSplat = @{
-            Stage   = 'Ειδοποίηση'
-            Message = "➜ Αποστολή POST στο Pushover API..."
-            Level   = 'Verbose'
-        }
-        Write-BridgeLog @writeBridgeLogSplat
         return Invoke-RestMethod @invokeRestMethodSplat
     } catch {
         $writeBridgeLogSplat = @{

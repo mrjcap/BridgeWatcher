@@ -59,12 +59,6 @@
         [ValidateSet('pushover', 'bike', 'bugle', 'cashregister', 'classical', 'cosmic', 'falling', 'gamelan', 'incoming', 'intermission', 'magic', 'mechanical', 'pianobar', 'siren', 'spacealarm', 'tugboat', 'alien', 'climb', 'persistent', 'echo', 'updown', 'none')]
         [string]$Sound
     )
-    $writeBridgeLogSplat = @{
-        Stage   = 'Ειδοποίηση'
-        Message = "Pushover ➤ Sending: '$Message'"
-        Level   = 'Verbose'
-    }
-    Write-BridgeLog @writeBridgeLogSplat
     $newPushoverPayloadSplat = @{
         PoUserKey = $PoUserKey
         PoApiKey  = $PoApiKey
@@ -83,12 +77,6 @@
             ErrorAction = 'Stop'
         }
         Send-BridgePushoverRequest @sendPushoverRequestSplat | Out-Null
-        $writeBridgeLogSplat = @{
-            Stage   = 'Ειδοποίηση'
-            Message = 'Pushover ✅ Sent successfully'
-            Level   = 'Verbose'
-        }
-        Write-BridgeLog @writeBridgeLogSplat
     } catch {
         $writeBridgeLogSplat = @{
             Stage   = 'Σφάλμα'
