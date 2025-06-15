@@ -105,11 +105,11 @@
                 $type = $handlerMap[$key]
                 # Χρήση helper function για επίλυση bridge state
                 $resolveBridgeStateForChangeSplat = @{
-                    Change = $change
+                    Change        = $change
                     PreviousState = $PreviousState
-                    CurrentState = $CurrentState
+                    CurrentState  = $CurrentState
                 }
-                $changedBridgeState    = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
+                $changedBridgeState = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
                 if ($changedBridgeState.Count -gt 0) {
                     $sendBridgeNotificationSplat = @{
                         Type      = $type
