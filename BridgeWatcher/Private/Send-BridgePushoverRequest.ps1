@@ -11,6 +11,9 @@
     .PARAMETER Payload
     Το hashtable με όλα τα απαιτούμενα δεδομένα.
 
+    .PARAMETER Configuration
+    Το configuration object που περιέχει τις ρυθμίσεις.
+
     .OUTPUTS
     [object] - Το αποτέλεσμα του API ή $null σε σφάλμα.
 
@@ -23,21 +26,50 @@
 
     [OutputType([object])]
     param (
-        [Parameter(Mandatory)][hashtable]$Payload
+        [Parameter(Mandatory)][hashtable]$Payload,
+        [Parameter()][PSCustomObject]$Configuration
     )
+
+    # Get Pushover API URL from configuration or use fallback
+    $pushoverApiUrl = if ($Configuration -and $Configuration.PushoverApiUrl) {
+        $Configuration.PushoverApiUrl
+    } else {
+        'https://api.pushover.net/1/messages.json'
+    }
+
+    # Get error message from configuration or use fallback
+    $errorMessagePrefix = if ($Configuration -and $Configuration.PushoverMessages -and $Configuration.PushoverMessages.SendFailed) {
+        $Configuration.PushoverMessages.SendFailed
+    } else {
+        '❌ Αποτυχία αποστολής'
+    }
+
+    # Get logging stage from configuration or use fallback
+    $errorStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.ErrorStage) {
+        $Configuration.LoggingConfig.ErrorStage
+    } else {
+        'Σφάλμα'
+    }
+
+    $warningLevel = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.WarningLevel) {
+        $Configuration.LoggingConfig.WarningLevel
+    } else {
+        'Warning'
+    }
+
     try {
         $invokeRestMethodSplat = @{
             Method      = 'Post'
-            Uri         = 'https://api.pushover.net/1/messages.json'
+            Uri         = $pushoverApiUrl
             Body        = $Payload
             ErrorAction = 'Stop'
         }
         return Invoke-RestMethod @invokeRestMethodSplat
     } catch {
         $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = "❌ Αποτυχία αποστολής: $($_.Exception.Message)"
-            Level   = 'Warning'
+            Stage   = $errorStage
+            Message = "$errorMessagePrefix`: $($_.Exception.Message)"
+            Level   = $warningLevel
         }
         Write-BridgeLog @writeBridgeLogSplat
         $errorRecord = [System.Management.Automation.ErrorRecord]::new($_.Exception, 'PushoverSendFailure', [System.Management.Automation.ErrorCategory]::ConnectionError, $Payload)

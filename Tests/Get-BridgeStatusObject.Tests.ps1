@@ -41,5 +41,33 @@ InModuleScope 'BridgeWatcher' {
                 $obj.imageUrl | Should -Be 'https://custom.com/test.jpg'
             }
         }
+
+        Context 'Configuration Fallbacks' {
+            It 'Χρησιμοποιεί fallback BaseUrl όταν Configuration.BaseImageUrl δεν υπάρχει' {
+                $mockConfig = @{ SomeOtherProperty = 'value' }  # No BaseImageUrl
+
+                $obj = Get-BridgeStatusObject -Location 'poseidonia' -Status 'Ανοιχτή' `
+                    -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'test.jpg' -Configuration $mockConfig
+
+                $obj.imageUrl | Should -Be 'https://www.topvision.gr/dioriga/test.jpg'
+            }
+
+            It 'Χρησιμοποιεί fallback bridge names όταν Configuration.BridgeNames δεν υπάρχει' {
+                $mockConfig = @{ BaseImageUrl = 'https://test.com/' }  # No BridgeNames
+
+                $obj = Get-BridgeStatusObject -Location 'poseidonia' -Status 'Ανοιχτή' `
+                    -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'test.jpg' -Configuration $mockConfig
+
+                $obj.gefyraName | Should -Be 'Ποσειδωνία'
+            }
+
+            It 'Χρησιμοποιεί fallback για isthmia όταν Configuration είναι null' {
+                $obj = Get-BridgeStatusObject -Location 'isthmia' -Status 'Κλειστή' `
+                    -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'test.jpg' -Configuration $null
+
+                $obj.gefyraName | Should -Be 'Ισθμία'
+                $obj.imageUrl | Should -Be 'https://www.topvision.gr/dioriga/test.jpg'
+            }
+        }
     }
 }

@@ -26,15 +26,22 @@
     #>
 
     [OutputType([System.Collections.ArrayList])]
-    param (
-        [Parameter(Mandatory)][string]$HtmlContent,
-        [Parameter(Mandatory)][ValidateSet('poseidonia', 'isthmia')] [string]$Location
+    param (        [Parameter(Mandatory)][string]$HtmlContent,
+        [Parameter(Mandatory)][ValidateSet('poseidonia', 'isthmia')] [string]$Location,
+
+        [Parameter()]
+        [PSCustomObject]$Configuration = (New-BridgeConfiguration)
     )
-    $bridgeLabel = switch ($Location) {
-        'poseidonia' { 'ΠΟΣΕΙΔΩΝΙΑ' }
-        'isthmia' { 'ΙΣΘΜΙΑ' }
+    $bridgeLabel = if ($Configuration -and $Configuration.BridgeNames -and $Configuration.BridgeNames[$Location]) {
+        $Configuration.BridgeNames[$Location].ToUpper()
+    } else {
+        # Fallback to hardcoded values
+        switch ($Location) {
+            'poseidonia' { 'ΠΟΣΕΙΔΩΝΙΑ' }
+            'isthmia' { 'ΙΣΘΜΙΑ' } }
     }
-    $blocks = $HtmlContent -split '<div class="panel panel-primary">'
+
+    $blocks = $HtmlContent -split '<div class="panel panel-primary\s*">'
     $block = $blocks | Where-Object { $_ -match "<b>$bridgeLabel</b>" }
     if (-not $block) {
         $writeBridgeLogSplat = @{
@@ -42,6 +49,7 @@
             Message = "❌ Δεν βρέθηκε block για $Location"
         }
         Write-BridgeLog @writeBridgeLogSplat
+
         $errorRecord = [System.Management.Automation.ErrorRecord]::new(
             ([System.Exception]::new("Δεν βρέθηκε block για τη θέση $Location.")),
             'BridgeImageBlockNotFound',

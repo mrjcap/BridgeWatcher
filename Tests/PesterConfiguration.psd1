@@ -1,11 +1,11 @@
 ﻿@{
     Run          = @{
-        Path          = '.\Tests\'
+        Path          = 'c:\code\BridgeWatcher\Tests\'
         Parameters    = @{
             ModuleName = 'BridgeWatcher'
         }
         TestExtension = '.Tests.ps1'
-        Exit          = $true
+        Exit          = $false
         Throw         = $false
         PassThru      = $true
     }

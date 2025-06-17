@@ -40,20 +40,107 @@ InModuleScope 'BridgeWatcher' {
             It 'Πετάει validation σφάλμα όταν το Data είναι κενό' {
                 { Export-BridgeStatusJson -Data @() -Path 'out.json' } | Should -Throw
             }
+
             It 'Πετάει validation σφάλμα όταν το Path είναι κενό' {
                 { Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path '' } | Should -Throw
             }
+            It 'Γράφει exception όταν αποτυγχάνει η εγγραφή JSON' {
+                Mock Set-Content { throw 'Fake write failure' }
+                { Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path 'fake.json' -Verbose } |
+                    Should -Throw 'Σφάλμα αποθήκευσης JSON: Ο φάκελος προορισμού δεν υπάρχει: '
+            }
         }
-        It 'Πετάει validation error όταν το Data είναι κενό' {
-            { Export-BridgeStatusJson -Data @() -Path 'out.json' } | Should -Throw
-        }
-        It 'Πετάει validation error όταν το Path είναι κενό' {
-            { Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path '' } | Should -Throw
-        }
-        It 'Γράφει exception όταν αποτυγχάνει η εγγραφή JSON' {
-            Mock Set-Content { throw 'Fake write failure' }
-            { Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path 'fake.json' -Verbose } |
-                Should -Throw 'Σφάλμα αποθήκευσης JSON: Ο φάκελος προορισμού δεν υπάρχει: '
+        Context 'Configuration Coverage Tests' {
+            It 'Καλύπτει Configuration.DefaultJsonDepth path' {
+                Mock Test-Path { $true }
+                Mock Set-Content {}
+                Mock ConvertTo-Json { '{"test": "data"}' }
+
+                $config = [PSCustomObject]@{
+                    DefaultJsonDepth    = 8
+                }
+
+                Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
+
+                Assert-MockCalled ConvertTo-Json -ParameterFilter { $Depth -eq 8 } -Times 1
+            }
+            It 'Καλύπτει Configuration.ExportMessages.Success path' {
+                Mock Test-Path { $true }
+                Mock Set-Content {}
+                Mock Write-BridgeLog {}
+
+                $config = [PSCustomObject]@{
+                    ExportMessages = @{
+                        Success    = 'Custom success message'
+                    }
+                    LoggingConfig  = @{
+                        InfoStage    = 'Ανάλυση'
+                    }
+                }
+
+                Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
+
+                Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like 'Custom success message*' } -Times 1
+            }
+            It 'Καλύπτει Configuration.ExportMessages.Failed σε σφάλμα' {
+                Mock Test-Path { $true }
+                Mock Set-Content { throw 'Test error' }
+                Mock Write-BridgeLog {}
+
+                $config = [PSCustomObject]@{
+                    ExportMessages = @{
+                        Failed    = 'Custom failed message'
+                    }
+                    LoggingConfig  = @{
+                        ErrorStage   = 'Σφάλμα'
+                        WarningLevel = 'Warning'
+                    }
+                }
+
+                { Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config } | Should -Throw
+
+                Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like 'Custom failed message*' } -Times 1
+            }
+            It 'Καλύπτει Configuration.ExportMessages.DirectoryNotExists' {
+                Mock Test-Path { $false }
+                Mock Split-Path { 'invalid/path' }
+                Mock Write-BridgeLog {}
+
+                $config = [PSCustomObject]@{
+                    ExportMessages = @{
+                        DirectoryNotExists = 'Custom directory not exists'
+                        Failed             = 'Custom failed message'
+                    }
+                    LoggingConfig  = @{
+                        ErrorStage   = 'Σφάλμα'
+                        WarningLevel = 'Warning'
+                    }
+                }
+
+                { Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'invalid/path/test.json' -Configuration $config } | Should -Throw
+
+                Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like 'Custom failed message*' } -Times 1
+            }
+            It 'Καλύπτει Configuration.LoggingConfig paths' {
+                Mock Test-Path { $true }
+                Mock Set-Content {}
+                Mock Write-BridgeLog {}
+
+                $config = [PSCustomObject]@{
+                    ExportMessages = @{
+                        Success    = 'Success'
+                    }
+                    LoggingConfig  = @{
+                        InfoStage    = 'Ανάλυση'
+                        ErrorStage   = 'Σφάλμα'
+                        WarningLevel = 'Warning'
+                    }
+                }
+
+                Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
+
+                Assert-MockCalled Write-BridgeLog -ParameterFilter { $Stage -eq 'Ανάλυση' } -Times 1
+            }
         }
     }
 }

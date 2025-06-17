@@ -22,17 +22,33 @@
 
     .NOTES
     Χρησιμοποιεί regex και structured parsing για ανάλυση.    #>
-    [OutputType([pscustomobject[]])]
-    param (
+    [OutputType([pscustomobject[]])]    param (
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Html,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Timestamp
+        [string]$Timestamp,
+        [Parameter()]
+        [PSCustomObject]$Configuration
     )
-    $baseUrl = 'https://www.topvision.gr/dioriga/'
+
+    # Use configuration or fallback
+    if (-not $Configuration) {
+        try {
+            $Configuration = New-BridgeConfiguration
+        } catch {
+            # Fallback if configuration fails
+            $Configuration = $null
+        }
+    }
+
+    $baseUrl = if ($Configuration -and $Configuration.BaseImageUrl) {
+        $Configuration.BaseImageUrl
+    } else {
+        'https://www.topvision.gr/dioriga/'
+    }
     $patterns = @{
         'poseidonia' = @{
             'Κλειστή για συντήρηση' = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
@@ -58,6 +74,11 @@
         $getBridgeImagesSplat = @{
             HtmlContent = $Html
             Location    = $location
+        }
+
+        # Add configuration only if it's available and not null
+        if ($Configuration) {
+            $getBridgeImagesSplat.Configuration = $Configuration
         }
         $bridgeImages = Get-BridgeImage @getBridgeImagesSplat
         if (-not $bridgeImages -or $bridgeImages.Count -eq 0) {
@@ -114,6 +135,11 @@
                     Timestamp = $Timestamp
                     ImageSrc  = $image.src
                     BaseUrl   = $baseUrl
+                }
+
+                # Add configuration only if it's available and not null
+                if ($Configuration) {
+                    $newBridgeStatusObjectSplat.Configuration = $Configuration
                 }
                 $object = Get-BridgeStatusObject @newBridgeStatusObjectSplat
                 $result += $object

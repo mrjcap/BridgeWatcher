@@ -14,6 +14,9 @@
     .PARAMETER MaxWaitTimeMinutes
     Ο μέγιστος χρόνος αναμονής σε λεπτά (προεπιλογή: 12 λεπτά).
 
+    .PARAMETER Configuration
+    Το configuration object που περιέχει τις ρυθμίσεις.
+
     .OUTPUTS
     [string] - String με προτεινόμενο status και μήνυμα.
 
@@ -29,10 +32,34 @@
     [OutputType([string])]
     param (
         [Parameter(Mandatory)][int]$MinutesUntilOpen,
-        [Parameter()][ValidateRange(1, 120)][int]$MaxWaitTimeMinutes = 12
+        [Parameter()][ValidateRange(1, 120)][int]$MaxWaitTimeMinutes,
+        [Parameter()][PSCustomObject]$Configuration
     )
-    if ($MinutesUntilOpen -gt $MaxWaitTimeMinutes) {
-        return 'Είναι προτιμότερο να μην περιμένεις'
+
+    # Get max wait time from parameter, configuration, or use fallback
+    if (-not $MaxWaitTimeMinutes) {
+        $MaxWaitTimeMinutes = if ($Configuration -and $Configuration.DefaultMaxWaitTimeMinutes) {
+            $Configuration.DefaultMaxWaitTimeMinutes
+        } else {
+            12
+        }
     }
-    return 'Είναι προτιμότερο να περιμένεις'
+
+    # Get advice messages from configuration or use fallback
+    $doNotWaitMessage = if ($Configuration -and $Configuration.AdviceMessages -and $Configuration.AdviceMessages.DoNotWait) {
+        $Configuration.AdviceMessages.DoNotWait
+    } else {
+        'Είναι προτιμότερο να μην περιμένεις'
+    }
+
+    $waitMessage = if ($Configuration -and $Configuration.AdviceMessages -and $Configuration.AdviceMessages.Wait) {
+        $Configuration.AdviceMessages.Wait
+    } else {
+        'Είναι προτιμότερο να περιμένεις'
+    }
+
+    if ($MinutesUntilOpen -gt $MaxWaitTimeMinutes) {
+        return $doNotWaitMessage
+    }
+    return $waitMessage
 }

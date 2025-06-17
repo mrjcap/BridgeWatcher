@@ -34,20 +34,66 @@
     Το monitoring συνεχίζει μέχρι να ολοκληρωθούν οι επαναλήψεις ή να τερματιστεί χειροκίνητα.
     #>    [OutputType([void])]
     param (
-        [Parameter(Mandatory)][ValidateRange(0, [int]::MaxValue)][int]$MaxIterations,
-        [Parameter(Mandatory)][ValidateRange(1, 3600)][int]$IntervalSeconds, # Max 1 hour (3600 seconds)
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$OutputFile,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey
+        [Parameter()][ValidateRange(0, [int]::MaxValue)][int]$MaxIterations,
+        [Parameter()][ValidateRange(1, 3600)][int]$IntervalSeconds,
+        [Parameter()][ValidateNotNullOrEmpty()][string]$OutputFile,
+        [Parameter()][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter()][ValidateNotNullOrEmpty()][string]$PoUserKey,
+        [Parameter()][ValidateNotNullOrEmpty()][string]$PoApiKey,
+
+        [Parameter()]
+        [PSCustomObject]$Configuration
     )
+
     begin {
+        # Ensure configuration is available
+        if (-not $Configuration) {
+            try {
+                $Configuration = New-BridgeConfiguration
+            } catch {
+                # Fallback to null configuration - functions will handle this
+                $Configuration = $null
+            }
+        }
+
+        # Set defaults from configuration if parameters not provided
+        if (-not $PSBoundParameters.ContainsKey('MaxIterations')) {
+            $MaxIterations = if ($Configuration -and $Configuration.DefaultMaxIterations) {
+                $Configuration.DefaultMaxIterations
+            } else {
+                100
+            }
+        }
+
+        if (-not $PSBoundParameters.ContainsKey('IntervalSeconds')) {
+            $IntervalSeconds = if ($Configuration -and $Configuration.DefaultIntervalSeconds) {
+                $Configuration.DefaultIntervalSeconds
+            } else {
+                300
+            }
+        }
+
         $iteration = 0
         $infiniteLoop = $MaxIterations -eq 0
+
+        $monitoringStartMessage = if ($Configuration -and $Configuration.StatusMessages) {
+            $Configuration.StatusMessages.MonitoringStart
+        } else {
+            "Ξεκίνησε ο κύκλος παρακολούθησης"
+        }
+
         $writeBridgeLogSplat = @{
-            Stage   = 'Ανάλυση'
-            Message = "Ξεκίνησε ο κύκλος παρακολούθησης: Διάστημα = $IntervalSeconds δευτ., Μέγιστες επαναλήψεις = $MaxIterations"
-            Level   = 'Verbose'
+            Stage   = if ($Configuration -and $Configuration.LoggingConfig) {
+                $Configuration.LoggingConfig.InfoStage
+            } else {
+                'Ανάλυση'
+            }
+            Message = "$monitoringStartMessage`: Διάστημα = $IntervalSeconds δευτ., Μέγιστες επαναλήψεις = $MaxIterations"
+            Level   = if ($Configuration -and $Configuration.LoggingConfig) {
+                $Configuration.LoggingConfig.VerboseLevel
+            } else {
+                'Verbose'
+            }
         }
         Write-BridgeLog @writeBridgeLogSplat
     }
@@ -61,25 +107,55 @@
                     PoUserKey  = $PoUserKey
                     PoApiKey   = $PoApiKey
                 }
+
+                # Note: Get-BridgeStatusComparison doesn't support Configuration parameter yet
+                # Will be added in future refactoring iteration
                 Get-BridgeStatusComparison @getBridgeStatusComparisonSplat
                 if (-not $infiniteLoop -and $iteration -ge $MaxIterations) { break }
                 $startSleepSplat = @{
                     Seconds = $IntervalSeconds
                 }
-                Start-Sleep @startSleepSplat
-            } catch {
+                Start-Sleep @startSleepSplat } catch {
+                $errorMessage = if ($Configuration -and $Configuration.ErrorMessages) {
+                    $Configuration.ErrorMessages.MonitoringError
+                } else {
+                    "❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας"
+                }
+
                 $writeBridgeLogSplat = @{
-                    Stage   = 'Σφάλμα'
-                    Message = "❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας: $($_) $iteration"
-                    Level   = 'Debug'
+                    Stage   = if ($Configuration -and $Configuration.LoggingConfig) {
+                        $Configuration.LoggingConfig.ErrorStage
+                    } else {
+                        'Σφάλμα'
+                    }
+                    Message = "$errorMessage`: $($_) $iteration"
+                    Level   = if ($Configuration -and $Configuration.LoggingConfig) {
+                        $Configuration.LoggingConfig.DebugLevel
+                    } else {
+                        'Debug'
+                    }
                 }
                 Write-BridgeLog @writeBridgeLogSplat
-            }
+            } }
+
+        $monitoringCompleteMessage = if ($Configuration -and $Configuration.StatusMessages) {
+            $Configuration.StatusMessages.MonitoringComplete
+        } else {
+            "✅ Ο κύκλος παρακολούθησης ολοκληρώθηκε"
         }
+
         $writeBridgeLogSplat = @{
-            Stage   = 'Ανάλυση'
-            Message = "✅ Ο κύκλος παρακολούθησης ολοκληρώθηκε μετά από $iteration επανάληψη(εις)."
-            Level   = 'Verbose'
+            Stage   = if ($Configuration -and $Configuration.LoggingConfig) {
+                $Configuration.LoggingConfig.InfoStage
+            } else {
+                'Ανάλυση'
+            }
+            Message = "$monitoringCompleteMessage μετά από $iteration επανάληψη(εις)."
+            Level   = if ($Configuration -and $Configuration.LoggingConfig) {
+                $Configuration.LoggingConfig.VerboseLevel
+            } else {
+                'Verbose'
+            }
         }
         Write-BridgeLog @writeBridgeLogSplat
     }

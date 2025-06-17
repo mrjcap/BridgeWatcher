@@ -169,4 +169,40 @@ InModuleScope 'BridgeWatcher' {
             # Αν θέλεις:μπορείς να πιάσεις το warning μέσω transcript ή out-string
         }
     }
+
+    Describe 'Get-BridgeStatus Configuration Fallbacks' {
+        It 'Χρησιμοποιεί fallback values όταν η New-BridgeConfiguration αποτυγχάνει' {
+            Mock New-BridgeConfiguration { throw "Configuration error" }
+            Mock Get-BridgeHtml { '<html>test</html>' }
+            Mock Get-BridgeStatusFromHtml { @() }
+            Mock Export-BridgeStatusJson { }
+            Mock Write-BridgeLog { }
+
+            { Get-BridgeStatus -OutputFile 'test.json' } | Should -Not -Throw
+            # Verify that fallback messages are used (should be called twice - once in process, once in end block)
+            Assert-MockCalled Write-BridgeLog -ParameterFilter {
+                $Message -eq '⛔ Δεν υπάρχει διαθέσιμο status για αποθήκευση.' -and
+                $Stage -eq 'Σφάλμα' -and
+                $Level -eq 'Warning'
+            } -Exactly 2
+        }
+
+        It 'Χρησιμοποιεί fallback values όταν Configuration είναι null' {
+            Mock Get-BridgeHtml { '<html>test</html>' }
+            Mock Get-BridgeStatusFromHtml { @() }
+            Mock Export-BridgeStatusJson { }
+            Mock Write-BridgeLog { }
+
+            { Get-BridgeStatus -Configuration $null -OutputFile 'test.json' } | Should -Not -Throw
+            # Verify fallback behavior
+            Assert-MockCalled Get-BridgeHtml -Exactly 1
+            Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 1
+        }
+        It 'Χειρίζεται null configuration στο error message fallback' {
+            Mock New-BridgeConfiguration { throw "Configuration failed" }
+            Mock Get-BridgeHtml { $null }
+
+            { Get-BridgeStatus } | Should -Throw "Αποτυχία λήψης HTML"
+        }
+    }
 }

@@ -16,11 +16,21 @@
 
     .NOTES
     Χρησιμοποιείται από άλλες functions για ανάλυση περιεχομένου.
-    #>    [OutputType([string])]
-    param (
+    #>    [OutputType([string])]    param (
         [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
-        [string]$Uri = 'https://www.topvision.gr/dioriga/'
+        [string]$Uri,
+        [Parameter()]
+        [PSCustomObject]$Configuration
     )
+
+    # Use configuration or fallback for URI
+    if (-not $Uri) {
+        if ($Configuration -and $Configuration.SourceUrl) {
+            $Uri = $Configuration.SourceUrl
+        } else {
+            $Uri = 'https://www.topvision.gr/dioriga/'
+        }
+    }
     try {
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'

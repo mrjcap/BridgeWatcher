@@ -36,18 +36,33 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Location,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Status,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Timestamp,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ImageSrc,
-        [Parameter()][ValidateScript({
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ImageSrc, [Parameter()][ValidateScript({
                 if ([string]::IsNullOrEmpty($_) -or [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
                     $true
                 } else {
                     throw "The parameter '$_' is not a valid absolute URI."
                 }
-            })][string]$BaseUrl = 'https://www.topvision.gr/dioriga/'
+            })][string]$BaseUrl,
+        [Parameter()]
+        [PSCustomObject]$Configuration
     )
+
+    # Use configuration or fallback for BaseUrl
+    if (-not $BaseUrl) {
+        if ($Configuration -and $Configuration.BaseImageUrl) {
+            $BaseUrl = $Configuration.BaseImageUrl
+        } else {
+            $BaseUrl = 'https://www.topvision.gr/dioriga/'
+        }
+    }
     return [pscustomobject]@{
         PSTypeName   = 'Bridge.Status'
-        GefyraName   = if ($Location -eq 'poseidonia') { 'Ποσειδωνία' } else { 'Ισθμία' }
+        GefyraName   = if ($Configuration -and $Configuration.BridgeNames -and $Configuration.BridgeNames[$Location]) {
+            $Configuration.BridgeNames[$Location]
+        } else {
+            # Fallback to hardcoded values
+            if ($Location -eq 'poseidonia') { 'Ποσειδωνία' } else { 'Ισθμία' }
+        }
         GefyraStatus = $Status
         Timestamp    = $Timestamp
         ImageUrl     = if ($ImageSrc -match '^https?://') { $ImageSrc } else { "$BaseUrl$ImageSrc" }

@@ -14,6 +14,9 @@
     .PARAMETER RequestBody
     Το JSON σώμα του αιτήματος.
 
+    .PARAMETER Configuration
+    Το configuration object που περιέχει τις ρυθμίσεις.
+
     .OUTPUTS
     [object] - Το αποτέλεσμα του OCR API.
 
@@ -27,9 +30,44 @@
     [OutputType([object])]
     param (
         [Parameter(Mandatory)][string]$ApiKey,
-        [Parameter(Mandatory)][string]$RequestBody
-    )
-    $url = "https://vision.googleapis.com/v1/images:annotate?key=$ApiKey"
+        [Parameter(Mandatory)][string]$RequestBody,
+        [Parameter()][PSCustomObject]$Configuration
+    )    # Get OCR API URL from configuration or use fallback
+    $url = if ($Configuration -and $Configuration.OCRApiUrl) {
+        "$($Configuration.OCRApiUrl)?key=$ApiKey"
+    } else {
+        "https://vision.googleapis.com/v1/images:annotate?key=$ApiKey"
+    }
+
+    # Get messages from configuration or use fallback
+    $startMessage = if ($Configuration -and $Configuration.OCRMessages -and $Configuration.OCRMessages.StartOCR) {
+        $Configuration.OCRMessages.StartOCR
+    } else {
+        '➜ Calling Google Vision API...'
+    }
+
+    $failedMessagePrefix = if ($Configuration -and $Configuration.OCRMessages -and $Configuration.OCRMessages.OCRFailed) {
+        $Configuration.OCRMessages.OCRFailed
+    } else {
+        '❌ Request failed'
+    }
+
+    # Get logging stage from configuration or use fallback
+    $analysisStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.InfoStage) {
+        $Configuration.LoggingConfig.InfoStage
+    } else {
+        'Ανάλυση'
+    }
+
+    $errorStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.ErrorStage) {
+        $Configuration.LoggingConfig.ErrorStage
+    } else {
+        'Σφάλμα'
+    }    $url = if ($Configuration -and $Configuration.OCRApiUrl) {
+        "$($Configuration.OCRApiUrl)?key=$ApiKey"
+    } else {
+        "https://vision.googleapis.com/v1/images:annotate?key=$ApiKey"
+    }
     try {
         $invokeRestMethodSplat = @{
             Uri         = $url
@@ -39,16 +77,20 @@
             ErrorAction = 'Stop'
         }
         $writeBridgeLogSplat = @{
-            Stage   = 'Ανάλυση'
-            Message = '➜ Calling Google Vision API...'
+            Stage   = $analysisStage
+            Message = $startMessage
         }
         Write-BridgeLog @writeBridgeLogSplat
         return Invoke-RestMethod @invokeRestMethodSplat
     } catch {
         $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = "❌ Request failed: $($_.Exception.Message)"
-            Level   = 'Warning'
+            Stage   = $errorStage
+            Message = "$failedMessagePrefix`: $($_.Exception.Message)"
+            Level   = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.WarningLevel) {
+                $Configuration.LoggingConfig.WarningLevel
+            } else {
+                'Warning'
+            }
         }
         Write-BridgeLog @writeBridgeLogSplat
         $errorRecord = [System.Management.Automation.ErrorRecord]::new(
