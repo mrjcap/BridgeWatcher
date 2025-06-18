@@ -1,12 +1,12 @@
 ﻿function Export-BridgeStatusJson {
-    [CmdletBinding()]
     <#
     .SYNOPSIS
     Εξάγει την κατάσταση γέφυρας σε αρχείο JSON.
 
     .DESCRIPTION
     Η Export-BridgeStatusJson αποθηκεύει δεδομένα κατάστασης γέφυρας σε μορφή JSON
-    σε καθορισμένη διαδρομή.
+    σε καθορισμένη διαδρομή. Τώρα επιστρέφει BridgeResult object για καλύτερο
+    error handling και pipeline integration.
 
     .PARAMETER Data
     Το αντικείμενο ή η λίστα αντικειμένων που θα εξαχθεί.
@@ -21,20 +21,33 @@
     Το configuration object που περιέχει τις ρυθμίσεις.
 
     .OUTPUTS
-    None.
+    [PSCustomObject] - BridgeResult object με Success, Data, ErrorMessage, ErrorCode, Timestamp.
 
     .EXAMPLE
-    Export-BridgeStatusJson -Data $bridgeStatus -Path 'C:\Logs\status.json'
+    $exportResult = Export-BridgeStatusJson -Data $bridgeStatus -Path 'C:\Logs\status.json'
+    if (Test-BridgeResult $exportResult) {
+        Write-Host "Export successful"
+    }
 
     .NOTES
-    Χρησιμοποιεί ConvertTo-Json και Set-Content για ασφαλή αποθήκευση.
+    Χρησιμοποιεί New-BridgeResult για τυποποιημένη επιστροφή αποτελεσμάτων.
     #>
-    [OutputType([void])]
-    param (
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$Data,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Path,
-        [Parameter()][ValidateRange(1, 20)][int]$JsonDepth,
-        [Parameter()][PSCustomObject]$Configuration
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param (        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [object[]]$Data,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path,
+
+        [Parameter()]
+        [ValidateRange(1, 20)]
+        [int]$JsonDepth,
+
+        [Parameter()]
+        [PSCustomObject]$Configuration
     )
 
     # Get JSON depth from configuration or parameter or use fallback
@@ -89,9 +102,19 @@
             Depth    = $JsonDepth
             Compress = $true
         }
+
         if (-not (Test-Path -Path (Split-Path -Parent $Path))) {
-            throw "$directoryNotExistsMessage`: $(Split-Path -Parent $Path)"
+            $errorMessage = "$directoryNotExistsMessage`: $(Split-Path -Parent $Path)"
+            $writeBridgeLogSplat = @{
+                Stage   = $errorStage
+                Message = $errorMessage
+                Level   = $warningLevel
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+
+            return New-BridgeResult -Success $false -ErrorMessage $errorMessage -ErrorCode 'DIRECTORY_NOT_EXISTS'
         }
+
         $json = $Data | ConvertTo-Json @convertToJsonSplat
         $setContentSplat = @{
             Path     = $Path
@@ -99,24 +122,24 @@
             Encoding = 'utf8BOM'
         }
         Set-Content @setContentSplat
+
         $writeBridgeLogSplat = @{
             Stage   = $analysisStage
             Message = "$successMessage`: $Path"
         }
         Write-BridgeLog @writeBridgeLogSplat
-    } catch {
+
+        return New-BridgeResult -Success $true -Data @{ ExportedPath = $Path; RecordCount = $Data.Count }
+    }
+    catch {
+        $errorMessage = "$failedMessage`: $($_.Exception.Message)"
         $writeBridgeLogSplat = @{
             Stage   = $errorStage
-            Message = "$failedMessage`: $($_.Exception.Message)"
+            Message = $errorMessage
             Level   = $warningLevel
         }
         Write-BridgeLog @writeBridgeLogSplat
-        $errorRecord = [System.Management.Automation.ErrorRecord]::new(
-            ([System.Exception]::new("Σφάλμα αποθήκευσης JSON: $($_.Exception.Message)")),
-            'JsonExportFailure',
-            [System.Management.Automation.ErrorCategory]::WriteError,
-            $Path
-        )
-        $PSCmdlet.ThrowTerminatingError($errorRecord)
+
+        return New-BridgeResult -Success $false -ErrorMessage $errorMessage -ErrorCode 'JSON_EXPORT_FAILURE'
     }
 }

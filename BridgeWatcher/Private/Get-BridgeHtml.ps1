@@ -1,24 +1,38 @@
 ﻿function Get-BridgeHtml {
-    [CmdletBinding()]
     <#
     .SYNOPSIS
     Ανακτά HTML περιεχόμενο από την σελίδα της γέφυρας.
 
     .DESCRIPTION
     Η Get-BridgeHtml πραγματοποιεί HTTP αίτηση και επιστρέφει το HTML
-    περιεχόμενο της σελίδας.
+    περιεχόμενο της σελίδας. Τώρα επιστρέφει BridgeResult object για
+    καλύτερο error handling.
+
+    .PARAMETER Uri
+    Το URI από όπου θα ανακτηθεί το HTML. Αν δεν παρέχεται, χρησιμοποιείται το Configuration.
+
+    .PARAMETER Configuration
+    Αντικείμενο διαμόρφωσης που περιέχει το SourceUrl και άλλες ρυθμίσεις.
 
     .OUTPUTS
-    [string] - Το HTML περιεχόμενο της σελίδας.
+    [PSCustomObject] - BridgeResult object με Success, Data (HTML content), ErrorMessage, ErrorCode, Timestamp.
 
     .EXAMPLE
-    $html    = Get-BridgeHtml
+    $htmlResult = Get-BridgeHtml -Configuration $config
+    if (Test-BridgeResult $htmlResult) {
+        $html = $htmlResult.Data
+    }
 
     .NOTES
-    Χρησιμοποιείται από άλλες functions για ανάλυση περιεχομένου.
-    #>    [OutputType([string])]    param (
+    Χρησιμοποιεί New-BridgeResult για τυποποιημένη επιστροφή αποτελεσμάτων.
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param (
+        [Parameter()]
         [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
         [string]$Uri,
+
         [Parameter()]
         [PSCustomObject]$Configuration
     )
@@ -31,32 +45,30 @@
             $Uri = 'https://www.topvision.gr/dioriga/'
         }
     }
+
     try {
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
             Message = "🌐 Λήψη περιεχομένου από: $Uri"
         }
         Write-BridgeLog @writeBridgeLogSplat
+
         $invokeWebRequestSplat = @{
             Uri             = $Uri
             UseBasicParsing = $true
             ErrorAction     = 'Stop'
         }
         $response = Invoke-WebRequest @invokeWebRequestSplat
-        return $response.Content
-    } catch {
+
+        return New-BridgeResult -Success $true -Data $response.Content
+    }    catch {
         $writeBridgeLogSplat = @{
             Stage   = 'Σφάλμα'
             Message = "❌ Σφάλμα κατά την ανάκτηση: $($_.Exception.Message)"
             Level   = 'Warning'
         }
         Write-BridgeLog @writeBridgeLogSplat
-        $errorRecord = [System.Management.Automation.ErrorRecord]::new(
-            ([System.Exception]::new("Αποτυχία λήψης HTML: $($_.Exception.Message)")),
-            'BridgeHtmlDownloadFailed',
-            [System.Management.Automation.ErrorCategory]::ConnectionError,
-            $Uri
-        )
-        $PSCmdlet.ThrowTerminatingError($errorRecord)
+
+        return New-BridgeResult -Success $false -ErrorMessage $_.Exception.Message -ErrorCode 'HTTP_ERROR'
     }
 }

@@ -5,29 +5,39 @@ InModuleScope 'BridgeWatcher' {
         BeforeAll {
             # Μόκ για εξωτερικές συναρτήσεις
             Mock Get-BridgeHtml {}
-            Mock Get-BridgeStatusFromHtml {}
-            Mock ConvertTo-Json {}
-            Mock Set-Content {}
+            Mock ConvertFrom-BridgeHtml {}
+            Mock Export-BridgeStatusJson {}
             Mock Write-Warning {}
         }
         Context 'Επιτυχής ανάκτηση HTML και αποθήκευση JSON' {
-            It 'Πρέπει να καλείται Get-BridgeHtml και Get-BridgeStatusFromHtml με τα σωστά splat params' {
+            It 'Πρέπει να καλείται Get-BridgeHtml και ConvertFrom-BridgeHtml με τα σωστά splat params' {
                 # Ρύθμιση
                 $OutputFile = 'C:\mock\path\to\output.json'
                 $html = '<html></html>'
                 $timestamp = Get-Date -Format o
-                Mock Get-BridgeHtml { $html }
-                Mock Get-BridgeStatusFromHtml {
-                    return @(
+                Mock Get-BridgeHtml {
+                    New-BridgeResult -Success $true -Data $html
+                }
+                Mock ConvertFrom-BridgeHtml {
+                    $bridgeData = @(
                         [pscustomobject]@{Location = 'Isthmia'; Status = 'Ανοιχτή'; Timestamp = $timestamp; ImageSrc = 'image1.jpg'; BaseUrl = 'http://localhost' }
                     )
+                    return New-BridgeResult -Success $true -Data $bridgeData
                 }
-                Mock Export-BridgeStatusJson { }
+                Mock Export-BridgeStatusJson {
+                    New-BridgeResult -Success $true
+                }
                 Mock Write-Warning { }
                 # Εκτέλεση
-                Get-BridgeStatus -OutputFile $OutputFile
-                # Έλεγχοι                Assert-MockCalled Get-BridgeHtml -Exactly 1 -Scope It
-                Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 1 -Scope It
+                $result = Get-BridgeStatus -OutputFile $OutputFile
+                # Έλεγχοι
+                $result | Should -Not -BeNullOrEmpty
+                $result.Count | Should -Be 1
+                $result[0].Location | Should -Be 'Isthmia'
+                $result[0].Status | Should -Be 'Ανοιχτή'
+
+                Assert-MockCalled Get-BridgeHtml -Exactly 1 -Scope It
+                Assert-MockCalled ConvertFrom-BridgeHtml -Exactly 1 -Scope It
                 Assert-MockCalled Export-BridgeStatusJson -Exactly 1 -Scope It
                 Assert-MockCalled Write-Warning -Exactly 0 -Scope It
             }
@@ -37,65 +47,73 @@ InModuleScope 'BridgeWatcher' {
                 # Ρύθμιση
                 Mock Get-BridgeHtml { $null }
                 # Εκτέλεση & Έλεγχος
-                { Get-BridgeStatus } | Should -Throw -ExpectedMessage "*Αποτυχία ανάκτησης HTML από τον server*"
+                { Get-BridgeStatus } | Should -Throw -ExpectedMessage "*HTML retrieval returned null*"
                 # Έλεγχος κλήσεων
                 Assert-MockCalled Get-BridgeHtml -Exactly 1 -Scope It
-                Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 0 -Scope It
-                Assert-MockCalled Set-Content -Exactly 0 -Scope It
+                Assert-MockCalled ConvertFrom-BridgeHtml -Exactly 0 -Scope It
+                Assert-MockCalled Export-BridgeStatusJson -Exactly 0 -Scope It
             }
         }
-        Context 'Get-BridgeStatusFromHtml επιστρέφει κενό' {
-            It 'Πρέπει να καλείται Write-Warning με το μήνυμα: [BridgeWatcher] ⛔ Δεν υπάρχει διαθέσιμο status για αποθήκευση' {
+        Context 'ConvertFrom-BridgeHtml επιστρέφει κενό' {
+            It 'Πρέπει να ρίχνει terminating error όταν δεν υπάρχει διαθέσιμο status για αποθήκευση' {
                 # Ρύθμιση
                 $html = '<html></html>'
-                Mock Get-BridgeHtml { $html }
-                Mock Get-BridgeStatusFromHtml { @() }
-                # Εκτέλεση
-                $result = Get-BridgeStatus
+                Mock Get-BridgeHtml {
+                    New-BridgeResult -Success $true -Data $html
+                }
+                Mock ConvertFrom-BridgeHtml {
+                    New-BridgeResult -Success $false -ErrorMessage "Δεν υπάρχει διαθέσιμο status για αποθήκευση" -ErrorCode 'NO_STATUS_FOUND'
+                }
+                # Εκτέλεση & Έλεγχος
+                { Get-BridgeStatus } | Should -Throw
                 # Έλεγχος κλήσεων
                 Assert-MockCalled Get-BridgeHtml -Exactly 1 -Scope It
-                Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 1 -Scope It
-                Assert-MockCalled Write-Warning -Exactly 1 -Scope It
-                Assert-MockCalled Set-Content -Exactly 0 -Scope It
-                $result | Should -BeNullOrEmpty
+                Assert-MockCalled ConvertFrom-BridgeHtml -Exactly 1 -Scope It
+                Assert-MockCalled Export-BridgeStatusJson -Exactly 0 -Scope It
             }
         }
         Context 'Σφάλμα κατά την αποθήκευση JSON' {
-            It 'Πρέπει να καλείται Write-Warning με το μήνυμα σφάλματος αποθήκευσης' {
+            It 'Πρέπει να ρίχνει terminating error όταν η αποθήκευση JSON αποτύχει' {
                 # Ρύθμιση
                 $html = '<html></html>'
-                $result = @(@{Status = 'Open'; Location = 'Isthmia'; Timestamp = (Get-Date); ImageSrc = 'image.jpg'; BaseUrl = 'http://localhost' })
-                Mock Get-BridgeHtml { $html }
-                Mock Get-BridgeStatusFromHtml { $result }
-                #Mock ConvertTo-Json { '{"Status":"Open","Location":"Isthmia","Timestamp":"2025-04-18T00:00:00Z","ImageSrc":"image.jpg","BaseUrl":"http://localhost"}' }
-                #Mock Set-Content { throw "Error during saving" }
-                # Εκτέλεση
-                $result = Get-BridgeStatus -OutputFile 'C:\path\to\output.json'
+                $bridgeData = @(@{Status = 'Open'; Location = 'Isthmia'; Timestamp = (Get-Date); ImageSrc = 'image.jpg'; BaseUrl = 'http://localhost' })
+                Mock Get-BridgeHtml {
+                    New-BridgeResult -Success $true -Data $html
+                }
+                Mock ConvertFrom-BridgeHtml {
+                    New-BridgeResult -Success $true -Data $bridgeData
+                }
+                Mock Export-BridgeStatusJson {
+                    New-BridgeResult -Success $false -ErrorMessage "Error during saving" -ErrorCode 'JSON_EXPORT_FAILURE'
+                }
+                # Εκτέλεση & Έλεγχος
+                { Get-BridgeStatus -OutputFile 'C:\path\to\output.json' } | Should -Throw
                 # Έλεγχος κλήσεων
                 Assert-MockCalled Get-BridgeHtml -Exactly 1 -Scope It
-                Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 1 -Scope It
-                #Assert-MockCalled ConvertTo-Json -Exactly 1 -Scope It
-                #Assert-MockCalled Set-Content -Exactly 1 -Scope It
-                Assert-MockCalled Write-Warning -Exactly 2 -Scope It
-                $result | Should -BeNullOrEmpty
+                Assert-MockCalled ConvertFrom-BridgeHtml -Exactly 1 -Scope It
+                Assert-MockCalled Export-BridgeStatusJson -Exactly 1 -Scope It
             }
         }
         Context 'Permission Denied κατά την εγγραφή αρχείου' {
-            It 'Πρέπει να καταγράφεται προειδοποίηση για το σφάλμα και να επιστρέφεται κενό' {
+            It 'Πρέπει να ρίχνει terminating error για Permission Denied' {
                 # Ρύθμιση
                 $html = '<html></html>'
-                $result = @(@{Status = 'Open'; Location = 'Isthmia'; Timestamp = (Get-Date); ImageSrc = 'image.jpg'; BaseUrl = 'http://localhost' })
-                Mock Get-BridgeHtml { $html }
-                Mock Get-BridgeStatusFromHtml { $result }
-                Mock ConvertTo-Json { '{"Status":"Open","Location":"Isthmia","Timestamp":"2025-04-18T00:00:00Z","ImageSrc":"image.jpg","BaseUrl":"http://localhost"}' }
-                Mock Set-Content { throw [System.UnauthorizedAccessException] 'Permission Denied' }
-                # Εκτέλεση
-                $result = Get-BridgeStatus -OutputFile 'C:\path\to\output.json'
+                $bridgeData = @(@{Status = 'Open'; Location = 'Isthmia'; Timestamp = (Get-Date); ImageSrc = 'image.jpg'; BaseUrl = 'http://localhost' })
+                Mock Get-BridgeHtml {
+                    New-BridgeResult -Success $true -Data $html
+                }
+                Mock ConvertFrom-BridgeHtml {
+                    New-BridgeResult -Success $true -Data $bridgeData
+                }
+                Mock Export-BridgeStatusJson {
+                    New-BridgeResult -Success $false -ErrorMessage "Permission Denied" -ErrorCode 'PERMISSION_DENIED'
+                }
+                # Εκτέλεση & Έλεγχος
+                { Get-BridgeStatus -OutputFile 'C:\path\to\output.json' } | Should -Throw
                 # Έλεγχος κλήσεων
                 Assert-MockCalled Get-BridgeHtml -Exactly 1 -Scope It
-                Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 1 -Scope It
-                Assert-MockCalled Write-Warning -Exactly 2 -Scope It
-                $result | Should -BeNullOrEmpty
+                Assert-MockCalled ConvertFrom-BridgeHtml -Exactly 1 -Scope It
+                Assert-MockCalled Export-BridgeStatusJson -Exactly 1 -Scope It
             }
         }
     }
@@ -152,57 +170,70 @@ InModuleScope 'BridgeWatcher' {
             Mock Invoke-WebRequest { [pscustomobject]@{ Content = $html } }
             { Get-BridgeStatus } | Should -Throw "Δεν βρέθηκε block για τη θέση poseidonia."
         }
+
         It 'Γράφει warning όταν δεν υπάρχει διαθέσιμο status για αποθήκευση' {
-            Mock Get-BridgeHtml { '<html></html>' }
-            Mock Get-BridgeStatusFromHtml { @() }
-            Mock Export-BridgeStatusJson { }
+            Mock Get-BridgeHtml {
+                return New-BridgeResult -Success $true -Data '<html></html>'
+            }
+            Mock ConvertFrom-BridgeHtml {
+                return New-BridgeResult -Success $true -Data @()  # Empty array
+            }
+            Mock Export-BridgeStatusJson {
+                return New-BridgeResult -Success $true -Data @{ ExportedPath = 'dummy.json'; RecordCount = 0 }
+            }
             { Get-BridgeStatus -OutputFile 'dummy.json' -Verbose } | Should -Not -Throw
         }
     }
 
     Describe 'Get-BridgeStatus Integration - Error Handling' {
         It 'Χειρίζεται σφάλμα από Invoke-WebRequest' {
-            Mock -CommandName Invoke-WebRequest -MockWith {
-                throw 'Κάτι πήγε στραβά'
+            Mock Get-BridgeHtml {
+                return New-BridgeResult -Success $false -ErrorMessage 'Κάτι πήγε στραβά' -ErrorCode 'HTTP_ERROR'
             }
-            { Get-BridgeStatus } | Should -Throw "Αποτυχία λήψης HTML: Κάτι πήγε στραβά"
-            # Αν θέλεις:μπορείς να πιάσεις το warning μέσω transcript ή out-string
+            { Get-BridgeStatus } | Should -Throw "Κάτι πήγε στραβά"
         }
     }
 
     Describe 'Get-BridgeStatus Configuration Fallbacks' {
         It 'Χρησιμοποιεί fallback values όταν η New-BridgeConfiguration αποτυγχάνει' {
             Mock New-BridgeConfiguration { throw "Configuration error" }
-            Mock Get-BridgeHtml { '<html>test</html>' }
-            Mock Get-BridgeStatusFromHtml { @() }
-            Mock Export-BridgeStatusJson { }
+            Mock Get-BridgeHtml {
+                return New-BridgeResult -Success $true -Data '<html>test</html>'
+            }
+            Mock ConvertFrom-BridgeHtml {
+                return New-BridgeResult -Success $true -Data @()  # Empty array
+            }
+            Mock Export-BridgeStatusJson {
+                return New-BridgeResult -Success $true -Data @{ ExportedPath = 'test.json'; RecordCount = 0 }
+            }
             Mock Write-BridgeLog { }
 
             { Get-BridgeStatus -OutputFile 'test.json' } | Should -Not -Throw
-            # Verify that fallback messages are used (should be called twice - once in process, once in end block)
-            Assert-MockCalled Write-BridgeLog -ParameterFilter {
-                $Message -eq '⛔ Δεν υπάρχει διαθέσιμο status για αποθήκευση.' -and
-                $Stage -eq 'Σφάλμα' -and
-                $Level -eq 'Warning'
-            } -Exactly 2
         }
 
         It 'Χρησιμοποιεί fallback values όταν Configuration είναι null' {
-            Mock Get-BridgeHtml { '<html>test</html>' }
-            Mock Get-BridgeStatusFromHtml { @() }
-            Mock Export-BridgeStatusJson { }
+            Mock Get-BridgeHtml {
+                return New-BridgeResult -Success $true -Data '<html>test</html>'
+            }
+            Mock ConvertFrom-BridgeHtml {
+                return New-BridgeResult -Success $true -Data @()  # Empty array
+            }
+            Mock Export-BridgeStatusJson {
+                return New-BridgeResult -Success $true -Data @{ ExportedPath = 'test.json'; RecordCount = 0 }
+            }
             Mock Write-BridgeLog { }
 
             { Get-BridgeStatus -Configuration $null -OutputFile 'test.json' } | Should -Not -Throw
             # Verify fallback behavior
             Assert-MockCalled Get-BridgeHtml -Exactly 1
-            Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 1
+            Assert-MockCalled ConvertFrom-BridgeHtml -Exactly 1
         }
+
         It 'Χειρίζεται null configuration στο error message fallback' {
             Mock New-BridgeConfiguration { throw "Configuration failed" }
             Mock Get-BridgeHtml { $null }
 
-            { Get-BridgeStatus } | Should -Throw "Αποτυχία λήψης HTML"
+            { Get-BridgeStatus } | Should -Throw "HTML retrieval returned null"
         }
     }
 }

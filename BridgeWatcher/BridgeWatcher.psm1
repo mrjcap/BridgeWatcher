@@ -10,6 +10,9 @@
 
 # region Private Functions
 . "$PSScriptRoot\Private\New-BridgeConfiguration.ps1"
+. "$PSScriptRoot\Private\New-BridgeResult.ps1"
+. "$PSScriptRoot\Private\Test-BridgeResult.ps1"
+. "$PSScriptRoot\Private\ConvertFrom-BridgeHtml.ps1"
 . "$PSScriptRoot\Private\ConvertFrom-BridgeOCRResult.ps1"
 . "$PSScriptRoot\Private\ConvertTo-BridgeTimeRange.ps1"
 . "$PSScriptRoot\Private\Export-BridgeStatusJson.ps1"

@@ -3,7 +3,7 @@
 InModuleScope 'BridgeWatcher' {
     Describe 'Export-BridgeStatusJson Tests' {
         Context 'Όταν συμβαίνει σφάλμα κατά την αποθήκευση JSON' {
-            It 'Πετάει σφάλμα και γράφει το κατάλληλο μήνυμα' {
+            It 'Επιστρέφει BridgeResult με σφάλμα και γράφει το κατάλληλο μήνυμα' {
                 # Mock το Test-Path να επιστρέφει true για να μην αποτύχει πρόωρα
                 Mock Test-Path { $true }
                 # Mock Set-Content για να προκαλέσουμε σφάλμα
@@ -11,19 +11,31 @@ InModuleScope 'BridgeWatcher' {
                 # Mock Write-BridgeLog
                 Mock Write-BridgeLog {}
 
-                { Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json' } |
-                    Should -Throw 'Σφάλμα αποθήκευσης JSON: Fake error during file write'
+                $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
+
+                $result | Should -Not -BeNullOrEmpty
+                $result.Success | Should -Be $false
+                $result.ErrorMessage | Should -Match 'Fake error during file write'
+                $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
 
                 # Επιβεβαιώνουμε ότι κάλεσε το Write-BridgeLog με σφάλμα
                 Assert-MockCalled Write-BridgeLog -Exactly 1 -Scope It
             }
         }
+
         Context 'Όταν η αποθήκευση JSON είναι επιτυχής' {
-            It 'Δεν πρέπει να γράψει Warning' {
+            It 'Επιστρέφει BridgeResult με επιτυχία' {
                 Mock Test-Path { $true }
                 Mock Set-Content {}
                 Mock Write-BridgeLog {}
-                Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
+
+                $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
+
+                $result | Should -Not -BeNullOrEmpty
+                $result.Success | Should -Be $true
+                $result.Data.ExportedPath | Should -Be 'C:\valid\path\file.json'
+                $result.Data.RecordCount | Should -Be 1
+
                 # Επιβεβαιώνουμε ότι δεν έγραψε Warning (μόνο Info)
                 Assert-MockCalled Write-BridgeLog -Exactly 1 -Scope It
             }
@@ -36,18 +48,31 @@ InModuleScope 'BridgeWatcher' {
                 Assert-MockCalled Write-BridgeLog -Exactly 1 -Scope It
             }
         }
-        Context 'Έλεγχος Validation παραμέτρων' {
-            It 'Πετάει validation σφάλμα όταν το Data είναι κενό' {
-                { Export-BridgeStatusJson -Data @() -Path 'out.json' } | Should -Throw
+        Context 'Έλεγχος Validation παραμέτρων' { It 'Δέχεται κενό array όταν το Data είναι κενό' {
+                Mock Test-Path { $true }
+                Mock ConvertTo-Json { '[]' }
+                Mock Set-Content { }
+                Mock Write-BridgeLog { }
+
+                $result = Export-BridgeStatusJson -Data @() -Path 'out.json'
+                $result | Should -Not -BeNullOrEmpty
+                $result.Success | Should -Be $true
+                $result.Data.RecordCount | Should -Be 0
             }
 
             It 'Πετάει validation σφάλμα όταν το Path είναι κενό' {
                 { Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path '' } | Should -Throw
             }
-            It 'Γράφει exception όταν αποτυγχάνει η εγγραφή JSON' {
-                Mock Set-Content { throw 'Fake write failure' }
-                { Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path 'fake.json' -Verbose } |
-                    Should -Throw 'Σφάλμα αποθήκευσης JSON: Ο φάκελος προορισμού δεν υπάρχει: '
+
+            It 'Επιστρέφει BridgeResult με σφάλμα όταν αποτυγχάνει η εγγραφή JSON' {
+                Mock Write-BridgeLog
+
+                $result = Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path 'fake.json' -Verbose
+
+                $result | Should -Not -BeNullOrEmpty
+                $result.Success | Should -Be $false
+                $result.ErrorMessage | Should -Match 'Ο φάκελος προορισμού δεν υπάρχει'
+                $result.ErrorCode | Should -Be 'DIRECTORY_NOT_EXISTS'
             }
         }
         Context 'Configuration Coverage Tests' {
@@ -94,10 +119,12 @@ InModuleScope 'BridgeWatcher' {
                     LoggingConfig  = @{
                         ErrorStage   = 'Σφάλμα'
                         WarningLevel = 'Warning'
-                    }
-                }
+                    } }
 
-                { Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config } | Should -Throw
+                $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
+
+                $result.Success | Should -Be $false
+                $result.ErrorMessage | Should -Match 'Custom failed message'
 
                 Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like 'Custom failed message*' } -Times 1
             }
@@ -114,12 +141,14 @@ InModuleScope 'BridgeWatcher' {
                     LoggingConfig  = @{
                         ErrorStage   = 'Σφάλμα'
                         WarningLevel = 'Warning'
-                    }
-                }
+                    } }
 
-                { Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'invalid/path/test.json' -Configuration $config } | Should -Throw
+                $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'invalid/path/test.json' -Configuration $config
 
-                Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like 'Custom failed message*' } -Times 1
+                $result.Success | Should -Be $false
+                $result.ErrorMessage | Should -Match 'Custom directory not exists'
+
+                Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like 'Custom directory not exists*' } -Times 1
             }
             It 'Καλύπτει Configuration.LoggingConfig paths' {
                 Mock Test-Path { $true }
