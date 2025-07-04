@@ -12,14 +12,18 @@ InModuleScope 'BridgeWatcher' {
                 )
             } -ParameterFilter { $InputFile -eq $jsonFile } -ModuleName 'BridgeWatcher'
             Mock Get-BridgeStatus -ModuleName 'BridgeWatcher' -MockWith {
-                return @(
+                $mockData = @(
                     @{ Bridge = 'Ποσειδωνία'; Status = 'Ανοικτή' },
                     @{ Bridge = 'Ισθμία'; Status = 'Ανοικτή' }
                 )
+                return New-BridgeResult -Success $true -Data $mockData
             }
             Mock Invoke-BridgeStatusComparison {}
             Mock Set-Content {}
             Mock Write-Verbose {}
+            Mock Export-BridgeStatusJson {
+                return New-BridgeResult -Success $true -Data @{ ExportedPath = $jsonFile; RecordCount = 2 }
+            }
             # Κλήση υπό δοκιμή
             {
                 Get-BridgeStatusComparison -OutputFile $jsonFile -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
@@ -38,15 +42,19 @@ InModuleScope 'BridgeWatcher' {
                 return '{"Bridge": "Ποσειδωνία", "Status": "Ανοιχτή"}'  # Ψευδή δεδομένα για το test
             }
             Mock Get-BridgeStatus -ModuleName 'BridgeWatcher' -MockWith {
-                return @(
+                $mockData = @(
                     @{ Bridge = 'Ποσειδωνία'; Status = 'Ανοικτή' },
                     @{ Bridge = 'Ισθμία'; Status = 'Ανοικτή' }
                 )
+                return New-BridgeResult -Success $true -Data $mockData
             }
             # Mock για Invoke-BridgeStatusComparison, Set-Content, Write-Verbose
             Mock Invoke-BridgeStatusComparison {}
             Mock Set-Content {}
             Mock Write-Verbose {}
+            Mock Export-BridgeStatusJson {
+                return New-BridgeResult -Success $true -Data @{ ExportedPath = $jsonFile; RecordCount = 2 }
+            }
             # Εκτέλεση της συνάρτησης Get-BridgeStatusComparison
             $getBridgeStatusComparisonSplat = @{
                 OutputFile = $jsonFile
