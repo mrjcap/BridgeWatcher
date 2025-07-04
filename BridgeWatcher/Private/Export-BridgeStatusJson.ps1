@@ -117,9 +117,8 @@
 
         $json = $Data | ConvertTo-Json @convertToJsonSplat
         $setContentSplat = @{
-            Path     = $Path
-            Value    = $json
-            Encoding = 'utf8BOM'
+            Path  = $Path
+            Value = $json
         }
         Set-Content @setContentSplat
 
