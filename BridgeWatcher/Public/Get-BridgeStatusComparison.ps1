@@ -48,7 +48,16 @@
         $getDiorigaStatusSplat = @{
             OutputFile = $OutputFile
         }
-        $currentState = Get-BridgeStatus @getDiorigaStatusSplat
+        $currentStateResult = Get-BridgeStatus @getDiorigaStatusSplat
+        if (-not (Test-BridgeResult $currentStateResult)) {
+            $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+                [System.Exception]::new($currentStateResult.ErrorMessage),
+                $currentStateResult.ErrorCode,
+                [System.Management.Automation.ErrorCategory]::InvalidResult,
+                $null
+            ))
+        }
+        $currentState = $currentStateResult.Data
         $previousState = $currentState
     } else {
         # Το αρχείο υπάρχει, μπορείς να το διαβάσεις με ασφάλεια
@@ -56,7 +65,16 @@
             InputFile = $OutputFile
         }
         $previousState = Get-BridgePreviousStatus @getDiorigaPreviousStatusSplat
-        $currentState = Get-BridgeStatus
+        $currentStateResult = Get-BridgeStatus
+        if (-not (Test-BridgeResult $currentStateResult)) {
+            $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+                [System.Exception]::new($currentStateResult.ErrorMessage),
+                $currentStateResult.ErrorCode,
+                [System.Management.Automation.ErrorCategory]::InvalidResult,
+                $null
+            ))
+        }
+        $currentState = $currentStateResult.Data
     }
     $invokeSplat = @{
         PreviousState = $previousState

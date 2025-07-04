@@ -53,14 +53,41 @@
         }
         Write-BridgeLog @writeBridgeLogSplat
 
-        $invokeWebRequestSplat = @{
-            Uri             = $Uri
-            UseBasicParsing = $true
-            ErrorAction     = 'Stop'
+        # HIGH-002: Add retry logic with exponential backoff and timeout
+        $maxRetries = 3
+        $baseDelaySeconds = 1
+        $timeoutSeconds = 30
+        
+        for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+            try {
+                $invokeWebRequestSplat = @{
+                    Uri             = $Uri
+                    UseBasicParsing = $true
+                    TimeoutSec      = $timeoutSeconds
+                    ErrorAction     = 'Stop'
+                }
+                $response = Invoke-WebRequest @invokeWebRequestSplat
+                
+                # Success - return immediately
+                return New-BridgeResult -Success $true -Data $response.Content
+            }
+            catch {
+                $delaySeconds = $baseDelaySeconds * [Math]::Pow(2, $attempt - 1)
+                
+                if ($attempt -lt $maxRetries) {
+                    $writeBridgeLogSplat = @{
+                        Stage   = 'Ανάλυση'
+                        Message = "⚠️ Προσπάθεια $attempt/$maxRetries απέτυχε: $($_.Exception.Message). Επανάληψη σε $delaySeconds δευτερόλεπτα..."
+                        Level   = 'Warning'
+                    }
+                    Write-BridgeLog @writeBridgeLogSplat
+                    Start-Sleep -Seconds $delaySeconds
+                } else {
+                    # Final attempt failed - throw the error
+                    throw
+                }
+            }
         }
-        $response = Invoke-WebRequest @invokeWebRequestSplat
-
-        return New-BridgeResult -Success $true -Data $response.Content
     }    catch {
         $writeBridgeLogSplat = @{
             Stage   = 'Σφάλμα'

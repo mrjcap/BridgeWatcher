@@ -16,10 +16,13 @@
     (Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
 
     .OUTPUTS
-    [PSCustomObject] - Αντικείμενο αποτελέσματος με Success, Data, ErrorMessage, ErrorCode και Timestamp.
+    [PSCustomObject] - BridgeResult object με Success, Data, ErrorMessage, ErrorCode και Timestamp.
 
     .EXAMPLE
-    Get-BridgeStatus -OutputFile 'C:\Logs\current-status.json'
+    $result = Get-BridgeStatus -OutputFile 'C:\Logs\current-status.json'
+    if (Test-BridgeResult $result) {
+        Write-Host "Success: $($result.Data.Count) bridges found"
+    }
 
     .EXAMPLE
     $result = Get-BridgeStatus
@@ -49,52 +52,42 @@
             try {
                 $Configuration = New-BridgeConfiguration
             } catch {
-                return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode 'CONFIG_ERROR'
+                # CRIT-001: Use fallback configuration instead of returning error
+                $Configuration = [PSCustomObject]@{
+                    SourceUrl = 'https://www.topvision.gr/dioriga/'
+                    BaseImageUrl = 'https://www.topvision.gr/dioriga'
+                }
             }
         }
-    }    process { # Stage 1: Data Acquisition - Get HTML content
+    }    process { 
+        # Stage 1: Data Acquisition - Get HTML content
         $htmlResult = Get-BridgeHtml -Configuration $Configuration
         if (-not $htmlResult) {
-            $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                    [System.InvalidOperationException]::new('HTML retrieval returned null'),
-                    'HTML_NULL',
-                    [System.Management.Automation.ErrorCategory]::ConnectionError,
-                    $null
-                ))
+            # CRIT-002: Return BridgeResult instead of ThrowTerminatingError
+            return New-BridgeResult -Success $false -ErrorMessage 'HTML retrieval returned null' -ErrorCode 'HTML_NULL'
         }
         if (-not (Test-BridgeResult $htmlResult)) {
-            $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                    [System.Exception]::new($htmlResult.ErrorMessage),
-                    $htmlResult.ErrorCode,
-                    [System.Management.Automation.ErrorCategory]::ConnectionError,
-                    $null
-                ))
+            # CRIT-002: Return BridgeResult instead of ThrowTerminatingError
+            return New-BridgeResult -Success $false -ErrorMessage $htmlResult.ErrorMessage -ErrorCode $htmlResult.ErrorCode
         }
 
         # Stage 2: Data Processing - Convert HTML to bridge status
         $statusResult = ConvertFrom-BridgeHtml -Html $htmlResult.Data -Configuration $Configuration
         if (-not (Test-BridgeResult $statusResult)) {
-            $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                    [System.Exception]::new($statusResult.ErrorMessage),
-                    $statusResult.ErrorCode,
-                    [System.Management.Automation.ErrorCategory]::ParserError,
-                    $null                ))
+            # CRIT-002: Return BridgeResult instead of ThrowTerminatingError
+            return New-BridgeResult -Success $false -ErrorMessage $statusResult.ErrorMessage -ErrorCode $statusResult.ErrorCode
         }
 
         # Stage 3: Data Persistence (optional)
         if ($OutputFile) {
             $exportResult = Export-BridgeStatusJson -Data $statusResult.Data -Path $OutputFile
             if (-not (Test-BridgeResult $exportResult)) {
-                $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                        [System.Exception]::new($exportResult.ErrorMessage),
-                        $exportResult.ErrorCode,
-                        [System.Management.Automation.ErrorCategory]::WriteError,
-                        $OutputFile
-                    ))
+                # CRIT-002: Return BridgeResult instead of ThrowTerminatingError
+                return New-BridgeResult -Success $false -ErrorMessage $exportResult.ErrorMessage -ErrorCode $exportResult.ErrorCode
             }
         }
 
-        # Return the actual data for backward compatibility
-        return $statusResult.Data
+        # CRIT-003: Return BridgeResult instead of raw data
+        return $statusResult
     }
 }

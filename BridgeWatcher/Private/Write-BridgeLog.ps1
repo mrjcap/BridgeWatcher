@@ -70,17 +70,55 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
     $logPath = Join-Path @joinPathSplat
     $logLine = "[$timeStr] [$Stage] $Message"
 
+    # HIGH-005: Add mutex locking and retry logic for file operations
+    $mutexName = "BridgeWatcher_Log_$($logPath -replace '[\\/:*?"<>|]', '_')"
+    $mutex = $null
+    $maxRetries = 3
+    $baseDelayMs = 50
+    
     try {
-        $addContentSplat = @{
-            Path        = $logPath
-            Value       = $logLine
-            Encoding    = 'utf8BOM'
-            ErrorAction = 'Stop'
+        # Create or open named mutex
+        $mutex = New-Object System.Threading.Mutex($false, $mutexName)
+        
+        for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+            try {
+                # Try to acquire mutex with timeout
+                if ($mutex.WaitOne(5000)) { # 5 second timeout
+                    try {
+                        $addContentSplat = @{
+                            Path        = $logPath
+                            Value       = $logLine
+                            Encoding    = 'utf8BOM'
+                            ErrorAction = 'Stop'
+                        }
+                        Add-Content @addContentSplat
+                        return # Success - exit function
+                    }
+                    finally {
+                        $mutex.ReleaseMutex()
+                    }
+                } else {
+                    throw (New-Object System.TimeoutException("Timeout acquiring file lock"))
+                }
+            }
+            catch {
+                if ($attempt -lt $maxRetries) {
+                    $delayMs = $baseDelayMs * [Math]::Pow(2, $attempt - 1)
+                    Start-Sleep -Milliseconds $delayMs
+                } else {
+                    # Final attempt failed - use fallback
+                    Write-Warning "Failed to write to log file '$logPath' after $maxRetries attempts: $($_.Exception.Message)"
+                }
+            }
         }
-        Add-Content @addContentSplat
     }
     catch {
-        # Fallback: write only to console if file logging fails
+        # Fallback: write only to console if mutex creation or file logging fails
         Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
+    }
+    finally {
+        if ($mutex) {
+            $mutex.Dispose()
+        }
     }
 }
