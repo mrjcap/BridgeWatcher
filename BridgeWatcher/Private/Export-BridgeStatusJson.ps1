@@ -119,7 +119,7 @@
         $setContentSplat = @{
             Path     = $Path
             Value    = $json
-            Encoding = 'utf8BOM'
+            Encoding = 'utf8'
         }
         Set-Content @setContentSplat
 

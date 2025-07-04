@@ -40,7 +40,7 @@
         $getContentSplat = @{
             Path     = $InputFile
             Raw      = $true
-            Encoding = 'utf8BOM'
+            Encoding = 'utf8'
         }
         $convertFromJsonSplat = @{
             Depth = $JsonDepth

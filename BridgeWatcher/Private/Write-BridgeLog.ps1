@@ -74,7 +74,7 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
         $addContentSplat = @{
             Path        = $logPath
             Value       = $logLine
-            Encoding    = 'utf8BOM'
+            Encoding    = 'utf8'
             ErrorAction = 'Stop'
         }
         Add-Content @addContentSplat
