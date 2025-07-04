@@ -28,6 +28,12 @@
     .PARAMETER DefaultRetryDelaySeconds
     Η προεπιλεγμένη καθυστέρηση σε δευτερόλεπτα μεταξύ επαναλήψεων.
 
+    .PARAMETER DefaultMaxResults
+    Ο προεπιλεγμένος μέγιστος αριθμός αποτελεσμάτων για OCR αιτήματα.
+
+    .PARAMETER EnableDetailedLogging
+    Ενεργοποιεί λεπτομερή καταγραφή για debugging.
+
     .OUTPUTS
     [PSCustomObject] Configuration object
 
@@ -79,7 +85,14 @@
 
         [Parameter()]
         [ValidateRange(1, 60)]
-        [int]$DefaultRetryDelaySeconds = 5
+        [int]$DefaultRetryDelaySeconds = 5,
+
+        [Parameter()]
+        [ValidateRange(1, 100)]
+        [int]$DefaultMaxResults = 50,
+
+        [Parameter()]
+        [switch]$EnableDetailedLogging
     )
 
     # Bridge name mappings
@@ -121,6 +134,7 @@
         VerboseLevel          = 'Verbose'
         EnableConsoleOutput   = $true
         EnableFileLogging     = $true
+        EnableDetailedLogging = $EnableDetailedLogging.IsPresent
     }
 
     # Export messages
@@ -160,6 +174,8 @@
         DefaultTimeoutSeconds     = $DefaultTimeoutSeconds
         DefaultRetryAttempts      = $DefaultRetryAttempts
         DefaultRetryDelaySeconds  = $DefaultRetryDelaySeconds
+        DefaultMaxResults         = $DefaultMaxResults
+        EnableDetailedLogging     = $EnableDetailedLogging.IsPresent
 
         # Mappings
         BridgeNames               = $bridgeNames
