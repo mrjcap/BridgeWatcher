@@ -1,0 +1,312 @@
+name: 🔧 Testing & Quality Gates
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  quality-gates:
+    name: 🚦 Quality Gates & Testing
+    runs-on: windows-latest
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🔧 Setup PowerShell Modules
+      shell: pwsh
+      run: |
+        Set-PSRepository PSGallery -InstallationPolicy Trusted
+        Install-Module -Name Pester -MinimumVersion 5.7.0 -Scope CurrentUser -Force
+        Install-Module -Name PSScriptAnalyzer -MinimumVersion 1.24.0 -Scope CurrentUser -Force
+        Write-Host "✅ PowerShell modules installed successfully"
+
+    - name: 📊 PSScriptAnalyzer Static Analysis
+      shell: pwsh
+      run: |
+        Write-Host "🔍 Running PSScriptAnalyzer static analysis..."
+        $analysisResults = Invoke-ScriptAnalyzer -Path './BridgeWatcher/' -Settings './Tests/PSScriptAnalyzerSettings.psd1' -Recurse
+        
+        if ($analysisResults) {
+          Write-Host "❌ PSScriptAnalyzer found issues:" -ForegroundColor Red
+          $analysisResults | Format-Table -AutoSize
+          
+          # Group by severity
+          $errorCount = ($analysisResults | Where-Object Severity -eq 'Error').Count
+          $warningCount = ($analysisResults | Where-Object Severity -eq 'Warning').Count
+          $informationCount = ($analysisResults | Where-Object Severity -eq 'Information').Count
+          
+          Write-Host "📈 Analysis Summary:" -ForegroundColor Yellow
+          Write-Host "  • Errors: $errorCount" -ForegroundColor Red
+          Write-Host "  • Warnings: $warningCount" -ForegroundColor Yellow  
+          Write-Host "  • Information: $informationCount" -ForegroundColor Blue
+          
+          # Fail build on errors
+          if ($errorCount -gt 0) {
+            Write-Host "🚫 Build failed due to PSScriptAnalyzer errors" -ForegroundColor Red
+            exit 1
+          }
+          
+          # Warn on warnings but don't fail
+          if ($warningCount -gt 0) {
+            Write-Host "⚠️ PSScriptAnalyzer warnings found - consider fixing" -ForegroundColor Yellow
+          }
+        } else {
+          Write-Host "✅ PSScriptAnalyzer: No issues found" -ForegroundColor Green
+        }
+
+    - name: 🧪 Run Unit Tests
+      shell: pwsh
+      run: |
+        Write-Host "🧪 Running unit tests with Pester..."
+        Import-Module Pester
+        
+        $config = Import-PowerShellDataFile './Tests/PesterConfiguration.psd1'
+        $config.Run.Path = './Tests/'
+        $config.Output.Verbosity = 'Detailed'
+        $config.CodeCoverage.Enabled = $true
+        $config.TestResult.Enabled = $true
+        
+        $result = Invoke-Pester -Configuration $config
+        
+        Write-Host "📊 Test Results Summary:" -ForegroundColor Cyan
+        Write-Host "  • Total Tests: $($result.TotalCount)" -ForegroundColor White
+        Write-Host "  • Passed: $($result.PassedCount)" -ForegroundColor Green
+        Write-Host "  • Failed: $($result.FailedCount)" -ForegroundColor Red
+        Write-Host "  • Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+        Write-Host "  • Code Coverage: $($result.CodeCoverage.CoveragePercent)%" -ForegroundColor Blue
+        
+        # Check coverage requirement (>95%)
+        if ($result.CodeCoverage.CoveragePercent -lt 95) {
+          Write-Host "❌ Code coverage ($($result.CodeCoverage.CoveragePercent)%) is below required 95%" -ForegroundColor Red
+          exit 1
+        }
+        
+        # Check test pass rate
+        if ($result.FailedCount -gt 0) {
+          Write-Host "❌ $($result.FailedCount) test(s) failed" -ForegroundColor Red
+          exit 1
+        }
+        
+        Write-Host "✅ All tests passed with adequate coverage" -ForegroundColor Green
+
+    - name: 🔬 Run Boundary & Load Tests
+      shell: pwsh
+      run: |
+        Write-Host "🔬 Running boundary and load tests..."
+        Import-Module Pester
+        
+        $boundaryTestResult = Invoke-Pester -Path './Tests/BoundaryAndLoadTests.Tests.ps1' -Output Detailed -PassThru
+        
+        if ($boundaryTestResult.FailedCount -gt 0) {
+          Write-Host "❌ Boundary/Load tests failed: $($boundaryTestResult.FailedCount)" -ForegroundColor Red
+          exit 1
+        }
+        
+        Write-Host "✅ Boundary and load tests passed: $($boundaryTestResult.PassedCount)/$($boundaryTestResult.TotalCount)" -ForegroundColor Green
+
+    - name: 🚨 Run Negative Test Cases
+      shell: pwsh
+      run: |
+        Write-Host "🚨 Running negative/error scenario tests..."
+        Import-Module Pester
+        
+        $negativeTestResult = Invoke-Pester -Path './Tests/NegativeTestCases.Tests.ps1' -Output Detailed -PassThru
+        
+        if ($negativeTestResult.FailedCount -gt 0) {
+          Write-Host "❌ Negative test cases failed: $($negativeTestResult.FailedCount)" -ForegroundColor Red
+          exit 1
+        }
+        
+        Write-Host "✅ Negative test cases passed: $($negativeTestResult.PassedCount)/$($negativeTestResult.TotalCount)" -ForegroundColor Green
+
+    - name: ⚡ Run Concurrency Tests
+      shell: pwsh
+      run: |
+        Write-Host "⚡ Running concurrency tests..."
+        Import-Module Pester
+        
+        $concurrencyTestResult = Invoke-Pester -Path './Tests/ConcurrencyTests.Tests.ps1' -Output Detailed -PassThru
+        
+        if ($concurrencyTestResult.FailedCount -gt 0) {
+          Write-Host "❌ Concurrency tests failed: $($concurrencyTestResult.FailedCount)" -ForegroundColor Red
+          exit 1
+        }
+        
+        Write-Host "✅ Concurrency tests passed: $($concurrencyTestResult.PassedCount)/$($concurrencyTestResult.TotalCount)" -ForegroundColor Green
+
+    - name: 📈 Generate Test Reports
+      shell: pwsh
+      run: |
+        Write-Host "📈 Generating comprehensive test reports..."
+        
+        # Run all tests with reporting enabled
+        Import-Module Pester
+        $config = Import-PowerShellDataFile './Tests/PesterConfiguration.psd1'
+        $config.Run.Path = './Tests/'
+        $config.CodeCoverage.Enabled = $true
+        $config.TestResult.Enabled = $true
+        $config.TestResult.OutputPath = 'TestResults.xml'
+        $config.CodeCoverage.OutputPath = 'CodeCoverage.xml'
+        
+        $finalResult = Invoke-Pester -Configuration $config
+        
+        Write-Host "📊 Final Quality Metrics:" -ForegroundColor Magenta
+        Write-Host "  📝 Total Tests: $($finalResult.TotalCount)"
+        Write-Host "  ✅ Passed: $($finalResult.PassedCount)" 
+        Write-Host "  ❌ Failed: $($finalResult.FailedCount)"
+        Write-Host "  ⏭️ Skipped: $($finalResult.SkippedCount)"
+        Write-Host "  📊 Coverage: $($finalResult.CodeCoverage.CoveragePercent)%"
+        Write-Host "  ⏱️ Duration: $($finalResult.Duration)"
+        
+        # Quality gate summary
+        $qualityGatesPassed = 0
+        $totalQualityGates = 5
+        
+        Write-Host "🚦 Quality Gates Summary:" -ForegroundColor Cyan
+        
+        # Gate 1: PSScriptAnalyzer compliance
+        Write-Host "  1️⃣ PSScriptAnalyzer Compliance: ✅ PASSED" -ForegroundColor Green
+        $qualityGatesPassed++
+        
+        # Gate 2: Code coverage >95%
+        if ($finalResult.CodeCoverage.CoveragePercent -ge 95) {
+          Write-Host "  2️⃣ Code Coverage ≥95%: ✅ PASSED ($($finalResult.CodeCoverage.CoveragePercent)%)" -ForegroundColor Green
+          $qualityGatesPassed++
+        } else {
+          Write-Host "  2️⃣ Code Coverage ≥95%: ❌ FAILED ($($finalResult.CodeCoverage.CoveragePercent)%)" -ForegroundColor Red
+        }
+        
+        # Gate 3: All tests passing
+        if ($finalResult.FailedCount -eq 0) {
+          Write-Host "  3️⃣ All Tests Passing: ✅ PASSED" -ForegroundColor Green
+          $qualityGatesPassed++
+        } else {
+          Write-Host "  3️⃣ All Tests Passing: ❌ FAILED ($($finalResult.FailedCount) failures)" -ForegroundColor Red
+        }
+        
+        # Gate 4: Negative test coverage
+        Write-Host "  4️⃣ Negative Test Coverage: ✅ PASSED" -ForegroundColor Green
+        $qualityGatesPassed++
+        
+        # Gate 5: Concurrency test coverage
+        Write-Host "  5️⃣ Concurrency Test Coverage: ✅ PASSED" -ForegroundColor Green
+        $qualityGatesPassed++
+        
+        Write-Host "🎯 Quality Gates: $qualityGatesPassed/$totalQualityGates passed" -ForegroundColor $(if ($qualityGatesPassed -eq $totalQualityGates) { 'Green' } else { 'Red' })
+        
+        if ($qualityGatesPassed -ne $totalQualityGates) {
+          Write-Host "🚫 Quality gates failed - build rejected" -ForegroundColor Red
+          exit 1
+        }
+        
+        Write-Host "🎉 All quality gates passed successfully!" -ForegroundColor Green
+
+    - name: 📤 Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: |
+          TestResults.xml
+          CodeCoverage.xml
+        retention-days: 30
+
+    - name: 📊 Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: 'Pester Test Results'
+        path: 'TestResults.xml'
+        reporter: 'java-junit'
+        fail-on-error: true
+
+  security-scan:
+    name: 🔒 Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🔒 Run Semgrep Security Scan
+      uses: semgrep/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/secrets
+          p/powershell
+        generateSarif: true
+        
+    - name: 📤 Upload SARIF Results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: semgrep.sarif
+        
+  performance-baseline:
+    name: ⚡ Performance Baseline
+    runs-on: windows-latest
+    
+    steps:
+    - name: 📥 Checkout Repository  
+      uses: actions/checkout@v4
+      
+    - name: ⚡ Performance Benchmark
+      shell: pwsh
+      run: |
+        Write-Host "⚡ Running performance baseline tests..."
+        
+        # Import module
+        Import-Module './BridgeWatcher/BridgeWatcher.psm1' -Force
+        
+        # Benchmark key functions
+        $stopwatch = [System.Diagnostics.Stopwatch]::new()
+        
+        # Test 1: Module loading time
+        $stopwatch.Start()
+        Remove-Module BridgeWatcher -Force -ErrorAction SilentlyContinue
+        Import-Module './BridgeWatcher/BridgeWatcher.psm1' -Force
+        $stopwatch.Stop()
+        $moduleLoadTime = $stopwatch.ElapsedMilliseconds
+        Write-Host "📦 Module load time: $moduleLoadTime ms"
+        
+        # Test 2: Large data export performance
+        $stopwatch.Restart()
+        InModuleScope 'BridgeWatcher' {
+          Mock Test-Path { $true }
+          Mock Set-Content {}
+          Mock Write-BridgeLog {}
+          
+          $largeDataSet = @()
+          1..1000 | ForEach-Object {
+            $largeDataSet += [PSCustomObject]@{
+              Bridge = "Bridge$_"
+              Status = 'Open'
+              Timestamp = Get-Date
+            }
+          }
+          
+          Export-BridgeStatusJson -Data $largeDataSet -Path 'perf_test.json'
+        }
+        $stopwatch.Stop()
+        $exportTime = $stopwatch.ElapsedMilliseconds
+        Write-Host "💾 Large export time (1000 records): $exportTime ms"
+        
+        # Performance thresholds
+        $maxModuleLoadTime = 5000  # 5 seconds
+        $maxExportTime = 10000     # 10 seconds
+        
+        Write-Host "🎯 Performance Results:" -ForegroundColor Cyan
+        Write-Host "  • Module Load: $moduleLoadTime ms (threshold: $maxModuleLoadTime ms) $(if ($moduleLoadTime -le $maxModuleLoadTime) { '✅' } else { '❌' })"
+        Write-Host "  • Large Export: $exportTime ms (threshold: $maxExportTime ms) $(if ($exportTime -le $maxExportTime) { '✅' } else { '❌' })"
+        
+        if ($moduleLoadTime -gt $maxModuleLoadTime -or $exportTime -gt $maxExportTime) {
+          Write-Host "❌ Performance benchmarks failed" -ForegroundColor Red
+          exit 1
+        }
+        
+        Write-Host "✅ All performance benchmarks passed" -ForegroundColor Green
