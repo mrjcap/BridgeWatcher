@@ -35,6 +35,10 @@
 . "$PSScriptRoot\Private\Write-BridgeStage.ps1"
 . "$PSScriptRoot\Private\Write-BridgeLog.ps1"
 . "$PSScriptRoot\Private\Resolve-BridgeStateForChange.ps1"
+. "$PSScriptRoot\Private\Get-BridgeErrorCode.ps1"
+. "$PSScriptRoot\Private\Get-BridgeTimestamp.ps1"
+. "$PSScriptRoot\Private\Test-BridgeInputSanitization.ps1"
+. "$PSScriptRoot\Private\Test-BridgeMonitorInstance.ps1"
 
 # Export only public functions
 Export-ModuleMember -Function Get-BridgeStatus, Get-BridgePreviousStatus, Get-BridgeStatusComparison, Invoke-BridgeStatusComparison, Send-BridgePushover, Get-BridgeStatusMonitor

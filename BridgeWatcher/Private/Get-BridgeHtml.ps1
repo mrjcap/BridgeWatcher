@@ -30,7 +30,16 @@
     [OutputType([PSCustomObject])]
     param (
         [Parameter()]
-        [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
+        [ValidateScript({ 
+            if (-not [string]::IsNullOrWhiteSpace($_)) {
+                # MED-007: Input Sanitization for URLs
+                $sanitizationResult = Test-BridgeInputSanitization -InputString $_ -Type 'URL'
+                if (-not $sanitizationResult.IsValid) {
+                    throw [System.ArgumentException]::new("Invalid URI: $($sanitizationResult.ErrorMessage)", "Uri")
+                }
+            }
+            return $true
+        })]
         [string]$Uri,
 
         [Parameter()]
@@ -69,6 +78,6 @@
         }
         Write-BridgeLog @writeBridgeLogSplat
 
-        return New-BridgeResult -Success $false -ErrorMessage $_.Exception.Message -ErrorCode 'HTTP_ERROR'
+        return New-BridgeResult -Success $false -ErrorMessage $_.Exception.Message -ErrorCode (Get-BridgeErrorCode -Category 'Network' -Type 'HttpError')
     }
 }

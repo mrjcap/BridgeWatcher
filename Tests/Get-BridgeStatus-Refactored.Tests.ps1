@@ -143,7 +143,7 @@ InModuleScope 'BridgeWatcher' {
                 $result | Should -Not -BeNullOrEmpty
                 $result.Success | Should -Be $false
                 $result.ErrorMessage | Should -Match 'Configuration initialization failed'
-                $result.ErrorCode | Should -Be 'CONFIG_ERROR'
+                $result.ErrorCode | Should -Be 'CFG-001'
             }
         }
 
@@ -197,7 +197,7 @@ InModuleScope 'BridgeWatcher' {
                 $result | Should -Not -BeNullOrEmpty
                 $result.Success | Should -Be $false
                 $result.ErrorMessage | Should -Be 'Unexpected parsing error'
-                $result.ErrorCode | Should -Be 'PARSING_ERROR'
+                $result.ErrorCode | Should -Be 'PAR-002'
 
                 # Verify that error was logged
                 Assert-MockCalled Write-BridgeLog -ParameterFilter {
@@ -232,7 +232,7 @@ InModuleScope 'BridgeWatcher' {
                 $result | Should -Not -BeNullOrEmpty
                 $result.Success | Should -Be $false
                 $result.ErrorMessage | Should -Be 'BridgeResult creation error'
-                $result.ErrorCode | Should -Be 'PARSING_ERROR'
+                $result.ErrorCode | Should -Be 'PAR-002'
 
                 # Verify that error was logged
                 Assert-MockCalled Write-BridgeLog -ParameterFilter {

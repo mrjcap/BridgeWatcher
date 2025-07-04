@@ -44,9 +44,9 @@
             try {
                 $Configuration = New-BridgeConfiguration
             } catch {
-                return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode 'CONFIG_ERROR'
+                return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode (Get-BridgeErrorCode -Category 'Configuration' -Type 'ConfigError')
             }
-        }        $timestamp = Get-Date -Format o
+        }        $timestamp = Get-BridgeTimestamp
 
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
@@ -90,6 +90,6 @@
         }
         Write-BridgeLog @writeBridgeLogSplat
 
-        return New-BridgeResult -Success $false -ErrorMessage $_.Exception.Message -ErrorCode 'PARSING_ERROR'
+        return New-BridgeResult -Success $false -ErrorMessage $_.Exception.Message -ErrorCode (Get-BridgeErrorCode -Category 'Parsing' -Type 'HtmlParseError')
     }
 }

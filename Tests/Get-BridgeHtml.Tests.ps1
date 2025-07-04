@@ -39,7 +39,7 @@ InModuleScope 'BridgeWatcher' {
                 $result | Should -Not -BeNullOrEmpty
                 $result.Success | Should -Be $false
                 $result.ErrorMessage | Should -Be 'Network error!'
-                $result.ErrorCode | Should -Be 'HTTP_ERROR'
+                $result.ErrorCode | Should -Be 'NET-001'
                 Assert-MockCalled Write-BridgeLog -Exactly 2
             }
         }

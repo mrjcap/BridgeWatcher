@@ -46,10 +46,17 @@
         [int]$DefaultMaxIterations = 100
     )
 
-    # Bridge name mappings
+    # Bridge name mappings with validation
     $bridgeNames = @{
         'isthmia'    = 'Ισθμια'
         'poseidonia' = 'Ποσειδωνια'
+    }
+    
+    # Validate bridge name mappings are not null or empty
+    foreach ($key in $bridgeNames.Keys) {
+        if ([string]::IsNullOrWhiteSpace($bridgeNames[$key])) {
+            throw [System.ArgumentException]::new("Bridge name mapping for '$key' cannot be null or empty")
+        }
     }    # Status mappings
     $statusMappings = @{
         'ΚΛΕΙΣΤΗ' = 'Κλειστή'

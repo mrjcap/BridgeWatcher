@@ -46,6 +46,23 @@
     )
 
     begin {
+        # MED-008: Concurrency Protection - Check for existing monitor instances
+        $concurrencyCheck = Test-BridgeMonitorInstance -Action 'Check'
+        if ($concurrencyCheck.IsRunning) {
+            throw [System.InvalidOperationException]::new(
+                "Another BridgeWatcher monitor instance is already running. Only one instance is allowed at a time."
+            )
+        }
+
+        # Acquire lock for this instance
+        $instanceId = "monitor-$([System.Guid]::NewGuid().ToString().Substring(0,8))"
+        $lockResult = Test-BridgeMonitorInstance -Action 'Lock' -InstanceId $instanceId
+        if (-not $lockResult.Success) {
+            throw [System.InvalidOperationException]::new(
+                "Failed to acquire monitor lock: $($lockResult.ErrorMessage)"
+            )
+        }
+
         # Ensure configuration is available
         if (-not $Configuration) {
             try {
@@ -158,5 +175,26 @@
             }
         }
         Write-BridgeLog @writeBridgeLogSplat
+
+        # Release the monitor lock
+        try {
+            Test-BridgeMonitorInstance -Action 'Unlock' | Out-Null
+        }
+        catch {
+            $writeBridgeLogSplat = @{
+                Stage   = if ($Configuration -and $Configuration.LoggingConfig) {
+                    $Configuration.LoggingConfig.ErrorStage
+                } else {
+                    'Σφάλμα'
+                }
+                Message = "⚠️ Failed to release monitor lock: $($_.Exception.Message)"
+                Level   = if ($Configuration -and $Configuration.LoggingConfig) {
+                    $Configuration.LoggingConfig.WarningLevel
+                } else {
+                    'Warning'
+                }
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+        }
     }
 }

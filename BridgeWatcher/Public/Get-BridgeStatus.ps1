@@ -49,7 +49,7 @@
             try {
                 $Configuration = New-BridgeConfiguration
             } catch {
-                return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode 'CONFIG_ERROR'
+                return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode (Get-BridgeErrorCode -Category 'Configuration' -Type 'ConfigError')
             }
         }
     }    process { # Stage 1: Data Acquisition - Get HTML content

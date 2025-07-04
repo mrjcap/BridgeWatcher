@@ -61,6 +61,6 @@
         Data         = $Data
         ErrorMessage = $ErrorMessage
         ErrorCode    = $ErrorCode
-        Timestamp    = Get-Date -Format o
+        Timestamp    = Get-BridgeTimestamp
     }
 }

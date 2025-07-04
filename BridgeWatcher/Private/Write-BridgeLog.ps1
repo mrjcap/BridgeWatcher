@@ -60,8 +60,8 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
         }
         New-Item @newItemSplat | Out-Null
     }
-    $dateStr = (Get-Date).ToString('yyyy-MM-dd')
-    $timeStr = (Get-Date).ToString('HH:mm:ss')
+    $dateStr = Get-BridgeTimestamp -Format DateOnly
+    $timeStr = Get-BridgeTimestamp -Format TimeOnly
 
     $joinPathSplat = @{
         Path      = $logDir

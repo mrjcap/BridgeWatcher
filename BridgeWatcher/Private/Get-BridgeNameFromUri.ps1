@@ -28,7 +28,18 @@
     #>    [OutputType([string])]
     param (
         [Parameter(Mandatory)]
-        [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript({ 
+            if ([string]::IsNullOrWhiteSpace($_)) {
+                throw [System.ArgumentException]::new("Bridge URI cannot be null or empty", "ImageUri")
+            }
+            # MED-007: Input Sanitization for URLs
+            $sanitizationResult = Test-BridgeInputSanitization -InputString $_ -Type 'URL'
+            if (-not $sanitizationResult.IsValid) {
+                throw [System.ArgumentException]::new("Invalid URI: $($sanitizationResult.ErrorMessage)", "ImageUri")
+            }
+            return $true
+        })]
         [string]$ImageUri
     )
     switch -Regex ($ImageUri.ToLowerInvariant()) {

@@ -13,7 +13,7 @@ InModuleScope 'BridgeWatcher' {
                 $result | Should -Not -BeNullOrEmpty
                 $result.Success | Should -Be $false
                 $result.ErrorMessage | Should -Match 'Configuration initialization failed'
-                $result.ErrorCode | Should -Be 'CONFIG_ERROR'
+                $result.ErrorCode | Should -Be 'CFG-001'
             }
         }
 
