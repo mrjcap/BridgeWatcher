@@ -18,28 +18,59 @@
 .PARAMETER Level
 Το επίπεδο λογιστικού μηνύματος (Verbose, Debug, Warning).
 
+.PARAMETER SuppressConsoleOutput
+Καταστέλλει την έξοδο στην κονσόλα (για internal χρήση).
+
+.PARAMETER Configuration
+Το configuration object που περιέχει ρυθμίσεις logging.
+
 .OUTPUTS
 None.
 
 .EXAMPLE
 Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 'Verbose'
 
+Καταγράφει ένα verbose μήνυμα ανάλυσης.
+
+.EXAMPLE
+Write-BridgeLog -Stage 'Σφάλμα' -Message 'API κλήση απέτυχε' -Level 'Warning' -Configuration $config
+
+Καταγράφει ένα warning με χρήση configuration settings.
+
+.EXAMPLE
+Write-BridgeLog -Stage 'Ανάλυση' -Message 'Debug info' -Level 'Debug' -SuppressConsoleOutput
+
+Καταγράφει debug μήνυμα μόνο σε αρχείο, όχι στην κονσόλα.
+
 .NOTES
 Δημιουργεί log directory αν δεν υπάρχει και καταγράφει ημερήσια αρχεία.
+Υποστηρίζει configurable console output και file logging μέσω Configuration object.
 #>    param (
         [Parameter(Mandatory)][ValidateSet('Ανάλυση', 'Απόφαση', 'Ειδοποίηση', 'Σφάλμα')]
         [string]$Stage,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [Parameter()][ValidateSet('Verbose', 'Debug', 'Warning')]
-        [string]$Level = 'Verbose'
+        [string]$Level = 'Verbose',
+        [Parameter()][switch]$SuppressConsoleOutput,
+        [Parameter()][PSCustomObject]$Configuration
     )
     $prefix = "[Bridge:$Stage]"
     $output = "$prefix $Message"
-    # Console logging
-    switch ($Level) {
-        'Verbose' { Write-Verbose $output }
-        'Debug' { Write-Debug $output }
-        'Warning' { Write-Warning $output }
+    
+    # Check if console output should be suppressed based on configuration
+    $enableConsoleOutput = if ($Configuration) {
+        Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'LoggingConfig.EnableConsoleOutput' -FallbackValue $true
+    } else {
+        $true
+    }
+    
+    # Console logging (only if not suppressed)
+    if (-not $SuppressConsoleOutput -and $enableConsoleOutput) {
+        switch ($Level) {
+            'Verbose' { Write-Verbose $output }
+            'Debug' { Write-Debug $output }
+            'Warning' { Write-Warning $output }
+        }
     }
     # File logging - two levels up
     $splitPathSplat = @{

@@ -38,25 +38,13 @@
 
     # Get max wait time from parameter, configuration, or use fallback
     if (-not $MaxWaitTimeMinutes) {
-        $MaxWaitTimeMinutes = if ($Configuration -and $Configuration.DefaultMaxWaitTimeMinutes) {
-            $Configuration.DefaultMaxWaitTimeMinutes
-        } else {
-            12
-        }
+        $MaxWaitTimeMinutes = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'DefaultMaxWaitTimeMinutes' -FallbackValue 12
     }
 
     # Get advice messages from configuration or use fallback
-    $doNotWaitMessage = if ($Configuration -and $Configuration.AdviceMessages -and $Configuration.AdviceMessages.DoNotWait) {
-        $Configuration.AdviceMessages.DoNotWait
-    } else {
-        'Είναι προτιμότερο να μην περιμένεις'
-    }
-
-    $waitMessage = if ($Configuration -and $Configuration.AdviceMessages -and $Configuration.AdviceMessages.Wait) {
-        $Configuration.AdviceMessages.Wait
-    } else {
-        'Είναι προτιμότερο να περιμένεις'
-    }
+    $doNotWaitMessage = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'AdviceMessages.DoNotWait' -FallbackValue 'Είναι προτιμότερο να μην περιμένεις'
+    
+    $waitMessage = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'AdviceMessages.Wait' -FallbackValue 'Είναι προτιμότερο να περιμένεις'
 
     if ($MinutesUntilOpen -gt $MaxWaitTimeMinutes) {
         return $doNotWaitMessage

@@ -52,50 +52,22 @@
 
     # Get JSON depth from configuration or parameter or use fallback
     if (-not $JsonDepth) {
-        $JsonDepth = if ($Configuration -and $Configuration.DefaultJsonDepth) {
-            $Configuration.DefaultJsonDepth
-        } else {
-            10
-        }
+        $JsonDepth = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'DefaultJsonDepth' -FallbackValue 10
     }
 
     # Get messages from configuration or use fallback
-    $successMessage = if ($Configuration -and $Configuration.ExportMessages -and $Configuration.ExportMessages.Success) {
-        $Configuration.ExportMessages.Success
-    } else {
-        '✅ JSON αποθηκεύτηκε στο'
-    }
-
-    $failedMessage = if ($Configuration -and $Configuration.ExportMessages -and $Configuration.ExportMessages.Failed) {
-        $Configuration.ExportMessages.Failed
-    } else {
-        '❌ Σφάλμα κατά την αποθήκευση JSON'
-    }
-
-    $directoryNotExistsMessage = if ($Configuration -and $Configuration.ExportMessages -and $Configuration.ExportMessages.DirectoryNotExists) {
-        $Configuration.ExportMessages.DirectoryNotExists
-    } else {
-        'Ο φάκελος προορισμού δεν υπάρχει'
-    }
+    $successMessage = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'ExportMessages.Success' -FallbackValue '✅ JSON αποθηκεύτηκε στο'
+    
+    $failedMessage = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'ExportMessages.Failed' -FallbackValue '❌ Σφάλμα κατά την αποθήκευση JSON'
+    
+    $directoryNotExistsMessage = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'ExportMessages.DirectoryNotExists' -FallbackValue 'Ο φάκελος προορισμού δεν υπάρχει'
 
     # Get logging stage from configuration or use fallback
-    $analysisStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.InfoStage) {
-        $Configuration.LoggingConfig.InfoStage
-    } else {
-        'Ανάλυση'
-    }
-
-    $errorStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.ErrorStage) {
-        $Configuration.LoggingConfig.ErrorStage
-    } else {
-        'Σφάλμα'
-    }
-
-    $warningLevel = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.WarningLevel) {
-        $Configuration.LoggingConfig.WarningLevel
-    } else {
-        'Warning'
-    }
+    $analysisStage = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'LoggingConfig.InfoStage' -FallbackValue 'Ανάλυση'
+    
+    $errorStage = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'LoggingConfig.ErrorStage' -FallbackValue 'Σφάλμα'
+    
+    $warningLevel = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'LoggingConfig.WarningLevel' -FallbackValue 'Warning'
 
     try {
         $convertToJsonSplat = @{

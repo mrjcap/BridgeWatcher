@@ -31,31 +31,15 @@
     )
 
     # Get Pushover API URL from configuration or use fallback
-    $pushoverApiUrl = if ($Configuration -and $Configuration.PushoverApiUrl) {
-        $Configuration.PushoverApiUrl
-    } else {
-        'https://api.pushover.net/1/messages.json'
-    }
+    $pushoverApiUrl = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'PushoverApiUrl' -FallbackValue 'https://api.pushover.net/1/messages.json'
 
     # Get error message from configuration or use fallback
-    $errorMessagePrefix = if ($Configuration -and $Configuration.PushoverMessages -and $Configuration.PushoverMessages.SendFailed) {
-        $Configuration.PushoverMessages.SendFailed
-    } else {
-        '❌ Αποτυχία αποστολής'
-    }
+    $errorMessagePrefix = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'PushoverMessages.SendFailed' -FallbackValue '❌ Αποτυχία αποστολής'
 
     # Get logging stage from configuration or use fallback
-    $errorStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.ErrorStage) {
-        $Configuration.LoggingConfig.ErrorStage
-    } else {
-        'Σφάλμα'
-    }
-
-    $warningLevel = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.WarningLevel) {
-        $Configuration.LoggingConfig.WarningLevel
-    } else {
-        'Warning'
-    }
+    $errorStage = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'LoggingConfig.ErrorStage' -FallbackValue 'Σφάλμα'
+    
+    $warningLevel = Get-ConfigurationValue -Configuration $Configuration -PropertyPath 'LoggingConfig.WarningLevel' -FallbackValue 'Warning'
 
     try {
         $invokeRestMethodSplat = @{
