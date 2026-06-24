@@ -5,6 +5,19 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.76] - 2026-06-24
+
+### ✨ Προστέθηκαν
+
+- feat: Προσθήκη [OutputType()] attributes για καλύτερη τεκμηρίωση
+- feat(error-handling): Βελτίωση error handling, validation και test coverage
+- feat(docs): Εναρμόνιση comment-based help σε Private functions
+
+### 🐛 Διορθώθηκαν
+
+- fix: διόρθωση μορφοποίησης και indentation στο Resolve-BridgeStateForChange
+- fix: Συμμόρφωση με PSScriptAnalyzer και βελτιώσεις επικύρωσης παραμέτρων
+
 ## [1.0.75] - 2025-06-13
 
 ### 🐛 Διορθώθηκαν
@@ -461,3 +474,4 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
+
