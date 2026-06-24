@@ -47,7 +47,7 @@ function Update-ModuleVersionContent {
     )
 
     if ($PSCmdlet.ShouldProcess("Module version", "Update from '$OldVersion' to '$NewVersion'")) {
-        return $Content -replace "ModuleVersion\s*=\s*'$OldVersion'", "ModuleVersion = '$NewVersion'"
+        return $Content -replace "^(?<left>\s*ModuleVersion)(?<between>\s*=\s*)(?<quote>')(?<ver>\d+\.\d+\.\d+)(')", '${left}${between}${quote}' + $NewVersion + "'"
     }
     return $Content
 }
