@@ -13,7 +13,7 @@ env:
 
 jobs:
   test:
-    name: Test on ubuntu-latest with PowerShell v7.5.1
+    name: Test on ubuntu-latest with PowerShell v7.6.3
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +25,7 @@ jobs:
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
         with:
-          tag: 'v7.5.1'
+          tag: 'v7.6.3'
 
       - name: Cache PowerShell modules
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
@@ -34,9 +34,9 @@ jobs:
             ~/.local/share/powershell/Modules
             ~/Documents/PowerShell/Modules
             ~/Library/PowerShell/Modules
-          key: ubuntu-latest-v7.5.1-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
+          key: ubuntu-latest-v7.6.3-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
           restore-keys: |
-            ubuntu-latest-v7.5.1-pwshmodules-
+            ubuntu-latest-v7.6.3-pwshmodules-
 
       - name: Install required PowerShell modules
         shell: pwsh
@@ -85,7 +85,7 @@ jobs:
           Write-Verbose "Running Pester tests..."
           if (Test-Path ./Tests/PesterConfiguration.psd1) {
             $config = Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1
-            $result = Invoke-Pester -Configuration (Import-PowerShellDataFile .\Tests\PesterConfiguration.psd1)
+            $result = Invoke-Pester -Configuration $config
             if ($result.Result -ne 'Passed') {
               Write-Error " Tests failed! $($result.FailedCount) of $($result.TotalCount) tests failed"
               exit 1
@@ -101,7 +101,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: test-results-ubuntu-latest-v7.5.1
+          name: test-results-ubuntu-latest-v7.6.3
           path: |
             testResults.xml
             coverage.xml
@@ -126,5 +126,5 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: unittests
-          name: codecov-ubuntu-latest-v7.5.1
+          name: codecov-ubuntu-latest-v7.6.3
           fail_ci_if_error: true
