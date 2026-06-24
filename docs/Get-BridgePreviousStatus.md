@@ -14,7 +14,8 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-BridgePreviousStatus [-InputFile] <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-BridgePreviousStatus [-InputFile] <String> [[-JsonDepth] <Int32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -44,6 +45,22 @@ Aliases:
 
 Required: True
 Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -JsonDepth
+
+{{ Fill JsonDepth Description }}
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

@@ -14,7 +14,8 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-BridgeStatus [[-OutputFile] <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-BridgeStatus [[-OutputFile] <String>] [[-Configuration] <PSObject>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -43,7 +44,23 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 0
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Configuration
+
+(Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
