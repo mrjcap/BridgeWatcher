@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.77] - 2026-06-24
+
+### ✨ Προστέθηκαν
+
+- Add UTF-8 BOM to module manifest to satisfy PSScriptAnalyzer
+
 ## [1.0.76] - 2026-06-24
 
 ### ✨ Προστέθηκαν
@@ -474,4 +480,5 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
+
 
