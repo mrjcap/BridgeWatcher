@@ -1,6 +1,6 @@
 ﻿@{
     Run          = @{
-        Path          = 'c:\code\BridgeWatcher\Tests\'
+        Path          = './Tests'
         Parameters    = @{
             ModuleName = 'BridgeWatcher'
         }
@@ -16,8 +16,8 @@
     CodeCoverage = @{
         Enabled               = $true
         Path                  = @(
-            '.\\BridgeWatcher\\Public\\*.ps1',
-            '.\\BridgeWatcher\\Private\\*.ps1'
+            './BridgeWatcher/Public/*.ps1',
+            './BridgeWatcher/Private/*.ps1'
         )
         OutputFormat          = 'JaCoCo'
         OutputPath            = 'coverage.xml'
