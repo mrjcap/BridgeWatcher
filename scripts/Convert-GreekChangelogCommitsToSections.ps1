@@ -104,11 +104,13 @@ $sections = @{
 
 foreach ($msg in $Commits) {
     $matched = $false
-    Write-Verbose "Processing commit: $msg"
+    # Strip leading emojis and whitespace for matching
+    $cleanMsg = $msg -replace '^[\p{So}\p{Cn}\p{Cs}\p{Cf}]+\s*', ''
+    Write-Verbose "Processing commit: $cleanMsg (original: $msg)"
 
     foreach ($section in $patterns.Keys) {
         foreach ($pat in $patterns[$section]) {
-            if ($msg.ToLower() -match $pat) {
+            if ($cleanMsg.ToLower() -match $pat) {
                 Write-Verbose "  Matched pattern '$pat' in section '$section'"
                 $sections[$section] += $msg
                 $matched = $true
@@ -124,3 +126,4 @@ foreach ($msg in $Commits) {
 }
 
 [PSCustomObject]$sections
+
