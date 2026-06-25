@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Export-BridgeStatusJson Tests' {
@@ -8,6 +8,7 @@ InModuleScope 'BridgeWatcher' {
                 Mock Test-Path { $true }
                 # Mock Set-Content για να προκαλέσουμε σφάλμα
                 Mock Set-Content { throw 'Fake error during file write' }
+                Mock Move-Item {}
                 # Mock Write-BridgeLog
                 Mock Write-BridgeLog {}
 
@@ -27,6 +28,7 @@ InModuleScope 'BridgeWatcher' {
             It 'Επιστρέφει BridgeResult με επιτυχία' {
                 Mock Test-Path { $true }
                 Mock Set-Content {}
+                Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
                 $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
@@ -42,6 +44,7 @@ InModuleScope 'BridgeWatcher' {
             It 'Πρέπει να καταγράψει επιτυχές μήνυμα (Write-BridgeLog)' {
                 Mock Test-Path { $true }
                 Mock Set-Content {}
+                Mock Move-Item {}
                 Mock Write-BridgeLog {}
                 Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
                 # Επιβεβαιώνουμε ότι κάλεσε το Write-BridgeLog μία φορά
@@ -52,6 +55,7 @@ InModuleScope 'BridgeWatcher' {
                 Mock Test-Path { $true }
                 Mock ConvertTo-Json { '[]' }
                 Mock Set-Content { }
+                Mock Move-Item {}
                 Mock Write-BridgeLog { }
 
                 $result = Export-BridgeStatusJson -Data @() -Path 'out.json'
@@ -79,6 +83,7 @@ InModuleScope 'BridgeWatcher' {
             It 'Καλύπτει Configuration.DefaultJsonDepth path' {
                 Mock Test-Path { $true }
                 Mock Set-Content {}
+                Mock Move-Item {}
                 Mock ConvertTo-Json { '{"test": "data"}' }
 
                 $config = [PSCustomObject]@{
@@ -92,6 +97,7 @@ InModuleScope 'BridgeWatcher' {
             It 'Καλύπτει Configuration.ExportMessages.Success path' {
                 Mock Test-Path { $true }
                 Mock Set-Content {}
+                Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
                 $config = [PSCustomObject]@{
@@ -110,6 +116,7 @@ InModuleScope 'BridgeWatcher' {
             It 'Καλύπτει Configuration.ExportMessages.Failed σε σφάλμα' {
                 Mock Test-Path { $true }
                 Mock Set-Content { throw 'Test error' }
+                Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
                 $config = [PSCustomObject]@{
@@ -153,6 +160,7 @@ InModuleScope 'BridgeWatcher' {
             It 'Καλύπτει Configuration.LoggingConfig paths' {
                 Mock Test-Path { $true }
                 Mock Set-Content {}
+                Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
                 $config = [PSCustomObject]@{
