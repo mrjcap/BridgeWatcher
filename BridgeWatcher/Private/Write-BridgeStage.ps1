@@ -32,7 +32,7 @@ function Write-BridgeStage {
     Βασική helper function για logging στα modules του BridgeWatcher.
     #>    [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][ValidateSet('Ανάλυση', 'Σφάλμα')][string]$Stage,
+        [Parameter(Mandatory)][ValidateSet('Ανάλυση', 'Απόφαση', 'Ειδοποίηση', 'Σφάλμα')][string]$Stage,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [ValidateSet('Verbose', 'Debug', 'Warning')][string]$Level = 'Verbose'
     )
