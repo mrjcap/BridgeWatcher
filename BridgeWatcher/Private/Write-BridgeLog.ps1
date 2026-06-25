@@ -1,4 +1,4 @@
-﻿function Write-BridgeLog {
+function Write-BridgeLog {
     [CmdletBinding()]
     [OutputType([void])]
     <#
@@ -18,6 +18,9 @@
 .PARAMETER Level
 Το επίπεδο λογιστικού μηνύματος (Verbose, Debug, Warning).
 
+.PARAMETER Configuration
+Το configuration object που περιέχει τις ρυθμίσεις.
+
 .OUTPUTS
 None.
 
@@ -31,8 +34,12 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
         [string]$Stage,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [Parameter()][ValidateSet('Verbose', 'Debug', 'Warning')]
-        [string]$Level = 'Verbose'
+        [string]$Level = 'Verbose',
+        [Parameter()][PSCustomObject]$Configuration
     )
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
     $prefix = "[Bridge:$Stage]"
     $output = "$prefix $Message"
     # Console logging
@@ -41,17 +48,8 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
         'Debug' { Write-Debug $output }
         'Warning' { Write-Warning $output }
     }
-    # File logging - two levels up
-    $splitPathSplat = @{
-        Path   = (Split-Path -Path $PSScriptRoot -Parent)
-        Parent = $true
-    }
-    $basePath = Split-Path @splitPathSplat
-    $joinPathSplat = @{
-        Path      = $basePath
-        ChildPath = 'logs'
-    }
-    $logDir = Join-Path @joinPathSplat
+    # File logging — uses configured log directory
+    $logDir = $Configuration.LogDirectory
     if (-not (Test-Path $logDir)) {
         $newItemSplat = @{
             Path     = $logDir
@@ -84,3 +82,4 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
         Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
     }
 }
+
