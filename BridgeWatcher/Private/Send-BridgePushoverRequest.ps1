@@ -1,4 +1,4 @@
-﻿function Send-BridgePushoverRequest {
+function Send-BridgePushoverRequest {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -72,7 +72,7 @@
             Level   = $warningLevel
         }
         Write-BridgeLog @writeBridgeLogSplat
-        $errorRecord = [System.Management.Automation.ErrorRecord]::new($_.Exception, 'PushoverSendFailure', [System.Management.Automation.ErrorCategory]::ConnectionError, $Payload)
+        $errorRecord = [System.Management.Automation.ErrorRecord]::new($_.Exception, 'PushoverSendFailure', [System.Management.Automation.ErrorCategory]::ConnectionError, $null)
         throw $errorRecord
     }
 }
