@@ -1,4 +1,4 @@
-﻿function Invoke-BridgeStatusComparison {
+function Invoke-BridgeStatusComparison {
     <#
     .SYNOPSIS
     Συγκρίνει τις λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
@@ -64,12 +64,12 @@
         }
         $diff = Compare-Object @compareSplat
         if (-not $diff) {
-            $writeBridgeStageSplat = @{
+            $writeBridgeLogSplat = @{
                 Level   = 'Verbose'
                 Stage   = 'Ανάλυση'
                 Message = '✅ Καμία αλλαγή στις γέφυρες.'
             }
-            Write-BridgeStage @writeBridgeStageSplat
+            Write-BridgeLog @writeBridgeLogSplat
             return $false
         }
 
@@ -85,19 +85,19 @@
         }
 
         foreach ($change in $diff) {
-            $writeBridgeStageSplat = @{
+            $writeBridgeLogSplat = @{
                 Level   = 'Verbose'
                 Stage   = 'Ανάλυση'
                 Message = "🌉 $($change.gefyraName) ➜ $($change.gefyraStatus) ($($change.SideIndicator))"
             }
-            Write-BridgeStage @writeBridgeStageSplat
+            Write-BridgeLog @writeBridgeLogSplat
             if ($change.SideIndicator -eq '==') {
-                $writeBridgeStageSplat = @{
+                $writeBridgeLogSplat = @{
                     Level   = 'Verbose'
                     Stage   = 'Ανάλυση'
                     Message = "Καμία ουσιαστική αλλαγή στην $($change.gefyraName)."
                 }
-                Write-BridgeStage @writeBridgeStageSplat
+                Write-BridgeLog @writeBridgeLogSplat
                 continue
             }
             $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
@@ -122,22 +122,22 @@
                 }
                 continue
             } else {
-                $writeBridgeStageSplat = @{
+                $writeBridgeLogSplat = @{
                     Stage   = 'Σφάλμα'
                     Message = "❓ Άγνωστο combo: $key"
                     Level   = 'Warning'
                 }
-                Write-BridgeStage @writeBridgeStageSplat
+                Write-BridgeLog @writeBridgeLogSplat
             }
         }
         return $true
     } catch {
-        $writeBridgeStageSplat = @{
+        $writeBridgeLogSplat = @{
             Level   = 'Warning'
             Stage   = 'Σφάλμα'
             Message = "❌ $($_.Exception.Message)"
         }
-        Write-BridgeStage @writeBridgeStageSplat
+        Write-BridgeLog @writeBridgeLogSplat
         throw
     }
 }

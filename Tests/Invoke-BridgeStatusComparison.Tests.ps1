@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
@@ -386,14 +386,7 @@ InModuleScope 'BridgeWatcher' {
                 "$Stage|$Level|$Message" | Out-File -Append "$TestDrive\log.txt"
             }
 
-            function Write-BridgeStage {
-                param(
-                    [ValidateSet('Ανάλυση', 'Σφάλμα')][string]$Stage,
-                    [string]$Message,
-                    [ValidateSet('Verbose', 'Warning', 'Error')][string]$Level = 'Verbose'
-                )
-                Write-BridgeLog -Stage $Stage -Message $Message -Level $Level
-            }
+
 
             function Send-BridgeNotification {
                 param([ValidateSet('Closed', 'Opened')]$Type, [object[]]$State)
