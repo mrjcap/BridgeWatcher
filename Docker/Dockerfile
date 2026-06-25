@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/runtime:10.0.9-alpine3.23
+FROM mcr.microsoft.com/dotnet/runtime:10.0.9-alpine3.23
 
 ARG PUID=99
 ARG PGID=100
@@ -50,9 +50,9 @@ RUN mkdir -p /tmp && chmod 1777 /tmp
 USER appuser
 WORKDIR /home/appuser/scripts
 
-COPY --chown=appuser:appgroup ./BridgeWatcher ./modules/BridgeWatcher
-COPY --chown=appuser:appgroup Docker/entrypoint.sh /home/appuser/scripts/entrypoint.sh
-COPY --chown=appuser:appgroup run.ps1 .
+COPY --chown=${PUID}:${PGID} ./BridgeWatcher ./modules/BridgeWatcher
+COPY --chown=${PUID}:${PGID} Docker/entrypoint.sh /home/appuser/scripts/entrypoint.sh
+COPY --chown=${PUID}:${PGID} run.ps1 .
 
 EXPOSE 8090
 
