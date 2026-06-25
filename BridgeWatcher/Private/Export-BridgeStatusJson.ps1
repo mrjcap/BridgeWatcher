@@ -1,4 +1,4 @@
-﻿function Export-BridgeStatusJson {
+function Export-BridgeStatusJson {
     <#
     .SYNOPSIS
     Εξάγει την κατάσταση γέφυρας σε αρχείο JSON.
@@ -117,11 +117,13 @@
         }
 
         $json = $Data | ConvertTo-Json @convertToJsonSplat
+        $tmpPath = "$Path.tmp"
         $setContentSplat = @{
-            Path  = $Path
+            Path  = $tmpPath
             Value = $json
         }
         Set-Content @setContentSplat
+        Move-Item -Path $tmpPath -Destination $Path -Force
 
         $writeBridgeLogSplat = @{
             Stage   = $analysisStage
