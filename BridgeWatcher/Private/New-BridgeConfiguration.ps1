@@ -1,4 +1,4 @@
-﻿function New-BridgeConfiguration {
+function New-BridgeConfiguration {
     <#
     .SYNOPSIS
     Δημιουργεί ένα configuration object για το BridgeWatcher module.
@@ -43,13 +43,17 @@
         [int]$DefaultIntervalSeconds = 300,
 
         [Parameter()]        [ValidateRange(1, 1000)]
-        [int]$DefaultMaxIterations = 100
+        [int]$DefaultMaxIterations = 100,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$LogDirectory = (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'logs')
     )
 
     # Bridge name mappings
     $bridgeNames = @{
-        'isthmia'    = 'Ισθμια'
-        'poseidonia' = 'Ποσειδωνια'
+        'isthmia'    = 'Ισθμία'
+        'poseidonia' = 'Ποσειδωνία'
     }    # Status mappings
     $statusMappings = @{
         'ΚΛΕΙΣΤΗ' = 'Κλειστή'
@@ -119,6 +123,7 @@
         DefaultMaxIterations      = $DefaultMaxIterations
         DefaultJsonDepth          = 5
         DefaultMaxWaitTimeMinutes = 12
+        LogDirectory              = $LogDirectory
 
         # Mappings
         BridgeNames               = $bridgeNames
