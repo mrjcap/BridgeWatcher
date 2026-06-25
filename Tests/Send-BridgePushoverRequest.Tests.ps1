@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Send-BridgePushoverRequest' {
@@ -64,10 +64,13 @@ InModuleScope 'BridgeWatcher' {
                 Mock Invoke-RestMethod { throw 'Test API failure' }
                 Mock Write-BridgeLog {}
 
+                $baseConfig = New-BridgeConfiguration
                 $config = [PSCustomObject]@{
+                    PushoverApiUrl   = $baseConfig.PushoverApiUrl
                     PushoverMessages = @{
                         SendFailed = 'Custom send failed message'
                     }
+                    LoggingConfig    = $baseConfig.LoggingConfig
                 }
 
                 $payload = @{ token = 'test'; user = 'user'; message = 'msg' }
@@ -81,9 +84,13 @@ InModuleScope 'BridgeWatcher' {
             It 'Καλύπτει Configuration.LoggingConfig.ErrorStage path σε σφάλμα' {
                 Mock Invoke-RestMethod { throw 'Test API failure' }
                 Mock Write-BridgeLog {}
+                $baseConfig = New-BridgeConfiguration
                 $config = [PSCustomObject]@{
-                    LoggingConfig = @{
-                        ErrorStage = 'Σφάλμα'
+                    PushoverApiUrl   = $baseConfig.PushoverApiUrl
+                    PushoverMessages = $baseConfig.PushoverMessages
+                    LoggingConfig    = @{
+                        ErrorStage   = 'Σφάλμα'
+                        WarningLevel = $baseConfig.LoggingConfig.WarningLevel
                     }
                 }
 
@@ -97,8 +104,12 @@ InModuleScope 'BridgeWatcher' {
             It 'Καλύπτει Configuration.LoggingConfig.WarningLevel path σε σφάλμα' {
                 Mock Invoke-RestMethod { throw 'Test API failure' }
                 Mock Write-BridgeLog {}
+                $baseConfig = New-BridgeConfiguration
                 $config = [PSCustomObject]@{
-                    LoggingConfig = @{
+                    PushoverApiUrl   = $baseConfig.PushoverApiUrl
+                    PushoverMessages = $baseConfig.PushoverMessages
+                    LoggingConfig    = @{
+                        ErrorStage   = $baseConfig.LoggingConfig.ErrorStage
                         WarningLevel = 'Warning'
                     }
                 }

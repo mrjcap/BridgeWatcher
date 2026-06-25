@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Export-BridgeStatusJson Tests' {
@@ -86,9 +86,8 @@ InModuleScope 'BridgeWatcher' {
                 Mock Move-Item {}
                 Mock ConvertTo-Json { '{"test": "data"}' }
 
-                $config = [PSCustomObject]@{
-                    DefaultJsonDepth    = 8
-                }
+                $config = New-BridgeConfiguration
+                $config.DefaultJsonDepth = 8
 
                 Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
 
@@ -100,14 +99,8 @@ InModuleScope 'BridgeWatcher' {
                 Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
-                $config = [PSCustomObject]@{
-                    ExportMessages = @{
-                        Success    = 'Custom success message'
-                    }
-                    LoggingConfig  = @{
-                        InfoStage    = 'Ανάλυση'
-                    }
-                }
+                $config = New-BridgeConfiguration
+                $config.ExportMessages.Success = 'Custom success message'
 
                 Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
 
@@ -119,14 +112,8 @@ InModuleScope 'BridgeWatcher' {
                 Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
-                $config = [PSCustomObject]@{
-                    ExportMessages = @{
-                        Failed    = 'Custom failed message'
-                    }
-                    LoggingConfig  = @{
-                        ErrorStage   = 'Σφάλμα'
-                        WarningLevel = 'Warning'
-                    } }
+                $config = New-BridgeConfiguration
+                $config.ExportMessages.Failed = 'Custom failed message'
 
                 $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
 
@@ -140,15 +127,8 @@ InModuleScope 'BridgeWatcher' {
                 Mock Split-Path { 'invalid/path' }
                 Mock Write-BridgeLog {}
 
-                $config = [PSCustomObject]@{
-                    ExportMessages = @{
-                        DirectoryNotExists = 'Custom directory not exists'
-                        Failed             = 'Custom failed message'
-                    }
-                    LoggingConfig  = @{
-                        ErrorStage   = 'Σφάλμα'
-                        WarningLevel = 'Warning'
-                    } }
+                $config = New-BridgeConfiguration
+                $config.ExportMessages.DirectoryNotExists = 'Custom directory not exists'
 
                 $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'invalid/path/test.json' -Configuration $config
 
@@ -163,16 +143,8 @@ InModuleScope 'BridgeWatcher' {
                 Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
-                $config = [PSCustomObject]@{
-                    ExportMessages = @{
-                        Success    = 'Success'
-                    }
-                    LoggingConfig  = @{
-                        InfoStage    = 'Ανάλυση'
-                        ErrorStage   = 'Σφάλμα'
-                        WarningLevel = 'Warning'
-                    }
-                }
+                $config = New-BridgeConfiguration
+                # LoggingConfig.InfoStage already defaults to 'Ανάλυση'
 
                 Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
 

@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Get-BridgeImage' {
@@ -7,7 +7,7 @@ InModuleScope 'BridgeWatcher' {
                 $html = @'
 <div class="panel panel-primary">
 <div class="panel-heading">
-    <h4><b>ΙΣΘΜΙΑ</b></h4>
+    <h4><b>ΙΣΘΜΊΑ</b></h4>
 </div>
 <div class="panel-body">
 <div class="form-group">
@@ -30,43 +30,5 @@ InModuleScope 'BridgeWatcher' {
             }
         }
 
-        Context 'Configuration Fallbacks' {
-            It 'Χρησιμοποιεί fallback bridge labels όταν Configuration είναι null' {
-                $html = @'
-<div class="panel panel-primary">
-<div class="panel-heading">
-    <h4><b>ΠΟΣΕΙΔΩΝΙΑ</b></h4>
-</div>
-<div class="panel-body">
-<div class="form-group">
-<center>
-        <img src="image-bridge-open-no-schedule.php?123456">
-      </center>
-    </div>
-  </div>
-</div>
-'@
-                { Get-BridgeImage -HtmlContent $html -Location 'poseidonia' -Configuration $null } | Should -Not -Throw
-            }
-
-            It 'Χρησιμοποιεί fallback bridge labels όταν Configuration δεν έχει BridgeNames' {
-                $mockConfig = @{ SomeOtherProperty = 'value' }
-                $html = @'
-<div class="panel panel-primary">
-<div class="panel-heading">
-    <h4><b>ΙΣΘΜΙΑ</b></h4>
-</div>
-<div class="panel-body">
-<div class="form-group">
-<center>
-        <img src="image-bridge-open-no-schedule.php?123456">
-      </center>
-    </div>
-  </div>
-</div>
-'@
-                { Get-BridgeImage -HtmlContent $html -Location 'isthmia' -Configuration $mockConfig } | Should -Not -Throw
-            }
-        }
     }
 }

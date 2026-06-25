@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
 
@@ -63,8 +63,13 @@ InModuleScope 'BridgeWatcher' {
             }
             Mock Write-BridgeLog {}
 
+            $config = New-BridgeConfiguration
             $config = [PSCustomObject]@{
-                OCRApiUrl = 'https://custom-ocr-api.com/annotate'
+                OCRApiUrl        = 'https://custom-ocr-api.com/annotate'
+                OCRMessages      = $config.OCRMessages
+                LoggingConfig    = $config.LoggingConfig
+                PushoverApiUrl   = $config.PushoverApiUrl
+                PushoverMessages = $config.PushoverMessages
             }
 
             $result = Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{"test": "data"}' -Configuration $config
@@ -81,10 +86,14 @@ InModuleScope 'BridgeWatcher' {
             }
             Mock Write-BridgeLog {}
 
+            $baseConfig = New-BridgeConfiguration
             $config = [PSCustomObject]@{
-                OCRMessages = @{
-                    StartOCR = 'Custom start OCR message'
+                OCRApiUrl     = $baseConfig.OCRApiUrl
+                OCRMessages   = @{
+                    StartOCR  = 'Custom start OCR message'
+                    OCRFailed = $baseConfig.OCRMessages.OCRFailed
                 }
+                LoggingConfig = $baseConfig.LoggingConfig
             }
 
             Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{}' -Configuration $config
@@ -123,9 +132,14 @@ InModuleScope 'BridgeWatcher' {
             }
             Mock Write-BridgeLog {}
 
+            $baseConfig = New-BridgeConfiguration
             $config = [PSCustomObject]@{
+                OCRApiUrl     = $baseConfig.OCRApiUrl
+                OCRMessages   = $baseConfig.OCRMessages
                 LoggingConfig = @{
-                    InfoStage = 'Ανάλυση'
+                    InfoStage    = 'Ανάλυση'
+                    ErrorStage   = $baseConfig.LoggingConfig.ErrorStage
+                    WarningLevel = $baseConfig.LoggingConfig.WarningLevel
                 }
             }
 

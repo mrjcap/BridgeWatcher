@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Get-BridgeStatusAdvice Tests' {
@@ -18,8 +18,11 @@ InModuleScope 'BridgeWatcher' {
 
         Context 'Configuration Coverage Tests' {
             It 'Καλύπτει Configuration.DefaultMaxWaitTimeMinutes path' {
+                $baseConfig = New-BridgeConfiguration
                 $config = [PSCustomObject]@{
-                    DefaultMaxWaitTimeMinutes    = 15
+                    DefaultMaxWaitTimeMinutes = 15
+                    AdviceMessages            = $baseConfig.AdviceMessages
+                    LoggingConfig             = $baseConfig.LoggingConfig
                 }
 
                 # Test with minutes above custom threshold
@@ -32,10 +35,14 @@ InModuleScope 'BridgeWatcher' {
             }
 
             It 'Καλύπτει Configuration.AdviceMessages.DoNotWait path' {
+                $baseConfig = New-BridgeConfiguration
                 $config = [PSCustomObject]@{
-                    AdviceMessages = @{
-                        DoNotWait    = 'Custom message - do not wait'
+                    DefaultMaxWaitTimeMinutes = $baseConfig.DefaultMaxWaitTimeMinutes
+                    AdviceMessages            = @{
+                        DoNotWait = 'Custom message - do not wait'
+                        Wait      = $baseConfig.AdviceMessages.Wait
                     }
+                    LoggingConfig             = $baseConfig.LoggingConfig
                 }
 
                 $result = Get-BridgeStatusAdvice -MinutesUntilOpen 20 -Configuration $config
@@ -43,10 +50,14 @@ InModuleScope 'BridgeWatcher' {
             }
 
             It 'Καλύπτει Configuration.AdviceMessages.Wait path' {
+                $baseConfig = New-BridgeConfiguration
                 $config = [PSCustomObject]@{
-                    AdviceMessages = @{
-                        Wait    = 'Custom message - wait'
+                    DefaultMaxWaitTimeMinutes = $baseConfig.DefaultMaxWaitTimeMinutes
+                    AdviceMessages            = @{
+                        DoNotWait = $baseConfig.AdviceMessages.DoNotWait
+                        Wait      = 'Custom message - wait'
                     }
+                    LoggingConfig             = $baseConfig.LoggingConfig
                 }
 
                 $result = Get-BridgeStatusAdvice -MinutesUntilOpen 5 -Configuration $config
@@ -54,12 +65,14 @@ InModuleScope 'BridgeWatcher' {
             }
 
             It 'Καλύπτει όλες τις configuration paths μαζί' {
+                $baseConfig = New-BridgeConfiguration
                 $config = [PSCustomObject]@{
                     DefaultMaxWaitTimeMinutes = 8
                     AdviceMessages            = @{
                         DoNotWait = 'Custom do not wait'
                         Wait      = 'Custom wait'
                     }
+                    LoggingConfig             = $baseConfig.LoggingConfig
                 }
 
                 # Test do not wait with custom threshold and message

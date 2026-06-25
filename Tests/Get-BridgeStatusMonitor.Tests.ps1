@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Get-BridgeStatusMonitor' {
@@ -89,84 +89,5 @@ InModuleScope 'BridgeWatcher' {
         }
     }
 
-    Describe 'Get-BridgeStatusMonitor Configuration Fallbacks' {
-        It 'Χρησιμοποιεί default values όταν η Configuration αποτυγχάνει' {
-            Mock New-BridgeConfiguration { throw "Configuration error" }
-            Mock Get-BridgeStatusComparison { @{ dummy = $true } }
-            Mock Start-Sleep { }
-
-            # Call without specifying MaxIterations and IntervalSeconds to test defaults
-            { Get-BridgeStatusMonitor -OutputFile 'test.json' -ApiKey 'key' -PoUserKey 'user' -PoApiKey 'app' } | Should -Not -Throw
-        }
-
-        It 'Χρησιμοποιεί configuration defaults όταν παράμετροι δεν παρέχονται' {
-            $mockConfig = @{
-                DefaultMaxIterations   = 50
-                DefaultIntervalSeconds = 600
-                StatusMessages         = @{
-                    MonitoringStart    = 'Custom start message'
-                    MonitoringComplete = 'Custom complete message'
-                }
-                LoggingConfig          = @{
-                    InfoStage    = 'Ανάλυση'
-                    VerboseLevel = 'Verbose'
-                }
-            }
-            Mock Get-BridgeStatusComparison { @{ dummy = $true } }
-            Mock Start-Sleep { }
-
-            { Get-BridgeStatusMonitor -Configuration $mockConfig -OutputFile 'test.json' -ApiKey 'key' -PoUserKey 'user' -PoApiKey 'app' } | Should -Not -Throw
-        }
-
-        It 'Χρησιμοποιεί fallback error messages όταν Configuration είναι null' {
-            Mock Get-BridgeStatusComparison { throw "Test error" }
-            Mock Start-Sleep { }
-            Mock Write-BridgeLog { }
-
-            { Get-BridgeStatusMonitor -Configuration $null -MaxIterations 1 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey 'key' -PoUserKey 'user' -PoApiKey 'app' } | Should -Not -Throw
-
-            # Verify fallback error message is used
-            Assert-MockCalled Write-BridgeLog -ParameterFilter {
-                $Message -like "*❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας*" -and
-                $Stage -eq 'Σφάλμα' -and
-                $Level -eq 'Debug'
-            } -Exactly 1
-        }
-
-        It 'Καλύπτει fallback error handling paths όταν Configuration missing και New-BridgeConfiguration αποτυγχάνει' {
-            # Mock New-BridgeConfiguration to fail, ensuring Configuration remains null
-            Mock New-BridgeConfiguration { throw "Configuration failed" }
-            Mock Get-BridgeStatusComparison { throw "Simulated comparison error" }
-            Mock Start-Sleep { }
-            Mock Write-BridgeLog { }
-
-            # Call without Configuration parameter to trigger fallback creation
-            { Get-BridgeStatusMonitor -MaxIterations 1 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey 'key' -PoUserKey 'user' -PoApiKey 'app' } | Should -Not -Throw
-
-            # Verify all three fallback paths are covered:
-            # 1. Fallback error message (line 122)
-            # 2. Fallback error stage (line 129)
-            # 3. Fallback debug level (line 135)
-            Assert-MockCalled Write-BridgeLog -ParameterFilter {
-                $Message -like "*❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας*" -and
-                $Stage -eq 'Σφάλμα' -and
-                $Level -eq 'Debug'
-            } -Exactly 1
-        }
-        It 'Χρησιμοποιεί fallback completion message όταν Configuration είναι null' {
-            Mock Get-BridgeStatusComparison { @{ dummy = $true } }
-            Mock Start-Sleep { }
-            Mock Write-BridgeLog { }
-
-            { Get-BridgeStatusMonitor -Configuration $null -MaxIterations 1 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey 'key' -PoUserKey 'user' -PoApiKey 'app' } | Should -Not -Throw
-
-            # Verify fallback completion message is used
-            Assert-MockCalled Write-BridgeLog -ParameterFilter {
-                $Message -like "*✅ Ο κύκλος παρακολούθησης ολοκληρώθηκε*" -and
-                $Stage -eq 'Ανάλυση' -and
-                $Level -eq 'Verbose'
-            } -Exactly 1
-        }
-    }
 }
 

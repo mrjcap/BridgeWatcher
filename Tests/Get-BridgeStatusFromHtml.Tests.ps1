@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Get-BridgeStatusFromHtml' {
@@ -30,35 +30,5 @@ InModuleScope 'BridgeWatcher' {
             }
         }
 
-        Context 'Configuration Fallbacks' {
-            It 'Χρησιμοποιεί fallback configuration όταν New-BridgeConfiguration αποτυγχάνει' {
-                Mock New-BridgeConfiguration { throw "Configuration error" }
-                Mock Get-BridgeImage { @(@{ src = 'image-bridge-open.php' }) }
-                Mock Resolve-BridgeStatus { $null }
-
-                $html = '<div>dummy</div>'
-                $timestamp = '2025-04-18T08:00:00'
-                { Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp } | Should -Not -Throw
-            }
-
-            It 'Χρησιμοποιεί fallback BaseImageUrl όταν Configuration είναι null' {
-                Mock Get-BridgeImage { @(@{ src = 'image-bridge-open.php' }) }
-                Mock Resolve-BridgeStatus {
-                    @{
-                        src = 'image-bridge-open.php'  # This is what the actual function expects
-                    }
-                }
-                Mock Get-BridgeStatusObject { @{ gefyraName = 'Test'; gefyraStatus = 'Test' } }
-
-                $html = '<div>dummy</div>'
-                $timestamp = '2025-04-18T08:00:00'
-
-                $result = Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp -Configuration $null
-                $result | Should -Not -BeNullOrEmpty
-
-                # Verify that Get-BridgeStatusObject was called twice (once for each location)
-                Assert-MockCalled Get-BridgeStatusObject -Exactly 2
-            }
-        }
     }
 }

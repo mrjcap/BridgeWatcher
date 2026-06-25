@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Test Get-BridgeStatus function' {
@@ -121,7 +121,7 @@ InModuleScope 'BridgeWatcher' {
         It 'Επιστρέφει σωστά αποτελέσματα για Ποσειδωνία και Ισθμία από mocked HTML' {
             $mockHtml = @'
 <div class="panel panel-primary ">
-        <h4><b>ΠΟΣΕΙΔΩΝΙΑ</b></h4>
+        <h4><b>ΠΟΣΕΙΔΩΝΊΑ</b></h4>
     </div>
     <div         class="panel-body">
     <div         class="form-group">
@@ -130,7 +130,7 @@ InModuleScope 'BridgeWatcher' {
     </div>
 </div>
 <div class="panel panel-primary">
-        <h4><b>ΙΣΘΜΙΑ</b></h4>
+        <h4><b>ΙΣΘΜΊΑ</b></h4>
     </div>
 <div         class="panel-body">
 <div         class="form-group">
@@ -161,7 +161,7 @@ InModuleScope 'BridgeWatcher' {
         It 'Γράφει debug όταν το status παραλείπεται (no match)' {
             $html = @'
         <div class="panel panel-primary">
-        <div class="panel-heading"><b>ΙΣΘΜΙΑ</b></div>
+        <div class="panel-heading"><b>ΙΣΘΜΊΑ</b></div>
         <div class="panel-body">
         <img src="image-bridge-always-close.php?123">
             </div>
