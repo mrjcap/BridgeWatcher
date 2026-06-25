@@ -1,4 +1,4 @@
-﻿# Αρχείο Αλλαγών (Changelog)
+# Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
@@ -6,6 +6,25 @@
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.78] - 2026-06-25
+
+### ✨ Προστέθηκαν
+
+- ✨ feat: update module version replacement regex
+
+### 🔄 Αλλαγές
+
+- 🎨 style: restore UTF-8 BOM encoding across scripts
+
+### 🐛 Διορθώθηκαν
+
+- 📝 fix(docs): remove corrupted begin block from docstring
+- 🐛 fix(logging): add missing stages to Write-BridgeStage ValidateSet
+- 🔒 fix(resilience): enforce atomic state writes via tmp file rename
+- 🐛 fix(logging): align ValidateSet with underlying logger
+- 🔒 fix(security): scrub credentials from ErrorRecord payload
+- 🐛 fix(docker): support dynamic PGID in COPY
+- 🐛 fix(module-version): preserve psd1 version formatting - keep the ModuleVersion line structure intact -
+  replace only the version value inside the quoted string - avoid rewriting the whole assignment line
 
 ## [1.0.77] - 2026-06-24
 
@@ -482,6 +501,3 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
-
-
-
