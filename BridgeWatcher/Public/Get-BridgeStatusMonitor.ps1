@@ -1,4 +1,4 @@
-﻿function Get-BridgeStatusMonitor {
+function Get-BridgeStatusMonitor {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -48,52 +48,27 @@
     begin {
         # Ensure configuration is available
         if (-not $Configuration) {
-            try {
-                $Configuration = New-BridgeConfiguration
-            } catch {
-                # Fallback to null configuration - functions will handle this
-                $Configuration = $null
-            }
+            $Configuration = New-BridgeConfiguration
         }
 
         # Set defaults from configuration if parameters not provided
         if (-not $PSBoundParameters.ContainsKey('MaxIterations')) {
-            $MaxIterations = if ($Configuration -and $Configuration.DefaultMaxIterations) {
-                $Configuration.DefaultMaxIterations
-            } else {
-                100
-            }
+            $MaxIterations = $Configuration.DefaultMaxIterations
         }
 
         if (-not $PSBoundParameters.ContainsKey('IntervalSeconds')) {
-            $IntervalSeconds = if ($Configuration -and $Configuration.DefaultIntervalSeconds) {
-                $Configuration.DefaultIntervalSeconds
-            } else {
-                300
-            }
+            $IntervalSeconds = $Configuration.DefaultIntervalSeconds
         }
 
         $iteration = 0
         $infiniteLoop = $MaxIterations -eq 0
 
-        $monitoringStartMessage = if ($Configuration -and $Configuration.StatusMessages) {
-            $Configuration.StatusMessages.MonitoringStart
-        } else {
-            "Ξεκίνησε ο κύκλος παρακολούθησης"
-        }
+        $monitoringStartMessage = $Configuration.StatusMessages.MonitoringStart
 
         $writeBridgeLogSplat = @{
-            Stage   = if ($Configuration -and $Configuration.LoggingConfig) {
-                $Configuration.LoggingConfig.InfoStage
-            } else {
-                'Ανάλυση'
-            }
+            Stage   = $Configuration.LoggingConfig.InfoStage
             Message = "$monitoringStartMessage`: Διάστημα = $IntervalSeconds δευτ., Μέγιστες επαναλήψεις = $MaxIterations"
-            Level   = if ($Configuration -and $Configuration.LoggingConfig) {
-                $Configuration.LoggingConfig.VerboseLevel
-            } else {
-                'Verbose'
-            }
+            Level   = $Configuration.LoggingConfig.VerboseLevel
         }
         Write-BridgeLog @writeBridgeLogSplat
     }
@@ -116,46 +91,22 @@
                     Seconds = $IntervalSeconds
                 }
                 Start-Sleep @startSleepSplat } catch {
-                $errorMessage = if ($Configuration -and $Configuration.ErrorMessages) {
-                    $Configuration.ErrorMessages.MonitoringError
-                } else {
-                    "❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας"
-                }
+                $errorMessage = $Configuration.ErrorMessages.MonitoringError
 
                 $writeBridgeLogSplat = @{
-                    Stage   = if ($Configuration -and $Configuration.LoggingConfig) {
-                        $Configuration.LoggingConfig.ErrorStage
-                    } else {
-                        'Σφάλμα'
-                    }
+                    Stage   = $Configuration.LoggingConfig.ErrorStage
                     Message = "$errorMessage`: $($_) $iteration"
-                    Level   = if ($Configuration -and $Configuration.LoggingConfig) {
-                        $Configuration.LoggingConfig.DebugLevel
-                    } else {
-                        'Debug'
-                    }
+                    Level   = $Configuration.LoggingConfig.DebugLevel
                 }
                 Write-BridgeLog @writeBridgeLogSplat
             } }
 
-        $monitoringCompleteMessage = if ($Configuration -and $Configuration.StatusMessages) {
-            $Configuration.StatusMessages.MonitoringComplete
-        } else {
-            "✅ Ο κύκλος παρακολούθησης ολοκληρώθηκε"
-        }
+        $monitoringCompleteMessage = $Configuration.StatusMessages.MonitoringComplete
 
         $writeBridgeLogSplat = @{
-            Stage   = if ($Configuration -and $Configuration.LoggingConfig) {
-                $Configuration.LoggingConfig.InfoStage
-            } else {
-                'Ανάλυση'
-            }
+            Stage   = $Configuration.LoggingConfig.InfoStage
             Message = "$monitoringCompleteMessage μετά από $iteration επανάληψη(εις)."
-            Level   = if ($Configuration -and $Configuration.LoggingConfig) {
-                $Configuration.LoggingConfig.VerboseLevel
-            } else {
-                'Verbose'
-            }
+            Level   = $Configuration.LoggingConfig.VerboseLevel
         }
         Write-BridgeLog @writeBridgeLogSplat
     }

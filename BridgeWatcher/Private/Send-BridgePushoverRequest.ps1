@@ -1,4 +1,4 @@
-﻿function Send-BridgePushoverRequest {
+function Send-BridgePushoverRequest {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -30,32 +30,20 @@
         [Parameter()][PSCustomObject]$Configuration
     )
 
-    # Get Pushover API URL from configuration or use fallback
-    $pushoverApiUrl = if ($Configuration -and $Configuration.PushoverApiUrl) {
-        $Configuration.PushoverApiUrl
-    } else {
-        'https://api.pushover.net/1/messages.json'
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
     }
 
-    # Get error message from configuration or use fallback
-    $errorMessagePrefix = if ($Configuration -and $Configuration.PushoverMessages -and $Configuration.PushoverMessages.SendFailed) {
-        $Configuration.PushoverMessages.SendFailed
-    } else {
-        '❌ Αποτυχία αποστολής'
-    }
+    # Get Pushover API URL from configuration
+    $pushoverApiUrl = $Configuration.PushoverApiUrl
 
-    # Get logging stage from configuration or use fallback
-    $errorStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.ErrorStage) {
-        $Configuration.LoggingConfig.ErrorStage
-    } else {
-        'Σφάλμα'
-    }
+    # Get error message from configuration
+    $errorMessagePrefix = $Configuration.PushoverMessages.SendFailed
 
-    $warningLevel = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.WarningLevel) {
-        $Configuration.LoggingConfig.WarningLevel
-    } else {
-        'Warning'
-    }
+    # Get logging stage from configuration
+    $errorStage = $Configuration.LoggingConfig.ErrorStage
+
+    $warningLevel = $Configuration.LoggingConfig.WarningLevel
 
     try {
         $invokeRestMethodSplat = @{

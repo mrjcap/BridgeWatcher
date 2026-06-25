@@ -1,4 +1,4 @@
-﻿function Invoke-BridgeOCRRequest {
+function Invoke-BridgeOCRRequest {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -32,42 +32,24 @@
         [Parameter(Mandatory)][string]$ApiKey,
         [Parameter(Mandatory)][string]$RequestBody,
         [Parameter()][PSCustomObject]$Configuration
-    )    # Get OCR API URL from configuration or use fallback
-    $url = if ($Configuration -and $Configuration.OCRApiUrl) {
-        "$($Configuration.OCRApiUrl)?key=$ApiKey"
-    } else {
-        "https://vision.googleapis.com/v1/images:annotate?key=$ApiKey"
+    )
+
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
     }
+
+    # Get OCR API URL from configuration
+    $url = "$($Configuration.OCRApiUrl)?key=$ApiKey"
 
     # Get messages from configuration or use fallback
-    $startMessage = if ($Configuration -and $Configuration.OCRMessages -and $Configuration.OCRMessages.StartOCR) {
-        $Configuration.OCRMessages.StartOCR
-    } else {
-        '➜ Calling Google Vision API...'
-    }
+    $startMessage = $Configuration.OCRMessages.StartOCR
 
-    $failedMessagePrefix = if ($Configuration -and $Configuration.OCRMessages -and $Configuration.OCRMessages.OCRFailed) {
-        $Configuration.OCRMessages.OCRFailed
-    } else {
-        '❌ Request failed'
-    }
+    $failedMessagePrefix = $Configuration.OCRMessages.OCRFailed
 
     # Get logging stage from configuration or use fallback
-    $analysisStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.InfoStage) {
-        $Configuration.LoggingConfig.InfoStage
-    } else {
-        'Ανάλυση'
-    }
+    $analysisStage = $Configuration.LoggingConfig.InfoStage
 
-    $errorStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.ErrorStage) {
-        $Configuration.LoggingConfig.ErrorStage
-    } else {
-        'Σφάλμα'
-    }    $url = if ($Configuration -and $Configuration.OCRApiUrl) {
-        "$($Configuration.OCRApiUrl)?key=$ApiKey"
-    } else {
-        "https://vision.googleapis.com/v1/images:annotate?key=$ApiKey"
-    }
+    $errorStage = $Configuration.LoggingConfig.ErrorStage
     try {
         $invokeRestMethodSplat = @{
             Uri         = $url
@@ -86,11 +68,7 @@
         $writeBridgeLogSplat = @{
             Stage   = $errorStage
             Message = "$failedMessagePrefix`: $($_.Exception.Message)"
-            Level   = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.WarningLevel) {
-                $Configuration.LoggingConfig.WarningLevel
-            } else {
-                'Warning'
-            }
+            Level   = $Configuration.LoggingConfig.WarningLevel
         }
         Write-BridgeLog @writeBridgeLogSplat
         $errorRecord = [System.Management.Automation.ErrorRecord]::new(

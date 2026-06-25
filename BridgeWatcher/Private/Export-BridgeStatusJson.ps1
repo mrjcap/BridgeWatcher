@@ -1,4 +1,4 @@
-﻿function Export-BridgeStatusJson {
+function Export-BridgeStatusJson {
     <#
     .SYNOPSIS
     Εξάγει την κατάσταση γέφυρας σε αρχείο JSON.
@@ -51,52 +51,28 @@
         [PSCustomObject]$Configuration
     )
 
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
+
     # Get JSON depth from configuration or parameter or use fallback
     if (-not $JsonDepth) {
-        $JsonDepth = if ($Configuration -and $Configuration.DefaultJsonDepth) {
-            $Configuration.DefaultJsonDepth
-        } else {
-            10
-        }
+        $JsonDepth = $Configuration.DefaultJsonDepth
     }
 
     # Get messages from configuration or use fallback
-    $successMessage = if ($Configuration -and $Configuration.ExportMessages -and $Configuration.ExportMessages.Success) {
-        $Configuration.ExportMessages.Success
-    } else {
-        '✅ JSON αποθηκεύτηκε στο'
-    }
+    $successMessage = $Configuration.ExportMessages.Success
 
-    $failedMessage = if ($Configuration -and $Configuration.ExportMessages -and $Configuration.ExportMessages.Failed) {
-        $Configuration.ExportMessages.Failed
-    } else {
-        '❌ Σφάλμα κατά την αποθήκευση JSON'
-    }
+    $failedMessage = $Configuration.ExportMessages.Failed
 
-    $directoryNotExistsMessage = if ($Configuration -and $Configuration.ExportMessages -and $Configuration.ExportMessages.DirectoryNotExists) {
-        $Configuration.ExportMessages.DirectoryNotExists
-    } else {
-        'Ο φάκελος προορισμού δεν υπάρχει'
-    }
+    $directoryNotExistsMessage = $Configuration.ExportMessages.DirectoryNotExists
 
     # Get logging stage from configuration or use fallback
-    $analysisStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.InfoStage) {
-        $Configuration.LoggingConfig.InfoStage
-    } else {
-        'Ανάλυση'
-    }
+    $analysisStage = $Configuration.LoggingConfig.InfoStage
 
-    $errorStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.ErrorStage) {
-        $Configuration.LoggingConfig.ErrorStage
-    } else {
-        'Σφάλμα'
-    }
+    $errorStage = $Configuration.LoggingConfig.ErrorStage
 
-    $warningLevel = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.WarningLevel) {
-        $Configuration.LoggingConfig.WarningLevel
-    } else {
-        'Warning'
-    }
+    $warningLevel = $Configuration.LoggingConfig.WarningLevel
 
     try {
         $convertToJsonSplat = @{

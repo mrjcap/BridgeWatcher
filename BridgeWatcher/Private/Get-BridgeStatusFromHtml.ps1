@@ -1,4 +1,4 @@
-﻿function Get-BridgeStatusFromHtml {
+function Get-BridgeStatusFromHtml {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -36,19 +36,10 @@
 
     # Use configuration or fallback
     if (-not $Configuration) {
-        try {
-            $Configuration = New-BridgeConfiguration
-        } catch {
-            # Fallback if configuration fails
-            $Configuration = $null
-        }
+        $Configuration = New-BridgeConfiguration
     }
 
-    $baseUrl = if ($Configuration -and $Configuration.BaseImageUrl) {
-        $Configuration.BaseImageUrl
-    } else {
-        'https://www.topvision.gr/dioriga/'
-    }
+    $baseUrl = $Configuration.BaseImageUrl
     $patterns = @{
         'poseidonia' = @{
             'Κλειστή για συντήρηση' = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
@@ -76,10 +67,7 @@
             Location    = $location
         }
 
-        # Add configuration only if it's available and not null
-        if ($Configuration) {
-            $getBridgeImagesSplat.Configuration = $Configuration
-        }
+        $getBridgeImagesSplat.Configuration = $Configuration
         $bridgeImages = Get-BridgeImage @getBridgeImagesSplat
         if (-not $bridgeImages -or $bridgeImages.Count -eq 0) {
             $writeBridgeLogSplat = @{
@@ -137,10 +125,7 @@
                     BaseUrl   = $baseUrl
                 }
 
-                # Add configuration only if it's available and not null
-                if ($Configuration) {
-                    $newBridgeStatusObjectSplat.Configuration = $Configuration
-                }
+                $newBridgeStatusObjectSplat.Configuration = $Configuration
                 $object = Get-BridgeStatusObject @newBridgeStatusObjectSplat
                 $result += $object
                 break

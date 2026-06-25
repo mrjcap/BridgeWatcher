@@ -1,4 +1,4 @@
-﻿function Get-BridgeImage {
+function Get-BridgeImage {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -32,14 +32,7 @@
         [Parameter()]
         [PSCustomObject]$Configuration = (New-BridgeConfiguration)
     )
-    $bridgeLabel = if ($Configuration -and $Configuration.BridgeNames -and $Configuration.BridgeNames[$Location]) {
-        $Configuration.BridgeNames[$Location].ToUpper()
-    } else {
-        # Fallback to hardcoded values
-        switch ($Location) {
-            'poseidonia' { 'ΠΟΣΕΙΔΩΝΙΑ' }
-            'isthmia' { 'ΙΣΘΜΙΑ' } }
-    }
+    $bridgeLabel = $Configuration.BridgeNames[$Location].ToUpper()
 
     $blocks = $HtmlContent -split '<div class="panel panel-primary\s*">'
     $block = $blocks | Where-Object { $_ -match "<b>$bridgeLabel</b>" }

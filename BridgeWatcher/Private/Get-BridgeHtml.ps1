@@ -1,4 +1,4 @@
-﻿function Get-BridgeHtml {
+function Get-BridgeHtml {
     <#
     .SYNOPSIS
     Ανακτά HTML περιεχόμενο από την σελίδα της γέφυρας.
@@ -37,13 +37,13 @@
         [PSCustomObject]$Configuration
     )
 
-    # Use configuration or fallback for URI
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
+
+    # Use configuration for URI
     if (-not $Uri) {
-        if ($Configuration -and $Configuration.SourceUrl) {
-            $Uri = $Configuration.SourceUrl
-        } else {
-            $Uri = 'https://www.topvision.gr/dioriga/'
-        }
+        $Uri = $Configuration.SourceUrl
     }
 
     try {

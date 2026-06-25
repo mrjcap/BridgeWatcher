@@ -1,4 +1,4 @@
-﻿function Get-BridgeStatusAdvice {
+function Get-BridgeStatusAdvice {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -36,27 +36,19 @@
         [Parameter()][PSCustomObject]$Configuration
     )
 
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
+
     # Get max wait time from parameter, configuration, or use fallback
     if (-not $MaxWaitTimeMinutes) {
-        $MaxWaitTimeMinutes = if ($Configuration -and $Configuration.DefaultMaxWaitTimeMinutes) {
-            $Configuration.DefaultMaxWaitTimeMinutes
-        } else {
-            12
-        }
+        $MaxWaitTimeMinutes = $Configuration.DefaultMaxWaitTimeMinutes
     }
 
     # Get advice messages from configuration or use fallback
-    $doNotWaitMessage = if ($Configuration -and $Configuration.AdviceMessages -and $Configuration.AdviceMessages.DoNotWait) {
-        $Configuration.AdviceMessages.DoNotWait
-    } else {
-        'Είναι προτιμότερο να μην περιμένεις'
-    }
+    $doNotWaitMessage = $Configuration.AdviceMessages.DoNotWait
 
-    $waitMessage = if ($Configuration -and $Configuration.AdviceMessages -and $Configuration.AdviceMessages.Wait) {
-        $Configuration.AdviceMessages.Wait
-    } else {
-        'Είναι προτιμότερο να περιμένεις'
-    }
+    $waitMessage = $Configuration.AdviceMessages.Wait
 
     if ($MinutesUntilOpen -gt $MaxWaitTimeMinutes) {
         return $doNotWaitMessage

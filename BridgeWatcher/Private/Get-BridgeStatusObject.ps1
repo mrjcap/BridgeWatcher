@@ -1,4 +1,4 @@
-﻿function Get-BridgeStatusObject {
+function Get-BridgeStatusObject {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -47,24 +47,19 @@
         [PSCustomObject]$Configuration
     )
 
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
+
     # Use configuration or fallback for BaseUrl
     if (-not $BaseUrl) {
-        if ($Configuration -and $Configuration.BaseImageUrl) {
-            $BaseUrl = $Configuration.BaseImageUrl
-        } else {
-            $BaseUrl = 'https://www.topvision.gr/dioriga/'
-        }
+        $BaseUrl = $Configuration.BaseImageUrl
     }
     return [pscustomobject]@{
         PSTypeName   = 'Bridge.Status'
-        GefyraName   = if ($Configuration -and $Configuration.BridgeNames -and $Configuration.BridgeNames[$Location]) {
-            $Configuration.BridgeNames[$Location]
-        } else {
-            # Fallback to hardcoded values
-            if ($Location -eq 'poseidonia') { 'Ποσειδωνία' } else { 'Ισθμία' }
-        }
+        GefyraName   = $Configuration.BridgeNames[$Location]
         GefyraStatus = $Status
         Timestamp    = $Timestamp
-        ImageUrl     = if ($ImageSrc -match '^https?://') { $ImageSrc } else { "$BaseUrl$ImageSrc" }
+        ImageUrl     = if ($ImageSrc -match '^https?://') { $ImageSrc } else { "$($BaseUrl.TrimEnd('/'))/$ImageSrc" }
     }
 }
