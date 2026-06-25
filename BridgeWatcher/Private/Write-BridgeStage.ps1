@@ -1,4 +1,4 @@
-﻿function Write-BridgeStage {
+function Write-BridgeStage {
     [OutputType([void])]
     <#
     .SYNOPSIS
@@ -6,7 +6,7 @@
 
     .DESCRIPTION
     Η Write-BridgeStage χρησιμοποιείται για να καταγράφει μηνύματα στα logs της εφαρμογής BridgeWatcher,
-    βοηθώντας στον διαχωρισμό των σταδίων (π.χ. 'Ανάλυση', 'Σφάλμα') και των επιπέδων logging ('Verbose', 'Warning', 'Error').
+    βοηθώντας στον διαχωρισμό των σταδίων (π.χ. 'Ανάλυση', 'Σφάλμα') και των επιπέδων logging ('Verbose', 'Debug', 'Warning').
     Βασίζεται στην Write-BridgeLog για πραγματική καταγραφή, προσφέροντας πιο φιλικό interface για σταδιακή αναφορά και ανάλυση.
 
     .PARAMETER Stage
@@ -24,9 +24,9 @@
     Καταγράφει μήνυμα ανάλυσης με προεπιλεγμένο επίπεδο Verbose.
 
     .EXAMPLE
-    Write-BridgeStage -Stage 'Σφάλμα' -Message 'Η σύνδεση απέτυχε.' -Level 'Error'
+    Write-BridgeStage -Stage 'Σφάλμα' -Message 'Η σύνδεση απέτυχε.' -Level 'Warning'
 
-    Καταγράφει σφάλμα με επίπεδο Error.
+    Καταγράφει σφάλμα με επίπεδο Warning.
 
     .NOTES
     Βασική helper function για logging στα modules του BridgeWatcher.
@@ -34,7 +34,7 @@
     param(
         [Parameter(Mandatory)][ValidateSet('Ανάλυση', 'Σφάλμα')][string]$Stage,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
-        [ValidateSet('Verbose', 'Warning', 'Error')][string]$Level = 'Verbose'
+        [ValidateSet('Verbose', 'Debug', 'Warning')][string]$Level = 'Verbose'
     )
     $writeBridgeLogSplat = @{
         Stage   = $Stage
