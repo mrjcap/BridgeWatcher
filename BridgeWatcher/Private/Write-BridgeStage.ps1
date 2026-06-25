@@ -1,4 +1,4 @@
-function Write-BridgeStage {
+﻿function Write-BridgeStage {
     [OutputType([void])]
     <#
     .SYNOPSIS

@@ -1,4 +1,4 @@
-function Export-BridgeStatusJson {
+﻿function Export-BridgeStatusJson {
     <#
     .SYNOPSIS
     Εξάγει την κατάσταση γέφυρας σε αρχείο JSON.
@@ -145,3 +145,4 @@ function Export-BridgeStatusJson {
         return New-BridgeResult -Success $false -ErrorMessage $errorMessage -ErrorCode 'JSON_EXPORT_FAILURE'
     }
 }
+

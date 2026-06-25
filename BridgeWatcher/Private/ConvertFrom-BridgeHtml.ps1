@@ -93,3 +93,4 @@
         return New-BridgeResult -Success $false -ErrorMessage $_.Exception.Message -ErrorCode 'PARSING_ERROR'
     }
 }
+

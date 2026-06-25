@@ -36,3 +36,4 @@ try {
     # Retry logic?
     exit 1  # Container θα κάνει restart αν έχεις --restart policy
 }
+
