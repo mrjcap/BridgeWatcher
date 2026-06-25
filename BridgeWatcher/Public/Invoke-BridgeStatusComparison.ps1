@@ -1,50 +1,7 @@
-﻿function Invoke-BridgeStatusComparison {
+function Invoke-BridgeStatusComparison {
     <#
     .SYNOPSIS
-    Συγκρί        # Create configuration object for fallback
-        if (-not $Configuration) {
-            try {
-                $Configuration = New-BridgeConfiguration
-            } catch {
-                # Continue with hardcoded fallback if configuration creation fails
-                $Configuration = $null
-            }
-        }
-
-        # Get handler map from configuration or use fallback
-        $handlerMap = if ($Configuration -and $Configuration.ComparisonMap) {
-            $Configuration.ComparisonMap
-        } else {
-            @{
-                'Κλειστή για συντήρηση|=>' = 'Closed'
-                'Κλειστή για συντήρηση|<=' = 'Closed'
-                'Κλειστή με πρόγραμμα|=>'  = 'Closed'
-                'Κλειστή με πρόγραμμα|<='  = 'Closed'
-                'Μόνιμα κλειστή|=>'        = 'Closed'
-                'Μόνιμα κλειστή|<='        = 'Closed'
-                'Ανοιχτή|=>'               = 'Opened'
-                'Ανοιχτή|<='               = 'Opened'
-            }
-        }
-
-        # Get logging stage from configuration or use fallback
-        $analysisStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.InfoStage) {
-            $Configuration.LoggingConfig.InfoStage
-        } else {
-            'Ανάλυση'
-        }
-
-        $errorStage = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.ErrorStage) {
-            $Configuration.LoggingConfig.ErrorStage
-        } else {
-            'Σφάλμα'
-        }
-
-        $warningLevel = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.WarningLevel) {
-            $Configuration.LoggingConfig.WarningLevel
-        } else {
-            'Warning'
-        }στες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
+    Συγκρίνει τις λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
 
     .DESCRIPTION
     Η Invoke-BridgeStatusComparison συγκρίνει την προηγούμενη και την τρέχουσα
