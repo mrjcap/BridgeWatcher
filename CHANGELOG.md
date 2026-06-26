@@ -1,9 +1,31 @@
-﻿# Αρχείο Αλλαγών (Changelog)
+# Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### ✨ Προστέθηκαν
+- Προσθήκη πολιτικής ασφάλειας ([SECURITY.md](SECURITY.md)) και απαιτήσεων ασφάλειας εφαρμογών ([docs/SECURITY-REQUIREMENTS.md](docs/SECURITY-REQUIREMENTS.md))
+- Προσθήκη οδηγού αντιμετώπισης περιστατικών ([docs/INCIDENT-RESPONSE.md](docs/INCIDENT-RESPONSE.md))
+- Προσθήκη οδηγού λειτουργιών και ανάκαμψης ([docs/OPERATIONS.md](docs/OPERATIONS.md))
+- Προσθήκη πολιτικής ασφάλειας εφοδιαστικής αλυσίδας ([docs/SUPPLY-CHAIN.md](docs/SUPPLY-CHAIN.md))
+- Προσθήκη προτύπων επικοινωνίας συμβάντων ([docs/COMMUNICATION-TEMPLATES.md](docs/COMMUNICATION-TEMPLATES.md))
+- Προσθήκη καταλόγου κινδύνων κατά NIST SP 800-30 ([docs/RISK-ASSESSMENT.md](docs/RISK-ASSESSMENT.md))
+- Προσθήκη διαδραστικού πίνακα ελέγχου συμμόρφωσης (compliance dashboard) σε HTML ([docs/compliance_dashboard.html](docs/compliance_dashboard.html))
+- Προσθήκη ενοποίησης Gitleaks για αυτόματο έλεγχο μυστικών (secret scanning) στο GitHub Actions CI workflow
+- Προσθήκη αυτόματης παραγωγής SBOM (Software Bill of Materials) μέσω Trivy στο Docker build pipeline
+- Προσθήκη προτύπου GitHub Issue για ετήσιο έλεγχο ασφάλειας και κινδύνων (annual risk review)
+- Προσθήκη αρχείων [docker-compose.yml](docker-compose.yml) και [Docker/filebeat.yml](Docker/filebeat.yml) για έλεγχο πόρων, ασφάλεια και ενεργή προώθηση αρχείων καταγραφής (active log forwarding)
+
+### 🛡️ Ασφάλεια
+- Διόρθωση F-1: Μεταφορά του Google Cloud Vision API key από τις παραμέτρους URL (query string) στην κεφαλίδα HTTP `X-Goog-Api-Key`
+- Διόρθωση F-3: Κατάργηση της έκθεσης της θύρας 8090 (unimplemented REST API) στο Dockerfile
+- Διόρθωση F-5: Αφαίρεση SUID/SGID δικαιωμάτων από εκτελέσιμα στο Docker base image
+- Διόρθωση F-6: Ενεργοποίηση Docker Content Trust (DCT) στο workflow κατασκευής εικόνας
+- Διόρθωση F-10: Προσθήκη ειδοποιήσεων σφάλματος Pushover σε περίπτωση αποτυχίας του κύκλου ελέγχου (run.ps1)
 
 ## [1.0.77] - 2026-06-24
 
