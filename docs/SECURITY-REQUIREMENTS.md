@@ -57,6 +57,12 @@ control A.8.26 (Application Security Requirements).
 | Unnecessary ports must not be exposed | No EXPOSE directives active |
 | Health check must validate output freshness | HEALTHCHECK with 10-minute threshold |
 
+## 7. Data Protection at Rest
+
+| Requirement | Implementation & Justification |
+| --- | --- |
+| Output JSON encryption at rest | **Accepted Risk (Not Required)**: The output JSON files contain only public operational status of the Corinth Canal bridges scraped from public web resources. They contain no personal data (GDPR), payment card data (PCI DSS), or proprietary intellectual property. Implementing encryption at rest would add unnecessary runtime overhead without increasing the security posture of the public data. |
+
 ---
 
 *Last reviewed: 2026-06-26*
