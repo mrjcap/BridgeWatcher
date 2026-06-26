@@ -9,51 +9,51 @@
 
 ### ✨ Προστέθηκαν
 
-- Προσθήκη πολιτικής ασφάλειας ([SECURITY.md](SECURITY.md)) και απαιτήσεων ασφάλειας εφαρμογών ([docs/SECURITY-REQUIREMENTS.md](docs/SECURITY-REQUIREMENTS.md))
-- Προσθήκη οδηγού αντιμετώπισης περιστατικών ([docs/INCIDENT-RESPONSE.md](docs/INCIDENT-RESPONSE.md))
-- Προσθήκη οδηγού λειτουργιών και ανάκαμψης ([docs/OPERATIONS.md](docs/OPERATIONS.md))
-- Προσθήκη πολιτικής ασφάλειας εφοδιαστικής αλυσίδας ([docs/SUPPLY-CHAIN.md](docs/SUPPLY-CHAIN.md))
-- Προσθήκη προτύπων επικοινωνίας συμβάντων ([docs/COMMUNICATION-TEMPLATES.md](docs/COMMUNICATION-TEMPLATES.md))
-- Προσθήκη καταλόγου κινδύνων κατά NIST SP 800-30 ([docs/RISK-ASSESSMENT.md](docs/RISK-ASSESSMENT.md))
-- Προσθήκη διαδραστικού πίνακα ελέγχου συμμόρφωσης (compliance dashboard) σε HTML ([docs/compliance_dashboard.html](docs/compliance_dashboard.html))
-- Προσθήκη ενοποίησης Gitleaks για αυτόματο έλεγχο μυστικών (secret scanning) στο GitHub Actions CI workflow
-- Προσθήκη αυτόματης παραγωγής SBOM (Software Bill of Materials) μέσω Trivy στο Docker build pipeline
-- Προσθήκη προτύπου GitHub Issue για ετήσιο έλεγχο ασφάλειας και κινδύνων (annual risk review)
-- Προσθήκη αρχείων [docker-compose.yml](docker-compose.yml) και [Docker/filebeat.yml](Docker/filebeat.yml)
-για έλεγχο πόρων, ασφάλεια και ενεργή προώθηση αρχείων καταγραφής (active log forwarding)
+- docs(security): Προσθήκη πολιτικής ασφάλειας ([SECURITY.md](SECURITY.md)) και απαιτήσεων ασφάλειας εφαρμογών ([docs/SECURITY-REQUIREMENTS.md](docs/SECURITY-REQUIREMENTS.md))
+- docs(incident-response): Προσθήκη οδηγού αντιμετώπισης περιστατικών ([docs/INCIDENT-RESPONSE.md](docs/INCIDENT-RESPONSE.md))
+- docs(operations): Προσθήκη οδηγού λειτουργιών και ανάκαμψης ([docs/OPERATIONS.md](docs/OPERATIONS.md))
+- docs(supply-chain): Προσθήκη πολιτικής ασφάλειας εφοδιαστικής αλυσίδας ([docs/SUPPLY-CHAIN.md](docs/SUPPLY-CHAIN.md))
+- docs(communication): Προσθήκη προτύπων επικοινωνίας συμβάντων ([docs/COMMUNICATION-TEMPLATES.md](docs/COMMUNICATION-TEMPLATES.md))
+- docs(risk-assessment): Προσθήκη καταλόγου κινδύνων κατά NIST SP 800-30 ([docs/RISK-ASSESSMENT.md](docs/RISK-ASSESSMENT.md))
+- docs(compliance): Προσθήκη διαδραστικού πίνακα ελέγχου συμμόρφωσης σε HTML ([docs/compliance_dashboard.html](docs/compliance_dashboard.html))
+- ci(gitleaks): Προσθήκη ενοποίησης Gitleaks για αυτόματο έλεγχο μυστικών στο GitHub Actions CI workflow
+- build(docker): Προσθήκη αυτόματης παραγωγής SBOM μέσω Trivy στο Docker build pipeline
+- docs(github): Προσθήκη προτύπου GitHub Issue για ετήσιο έλεγχο ασφάλειας και κινδύνων
+- build(docker): Προσθήκη [docker-compose.yml](docker-compose.yml) και [Docker/filebeat.yml](Docker/filebeat.yml)
+  για έλεγχο πόρων, ασφάλεια και ενεργή προώθηση αρχείων καταγραφής
 
 ### 🛡️ Ασφάλεια
 
-- Διόρθωση F-1: Μεταφορά του Google Cloud Vision API key από τις παραμέτρους URL (query string) στην κεφαλίδα HTTP `X-Goog-Api-Key`
-- Διόρθωση F-3: Κατάργηση της έκθεσης της θύρας 8090 (unimplemented REST API) στο Dockerfile
-- Διόρθωση F-5: Αφαίρεση SUID/SGID δικαιωμάτων από εκτελέσιμα στο Docker base image
-- Διόρθωση F-6: Ενεργοποίηση Docker Content Trust (DCT) στο workflow κατασκευής εικόνας
-- Διόρθωση F-10: Προσθήκη ειδοποιήσεων σφάλματος Pushover σε περίπτωση αποτυχίας του κύκλου ελέγχου (run.ps1)
+- fix(security): Διόρθωση F-1: Μεταφορά του Google Cloud Vision API key από τις παραμέτρους URL στην κεφαλίδα `X-Goog-Api-Key`
+- fix(docker): Διόρθωση F-3: Κατάργηση της έκθεσης της θύρας 8090 στο Dockerfile
+- fix(docker): Διόρθωση F-5: Αφαίρεση SUID/SGID δικαιωμάτων από εκτελέσιμα στο Docker base image
+- fix(docker): Διόρθωση F-6: Ενεργοποίηση Docker Content Trust (DCT) στο workflow κατασκευής εικόνας
+- fix(notifications): Διόρθωση F-10: Προσθήκη ειδοποιήσεων σφάλματος Pushover σε περίπτωση αποτυχίας του κύκλου ελέγχου (run.ps1)
 
 ## [1.0.77] - 2026-06-24
 
 ### ✨ Προστέθηκαν
 
-- Add UTF-8 BOM to module manifest to satisfy PSScriptAnalyzer
+- build(manifest): Προσθήκη UTF-8 BOM στο module manifest για την ικανοποίηση του PSScriptAnalyzer
 
 ## [1.0.76] - 2026-06-24
 
 ### ✨ Προστέθηκαν
 
-- feat: Προσθήκη [OutputType()] attributes για καλύτερη τεκμηρίωση
-- feat(error-handling): Βελτίωση error handling, validation και test coverage
-- feat(docs): Εναρμόνιση comment-based help σε Private functions
+- feat: Προσθήκη χαρακτηριστικών [OutputType()] για καλύτερη τεκμηρίωση
+- feat(error-handling): Βελτίωση χειρισμού σφαλμάτων, επικύρωσης και κάλυψης δοκιμών
+- feat(docs): Εναρμόνιση βοήθειας σχολίων σε ιδιωτικές συναρτήσεις
 
 ### 🐛 Διορθώθηκαν
 
-- fix: διόρθωση μορφοποίησης και indentation στο Resolve-BridgeStateForChange
+- fix: διόρθωση μορφοποίησης και εσοχών στο Resolve-BridgeStateForChange
 - fix: Συμμόρφωση με PSScriptAnalyzer και βελτιώσεις επικύρωσης παραμέτρων
 
 ## [1.0.75] - 2025-06-13
 
 ### 🐛 Διορθώθηκαν
 
-- fix(BridgeStatusComparison): Ενημέρωση λογικής για μη εύρεση bridge state
+- fix(bridge-status-comparison): Ενημέρωση λογικής για μη εύρεση bridge state
 
 ## [1.0.74] - 2025-06-12
 
@@ -86,206 +86,206 @@
 
 ### ✨ Προστέθηκαν
 
-- feat(docker): προσθήκη Docker container για BridgeWatcher
-  - Base image: .NET Runtime 9.0.6 Alpine 3.22
-  - PowerShell 7.5.1 με πλήρεις dependencies
-  - Timezone configuration για Europe/Athens
-  - Configurable user permissions (PUID/PGID)
-  - Port exposure 8090 για web interface
-  - Healthcheck για monitoring bridge status
-  - Entrypoint script για initialization
+- feat(docker): προσθήκη κοντέινερ Docker για το BridgeWatcher
+  - Εικόνα βάσης: .NET Runtime 9.0.6 Alpine 3.22
+  - PowerShell 7.5.1 με πλήρεις εξαρτήσεις
+  - Ρύθμιση ζώνης ώρας για Europe/Athens
+  - Ρυθμιζόμενα δικαιώματα χρήστη (PUID/PGID)
+  - Έκθεση θύρας 8090 για διεπαφή ιστού
+  - Healthcheck για την παρακολούθηση της κατάστασης της γέφυρας
+  - Σενάριο εισόδου (entrypoint script) για αρχικοποίηση
 
 ## [1.0.70] - 2025-06-11
 
 ### ✨ Προστέθηκαν
 
-- feat(scripts): προσθήκη demo script για changelog format validation
-- feat(scripts): προσθήκη perfect validation demo script
-- feat(scripts): νέο content validation script για commits
-- feat(scripts): comprehensive format validation για markdown αρχεία
-- feat(scripts): νέο comprehensive validation script
-- feat(scripts): τελικό validation script για quality assurance
-- feat(scripts): ultimate validation με perfect score achievement
-- feat(scripts): προσθήκη emoji support στα section headers
+- feat(scripts): προσθήκη σεναρίου επίδειξης για επικύρωση μορφής changelog
+- feat(scripts): προσθήκη σεναρίου επίδειξης για τέλεια επικύρωση
+- feat(scripts): νέο σενάριο επικύρωσης περιεχομένου για υποβολές (commits)
+- feat(scripts): ολοκληρωμένη επικύρωση μορφής για αρχεία markdown
+- feat(scripts): νέο ολοκληρωμένο σενάριο επικύρωσης
+- feat(scripts): τελικό σενάριο επικύρωσης για διασφάλιση ποιότητας
+- feat(scripts): τελική επικύρωση με επίτευξη τέλειου σκορ
+- feat(scripts): προσθήκη υποστήριξης emoji στις κεφαλίδες ενοτήτων
 
 ### 🔄 Αλλαγές
 
-- refactor(scripts): βελτίωση git commit exclusion patterns
-- build(dockerfile): μετάβαση σε .NET runtime:9.0.6-alpine3.22 base image
+- refactor(scripts): βελτίωση των μοτίβων εξαίρεσης για git commits
+- build(dockerfile): μετάβαση σε εικόνα βάσης .NET runtime:9.0.6-alpine3.22
 
 ### 🐛 Διορθώθηκαν
 
-- fix(scripts): διόρθωση syntax error στο changelog workflow test
-- fix(scripts): διόρθωση duplicate function name και function call
+- fix(scripts): διόρθωση συντακτικού σφάλματος στη δοκιμή της ροής εργασιών του changelog
+- fix(scripts): διόρθωση διπλότυπου ονόματος συνάρτησης και κλήσης συνάρτησης
 
 ### 🧪 Testing
 
-- test(scripts): προσθήκη test script για changelog fixes validation
+- test(scripts): προσθήκη σεναρίου δοκιμής για την επικύρωση διορθώσεων του changelog
 
 ### 🔧 CI/CD
 
-- ci(workflows): προσθήκη και αφαίρεση manual trigger από workflows (net zero change)
-- ci(release): βελτίωση error handling και formatting στο changelog update
+- ci(workflows): προσθήκη και αφαίρεση χειροκίνητου εναύσματος από τις ροές εργασιών (καθαρή μηδενική αλλαγή)
+- ci(release): βελτίωση διαχείρισης σφαλμάτων και μορφοποίησης στην ενημέρωση του changelog
 
 ### 📝 Τεκμηρίωση
 
-- docs(changelog): ενημέρωση CHANGELOG.md με unreleased sections
+- docs(changelog): ενημέρωση CHANGELOG.md με ενότητες που δεν έχουν κυκλοφορήσει
 
 ## [1.0.69] - 2025-06-11
 
 ### 🔄 Αλλαγές
 
-- **build(Dockerfile):** ενημέρωση ρύθμισης ζώνης ώρας
+- build(dockerfile): ενημέρωση ρύθμισης ζώνης ώρας
 
 ## [1.0.68] - 2025-06-10
 
 ### 🐛 Διορθώθηκαν
 
-#### Alpine Linux Group Conflicts
+#### Διενέξεις Ομάδων στο Alpine Linux
 
-- Επίλυση conflict με το προεγκατεστημένο Alpine 'users' group (GID 100)
-  - Smart conditional logic για ανίχνευση GID collision
-  - PGID=100: χρήση existing 'users' group
-  - PGID≠100: δημιουργία custom 'appgroup'
-- Διόρθωση "chown: unknown user/group appuser:appgroup" error
-  - Μετάβαση σε numeric ${PUID}:${PGID} ownership
-  - Platform-agnostic approach που παίζει παντού
+- fix(docker): Επίλυση διένεξης με την προεγκατεστημένη ομάδα 'users' (GID 100) του Alpine
+  - Έξυπνη λογική υπό όρους για ανίχνευση σύγκρουσης GID
+  - PGID=100: χρήση της υπάρχουσας ομάδας 'users'
+  - PGID≠100: δημιουργία προσαρμοσμένης ομάδας 'appgroup'
+- fix(docker): Διόρθωση σφάλματος "chown: unknown user/group appuser:appgroup"
+  - Μετάβαση σε αριθμητική ιδιοκτησία ${PUID}:${PGID}
+  - Προσέγγιση ανεξάρτητη από πλατφόρμα που λειτουργεί παντού
 
-#### Critical Path Typo
+#### Τυπογραφικό Σφάλμα σε Κρίσιμη Διαδρομή
 
-- Διόρθωση: `/tm` → `/tmp` στο chmod 1777
-  - Χωρίς αυτό, το healthcheck fallback θα απέτυχνε silently
-  - Affects: PowerShell temp file operations
+- fix(docker): Διόρθωση: `/tm` → `/tmp` στο chmod 1777
+  - Χωρίς αυτό, η εφεδρική λειτουργία του healthcheck θα αποτύγχανε σιωπηλά
+  - Επηρεάζει: Λειτουργίες προσωρινών αρχείων του PowerShell
 
 ### 🔄 Αλλαγές
 
-- Refactoring του user creation flow με if/else logic
-- Adoption των numeric IDs σε όλα τα chown operations
-- Improved error resilience για edge cases
+- refactor(docker): Αναδιάρθρωση της ροής δημιουργίας χρήστη με λογική if/else
+- refactor(docker): Υιοθέτηση αριθμητικών αναγνωριστικών σε όλες τις λειτουργίες chown
+- refactor(docker): Βελτιωμένη ανθεκτικότητα σε σφάλματα για ειδικές περιπτώσεις
 
 ### ✨ Προστέθηκαν
 
-- Full compatibility matrix:
+- feat(docker): Πλήρης πίνακας συμβατότητας
   - ✅ Unraid NAS (99:100 - nobody:users)
   - ✅ Standard Linux (1000:1000)
   - ✅ Synology DSM (1024:100)
-  - ✅ Custom environments (arbitrary UID/GID)
-- Comments για documentation του Alpine behavior
+  - ✅ Προσαρμοσμένα περιβάλλοντα (αυθαίρετο UID/GID)
+- docs(docker): Σχόλια για την τεκμηρίωση της συμπεριφοράς του Alpine
 
 ## [1.0.67] - 2025-06-10
 
 ### 🐛 Διορθώθηκαν
 
-#### Alpine Linux User Creation Syntax
+#### Συντακτικό Δημιουργίας Χρήστη στο Alpine Linux
 
-- Αφαίρεση του `-S` flag από το `addgroup` (unsupported στο Alpine/BusyBox)
-- Αντικατάσταση `-S` με `-D` στο `adduser` για Alpine compatibility
-  - `-D`: Don't assign password (Alpine style)
-  - `-S`: System user (Debian/Ubuntu style - not available)
-- Προσθήκη explicit shell specification: `-s /bin/sh`
-- Διόρθωση argument ordering για BusyBox utilities
+- fix(docker): Αφαίρεση της σημαίας `-S` από το `addgroup` (μη υποστηριζόμενη στο Alpine/BusyBox)
+- fix(docker): Αντικατάσταση του `-S` με `-D` στο `adduser` για συμβατότητα με Alpine
+  - `-D`: Μην ορίζετε κωδικό πρόσβασης (στυλ Alpine)
+  - `-S`: Χρήστης συστήματος (στυλ Debian/Ubuntu - μη διαθέσιμο)
+- fix(docker): Προσθήκη ρητού καθορισμού κελύφους: `-s /bin/sh`
+- fix(docker): Διόρθωση σειράς ορισμάτων για τα BusyBox utilities
 
 ### 🔄 Αλλαγές
 
-- Μετάβαση από GNU coreutils syntax σε BusyBox syntax
-- Χρήση Alpine-specific flags για user/group management
-- Βελτίωση compatibility με Alpine Linux containers
+- refactor(docker): Μετάβαση από τη σύνταξη GNU coreutils στη σύνταξη BusyBox
+- refactor(docker): Χρήση σημαιών ειδικά για Alpine για τη διαχείριση χρηστών/ομάδων
+- refactor(docker): Βελτίωση συμβατότητας με Alpine Linux containers
 
 ### 📝 Τεκμηρίωση
 
-- Ενημέρωση CHANGELOG.md με αναλυτικές εγγραφές για v1.0.66
-- Προσθήκη τεχνικών details για το dynamic UID/GID feature
-- Χρήση emoji categories για improved readability
+- docs(changelog): Ενημέρωση CHANGELOG.md με αναλυτικές εγγραφές για v1.0.66
+- docs(docker): Προσθήκη τεχνικών λεπτομερειών για τη δυνατότητα δυναμικού UID/GID
+- docs(changelog): Χρήση κατηγοριών emoji για βελτιωμένη αναγνωσιμότητα
 
 ## [1.0.66] - 2025-06-10
 
 ### ✨ Προστέθηκαν
 
-- Dynamic UID/GID support στο Dockerfile για πλήρη Unraid compatibility
-  - ARG directives για PUID/PGID με default values 99:100 (nobody:users)
-  - Configurable user creation κατά το build time
-  - Υποστήριξη custom builds: `docker build --build-arg PUID=1000`
+- feat(docker): Υποστήριξη δυναμικού UID/GID στο Dockerfile για πλήρη συμβατότητα με Unraid
+  - Οδηγίες ARG για PUID/PGID με προεπιλεγμένες τιμές 99:100 (nobody:users)
+  - Ρυθμιζόμενη δημιουργία χρήστη κατά τον χρόνο κατασκευής
+  - Υποστήριξη προσαρμοσμένων κατασκευών: `docker build --build-arg PUID=1000`
 
 ### 🔄 Αλλαγές
 
-- Προσθήκη .cache και .local directories για PowerShell module caching
-- Βελτίωση directory structure για better module isolation
-- Cleanup των verbose comments για cleaner Dockerfile
+- refactor: Προσθήκη καταλόγων .cache και .local για προσωρινή αποθήκευση του PowerShell module
+- refactor: Βελτίωση δομής καταλόγου για καλύτερη απομόνωση του module
+- refactor(docker): Καθαρισμός των λεπτομερών σχολίων για ένα πιο καθαρό Dockerfile
 
 ### 🐛 Διορθώθηκαν
 
-- Typo fix: `/tm` → `/tmp` στο chmod command (critical για healthcheck fallback)
+- fix(docker): Διόρθωση τυπογραφικού: `/tm` → `/tmp` στην εντολή chmod (κρίσιμο για το healthcheck fallback)
 
 ### 📝 Τεκμηρίωση
 
-- Ενημέρωση CHANGELOG.md με detailed entries για versions 1.0.64 και 1.0.65
-- Προσθήκη emoji categories για καλύτερη αναγνωσιμότητα
-- Αναλυτική τεκμηρίωση των breaking changes και fixes
+- docs(changelog): Ενημέρωση CHANGELOG.md με λεπτομερείς καταχωρίσεις για τις εκδόσεις 1.0.64 και 1.0.65
+- docs(changelog): Προσθήκη κατηγοριών emoji για καλύτερη αναγνωσιμότητα
+- docs: Αναλυτική τεκμηρίωση των breaking αλλαγών και διορθώσεων
 
 ## [1.0.65] - 2025-06-10
 
 ### 🐛 Διορθώθηκαν
 
-- Διόρθωση absolute path για το entrypoint.sh στο Dockerfile
-  - Από: `./entrypoint.sh` (relative path που μπορεί να προκαλέσει issues)
-  - Σε: `/home/appuser/scripts/entrypoint.sh` (explicit absolute path)
-- Διόρθωση Windows-specific paths στο run.ps1
-  - Import-Module από hardcoded Windows path σε relative path
-  - Συμβατότητα με Linux container environment
+- fix(docker): Διόρθωση απόλυτης διαδρομής για το entrypoint.sh στο Dockerfile
+  - Από: `./entrypoint.sh` (σχετική διαδρομή που μπορεί να προκαλέσει προβλήματα)
+  - Σε: `/home/appuser/scripts/entrypoint.sh` (ρητή απόλυτη διαδρομή)
+- fix(run): Διόρθωση μονοπατιών ειδικά για Windows στο run.ps1
+  - Import-Module από προκαθορισμένη διαδρομή Windows σε σχετική διαδρομή
+  - Συμβατότητα με περιβάλλον κοντέινερ Linux
 
 ### 🔄 Αλλαγές
 
-- Μετάβαση από PowerShell SecretManagement σε Docker secrets
-  - Αντικατάσταση `Get-Secret` cmdlet με `Get-Content` από mounted secrets
-  - Χρήση standard Docker pattern `/run/secrets/*`
-  - Platform-agnostic secret management
+- refactor(secrets): Μετάβαση από τη διαχείριση μυστικών PowerShell (PowerShell SecretManagement) στα μυστικά Docker (Docker secrets)
+  - Αντικατάσταση του `Get-Secret` cmdlet με το `Get-Content` από προσαρτημένα μυστικά
+  - Χρήση του τυπικού προτύπου Docker `/run/secrets/*`
+  - Διαχείριση μυστικών ανεξάρτητα από την πλατφόρμα
 
 ## [1.0.64] - 2025-06-10
 
 ### 📝 Τεκμηρίωση
 
-- Ενημέρωση README.md με βελτιωμένες οδηγίες
+- docs(readme): Ενημέρωση README.md με βελτιωμένες οδηγίες
 
 ### 🐛 Διορθώθηκαν
 
-- Διόρθωση λογικής αποστολής ειδοποιήσεων ώστε να στέλνονται μόνο για τις επηρεαζόμενες γέφυρες
-  - Αντικατάσταση του `$CurrentState` με το specific bridge object στο `Send-BridgeNotification`
-  - Προσθήκη validation για την ύπαρξη του bridge state πριν την αποστολή
-  - Βελτίωση error handling με descriptive messages
+- fix(notifications): Διόρθωση λογικής αποστολής ειδοποιήσεων ώστε να στέλνονται μόνο για τις επηρεαζόμενες γέφυρες
+  - Αντικατάσταση του `$CurrentState` με το συγκεκριμένο αντικείμενο γέφυρας στο `Send-BridgeNotification`
+  - Προσθήκη επικύρωσης για την ύπαρξη της κατάστασης της γέφυρας πριν την αποστολή
+  - Βελτίωση διαχείρισης σφαλμάτων με περιγραφικά μηνύματα
 
 ### 🔄 Αλλαγές
 
-- Διόρθωση μορφοποίησης module manifest (καθαρισμός κενών γραμμών)
-- Refactoring του `Invoke-BridgeStatusComparison` για καλύτερη readability
-  - Αντικατάσταση inline handlers με lookup table
-  - Απλοποίηση της λογικής με `ContainsKey` check
-  - Βελτίωση του control flow με early continues
+- refactor(manifest): Διόρθωση μορφοποίησης module manifest (καθαρισμός κενών γραμμών)
+- refactor(status-comparison): Αναδιάρθρωση του Invoke-BridgeStatusComparison για καλύτερη αναγνωσιμότητα
+  - Αντικατάσταση ενσωματωμένων χειριστών με πίνακα αναζήτησης
+  - Απλοποίηση της λογικής με έλεγχο `ContainsKey`
+  - Βελτίωση της ροής ελέγχου με πρόωρες συνεχίσεις
 
 ## [1.0.63] - 2025-06-05
 
 ### 📝 Τεκμηρίωση
 
-- Ενημέρωση README.md με εκτενές παράδειγμα για SecretStore automation
-- Ενημέρωση CHANGELOG.md με την τρέχουσα έκδοση
+- docs(readme): Ενημέρωση README.md με εκτενές παράδειγμα για την αυτοματοποίηση του SecretStore
+- docs(changelog): Ενημέρωση CHANGELOG.md με την τρέχουσα έκδοση
 
 ### ✨ Προστέθηκαν
 
-- Detailed guide για ασφαλή αυτοματοποίηση με Microsoft.PowerShell.SecretStore
-  - Step-by-step οδηγίες για unattended execution
-  - NIST SP 800-53 (IA-5) compliant approach
-  - Best practices για secret management
-- Παραδείγματα για:
-  - Vault password storage με Export-Clixml
-  - SecretStore configuration για automation
-  - Secure secret retrieval σε scripts
+- docs(secrets): Λεπτομερής οδηγός για ασφαλή αυτοματοποίηση με Microsoft.PowerShell.SecretStore
+  - Οδηγίες βήμα-προς-βήμα για εκτέλεση χωρίς επίβλεψη
+  - Προσέγγιση συμβατή με το πρότυπο NIST SP 800-53 (IA-5)
+  - Βέλτιστες πρακτικές για τη διαχείριση μυστικών
+- docs(secrets): Παραδείγματα για
+  - Αποθήκευση κωδικού πρόσβασης στο Vault με Export-Clixml
+  - Διαμόρφωση του SecretStore για αυτοματοποίηση
+  - Ασφαλής ανάκτηση μυστικών σε σενάρια
 
 ### 🔧 CI & Συντήρηση
 
-- Βελτίωση release workflow με automated changelog commits
-  - Git user configuration για github-actions[bot]
-  - Auto-commit changelog updates με [skip ci] flag
-  - Push changes πριν το release creation
-- Version bump από 1.0.62 σε 1.0.63
+- ci(release): Βελτίωση της ροής εργασίας κυκλοφορίας με αυτόματες υποβολές changelog
+  - Διαμόρφωση χρήστη Git για το github-actions[bot]
+  - Αυτόματη υποβολή ενημερώσεων του changelog με τη σημαία [skip ci]
+  - Ώθηση αλλαγών πριν τη δημιουργία της κυκλοφορίας
+- build(version): Version bump από 1.0.62 σε 1.0.63
 
 ---
 
@@ -294,7 +294,7 @@
 ### ❌ Αφαιρέθηκαν
 
 - refactor: Μόνο ενημέρωση έκδοσης στο psd1
-  (το changelog πλέον γίνεται upstream)
+  (το changelog πλέον γίνεται στην ανώτερρη ροή / upstream)
 
 ---
 
@@ -302,13 +302,13 @@
 
 ### ✨ Προστέθηκαν
 
-- Ενσωμάτωση mikepenz/release-changelog-builder-action για αυτόματο changelog
-- Προσθήκη έξυπνης επιλογής From ref με Get-LatestTagOnCurrentBranch
-- Νέο test-matrix job & cleanup artifacts για multi-OS/multi-version PowerShell
+- ci(changelog): Ενσωμάτωση mikepenz/release-changelog-builder-action για αυτόματο changelog
+- feat(git): Προσθήκη έξυπνης επιλογής From ref με Get-LatestTagOnCurrentBranch
+- ci(testing): Νέα εργασία πίνακα δοκιμών (test-matrix job) & καθαρισμός τεχνουργημάτων για multi-OS/multi-version PowerShell
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
-- Απλοποίηση και βελτίωση λογικής git log και Gatekeeper
+- refactor(release): Απλοποίηση και βελτίωση της λογικής του git log και του Gatekeeper
 
 ---
 
@@ -316,9 +316,8 @@
 
 ### ✨ Προστέθηκαν
 
-- Προσθήκη ExcludeHousekeeping switch στο Update-ReleaseChangeLog.ps1
-- Δυνατότητα έξυπνου commit filtering (From/To refs,
-  ExcludeHousekeeping & IncludeMergeCommits flags)
+- feat(changelog): Προσθήκη διακόπτη ExcludeHousekeeping στο Update-ReleaseChangeLog.ps1
+- feat(changelog): Δυνατότητα έξυπνου φιλτραρίσματος commits (From/To refs, σημαίες ExcludeHousekeeping & IncludeMergeCommits)
 
 ---
 
@@ -326,15 +325,13 @@
 
 ### ✨ Προστέθηκαν
 
-- Ξεχωριστό βήμα tagging Docker image ως latest
-- Εισαγωγή helper functions Send-BridgeNotification &
-  Write-BridgeStage στο BridgeWatcher.psm1
-- Μεταφορά helper functions σε ξεχωριστά αρχεία
+- feat(docker): Ξεχωριστό βήμα προσθήκης ετικέτας (tagging) της εικόνας Docker ως latest
+- feat(notifications): Εισαγωγή βοηθητικών συναρτήσεων Send-BridgeNotification & Write-BridgeStage στο BridgeWatcher.psm1
+- refactor: Μεταφορά βοηθητικών συναρτήσεων σε ξεχωριστά αρχεία
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
-- Αναδιάρθρωση PowerShell Module Publish workflow
-  (inputs, setup, checkout depth)
+- refactor(publish): Αναδιάρθρωση της ροής εργασίας δημοσίευσης του PowerShell Module (είσοδοι / inputs, ρύθμιση / setup, βάθος checkout / checkout depth)
 
 ---
 
@@ -342,12 +339,12 @@
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
-- Πλήρης αναβάθμιση Update-ReleaseChangeLog.ps1
-  με error handling & verbose logging
-- Επανασχεδιασμός Get-PotentialNextVersion.ps1
-  με καλύτερο error handling και semver ταξινόμηση
-- Ενοποίηση Release Orchestrator σε Release Process (ενσωμάτωση Gatekeeper)
-- Structured stages σε Set-FinalModuleVersion.ps1
+- refactor(changelog): Πλήρης αναβάθμιση του Update-ReleaseChangeLog.ps1
+  με διαχείριση σφαλμάτων & λεπτομερή καταγραφή
+- refactor(version): Επανασχεδιασμός του Get-PotentialNextVersion.ps1
+  με καλύτερη διαχείριση σφαλμάτων και ταξινόμηση semver
+- refactor(release): Ενοποίηση του Release Orchestrator στη διαδικασία κυκλοφορίας (ενσωμάτωση Gatekeeper)
+- refactor(version): Δομημένα στάδια στο Set-FinalModuleVersion.ps1
 
 ---
 
@@ -355,9 +352,8 @@
 
 ### ✨ Προστέθηκαν
 
-- HEALTHCHECK & αλλαγή ENTRYPOINT σε Alpine shell στο Dockerfile
-- Προστέθηκε φάκελος εξόδου `/tmp`,
-  try/catch & exit 1 σε σφάλμα στο Start-BridgeStatusMonitor
+- feat(docker): HEALTHCHECK & αλλαγή του ENTRYPOINT σε κέλυφος Alpine στο Dockerfile
+- feat(monitor): Προστέθηκε φάκελος εξόδου `/tmp`, try/catch & exit 1 σε περίπτωση σφάλματος στο Start-BridgeStatusMonitor
 
 ---
 
@@ -365,10 +361,10 @@
 
 ### ✨ Προστέθηκαν
 
-- Flag αρχείο changelog_updated.flag για νέα commits
-- Υποστήριξη καταστάσεων “Κλειστή για συντήρηση” σε όλα τα layers (cmdlets & tests)
-- Υποστήριξη custom format view για Bridge.Status (BridgeStatus.format.ps1xml)
-- Νέα Pester tests για “Κλειστή για συντήρηση” transitions
+- feat(changelog): Αρχείο σημαίας changelog_updated.flag για νέα commits
+- feat(status): Υποστήριξη καταστάσεων “Κλειστή για συντήρηση” σε όλα τα επίπεδα (cmdlets & tests)
+- feat(format): Υποστήριξη προσαρμοσμένης προβολής μορφοποίησης για το Bridge.Status (BridgeStatus.format.ps1xml)
+- feat(testing): Νέες δοκιμές Pester για μεταβάσεις της κατάστασης “Κλειστή για συντήρηση”
 
 ---
 
@@ -376,8 +372,7 @@
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
-- Βελτιστοποίηση workflow δημοσίευσης PowerShell module (actions/checkout@v4,
-  fetch all tags, bump/update/commit/tag/release/publish, error handling)
+- refactor(publish): Βελτιστοποίηση της ροής εργασίας δημοσίευσης του PowerShell module (actions/checkout@v4, ανάκτηση όλων των ετικετών, αύξηση έκδοσης/ενημέρωση/υποβολή/ετικέτα/κυκλοφορία/δημοσίευση, διαχείριση σφαλμάτων)
 
 ---
 
@@ -385,8 +380,8 @@
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
-- Ενεργοποίηση τερματισμού pipeline σε αποτυχίες tests
-- Αναβάθμιση actions, caching modules, conditional test & coverage upload
+- refactor(ci): Ενεργοποίηση τερματισμού της διοχέτευσης σε αποτυχίες δοκιμών
+- refactor(ci): Αναβάθμιση ενεργειών, προσωρινής αποθήκευσης ενοτήτων, δοκιμών υπό όρους & μεταφόρτωσης κάλυψης
 
 ---
 
@@ -394,12 +389,12 @@
 
 ### 🐛 Διορθώθηκαν
 
-- Έλεγχος για μη κενές optional παραμέτρους στο New-BridgePushoverPayload
-- Συντακτικό λάθος στο git tag --sort στο Get-GitCommitsSinceLastRelease.ps1
+- fix(pushover): Έλεγχος για μη κενές προαιρετικές παραμέτρους στο New-BridgePushoverPayload
+- fix(git): Συντακτικό λάθος στο git tag --sort στο Get-GitCommitsSinceLastRelease.ps1
 
 ### ✨ Προστέθηκαν
 
-- Filtering, merge support & προστασία διπλότυπων changelogs στο release pipeline
+- feat(release): Φιλτράρισμα, υποστήριξη συγχώνευσης & προστασία διπλότυπων changelogs στη διοχέτευση κυκλοφορίας
 
 ---
 
@@ -407,12 +402,12 @@
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
-- Αφαίρεση break από το catch στη Start-BridgeStatusMonitor για συνεχή παρακολούθηση
+- refactor(monitor): Αφαίρεση του break από το catch στο Start-BridgeStatusMonitor για συνεχή παρακολούθηση
 
 ### ✨ Προστέθηκαν
 
-- Υποστήριξη custom format view για Bridge.Status
-- Pester tests για αλλαγές status “Κλειστή για συντήρηση”
+- feat(format): Υποστήριξη προσαρμοσμένης προβολής μορφής για το Bridge.Status
+- test(status): Δοκιμές Pester για αλλαγές κατάστασης “Κλειστή για συντήρηση”
 
 ---
 
@@ -420,7 +415,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Πρόσθετα Pester tests για “Κλειστή για συντήρηση” στο Invoke-BridgeStatusComparison
+- test(status): Πρόσθετες δοκιμές Pester για την κατάσταση “Κλειστή για συντήρηση” στο Invoke-BridgeStatusComparison
 
 ---
 
@@ -428,8 +423,8 @@
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
-- Πλήρης εναρμόνιση headers → emojis στο Get-FormattedReleaseNotes.ps1
-- Νέα μορφοποίηση release notes
+- refactor(release): Πλήρης εναρμόνιση κεφαλίδων → emojis στο Get-FormattedReleaseNotes.ps1
+- refactor(release): Νέα μορφοποίηση των σημειώσεων κυκλοφορίας
 
 ---
 
@@ -437,11 +432,11 @@
 
 ### 🐛 Διορθώθηκαν
 
-- Λάθος σύνταξη στο git tag --sort για Get-GitCommitsSinceLastRelease.ps1
+- fix(git): Λάθος σύνταξη στο git tag --sort για το Get-GitCommitsSinceLastRelease.ps1
 
 ### ✨ Προστέθηκαν
 
-- Επέκταση release pipeline με filtering, merge support & προστασία διπλότυπων changelogs
+- feat(release): Επέκταση της διοχέτευσης κυκλοφορίας με φιλτράρισμα, υποστήριξη συγχώνευσης & προστασία διπλότυπων changelogs
 
 ---
 
@@ -449,7 +444,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Emojis στα release notes & βελτιωμένο help στο Get-FormattedReleaseNotes
+- feat(release): Emojis στις σημειώσεις κυκλοφορίας & βελτιωμένη βοήθεια στο Get-FormattedReleaseNotes
 
 ---
 
@@ -457,7 +452,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Script για αυτόματη αύξηση patch version σε PowerShell module manifest
+- feat(manifest): Σενάριο για αυτόματη αύξηση της έκδοσης patch στο PowerShell module manifest
 
 ---
 
@@ -465,8 +460,8 @@
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
-- Ενημέρωση regex για sections τύπου `## [1.0.24]` στο CHANGELOG.md
-- Script για αυτόματη εξαγωγή release notes & βελτιώσεις workflow
+- refactor(changelog): Ενημέρωση regex για ενότητες τύπου ## [1.0.24] στο CHANGELOG.md
+- refactor(release): Σενάριο για αυτόματη εξαγωγή σημειώσεων κυκλοφορίας & βελτιώσεις της ροής εργασίας
 
 ---
 
@@ -474,8 +469,7 @@
 
 ### ✨ Προστέθηκαν
 
-- Script-based σύστημα αυτόματης δημιουργίας και ενημέρωσης
-  CHANGELOG στο `/scripts/`
+- feat(changelog): Σύστημα βασισμένο σε σενάρια για αυτόματη δημιουργία και ενημέρωση του CHANGELOG στο /scripts/
 
 ---
 
@@ -483,8 +477,8 @@
 
 ### 🐛 Διορθώθηκαν
 
-- Προσθήκη try/catch στο test αποτυχίας API για Send-BridgePushoverRequest
-- Structured exception handling στο Send-BridgePushoverRequest
+- fix(pushover): Προσθήκη try/catch στη δοκιμή αποτυχίας API για το Send-BridgePushoverRequest
+- fix(pushover): Δομημένος χειρισμός εξαιρέσεων στο Send-BridgePushoverRequest
 
 ---
 
@@ -492,9 +486,9 @@
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
-- Μετάφραση description & διόρθωση αναμενόμενων κλήσεων Write-BridgeLog σε Start-BridgeStatusMonitor.Tests
-- Μετάφραση μηνυμάτων καταγραφής σε Start-BridgeStatusMonitor σε ελληνικά
-- Διόρθωση άρθρου στο Verbose μήνυμα της Invoke-BridgeStatusComparison
+- refactor(testing): Μετάφραση περιγραφής & διόρθωση αναμενόμενων κλήσεων Write-BridgeLog στο Start-BridgeStatusMonitor.Tests
+- refactor(monitor): Μετάφραση μηνυμάτων καταγραφής στο Start-BridgeStatusMonitor στα ελληνικά
+- refactor(status-comparison): Διόρθωση άρθρου στο λεπτομερές μήνυμα της Invoke-BridgeStatusComparison
 
 ---
 
@@ -502,6 +496,6 @@
 
 ### ✨ Προστέθηκαν
 
-- Αρχικό release του BridgeWatcher module
+- feat: Αρχική κυκλοφορία του module BridgeWatcher
 
 ---
