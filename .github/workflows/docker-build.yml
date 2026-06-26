@@ -144,6 +144,20 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
+      - name: Generate SBOM for Docker image
+        uses: aquasecurity/trivy-action@4b9b6fb4ef28b31450391a93ade098bb00de584e
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
+          format: 'cyclonedx'
+          output: 'sbom.json'
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sbom
+          path: sbom.json
+          retention-days: 7
+
       - name: Stop test container
         if: always()
         run: |
