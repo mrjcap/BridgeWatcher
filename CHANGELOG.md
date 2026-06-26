@@ -40,14 +40,14 @@
 
 ### ✨ Προστέθηκαν
 
-- feat: Προσθήκη χαρακτηριστικών [OutputType()] για καλύτερη τεκμηρίωση
+- feat(metadata): Προσθήκη χαρακτηριστικών [OutputType()] για καλύτερη τεκμηρίωση
 - feat(error-handling): Βελτίωση χειρισμού σφαλμάτων, επικύρωσης και κάλυψης δοκιμών
 - feat(docs): Εναρμόνιση βοήθειας σχολίων σε ιδιωτικές συναρτήσεις
 
 ### 🐛 Διορθώθηκαν
 
-- fix: διόρθωση μορφοποίησης και εσοχών στο Resolve-BridgeStateForChange
-- fix: Συμμόρφωση με PSScriptAnalyzer και βελτιώσεις επικύρωσης παραμέτρων
+- fix(resolve-state): διόρθωση μορφοποίησης και εσοχών στο Resolve-BridgeStateForChange
+- fix(validation): Συμμόρφωση με PSScriptAnalyzer και βελτιώσεις επικύρωσης παραμέτρων
 
 ## [1.0.75] - 2025-06-13
 
@@ -72,12 +72,12 @@
 
 ### ✨ Προστέθηκαν
 
-- feat: ενημέρωση Update-ReleaseChangeLog.ps1 για χρήση Manage-Changelog.ps1
-- feat: δημιουργία Manage-Changelog.ps1 για consolidated changelog operations
+- feat(changelog): ενημέρωση Update-ReleaseChangeLog.ps1 για χρήση Manage-Changelog.ps1
+- feat(changelog): δημιουργία Manage-Changelog.ps1 για consolidated changelog operations
 
 ### 🐛 Διορθώθηκαν
 
-- fix: αντικατάσταση null-coalescing operator για PowerShell compatibility
+- fix(compatibility): αντικατάσταση null-coalescing operator για PowerShell compatibility
 - fix(scripts): διόρθωση syntax errors και αφαίρεση duplicate κώδικα στο Manage-Changelog.ps1
 - fix(scripts): διόρθωση σφάλματος 'Cannot index into a null array' στο Update-ReleaseChangeLog.ps1
 - fix(scripts): διόρθωση empty changelog generation στο Update-ReleaseChangeLog.ps1
@@ -208,8 +208,8 @@
 
 ### 🔄 Αλλαγές
 
-- refactor: Προσθήκη καταλόγων .cache και .local για προσωρινή αποθήκευση του PowerShell module
-- refactor: Βελτίωση δομής καταλόγου για καλύτερη απομόνωση του module
+- refactor(module): Προσθήκη καταλόγων .cache και .local για προσωρινή αποθήκευση του PowerShell module
+- refactor(module): Βελτίωση δομής καταλόγου για καλύτερη απομόνωση του module
 - refactor(docker): Καθαρισμός των λεπτομερών σχολίων για ένα πιο καθαρό Dockerfile
 
 ### 🐛 Διορθώθηκαν
@@ -220,7 +220,7 @@
 
 - docs(changelog): Ενημέρωση CHANGELOG.md με λεπτομερείς καταχωρίσεις για τις εκδόσεις 1.0.64 και 1.0.65
 - docs(changelog): Προσθήκη κατηγοριών emoji για καλύτερη αναγνωσιμότητα
-- docs: Αναλυτική τεκμηρίωση των breaking αλλαγών και διορθώσεων
+- docs(release): Αναλυτική τεκμηρίωση των breaking αλλαγών και διορθώσεων
 
 ## [1.0.65] - 2025-06-10
 
@@ -293,7 +293,7 @@
 
 ### ❌ Αφαιρέθηκαν
 
-- refactor: Μόνο ενημέρωση έκδοσης στο psd1
+- refactor(version): Μόνο ενημέρωση έκδοσης στο psd1
   (το changelog πλέον γίνεται στην ανώτερρη ροή / upstream)
 
 ---
@@ -327,7 +327,7 @@
 
 - feat(docker): Ξεχωριστό βήμα προσθήκης ετικέτας (tagging) της εικόνας Docker ως latest
 - feat(notifications): Εισαγωγή βοηθητικών συναρτήσεων Send-BridgeNotification & Write-BridgeStage στο BridgeWatcher.psm1
-- refactor: Μεταφορά βοηθητικών συναρτήσεων σε ξεχωριστά αρχεία
+- refactor(functions): Μεταφορά βοηθητικών συναρτήσεων σε ξεχωριστά αρχεία
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
@@ -496,6 +496,6 @@
 
 ### ✨ Προστέθηκαν
 
-- feat: Αρχική κυκλοφορία του module BridgeWatcher
+- feat(release): Αρχική κυκλοφορία του module BridgeWatcher
 
 ---
