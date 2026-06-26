@@ -1,4 +1,6 @@
-﻿function Invoke-BridgeOCRRequest {
+function Invoke-BridgeOCRRequest {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'ApiKey',
+        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -32,12 +34,7 @@
         [Parameter(Mandatory)][string]$ApiKey,
         [Parameter(Mandatory)][string]$RequestBody,
         [Parameter()][PSCustomObject]$Configuration
-    )    # Get OCR API URL from configuration or use fallback
-    $url = if ($Configuration -and $Configuration.OCRApiUrl) {
-        "$($Configuration.OCRApiUrl)?key=$ApiKey"
-    } else {
-        "https://vision.googleapis.com/v1/images:annotate?key=$ApiKey"
-    }
+    )
 
     # Get messages from configuration or use fallback
     $startMessage = if ($Configuration -and $Configuration.OCRMessages -and $Configuration.OCRMessages.StartOCR) {
@@ -63,10 +60,13 @@
         $Configuration.LoggingConfig.ErrorStage
     } else {
         'Σφάλμα'
-    }    $url = if ($Configuration -and $Configuration.OCRApiUrl) {
-        "$($Configuration.OCRApiUrl)?key=$ApiKey"
+    }
+
+    # Κατασκευή URL χωρίς API key — το κλειδί πηγαίνει στο header
+    $url = if ($Configuration -and $Configuration.OCRApiUrl) {
+        "$($Configuration.OCRApiUrl)"
     } else {
-        "https://vision.googleapis.com/v1/images:annotate?key=$ApiKey"
+        "https://vision.googleapis.com/v1/images:annotate"
     }
     try {
         $invokeRestMethodSplat = @{
@@ -74,6 +74,7 @@
             Method      = 'Post'
             Body        = $RequestBody
             ContentType = 'application/json'
+            Headers     = @{ 'X-Goog-Api-Key' = $ApiKey }
             ErrorAction = 'Stop'
         }
         $writeBridgeLogSplat = @{

@@ -1,4 +1,4 @@
-﻿Import-Module './modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
+Import-Module './modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
 
 $API_KEY = Get-Content '/run/secrets/API_KEY' -Raw
 $POAPI_KEY = Get-Content '/run/secrets/POAPI_KEY' -Raw
@@ -32,8 +32,12 @@ try {
     Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat
 } catch {
     Write-Error "Monitor failed: $_"
-    # Send alert?
-    # Retry logic?
+    # F-10: Alert on monitoring failure via Pushover
+    try {
+        Send-BridgePushover -PoUserKey $POUSER_KEY -PoApiKey $POAPI_KEY -Message "⚠️ BridgeWatcher monitor failed: $($_.Exception.Message)" -Title 'BridgeWatcher Alert' -Priority 1
+    } catch {
+        Write-Warning "Failed to send failure alert: $($_.Exception.Message)"
+    }
     exit 1  # Container θα κάνει restart αν έχεις --restart policy
 }
 

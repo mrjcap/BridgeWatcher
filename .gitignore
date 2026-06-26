@@ -23,3 +23,8 @@ Desktop.ini
 # Temporary files
 *.tmp
 *.temp
+
+# Coding Agent files
+.agents/
+skills-lock.json
+install.ps1

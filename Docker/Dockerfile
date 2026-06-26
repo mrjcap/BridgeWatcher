@@ -47,6 +47,9 @@ RUN mkdir -p /home/appuser/scripts/modules \
 
 RUN mkdir -p /tmp && chmod 1777 /tmp
 
+# CIS Docker 4.8 — Remove setuid/setgid binaries to prevent privilege escalation
+RUN find / -perm /6000 -type f -exec chmod a-s {} \; 2>/dev/null || true
+
 USER appuser
 WORKDIR /home/appuser/scripts
 
@@ -54,7 +57,7 @@ COPY --chown=${PUID}:${PGID} ./BridgeWatcher ./modules/BridgeWatcher
 COPY --chown=${PUID}:${PGID} Docker/entrypoint.sh /home/appuser/scripts/entrypoint.sh
 COPY --chown=${PUID}:${PGID} run.ps1 .
 
-EXPOSE 8090
+# EXPOSE 8090  # Re-enable when REST API is implemented
 
 ENTRYPOINT ["sh", "./entrypoint.sh"]
 
