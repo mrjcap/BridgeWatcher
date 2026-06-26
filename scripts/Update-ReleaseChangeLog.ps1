@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 <#
 .SYNOPSIS
 Αυτόματο update CHANGELOG.md με based-on-commits sections.
@@ -190,13 +190,18 @@ try {
     }
 
     $defaultSections = @{
-        'Προστέθηκαν'            = @()
-        'Αλλαγές'                = @()
-        'Υποψήφια προς απόσυρση' = @()
-        'Αφαιρέθηκαν'            = @()
-        'Διορθώθηκαν'            = @()
-        'Ασφάλεια'               = @()
-        'Τεκμηρίωση'             = @()
+        'feat'     = @()
+        'fix'      = @()
+        'refactor' = @()
+        'docs'     = @()
+        'ci'       = @()
+        'build'    = @()
+        'test'     = @()
+        'chore'    = @()
+        'style'    = @()
+        'perf'     = @()
+        'revert'   = @()
+        'other'    = @()
     }
 
     foreach ($key in $defaultSections.Keys) {
@@ -218,13 +223,18 @@ try {
         Version       = $Version
         Action        = 'Update'
         ChangelogPath = $changelogPath
-        Added         = if ($sections['Προστέθηκαν']) { $sections['Προστέθηκαν'] } else { @() }
-        Changed       = if ($sections['Αλλαγές']) { $sections['Αλλαγές'] } else { @() }
-        Deprecated    = if ($sections['Υποψήφια προς απόσυρση']) { $sections['Υποψήφια προς απόσυρση'] } else { @() }
-        Removed       = if ($sections['Αφαιρέθηκαν']) { $sections['Αφαιρέθηκαν'] } else { @() }
-        Fixed         = if ($sections['Διορθώθηκαν']) { $sections['Διορθώθηκαν'] } else { @() }
-        Security      = if ($sections['Ασφάλεια']) { $sections['Ασφάλεια'] } else { @() }
-        Documentation = if ($sections['Τεκμηρίωση']) { $sections['Τεκμηρίωση'] } else { @() }
+        Feat          = if ($sections['feat']) { $sections['feat'] } else { @() }
+        Fix           = if ($sections['fix']) { $sections['fix'] } else { @() }
+        Refactor      = if ($sections['refactor']) { $sections['refactor'] } else { @() }
+        Docs          = if ($sections['docs']) { $sections['docs'] } else { @() }
+        Ci            = if ($sections['ci']) { $sections['ci'] } else { @() }
+        Build         = if ($sections['build']) { $sections['build'] } else { @() }
+        Test          = if ($sections['test']) { $sections['test'] } else { @() }
+        Chore         = if ($sections['chore']) { $sections['chore'] } else { @() }
+        Style         = if ($sections['style']) { $sections['style'] } else { @() }
+        Perf          = if ($sections['perf']) { $sections['perf'] } else { @() }
+        Revert        = if ($sections['revert']) { $sections['revert'] } else { @() }
+        Other         = if ($sections['other']) { $sections['other'] } else { @() }
     }
 
     & "$scriptRoot\Manage-Changelog.ps1" @updateArgs
