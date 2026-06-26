@@ -98,6 +98,35 @@ param(
     [string[]]$Other
 )
 
+function Wrap-Line {
+    param(
+        [string]$Line,
+        [int]$MaxLen = 120
+    )
+    if ($Line.Length -le $MaxLen) { return $Line }
+    
+    # Determine indentation prefix
+    $prefix = ""
+    if ($Line -match '^(\s*-\s+|\s+)') {
+        $prefix = $Matches[1]
+    }
+    $indent = " " * $prefix.Length
+    
+    $chunks = @()
+    $current = $Line
+    
+    while ($current.Length -gt $MaxLen) {
+        $breakIdx = $current.LastIndexOf(' ', $MaxLen - 1)
+        if ($breakIdx -lt $indent.Length + 10) {
+            $breakIdx = $MaxLen
+        }
+        $chunks += $current.Substring(0, $breakIdx)
+        $current = $indent + $current.Substring($breakIdx).TrimStart()
+    }
+    $chunks += $current
+    return $chunks -join "`n"
+}
+
 switch ($Action) {
     'Update' {
         if (-not $Version) {
@@ -192,7 +221,23 @@ switch ($Action) {
             if ($items.Count -gt 0) {
                 $newEntry += "`n### $($section.Title)`n`n"
                 foreach ($item in $items) {
-                    $newEntry += "- $item`n"
+                    $parts = $item -split ' \- '
+                    $formattedItem = ""
+                    if ($parts.Count -gt 1) {
+                        $formattedItem = "- $($parts[0])"
+                        for ($i = 1; $i -lt $parts.Count; $i++) {
+                            $formattedItem += "`n  - $($parts[$i])"
+                        }
+                    } else {
+                        $formattedItem = "- $item"
+                    }
+                    
+                    # Wrap each line in the formatted item to 120 chars
+                    $wrappedLines = @()
+                    foreach ($l in ($formattedItem -split "`n")) {
+                        $wrappedLines += Wrap-Line -Line $l
+                    }
+                    $newEntry += ($wrappedLines -join "`n") + "`n"
                 }
             }
         }
