@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### ✨ Προστέθηκαν
+
 - Προσθήκη πολιτικής ασφάλειας ([SECURITY.md](SECURITY.md)) και απαιτήσεων ασφάλειας εφαρμογών ([docs/SECURITY-REQUIREMENTS.md](docs/SECURITY-REQUIREMENTS.md))
 - Προσθήκη οδηγού αντιμετώπισης περιστατικών ([docs/INCIDENT-RESPONSE.md](docs/INCIDENT-RESPONSE.md))
 - Προσθήκη οδηγού λειτουργιών και ανάκαμψης ([docs/OPERATIONS.md](docs/OPERATIONS.md))
@@ -18,9 +19,11 @@
 - Προσθήκη ενοποίησης Gitleaks για αυτόματο έλεγχο μυστικών (secret scanning) στο GitHub Actions CI workflow
 - Προσθήκη αυτόματης παραγωγής SBOM (Software Bill of Materials) μέσω Trivy στο Docker build pipeline
 - Προσθήκη προτύπου GitHub Issue για ετήσιο έλεγχο ασφάλειας και κινδύνων (annual risk review)
-- Προσθήκη αρχείων [docker-compose.yml](docker-compose.yml) και [Docker/filebeat.yml](Docker/filebeat.yml) για έλεγχο πόρων, ασφάλεια και ενεργή προώθηση αρχείων καταγραφής (active log forwarding)
+- Προσθήκη αρχείων [docker-compose.yml](docker-compose.yml) και [Docker/filebeat.yml](Docker/filebeat.yml)
+για έλεγχο πόρων, ασφάλεια και ενεργή προώθηση αρχείων καταγραφής (active log forwarding)
 
 ### 🛡️ Ασφάλεια
+
 - Διόρθωση F-1: Μεταφορά του Google Cloud Vision API key από τις παραμέτρους URL (query string) στην κεφαλίδα HTTP `X-Goog-Api-Key`
 - Διόρθωση F-3: Κατάργηση της έκθεσης της θύρας 8090 (unimplemented REST API) στο Dockerfile
 - Διόρθωση F-5: Αφαίρεση SUID/SGID δικαιωμάτων από εκτελέσιμα στο Docker base image
@@ -291,7 +294,7 @@
 ### ❌ Αφαιρέθηκαν
 
 - refactor: Μόνο ενημέρωση έκδοσης στο psd1
-(το changelog πλέον γίνεται upstream)
+  (το changelog πλέον γίνεται upstream)
 
 ---
 
@@ -315,7 +318,7 @@
 
 - Προσθήκη ExcludeHousekeeping switch στο Update-ReleaseChangeLog.ps1
 - Δυνατότητα έξυπνου commit filtering (From/To refs,
-ExcludeHousekeeping & IncludeMergeCommits flags)
+  ExcludeHousekeeping & IncludeMergeCommits flags)
 
 ---
 
@@ -325,13 +328,13 @@ ExcludeHousekeeping & IncludeMergeCommits flags)
 
 - Ξεχωριστό βήμα tagging Docker image ως latest
 - Εισαγωγή helper functions Send-BridgeNotification &
-Write-BridgeStage στο BridgeWatcher.psm1
+  Write-BridgeStage στο BridgeWatcher.psm1
 - Μεταφορά helper functions σε ξεχωριστά αρχεία
 
 ### ♻️ Αλλαγές/Βελτιώσεις
 
 - Αναδιάρθρωση PowerShell Module Publish workflow
-(inputs, setup, checkout depth)
+  (inputs, setup, checkout depth)
 
 ---
 
@@ -340,9 +343,9 @@ Write-BridgeStage στο BridgeWatcher.psm1
 ### ♻️ Αλλαγές/Βελτιώσεις
 
 - Πλήρης αναβάθμιση Update-ReleaseChangeLog.ps1
-με error handling & verbose logging
+  με error handling & verbose logging
 - Επανασχεδιασμός Get-PotentialNextVersion.ps1
-με καλύτερο error handling και semver ταξινόμηση
+  με καλύτερο error handling και semver ταξινόμηση
 - Ενοποίηση Release Orchestrator σε Release Process (ενσωμάτωση Gatekeeper)
 - Structured stages σε Set-FinalModuleVersion.ps1
 
@@ -354,7 +357,7 @@ Write-BridgeStage στο BridgeWatcher.psm1
 
 - HEALTHCHECK & αλλαγή ENTRYPOINT σε Alpine shell στο Dockerfile
 - Προστέθηκε φάκελος εξόδου `/tmp`,
-try/catch & exit 1 σε σφάλμα στο Start-BridgeStatusMonitor
+  try/catch & exit 1 σε σφάλμα στο Start-BridgeStatusMonitor
 
 ---
 
@@ -374,7 +377,7 @@ try/catch & exit 1 σε σφάλμα στο Start-BridgeStatusMonitor
 ### ♻️ Αλλαγές/Βελτιώσεις
 
 - Βελτιστοποίηση workflow δημοσίευσης PowerShell module (actions/checkout@v4,
-fetch all tags, bump/update/commit/tag/release/publish, error handling)
+  fetch all tags, bump/update/commit/tag/release/publish, error handling)
 
 ---
 
@@ -472,7 +475,7 @@ fetch all tags, bump/update/commit/tag/release/publish, error handling)
 ### ✨ Προστέθηκαν
 
 - Script-based σύστημα αυτόματης δημιουργίας και ενημέρωσης
-CHANGELOG στο `/scripts/`
+  CHANGELOG στο `/scripts/`
 
 ---
 
@@ -502,5 +505,3 @@ CHANGELOG στο `/scripts/`
 - Αρχικό release του BridgeWatcher module
 
 ---
-
-
