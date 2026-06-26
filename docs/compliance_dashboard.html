@@ -1566,7 +1566,7 @@
                         <div class="roadmap-icon" style="color: var(--aurora-green);"><i class="fa-solid fa-circle-check"></i></div>
                         <div class="roadmap-details">
                             <h3>Define Governance Contacts</h3>
-                            <p>Assign explicit personnel to the security roles outlined in the Incident Response Runbook. Update contacts list once defined.</p>
+                            <p>Assign explicit personnel to the security roles outlined in the Incident Response Runbook. Contacts updated to primary maintainer.</p>
                             <span class="badge badge-success" style="margin-top: 8px;"><i class="fa-solid fa-circle-check"></i> Completed</span>
                         </div>
                     </div>
@@ -1574,7 +1574,7 @@
                         <div class="roadmap-icon" style="color: var(--aurora-green);"><i class="fa-solid fa-circle-check"></i></div>
                         <div class="roadmap-details">
                             <h3>Active Log Forwarding</h3>
-                            <p>Transition from passive local logging to active forwarding by implementing syslog or Filebeat forwarding to an external SIEM endpoint.</p>
+                            <p>Transition from passive local logging to active forwarding by implementing syslog configurations or a Filebeat sidecar container.</p>
                             <span class="badge badge-success" style="margin-top: 8px;"><i class="fa-solid fa-circle-check"></i> Completed</span>
                         </div>
                     </div>
@@ -1582,7 +1582,7 @@
                         <div class="roadmap-icon" style="color: var(--aurora-green);"><i class="fa-solid fa-circle-check"></i></div>
                         <div class="roadmap-details">
                             <h3>Automated Secret Scanning</h3>
-                            <p>Integrate <code>gitleaks</code> as a pre-commit hook and CI workflow check to prevent accidental credential leakage in repository history.</p>
+                            <p>Integrate <code>gitleaks</code> as a CI workflow check in GitHub Actions to prevent accidental credential leakage in repository history.</p>
                             <span class="badge badge-success" style="margin-top: 8px;"><i class="fa-solid fa-circle-check"></i> Completed</span>
                         </div>
                     </div>
@@ -1591,6 +1591,30 @@
                         <div class="roadmap-details">
                             <h3>Automated Software Bill of Materials (SBOM)</h3>
                             <p>Configure automated SBOM generation (via <code>trivy sbom</code>) inside the Docker build pipeline to track software package integrity.</p>
+                            <span class="badge badge-success" style="margin-top: 8px;"><i class="fa-solid fa-circle-check"></i> Completed</span>
+                        </div>
+                    </div>
+                    <div class="roadmap-card" style="border-color: var(--aurora-green);">
+                        <div class="roadmap-icon" style="color: var(--aurora-green);"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="roadmap-details">
+                            <h3>Automate Annual Risk Review</h3>
+                            <p>Created GitHub Issue template (<code>annual_risk_review.md</code>) to establish a repeatable, version-controlled process for risk assessment updates.</p>
+                            <span class="badge badge-success" style="margin-top: 8px;"><i class="fa-solid fa-circle-check"></i> Completed</span>
+                        </div>
+                    </div>
+                    <div class="roadmap-card" style="border-color: var(--aurora-green);">
+                        <div class="roadmap-icon" style="color: var(--aurora-green);"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="roadmap-details">
+                            <h3>Formal Supply Chain Policy</h3>
+                            <p>Drafted <code>docs/SUPPLY-CHAIN.md</code> defining standards for pinning base image digests, SHA-pinning Actions, and dependency auditing.</p>
+                            <span class="badge badge-success" style="margin-top: 8px;"><i class="fa-solid fa-circle-check"></i> Completed</span>
+                        </div>
+                    </div>
+                    <div class="roadmap-card" style="border-color: var(--aurora-green);">
+                        <div class="roadmap-icon" style="color: var(--aurora-green);"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="roadmap-details">
+                            <h3>Evaluate Output JSON Encryption</h3>
+                            <p>Completed security analysis in <code>docs/SECURITY-REQUIREMENTS.md</code>. Formally accepted risk as non-PII and public status data.</p>
                             <span class="badge badge-success" style="margin-top: 8px;"><i class="fa-solid fa-circle-check"></i> Completed</span>
                         </div>
                     </div>
