@@ -219,10 +219,10 @@ docker run --rm aquasec/trivy image bridgewatcher:latest
 
 | Role | Name | Contact | Escalation Path |
 |------|------|---------|-----------------|
-| Primary Operator | Project Maintainer | GitHub Issues | First responder |
-| Project Owner | Project Maintainer | GitHub Issues | SEV-1 escalation |
-| Security Lead | Project Maintainer | GitHub Issues | Compromise events |
-| Google Cloud Admin | Project Maintainer | Google Cloud Console | API key rotation |
+| Primary Operator | Jay Cap (@mrjcap) | GitHub Issues / mrjcap@users.noreply.github.com | First responder |
+| Project Owner | Jay Cap (@mrjcap) | GitHub Issues / mrjcap@users.noreply.github.com | SEV-1 escalation |
+| Security Lead | Jay Cap (@mrjcap) | GitHub Issues / mrjcap@users.noreply.github.com | Compromise events |
+| Google Cloud Admin | Jay Cap (@mrjcap) | Google Cloud Console / Console Admin | API key rotation |
 
 **External Resources:**
 - [Google Cloud Support](https://cloud.google.com/support)
