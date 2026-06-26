@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Κατηγοριοποιεί commit messages σε sections changelog (Προστέθηκαν, Διορθώθηκαν, κ.λπ.) βασισμένο σε ελληνικά ρήματα και μοτίβα τύπου Keep a Changelog.
 
@@ -21,19 +21,18 @@ param(
 
 # Μοτίβα για κάθε κατηγορία (με conventional commits και ελληνικά)
 $patterns = @{
-    "Προστέθηκαν"            = @(
+    "feat"     = @(
         "^feat:",
         "^feat\(",
         "^προστέθ",
         "^προσθήκη",
         "^νέο",
         "^υποστήριξη",
-        "^προσθήκα",
         "^add",
         "^added",
         "^new "
     )
-    "Διορθώθηκαν"            = @(
+    "fix"      = @(
         "^fix:",
         "^fix\(",
         "^διορθ",
@@ -45,61 +44,74 @@ $patterns = @{
         "^bugfix",
         "^αποκαταστ"
     )
-    "Αλλαγές"                = @(
+    "refactor" = @(
         "^refactor:",
         "^refactor\(",
-        "^style:",
-        "^style\(",
-        "^perf:",
-        "^perf\(",
-        "^αλλαγ",
-        "^τροποπ",
-        "^μεταβ",
-        "^change",
-        "^changed",
         "^refactor",
-        "^αναβάθμ",
-        "^ανανεώσ"
+        "^αναδιάρθρωση",
+        "^βελτίωση"
     )
-    "Αφαιρέθηκαν"            = @(
-        "^καταργ",
-        "^αφαίρ",
-        "^διαγρά",
-        "^remove",
-        "^removed",
-        "^deleted"
-    )
-    "Υποψήφια προς απόσυρση" = @(
-        "^υποψήφια προς απόσυρση",
-        "^deprecat",
-        "^παρωχημ",
-        "^απόσυρση"
-    )
-    "Ασφάλεια"               = @(
-        "^ασφάλ",
-        "^security",
-        "^sec"
-    )
-    "Τεκμηρίωση"             = @(
+    "docs"     = @(
         "^docs:",
         "^docs\(",
         "^τεκμηρ",
         "^documentation",
-        "^readme",
-        "^ενημέρω(ση|θηκε).*changelog"  # Μόνο για explicit changelog updates
+        "^readme"
+    )
+    "ci"       = @(
+        "^ci:",
+        "^ci\(",
+        "^workflow",
+        "^gitlab"
+    )
+    "build"    = @(
+        "^build:",
+        "^build\(",
+        "^docker",
+        "^compose"
+    )
+    "test"     = @(
+        "^test:",
+        "^test\(",
+        "^testing",
+        "^pester",
+        "^δοκιμ"
+    )
+    "chore"    = @(
+        "^chore:",
+        "^chore\(",
+        "^bump",
+        "^συντήρ",
+        "^καθαρισμ"
+    )
+    "style"    = @(
+        "^style:",
+        "^style\("
+    )
+    "perf"     = @(
+        "^perf:",
+        "^perf\("
+    )
+    "revert"   = @(
+        "^revert:",
+        "^revert\("
     )
 }
 
 # Προετοιμασία sections
 $sections = @{
-    'Προστέθηκαν'            = @()
-    'Διορθώθηκαν'            = @()
-    'Αλλαγές'                = @()
-    'Αφαιρέθηκαν'            = @()
-    'Υποψήφια προς απόσυρση' = @()
-    'Ασφάλεια'               = @()
-    'Τεκμηρίωση'             = @()
-    'Άλλο'                   = @()
+    'feat'     = @()
+    'fix'      = @()
+    'refactor' = @()
+    'docs'     = @()
+    'ci'       = @()
+    'build'    = @()
+    'test'     = @()
+    'chore'    = @()
+    'style'    = @()
+    'perf'     = @()
+    'revert'   = @()
+    'other'    = @()
 }
 
 foreach ($msg in $Commits) {
@@ -120,8 +132,8 @@ foreach ($msg in $Commits) {
         if ($matched) { break }
     }
     if (-not $matched) {
-        Write-Verbose "  No match found, adding to 'Άλλο'"
-        $sections['Άλλο'] += $msg
+        Write-Verbose "  No match found, adding to 'other'"
+        $sections['other'] += $msg
     }
 }
 
