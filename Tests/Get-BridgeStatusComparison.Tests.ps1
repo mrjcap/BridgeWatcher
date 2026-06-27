@@ -22,7 +22,7 @@ InModuleScope 'BridgeWatcher' {
             Mock Write-Verbose {}
             # Κλήση υπό δοκιμή
             {
-                Get-BridgeStatusComparison -OutputFile $jsonFile -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
+                Get-BridgeStatusComparison -OutputFile $jsonFile -ApiKey (ConvertTo-SecureString 'a' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'u' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'k' -AsPlainText -Force)
             } | Should -Not -Throw
             # Καθαρισμός
             if (Test-Path $jsonFile) { Remove-Item $jsonFile -Force }
@@ -50,9 +50,9 @@ InModuleScope 'BridgeWatcher' {
             # Εκτέλεση της συνάρτησης Get-BridgeStatusComparison
             $getBridgeStatusComparisonSplat = @{
                 OutputFile = $jsonFile
-                ApiKey     = 'dummyApiKey'
-                PoUserKey  = 'dummyPoUserKey'
-                PoApiKey   = 'dummyPoApiKey'
+                ApiKey = (ConvertTo-SecureString 'dummyApiKey' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummyPoUserKey' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummyPoApiKey' -AsPlainText -Force)
             }
             { Get-BridgeStatusComparison @getBridgeStatusComparisonSplat } | Should -Not -Throw
             # Ελέγχουμε αν η συνάρτηση Get-BridgeStatus καλείται με το σωστό OutputFile και τα flags Verbose/Debug
@@ -62,3 +62,4 @@ InModuleScope 'BridgeWatcher' {
         }
     }
 }
+
