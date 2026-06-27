@@ -1,6 +1,4 @@
 function Invoke-BridgeOCRRequest {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'ApiKey',
-        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -31,7 +29,7 @@ function Invoke-BridgeOCRRequest {
 
     [OutputType([object])]
     param (
-        [Parameter(Mandatory)][string]$ApiKey,
+        [Parameter(Mandatory)][SecureString]$ApiKey,
         [Parameter(Mandatory)][string]$RequestBody,
         [Parameter()][PSCustomObject]$Configuration
     )
@@ -68,13 +66,15 @@ function Invoke-BridgeOCRRequest {
     } else {
         "https://vision.googleapis.com/v1/images:annotate"
     }
+    $plainApiKey = [System.Net.NetworkCredential]::new('', $ApiKey).Password
+
     try {
         $invokeRestMethodSplat = @{
             Uri         = $url
             Method      = 'Post'
             Body        = $RequestBody
             ContentType = 'application/json'
-            Headers     = @{ 'X-Goog-Api-Key' = $ApiKey }
+            Headers     = @{ 'X-Goog-Api-Key' = $plainApiKey }
             ErrorAction = 'Stop'
         }
         $writeBridgeLogSplat = @{
@@ -82,7 +82,23 @@ function Invoke-BridgeOCRRequest {
             Message = $startMessage
         }
         Write-BridgeLog @writeBridgeLogSplat
-        return Invoke-RestMethod @invokeRestMethodSplat
+
+        $maxRetries = 3
+        for ($i = 1; $i -le $maxRetries; $i++) {
+            try {
+                return Invoke-RestMethod @invokeRestMethodSplat
+            } catch [System.Net.WebException] {
+                $response = $_.Exception.Response
+                if ($response -and $response.StatusCode -in @(400, 401, 403)) {
+                    throw
+                }
+                if ($i -eq $maxRetries) { throw }
+                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+            } catch {
+                if ($i -eq $maxRetries) { throw }
+                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+            }
+        }
     } catch {
         $writeBridgeLogSplat = @{
             Stage   = $errorStage
