@@ -1,4 +1,4 @@
-﻿function Get-BridgeImage {
+function Get-BridgeImage {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -41,7 +41,7 @@
             'isthmia' { 'ΙΣΘΜΙΑ' } }
     }
 
-    $blocks = $HtmlContent -split '<div class="panel panel-primary\s*">'
+    $blocks = $HtmlContent -split '(?i)<div[^>]*class="[^"]*panel panel-primary[^"]*"[^>]*>'
     $block = $blocks | Where-Object { $_ -match "<b>$bridgeLabel</b>" }
     if (-not $block) {
         $writeBridgeLogSplat = @{
@@ -58,13 +58,11 @@
         )
         $PSCmdlet.ThrowTerminatingError($errorRecord)
     }
-    $bmatches = [regex]::Matches($block, '<img[^>]+src="([^"]+)"')
-    $imageList = [System.Collections.ArrayList]::new()
-    foreach ($m in $bmatches) {
-        $src = $m.Groups[1].Value
-        if ($src -notmatch '\.png$' -and $src -match 'image-bridge') {
-            $null = $imageList.Add([pscustomobject]@{ src = $src })
-        }
+    $bmatches = [regex]::Matches($block, '(?i)<img[^>]+src\s*=\s*["'']([^"'']+)["'']')
+    $imageList = $bmatches | Where-Object {
+        $_.Groups[1].Value -notmatch '\.png$' -and $_.Groups[1].Value -match 'image-bridge'
+    } | ForEach-Object {
+        [pscustomobject]@{ src = $_.Groups[1].Value }
     }
-    return $imageList
+    return [System.Collections.ArrayList]::new([object[]]@($imageList))
 }
