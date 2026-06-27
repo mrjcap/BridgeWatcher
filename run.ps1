@@ -1,8 +1,9 @@
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 Import-Module './modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
 
-$API_KEY = Get-Content '/run/secrets/API_KEY' -Raw
-$POAPI_KEY = Get-Content '/run/secrets/POAPI_KEY' -Raw
-$POUSER_KEY = Get-Content '/run/secrets/POUSER_KEY' -Raw
+$API_KEY = ConvertTo-SecureString (Get-Content '/run/secrets/API_KEY' -Raw) -AsPlainText -Force
+$POAPI_KEY = ConvertTo-SecureString (Get-Content '/run/secrets/POAPI_KEY' -Raw) -AsPlainText -Force
+$POUSER_KEY = ConvertTo-SecureString (Get-Content '/run/secrets/POUSER_KEY' -Raw) -AsPlainText -Force
 
 if (-not $API_KEY -or -not $POAPI_KEY -or -not $POUSER_KEY) {
     throw 'One or more secrets are missing or empty'
