@@ -12,9 +12,9 @@ InModuleScope 'BridgeWatcher' {
                     CurrentState = @(
                         @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; imageUrl = 'https://example.com/img.jpg'; timestamp = (Get-Date) }
                     )
-                    ApiKey       = 'dummy'
-                    PoUserKey    = 'dummy'
-                    PoApiKey     = 'dummy'
+                    ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                    PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                    PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
                 }
                 Invoke-BridgeClosedNotification @params
                 Assert-MockCalled -CommandName Invoke-BridgeOCRGoogleCloud -Exactly 1
@@ -30,7 +30,7 @@ InModuleScope 'BridgeWatcher' {
                 Mock Send-BridgePushover -MockWith { }
                 Mock Write-BridgeLog -MockWith { }
                 Mock Invoke-BridgeOCRGoogleCloud { throw 'Δεν πρέπει να κληθεί OCR!' }
-                Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug
+                Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -Verbose -Debug
                 Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
                 Assert-MockCalled -CommandName Write-BridgeLog -Exactly 1 -ParameterFilter { $Message -like '*κλειστή για συντήρηση*' }
                 Assert-MockCalled -CommandName Invoke-BridgeOCRGoogleCloud -Exactly 0
@@ -42,13 +42,13 @@ InModuleScope 'BridgeWatcher' {
                 }
                 Mock -CommandName Send-BridgePushover
                 Mock -CommandName Write-Debug
-                Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose
+                Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -Verbose
                 Assert-MockCalled -CommandName Write-Debug -Exactly 1 -Scope It
             }
             It 'Γράφει warning όταν αποτυγχάνει η OCR' {
                 Mock Invoke-BridgeOCRGoogleCloud { throw 'Fake OCR failure' }
                 $entry = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
-                { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
+                { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -Verbose } | Should -Not -Throw
             }
             It 'Γράφει debug και δεν καλεί Send-BridgePushover για άγνωστη κατάσταση' {
                 # Arrange
@@ -60,8 +60,9 @@ InModuleScope 'BridgeWatcher' {
                 }
                 Mock Send-BridgePushover { throw 'Δεν έπρεπε να εκτελεστεί!' }
                 # Act
-                { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug } | Should -Not -Throw
+                { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -Verbose -Debug } | Should -Not -Throw
             }
         }
     }
 }
+
