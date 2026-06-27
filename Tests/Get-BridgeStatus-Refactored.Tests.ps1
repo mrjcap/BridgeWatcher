@@ -244,3 +244,4 @@ InModuleScope 'BridgeWatcher' {
         }
     }
 } # End InModuleScope
+
