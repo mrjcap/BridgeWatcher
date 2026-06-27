@@ -10,8 +10,8 @@ InModuleScope 'BridgeWatcher' {
             }
             Mock -CommandName Write-BridgeLog -MockWith { }
             $sendPushoverSplat = @{
-                PoUserKey = 'U'
-                PoApiKey  = 'T'
+                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
                 Message   = 'hello'
             }
             Send-BridgePushover @sendPushoverSplat
@@ -25,8 +25,8 @@ InModuleScope 'BridgeWatcher' {
             Mock -CommandName Write-BridgeLog -MockWith { }
 
             $sendPushoverSplat = @{
-                PoUserKey = 'U'
-                PoApiKey  = 'T'
+                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
                 Message   = 'hello'
             }
 
@@ -45,8 +45,8 @@ InModuleScope 'BridgeWatcher' {
             Mock -CommandName Write-BridgeLog -MockWith { }
 
             $sendPushoverSplat = @{
-                PoUserKey = 'U'
-                PoApiKey  = 'T'
+                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
                 Message   = 'hello'
                 Url       = 'https://example.com'
             }
@@ -61,8 +61,8 @@ InModuleScope 'BridgeWatcher' {
             Mock -CommandName Write-BridgeLog -MockWith { }
 
             $sendPushoverSplat = @{
-                PoUserKey = 'U'
-                PoApiKey  = 'T'
+                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
                 Message   = 'hello'
                 Url       = 'http://example.com'
             }
@@ -72,8 +72,8 @@ InModuleScope 'BridgeWatcher' {
 
         It 'Απορρίπτει άκυρο URL' {
             $sendPushoverSplat = @{
-                PoUserKey = 'U'
-                PoApiKey  = 'T'
+                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
                 Message   = 'hello'
                 Url       = 'invalid-url'
             }
@@ -82,4 +82,5 @@ InModuleScope 'BridgeWatcher' {
         }
     }
 }
+
 
