@@ -22,19 +22,19 @@ InModuleScope 'BridgeWatcher' {
             Mock ConvertFrom-BridgeOCRResult {
                 return @{ mock = 'result' }
             }
-            $out = Invoke-BridgeOCRGoogleCloud -ApiKey 'abc' -ImageUri $validUri
+            $out = Invoke-BridgeOCRGoogleCloud -ApiKey (ConvertTo-SecureString 'abc' -AsPlainText -Force) -ImageUri $validUri
             $out.mock | Should -Be 'result'
             Assert-MockCalled Get-BridgeOCRRequestBody -Times 1
             Assert-MockCalled Invoke-BridgeOCRRequest -Times 1
             Assert-MockCalled ConvertFrom-BridgeOCRResult -Times 1
         }
         It 'Ρίχνει σφάλμα αν το URI είναι άκυρο' {
-            { Invoke-BridgeOCRGoogleCloud -ApiKey 'abc' -ImageUri 'notaurl' } | Should -Throw
+            { Invoke-BridgeOCRGoogleCloud -ApiKey (ConvertTo-SecureString 'abc' -AsPlainText -Force) -ImageUri 'notaurl' } | Should -Throw
         }
         It 'Γράφει Error όταν αποτυγχάνει η κλήση' {
             Mock Invoke-BridgeOCRRequest { 'Simulated OCR failure' }
             $invokeOCRGoogleCloudSplat = @{
-                ApiKey        = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
                 ImageUri      = 'https://image.jpg'
                 Verbose       = $true
                 ErrorAction   = 'SilentlyContinue'
@@ -44,7 +44,8 @@ InModuleScope 'BridgeWatcher' {
         }
         It 'Γράφει Write-Error όταν αποτυγχάνει η κλήση' {
             Mock Invoke-BridgeOCRRequest { throw 'Simulated OCR failure' }
-            { Invoke-BridgeOCRGoogleCloud -ApiKey 'dummy' -ImageUri 'https://image.jpg' -Verbose -ErrorAction SilentlyContinue } | Should -Throw 'Simulated OCR failure'
+            { Invoke-BridgeOCRGoogleCloud -ApiKey (ConvertTo-SecureString 'dummy' -AsPlainText -Force) -ImageUri 'https://image.jpg' -Verbose -ErrorAction SilentlyContinue } | Should -Throw 'Simulated OCR failure'
         }
     }
 }
+
