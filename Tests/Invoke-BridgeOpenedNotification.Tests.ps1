@@ -10,8 +10,8 @@ InModuleScope 'BridgeWatcher' {
                     CurrentState = @(
                         @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
                     )
-                    PoUserKey    = 'dummy'
-                    PoApiKey     = 'dummy'
+                    PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                    PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
                 }
                 Invoke-BridgeOpenedNotification @params
                 Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
@@ -25,8 +25,8 @@ InModuleScope 'BridgeWatcher' {
                     CurrentState = @(
                         @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
                     )
-                    PoUserKey    = 'dummy'
-                    PoApiKey     = 'dummy'
+                    PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                    PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
                 }
 
                 { Invoke-BridgeOpenedNotification @params } | Should -Throw '*Αποτυχία αποστολής ειδοποίησης ανοίγματος*'
@@ -40,4 +40,5 @@ InModuleScope 'BridgeWatcher' {
         }
     }
 }
+
 
