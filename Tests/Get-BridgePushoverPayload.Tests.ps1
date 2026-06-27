@@ -4,8 +4,8 @@ InModuleScope 'BridgeWatcher' {
     Describe 'New-PushoverPayload' {
         It 'Δημιουργεί σωστό payload με όλα τα πεδία' {
             $newPushoverPayloadSplat = @{
-                PoUserKey = 'u1'
-                PoApiKey  = 'a1'
+                PoUserKey = (ConvertTo-SecureString 'u1' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'a1' -AsPlainText -Force)
                 Message   = 'msg'
                 Device    = 'dev1'
                 Title     = 'test'
@@ -28,8 +28,8 @@ InModuleScope 'BridgeWatcher' {
         }
         It 'Δεν περιλαμβάνει optional πεδία όταν είναι null' {
             $newPushoverPayloadSplat = @{
-                PoUserKey = 'u1'
-                PoApiKey  = 'a1'
+                PoUserKey = (ConvertTo-SecureString 'u1' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'a1' -AsPlainText -Force)
                 Message   = 'msg'
             }
             $payload = Get-BridgePushoverPayload @newPushoverPayloadSplat
@@ -38,3 +38,4 @@ InModuleScope 'BridgeWatcher' {
         }
     }
 }
+
