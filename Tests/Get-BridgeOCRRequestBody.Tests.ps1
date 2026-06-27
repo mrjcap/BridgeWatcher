@@ -10,3 +10,4 @@ InModuleScope 'BridgeWatcher' {
         }
     }
 }
+
