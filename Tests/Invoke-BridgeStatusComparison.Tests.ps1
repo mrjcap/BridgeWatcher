@@ -16,9 +16,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $sameState
                 CurrentState  = $sameState
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             Should -Invoke -CommandName Invoke-BridgeClosedNotification -Exactly 0
@@ -33,9 +33,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previous
                 CurrentState  = $current
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -49,9 +49,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previous
                 CurrentState  = $current
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -67,9 +67,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previous
                 CurrentState  = $current
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Send-BridgePushover -Times 1
@@ -86,9 +86,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $same
                 CurrentState  = $same
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
@@ -102,9 +102,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή' }
                 CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
         }
@@ -115,9 +115,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
                 CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'ανικτή'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
         }
@@ -129,9 +129,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $base
                 CurrentState  = $base.Clone()
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             $params.CurrentState.timestamp = (Get-Date).AddMinutes(5)
             Invoke-BridgeStatusComparison @params
@@ -141,9 +141,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
                 CurrentState  = $null
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Throw
         }
@@ -151,9 +151,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $null
                 CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Throw
         }
@@ -163,9 +163,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
                 CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = $null }
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 1
@@ -186,9 +186,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previousState
                 CurrentState  = $currentState
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             # ✅ Αναμένουμε 2 κλήσεις (μία για κάθε αλλαγή)
@@ -203,9 +203,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $base
                 CurrentState  = $copy
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
@@ -225,9 +225,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previousState
                 CurrentState  = $currentState
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             # ✅ Περιμένουμε μία κλήση σε κάθε notification
@@ -235,24 +235,24 @@ InModuleScope 'BridgeWatcher' {
             Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Times 1
         }
         It 'Γράφει warning όταν λείπει κατάσταση' {
-            { Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ gefyraName = 'X'; gefyraStatus = 'Ανοιχτή' } -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' } | Should -Throw
+            { Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ gefyraName = 'X'; gefyraStatus = 'Ανοιχτή' } -ApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) } | Should -Throw
         }
         It 'Γράφει verbose όταν δεν υπάρχουν αλλαγές' {
             Mock Send-BridgePushover {}
             $same = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; timestamp = Get-Date; imageUrl = 'x.jpg' }
-            { Invoke-BridgeStatusComparison -PreviousState $same -CurrentState $same -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
+            { Invoke-BridgeStatusComparison -PreviousState $same -CurrentState $same -ApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'x' -AsPlainText -Force) -Verbose } | Should -Not -Throw
         }
         It 'Γράφει Exception όταν CurrentState ή PreviousState είναι κενό array' {
             $paramsMissingCurrent = @{
                 PreviousState = @(@{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' })
                 CurrentState = @()
-                ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'
+                ApiKey = (ConvertTo-SecureString 'X' -AsPlainText -Force); PoUserKey = (ConvertTo-SecureString 'Y' -AsPlainText -Force); PoApiKey = (ConvertTo-SecureString 'Z' -AsPlainText -Force)
             }
             { Invoke-BridgeStatusComparison @paramsMissingCurrent } | Should -Throw
             $paramsMissingPrevious = @{
                 PreviousState = @()
                 CurrentState = @(@{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' })
-                ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'
+                ApiKey = (ConvertTo-SecureString 'X' -AsPlainText -Force); PoUserKey = (ConvertTo-SecureString 'Y' -AsPlainText -Force); PoApiKey = (ConvertTo-SecureString 'Z' -AsPlainText -Force)
             }
             { Invoke-BridgeStatusComparison @paramsMissingPrevious } | Should -Throw
         }
@@ -266,7 +266,7 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = @($state)
                 CurrentState = @($state)
-                ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'
+                ApiKey = (ConvertTo-SecureString 'X' -AsPlainText -Force); PoUserKey = (ConvertTo-SecureString 'Y' -AsPlainText -Force); PoApiKey = (ConvertTo-SecureString 'Z' -AsPlainText -Force)
                 Verbose = $true
             }
             { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
@@ -282,9 +282,9 @@ InModuleScope 'BridgeWatcher' {
                 $invokeBridgeStatusComparisonSplat = @{
                     PreviousState = @($state)
                     CurrentState  = @($state)
-                    ApiKey        = 'X'
-                    PoUserKey     = 'Y'
-                    PoApiKey      = 'Z'
+                    ApiKey = (ConvertTo-SecureString 'X' -AsPlainText -Force)
+                    PoUserKey = (ConvertTo-SecureString 'Y' -AsPlainText -Force)
+                    PoApiKey = (ConvertTo-SecureString 'Z' -AsPlainText -Force)
                     Verbose       = $true
                 }
                 Invoke-BridgeStatusComparison @invokeBridgeStatusComparisonSplat
@@ -299,18 +299,18 @@ InModuleScope 'BridgeWatcher' {
             { $invokeBridgeStatusComparisonSplat = @{
                     PreviousState = @($state)
                     CurrentState  = @($state)
-                    ApiKey        = 'X'
-                    PoUserKey     = 'Y'
-                    PoApiKey      = 'Z'
+                    ApiKey = (ConvertTo-SecureString 'X' -AsPlainText -Force)
+                    PoUserKey = (ConvertTo-SecureString 'Y' -AsPlainText -Force)
+                    PoApiKey = (ConvertTo-SecureString 'Z' -AsPlainText -Force)
                     Verbose       = $true
                 }
                 Invoke-BridgeStatusComparison @invokeBridgeStatusComparisonSplat } | Should -Not -Throw
         }
         It 'πρέπει να στείλει ειδοποίηση τύπου Closed' {
             $defaultParams = @{
-                ApiKey    = 'fake-key'
-                PoUserKey = 'user-key'
-                PoApiKey  = 'app-key'
+                ApiKey = (ConvertTo-SecureString 'fake-key' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'user-key' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'app-key' -AsPlainText -Force)
             }
             # Redefine Send-BridgeNotification to write to notify.txt for this test
             function Send-BridgeNotification {
@@ -324,9 +324,9 @@ InModuleScope 'BridgeWatcher' {
         }
         It 'πυροδοτεί handler για Μόνιμα κλειστή|<=' {
             $defaultParams = @{
-                ApiKey    = 'fake-key'
-                PoUserKey = 'user-key'
-                PoApiKey  = 'app-key'
+                ApiKey = (ConvertTo-SecureString 'fake-key' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'user-key' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'app-key' -AsPlainText -Force)
             }
             # current είναι Ανοιχτή        =>μπήκε παλιά
             # previous είναι Μόνιμα κλειστή=>τώρα εμφανίζεται=><=
@@ -348,9 +348,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $prev
                 CurrentState  = $curr
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -365,9 +365,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $prev
                 CurrentState  = $curr
-                ApiKey        = 'dummy'
-                PoUserKey     = 'dummy'
-                PoApiKey      = 'dummy'
+                ApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'dummy' -AsPlainText -Force)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -400,9 +400,9 @@ InModuleScope 'BridgeWatcher' {
                 "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
             }
             $defaultParams = @{
-                ApiKey    = 'fake-key'
-                PoUserKey = 'user-key'
-                PoApiKey  = 'app-key'
+                ApiKey = (ConvertTo-SecureString 'fake-key' -AsPlainText -Force)
+                PoUserKey = (ConvertTo-SecureString 'user-key' -AsPlainText -Force)
+                PoApiKey = (ConvertTo-SecureString 'app-key' -AsPlainText -Force)
             }
             $defaultParams
         }
@@ -459,3 +459,4 @@ InModuleScope 'BridgeWatcher' {
         }
     }
 }
+
