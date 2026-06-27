@@ -48,16 +48,13 @@ function Invoke-BridgeStatusComparison {
         [object[]]$CurrentState,
 
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$ApiKey,
+        [SecureString]$ApiKey,
 
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PoUserKey,
+        [SecureString]$PoUserKey,
 
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PoApiKey
+        [SecureString]$PoApiKey
     )
     Set-StrictMode -Version Latest
 
