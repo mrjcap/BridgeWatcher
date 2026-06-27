@@ -43,24 +43,20 @@ function Get-BridgeStatusMonitor {
         [Parameter()][ValidateRange(0, [int]::MaxValue)][int]$MaxIterations,
         [Parameter()][ValidateRange(1, 3600)][int]$IntervalSeconds,
         [Parameter()][ValidateNotNullOrEmpty()][string]$OutputFile,
-        [Parameter()][ValidateNotNullOrEmpty()][string]$ApiKey,
-        [Parameter()][ValidateNotNullOrEmpty()][string]$PoUserKey,
-        [Parameter()][ValidateNotNullOrEmpty()][string]$PoApiKey,
+        [Parameter()][SecureString]$ApiKey,
+        [Parameter()][SecureString]$PoUserKey,
+        [Parameter()][SecureString]$PoApiKey,
 
         [Parameter()]
-        [PSCustomObject]$Configuration
+        [PSCustomObject]$Configuration,
+
+        [Parameter()]
+        [System.Threading.CancellationToken]$CancellationToken = [System.Threading.CancellationToken]::None
     )
 
     begin {
         # Ensure configuration is available
-        if (-not $Configuration) {
-            try {
-                $Configuration = New-BridgeConfiguration
-            } catch {
-                # Fallback to null configuration - functions will handle this
-                $Configuration = $null
-            }
-        }
+        $Configuration = Get-SafeBridgeConfiguration -Configuration $Configuration -Quiet
 
         # Set defaults from configuration if parameters not provided
         if (-not $PSBoundParameters.ContainsKey('MaxIterations')) {
@@ -89,13 +85,13 @@ function Get-BridgeStatusMonitor {
         }
 
         $writeBridgeLogSplat = @{
-            Stage   = if ($Configuration -and $Configuration.LoggingConfig) {
+            Stage   = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.InfoStage) {
                 $Configuration.LoggingConfig.InfoStage
             } else {
                 'Ανάλυση'
             }
             Message = "$monitoringStartMessage`: Διάστημα = $IntervalSeconds δευτ., Μέγιστες επαναλήψεις = $MaxIterations"
-            Level   = if ($Configuration -and $Configuration.LoggingConfig) {
+            Level   = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.VerboseLevel) {
                 $Configuration.LoggingConfig.VerboseLevel
             } else {
                 'Verbose'
@@ -104,7 +100,8 @@ function Get-BridgeStatusMonitor {
         Write-BridgeLog @writeBridgeLogSplat
     }
     process {
-        while ($infiniteLoop -or $iteration -lt $MaxIterations) {
+        $consecutiveFailures = 0
+        while ((-not $CancellationToken.IsCancellationRequested) -and ($infiniteLoop -or $iteration -lt $MaxIterations)) {
             try {
                 $iteration++
                 $getBridgeStatusComparisonSplat = @{
@@ -117,11 +114,16 @@ function Get-BridgeStatusMonitor {
                 # Note: Get-BridgeStatusComparison doesn't support Configuration parameter yet
                 # Will be added in future refactoring iteration
                 Get-BridgeStatusComparison @getBridgeStatusComparisonSplat
+                $consecutiveFailures = 0 # reset on success
                 if (-not $infiniteLoop -and $iteration -ge $MaxIterations) { break }
-                $startSleepSplat = @{
-                    Seconds = $IntervalSeconds
+                if ($CancellationToken.CanBeCanceled) {
+                    if ($CancellationToken.WaitHandle.WaitOne([timespan]::FromSeconds($IntervalSeconds))) {
+                        break
+                    }
+                } else {
+                    Start-Sleep -Seconds $IntervalSeconds
                 }
-                Start-Sleep @startSleepSplat } catch {
+            } catch {
                 $errorMessage = if ($Configuration -and $Configuration.ErrorMessages) {
                     $Configuration.ErrorMessages.MonitoringError
                 } else {
@@ -129,20 +131,42 @@ function Get-BridgeStatusMonitor {
                 }
 
                 $writeBridgeLogSplat = @{
-                    Stage   = if ($Configuration -and $Configuration.LoggingConfig) {
+                    Stage   = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.ErrorStage) {
                         $Configuration.LoggingConfig.ErrorStage
                     } else {
                         'Σφάλμα'
                     }
                     Message = "$errorMessage`: $($_) $iteration"
-                    Level   = if ($Configuration -and $Configuration.LoggingConfig) {
+                    Level   = if ($Configuration -and $Configuration.LoggingConfig -and $Configuration.LoggingConfig.DebugLevel) {
                         $Configuration.LoggingConfig.DebugLevel
                     } else {
                         'Debug'
                     }
                 }
                 Write-BridgeLog @writeBridgeLogSplat
-            } }
+                $consecutiveFailures++
+                if ($consecutiveFailures -ge 5) {
+                    Write-BridgeLog -Stage 'Σφάλμα' -Message "Circuit breaker triggered. Sleeping for 15 minutes." -Level 'Warning'
+                    if ($CancellationToken.CanBeCanceled) {
+                        if ($CancellationToken.WaitHandle.WaitOne([timespan]::FromSeconds(900))) {
+                            break
+                        }
+                    } else {
+                        Start-Sleep -Seconds 900
+                    }
+                    $consecutiveFailures = 0
+                } else {
+                    if ($CancellationToken.CanBeCanceled) {
+                        if ($CancellationToken.WaitHandle.WaitOne([timespan]::FromSeconds($IntervalSeconds))) {
+                            break
+                        }
+                    } else {
+                        Start-Sleep -Seconds $IntervalSeconds
+                    }
+                }
+            } 
+            [System.GC]::Collect()
+        }
 
         $monitoringCompleteMessage = if ($Configuration -and $Configuration.StatusMessages) {
             $Configuration.StatusMessages.MonitoringComplete
