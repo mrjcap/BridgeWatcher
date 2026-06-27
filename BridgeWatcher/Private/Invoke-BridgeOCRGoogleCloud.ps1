@@ -1,6 +1,4 @@
 function Invoke-BridgeOCRGoogleCloud {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'ApiKey',
-        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -27,7 +25,7 @@ function Invoke-BridgeOCRGoogleCloud {
 
     [OutputType([pscustomobject[]])]
     param (
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter(Mandatory)][SecureString]$ApiKey,
         [Parameter(Mandatory)][ValidateScript({
                 if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
                     $true
