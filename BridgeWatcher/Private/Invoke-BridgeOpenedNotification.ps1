@@ -1,4 +1,4 @@
-﻿function Invoke-BridgeOpenedNotification {
+function Invoke-BridgeOpenedNotification {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -30,8 +30,8 @@
     [OutputType([void])]
     param (
         [Parameter(Mandatory)][object[]]$CurrentState,
-        [Parameter(Mandatory)][string]$PoUserKey,
-        [Parameter(Mandatory)][string]$PoApiKey
+        [Parameter(Mandatory)][SecureString]$PoUserKey,
+        [Parameter(Mandatory)][SecureString]$PoApiKey
     )
     foreach ($entry in $CurrentState) {
         if ($entry.gefyraStatus -eq 'Ανοιχτή') {
