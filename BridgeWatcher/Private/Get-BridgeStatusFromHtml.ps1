@@ -1,4 +1,4 @@
-﻿function Get-BridgeStatusFromHtml {
+function Get-BridgeStatusFromHtml {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -35,14 +35,7 @@
     )
 
     # Use configuration or fallback
-    if (-not $Configuration) {
-        try {
-            $Configuration = New-BridgeConfiguration
-        } catch {
-            # Fallback if configuration fails
-            $Configuration = $null
-        }
-    }
+    $Configuration = Get-SafeBridgeConfiguration -Configuration $Configuration -Quiet
 
     $baseUrl = if ($Configuration -and $Configuration.BaseImageUrl) {
         $Configuration.BaseImageUrl
@@ -63,7 +56,7 @@
             'Ανοιχτή'               = 'image-bridge-open-no-schedule\.php\?\d+'
         }
     }
-    $result = @()
+    $result = [System.Collections.Generic.List[PSCustomObject]]::new()
     foreach ($location in $patterns.Keys) {
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
@@ -142,10 +135,10 @@
                     $newBridgeStatusObjectSplat.Configuration = $Configuration
                 }
                 $object = Get-BridgeStatusObject @newBridgeStatusObjectSplat
-                $result += $object
+                $result.Add($object)
                 break
             }
         }
     }
-    return $result
+    return $result.ToArray()
 }
