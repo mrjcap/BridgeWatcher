@@ -1,4 +1,4 @@
-﻿function ConvertFrom-BridgeHtml {
+function ConvertFrom-BridgeHtml {
     <#
     .SYNOPSIS
     Αναλύει HTML περιεχόμενο και επιστρέφει καταστάσεις γέφυρας.
@@ -40,12 +40,10 @@
 
     try {
         # Use configuration or fallback
-        if (-not $Configuration) {
-            try {
-                $Configuration = New-BridgeConfiguration
-            } catch {
-                return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode 'CONFIG_ERROR'
-            }
+        try {
+            $Configuration = Get-SafeBridgeConfiguration -Configuration $Configuration
+        } catch {
+            return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode 'CONFIG_ERROR'
         }        $timestamp = Get-Date -Format o
 
         $writeBridgeLogSplat = @{
