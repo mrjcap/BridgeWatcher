@@ -39,9 +39,9 @@ function Get-BridgeStatusComparison {
 
     param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$OutputFile,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey
+        [Parameter(Mandatory)][SecureString]$ApiKey,
+        [Parameter(Mandatory)][SecureString]$PoUserKey,
+        [Parameter(Mandatory)][SecureString]$PoApiKey
     )
     $writeBridgeLogSplat = @{
         Stage   = 'Ανάλυση'
