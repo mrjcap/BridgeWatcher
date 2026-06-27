@@ -1,4 +1,4 @@
-﻿function Get-BridgeHtml {
+function Get-BridgeHtml {
     <#
     .SYNOPSIS
     Ανακτά HTML περιεχόμενο από την σελίδα της γέφυρας.
@@ -58,7 +58,18 @@
             UseBasicParsing = $true
             ErrorAction     = 'Stop'
         }
-        $response = Invoke-WebRequest @invokeWebRequestSplat
+
+        $maxRetries = 3
+        $response = $null
+        for ($i = 1; $i -le $maxRetries; $i++) {
+            try {
+                $response = Invoke-WebRequest @invokeWebRequestSplat
+                break
+            } catch {
+                if ($i -eq $maxRetries) { throw }
+                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+            }
+        }
 
         return New-BridgeResult -Success $true -Data $response.Content
     }    catch {
