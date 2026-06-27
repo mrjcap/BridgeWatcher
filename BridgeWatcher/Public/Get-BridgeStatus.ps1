@@ -1,4 +1,4 @@
-﻿function Get-BridgeStatus {
+function Get-BridgeStatus {
     <#
     .SYNOPSIS
     Ανακτά την τρέχουσα κατάσταση γεφυρών από διαδικτυακή σελίδα.
@@ -45,12 +45,10 @@
 
     begin {
         # Stage 0: Configuration Setup
-        if (-not $Configuration) {
-            try {
-                $Configuration = New-BridgeConfiguration
-            } catch {
-                return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode 'CONFIG_ERROR'
-            }
+        try {
+            $Configuration = Get-SafeBridgeConfiguration -Configuration $Configuration
+        } catch {
+            return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode 'CONFIG_ERROR'
         }
     }    process { # Stage 1: Data Acquisition - Get HTML content
         $htmlResult = Get-BridgeHtml -Configuration $Configuration
