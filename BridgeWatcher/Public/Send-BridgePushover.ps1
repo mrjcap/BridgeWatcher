@@ -51,8 +51,8 @@ function Send-BridgePushover {
 
     [OutputType([void])]
     param (
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
+        [Parameter(Mandatory)][SecureString]$PoUserKey,
+        [Parameter(Mandatory)][SecureString]$PoApiKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [ValidateNotNullOrEmpty()][string]$Device,
         [ValidateNotNullOrEmpty()][string]$Title,
@@ -80,7 +80,7 @@ function Send-BridgePushover {
             Payload     = $payload
             ErrorAction = 'Stop'
         }
-        Send-BridgePushoverRequest @sendPushoverRequestSplat | Out-Null
+        [void](Send-BridgePushoverRequest @sendPushoverRequestSplat)
     } catch {
         $writeBridgeLogSplat = @{
             Stage   = 'Σφάλμα'
