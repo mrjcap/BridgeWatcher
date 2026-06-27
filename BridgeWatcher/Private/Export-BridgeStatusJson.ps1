@@ -1,4 +1,4 @@
-﻿function Export-BridgeStatusJson {
+function Export-BridgeStatusJson {
     <#
     .SYNOPSIS
     Εξάγει την κατάσταση γέφυρας σε αρχείο JSON.
@@ -104,26 +104,32 @@
             Compress = $true
         }
 
-        if (-not (Test-Path -Path (Split-Path -Parent $Path))) {
-            $errorMessage = "$directoryNotExistsMessage`: $(Split-Path -Parent $Path)"
-            $writeBridgeLogSplat = @{
-                Stage   = $errorStage
-                Message = $errorMessage
-                Level   = $warningLevel
+        $parentDir = Split-Path -Parent $Path
+        if (-not [string]::IsNullOrWhiteSpace($parentDir)) {
+            try {
+                $null = New-Item -ItemType Directory -Force -Path $parentDir -ErrorAction Stop
+            } catch {
+                $errorMessage = "$directoryNotExistsMessage`: $parentDir"
+                $writeBridgeLogSplat = @{
+                    Stage   = $errorStage
+                    Message = $errorMessage
+                    Level   = $warningLevel
+                }
+                Write-BridgeLog @writeBridgeLogSplat
+
+                return New-BridgeResult -Success $false -ErrorMessage $errorMessage -ErrorCode 'DIRECTORY_NOT_EXISTS'
             }
-            Write-BridgeLog @writeBridgeLogSplat
-
-            return New-BridgeResult -Success $false -ErrorMessage $errorMessage -ErrorCode 'DIRECTORY_NOT_EXISTS'
         }
 
-        $json = $Data | ConvertTo-Json @convertToJsonSplat
-        $tmpPath = "$Path.tmp"
-        $setContentSplat = @{
-            Path  = $tmpPath
-            Value = $json
+        $json = ConvertTo-Json -InputObject $Data @convertToJsonSplat
+        $fileStream = [System.IO.FileStream]::new($Path, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
+        try {
+            $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+            $fileStream.Write($bytes, 0, $bytes.Length)
+        } finally {
+            $fileStream.Close()
+            $fileStream.Dispose()
         }
-        Set-Content @setContentSplat
-        Move-Item -Path $tmpPath -Destination $Path -Force
 
         $writeBridgeLogSplat = @{
             Stage   = $analysisStage
