@@ -120,20 +120,7 @@ jobs:
           files: testResults.xml
           report-type: test_results
 
-      - name: Check coverage file exists
-        id: check_coverage
-        shell: pwsh
-        run: |
-          if (Test-Path './coverage.xml') {
-            Write-Verbose " Coverage file found"
-            echo "coverage_exists=true" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Verbose " Coverage file not found"
-            echo "coverage_exists=false" >> $env:GITHUB_OUTPUT
-          }
-
       - name: Upload coverage to Codecov
-        if: success() && steps.check_coverage.outputs.coverage_exists == 'true'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -141,4 +128,5 @@ jobs:
           flags: unittests
           name: codecov-ubuntu-latest-v7.6.3
           fail_ci_if_error: true
+
 
