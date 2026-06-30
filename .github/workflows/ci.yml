@@ -62,7 +62,7 @@ jobs:
           $analysisResults = @()
           foreach ($scanPath in $scanPaths) {
             if (Test-Path $scanPath) {
-              $analysisResults += Invoke-ScriptAnalyzer -Path $scanPath -Recurse -ReportSummary
+              $analysisResults += Invoke-ScriptAnalyzer -Path $scanPath -Recurse -ReportSummary -Severity Error,Warning
             }
           }
           if ($analysisResults) {

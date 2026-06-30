@@ -164,7 +164,7 @@
                         Start-Sleep -Seconds $IntervalSeconds
                     }
                 }
-            } 
+            }
             [System.GC]::Collect()
         }
 
