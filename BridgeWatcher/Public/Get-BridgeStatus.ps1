@@ -1,4 +1,4 @@
-function Get-BridgeStatus {
+﻿function Get-BridgeStatus {
     <#
     .SYNOPSIS
     Ανακτά την τρέχουσα κατάσταση γεφυρών από διαδικτυακή σελίδα.

@@ -1,4 +1,4 @@
-function Get-BridgeStatusFromHtml {
+﻿function Get-BridgeStatusFromHtml {
     [CmdletBinding()]
     <#
     .SYNOPSIS

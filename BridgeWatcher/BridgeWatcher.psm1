@@ -1,4 +1,4 @@
-# BridgeWatcher.psm1
+﻿# BridgeWatcher.psm1
 
 # region Public Functions
 . "$PSScriptRoot\Public\Get-BridgeStatus.ps1"

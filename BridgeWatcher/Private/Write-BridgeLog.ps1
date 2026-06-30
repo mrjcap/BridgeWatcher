@@ -1,4 +1,4 @@
-function Write-BridgeLog {
+﻿function Write-BridgeLog {
     [CmdletBinding()]
     [OutputType([void])]
     <#

@@ -1,4 +1,4 @@
-function Export-BridgeStatusJson {
+﻿function Export-BridgeStatusJson {
     <#
     .SYNOPSIS
     Εξάγει την κατάσταση γέφυρας σε αρχείο JSON.

@@ -1,4 +1,4 @@
-function Send-BridgeNotification {
+﻿function Send-BridgeNotification {
     [OutputType([void])]
     <#
     .SYNOPSIS

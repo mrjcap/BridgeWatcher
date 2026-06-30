@@ -1,3 +1,9 @@
+﻿[Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+    'PSAvoidUsingConvertToSecureStringWithPlainText', '',
+    Justification = 'Secrets are read from Docker secret files at runtime (/run/secrets/*). ConvertTo-SecureString is used only to satisfy cmdlet parameter types; the source is never a hardcoded or user-supplied plaintext value.'
+)]
+param()
+
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 Import-Module './modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
 

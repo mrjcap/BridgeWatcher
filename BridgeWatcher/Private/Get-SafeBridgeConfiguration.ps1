@@ -1,4 +1,4 @@
-function Get-SafeBridgeConfiguration {
+﻿function Get-SafeBridgeConfiguration {
     <#
     .SYNOPSIS
     Returns a safe bridge configuration, creating a new one if necessary.

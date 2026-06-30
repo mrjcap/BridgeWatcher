@@ -1,4 +1,4 @@
-function Get-BridgeImage {
+﻿function Get-BridgeImage {
     [CmdletBinding()]
     <#
     .SYNOPSIS

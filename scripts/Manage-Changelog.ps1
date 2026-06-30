@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 <#
 .SYNOPSIS
 Simplified changelog management - combines update, format, and commit functionality.
@@ -98,23 +98,23 @@ param(
     [string[]]$Other
 )
 
-function Wrap-Line {
+function Format-WrapLine {
     param(
         [string]$Line,
         [int]$MaxLen = 120
     )
     if ($Line.Length -le $MaxLen) { return $Line }
-    
+
     # Determine indentation prefix
     $prefix = ""
     if ($Line -match '^(\s*-\s+|\s+)') {
         $prefix = $Matches[1]
     }
     $indent = " " * $prefix.Length
-    
+
     $chunks = @()
     $current = $Line
-    
+
     while ($current.Length -gt $MaxLen) {
         $breakIdx = $current.LastIndexOf(' ', $MaxLen - 1)
         if ($breakIdx -lt $indent.Length + 10) {
@@ -231,11 +231,11 @@ switch ($Action) {
                     } else {
                         $formattedItem = "- $item"
                     }
-                    
+
                     # Wrap each line in the formatted item to 120 chars
                     $wrappedLines = @()
                     foreach ($l in ($formattedItem -split "`n")) {
-                        $wrappedLines += Wrap-Line -Line $l
+                        $wrappedLines += Format-WrapLine -Line $l
                     }
                     $newEntry += ($wrappedLines -join "`n") + "`n"
                 }
@@ -308,4 +308,5 @@ switch ($Action) {
         }
     }
 }
+
 

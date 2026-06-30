@@ -1,4 +1,4 @@
-function ConvertFrom-BridgeHtml {
+﻿function ConvertFrom-BridgeHtml {
     <#
     .SYNOPSIS
     Αναλύει HTML περιεχόμενο και επιστρέφει καταστάσεις γέφυρας.

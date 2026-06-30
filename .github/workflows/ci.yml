@@ -56,14 +56,21 @@ jobs:
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
-          Write-Verbose "Running PSScriptAnalyzer..."
-          $analysisResults = Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -ReportSummary -EnableExit
+          Write-Verbose "Running PSScriptAnalyzer on source files..."
+          # Scan only real source paths; exclude graphify-out (vendored/temp) and .agents (skill scripts)
+          $scanPaths = @('./BridgeWatcher', './scripts', './install.ps1', './run.ps1')
+          $analysisResults = @()
+          foreach ($scanPath in $scanPaths) {
+            if (Test-Path $scanPath) {
+              $analysisResults += Invoke-ScriptAnalyzer -Path $scanPath -Recurse -ReportSummary
+            }
+          }
           if ($analysisResults) {
             $analysisResults | Format-Table -AutoSize
             Write-Error "PSScriptAnalyzer found $($analysisResults.Count) issues!"
             exit 1
           } else {
-            Write-Verbose " No PSScriptAnalyzer issues found"
+            Write-Verbose "No PSScriptAnalyzer issues found"
           }
 
       - name: Validate module manifest

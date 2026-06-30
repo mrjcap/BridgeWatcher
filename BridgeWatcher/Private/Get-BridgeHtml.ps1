@@ -1,4 +1,4 @@
-function Get-BridgeHtml {
+﻿function Get-BridgeHtml {
     <#
     .SYNOPSIS
     Ανακτά HTML περιεχόμενο από την σελίδα της γέφυρας.

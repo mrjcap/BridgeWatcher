@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 <#
 .SYNOPSIS
 Αυτόματο update CHANGELOG.md με based-on-commits sections.
