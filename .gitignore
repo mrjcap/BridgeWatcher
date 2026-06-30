@@ -28,3 +28,7 @@ Desktop.ini
 .agents/
 skills-lock.json
 install.ps1
+
+# Graphify outputs
+graphify-out/
+
