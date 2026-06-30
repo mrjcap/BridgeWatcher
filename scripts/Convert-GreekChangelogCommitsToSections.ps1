@@ -115,7 +115,8 @@ $sections = @{
 }
 
 foreach ($msg in $Commits) {
-    $greekMsg = & "$PSScriptRoot\Translate-CommitMessage.ps1" -Message $msg
+    # Pass commit message through directly (no translation applied)
+    $greekMsg = $msg
     $matched = $false
     # Strip leading emojis and whitespace for matching
     $cleanMsg = $greekMsg -replace '^[\p{So}\p{Cn}\p{Cs}\p{Cf}]+\s*', ''
