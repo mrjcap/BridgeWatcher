@@ -57,7 +57,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Verbose "Running PSScriptAnalyzer..."
-          $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -EnableExit
+          $analysisResults = Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -ReportSummary -EnableExit
           if ($analysisResults) {
             $analysisResults | Format-Table -AutoSize
             Write-Error "PSScriptAnalyzer found $($analysisResults.Count) issues!"
@@ -118,7 +118,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: testResults.xml
-          report-type: test_results
+          report_type: test_results
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
