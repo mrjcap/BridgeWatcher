@@ -160,7 +160,7 @@ if ($IncludeMergeCommits) {
 }
 
 try {
-    $commits = & "$scriptRoot\Get-GitCommitsSinceLastRelease.ps1" @commitArgs
+    $commits = & (Join-Path $scriptRoot 'Get-GitCommitsSinceLastRelease.ps1') @commitArgs
 
     # Έλεγχος για νέα commits
     if (-not $commits -or $commits.Count -eq 0) {
@@ -181,7 +181,7 @@ try {
 Write-Verbose "📊 Converting commits to changelog sections..."
 
 try {
-    $sectionsObject = & "$scriptRoot\Convert-GreekChangelogCommitsToSections.ps1" -Commits $commits
+    $sectionsObject = & (Join-Path $scriptRoot 'Convert-GreekChangelogCommitsToSections.ps1') -Commits $commits
     $sections = @{}
     if ($sectionsObject) {
         $sectionsObject.PSObject.Properties | ForEach-Object {
@@ -237,7 +237,7 @@ try {
         Other         = if ($sections['other']) { $sections['other'] } else { @() }
     }
 
-    & "$scriptRoot\Manage-Changelog.ps1" @updateArgs
+    & (Join-Path $scriptRoot 'Manage-Changelog.ps1') @updateArgs
 
 } catch {
     Write-Error "Failed to update changelog: $_"
