@@ -112,6 +112,14 @@ jobs:
             coverage.xml
           retention-days: 7
 
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: testResults.xml
+
+
       - name: Check coverage file exists
         id: check_coverage
         shell: pwsh
