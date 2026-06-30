@@ -1,9 +1,97 @@
-# Αρχείο Αλλαγών (Changelog)
+﻿# Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.79] - 2026-06-30
+
+### ✨ Χαρακτηριστικά
+
+- feat(ci): pin Codecov actions to commit SHA fb8b3582
+- feat(ci): migrate Codecov steps to use codecov-action@v7
+- feat(ci): update Codecov test results action version to v5
+- feat(ci): add Codecov test results upload step
+- feat(Send-BridgePushover): update Send-BridgePushover to address review findings
+- feat(Invoke-BridgeStatusComparison): update Invoke-BridgeStatusComparison to address review findings
+- feat(Get-BridgeStatusMonitor): update Get-BridgeStatusMonitor to address review findings
+- feat(Get-BridgeStatusComparison): update Get-BridgeStatusComparison to address review findings
+- feat(Get-BridgeStatus): update Get-BridgeStatus to address review findings
+- feat(config): add Get-SafeBridgeConfiguration helper for safe configuration null checks
+- feat: add script to automate changelog sectioning and update existing entries
+- feat: implement Manage-Changelog.ps1 and helper script to automate changelog updates and PR creation
+- feat: introduce Manage-Changelog.ps1 to consolidate changelog update, formatting, and PR creation workflows
+- feat: add scripts to automate changelog updates and commit history conversion
+
+### 🐛 Διορθώσεις
+
+- fix(scripts): remove call to missing Translate-CommitMessage.ps1
+- fix(scripts): use Join-Path for cross-platform script invocations
+- fix(lint): resolve all PSScriptAnalyzer errors and warnings
+- fix(ci): fix PSScriptAnalyzer path and Codecov report_type parameter
+- fix(ci): correct Gitleaks action version in ci.yml
+- fix(PesterConfiguration): change TestResult output format to JUnitXml
+- fix: update regex for module version replacement to support multiline matching
+- fix: improve commit message processing by stripping leading emojis and whitespace
+- 🐛 fix(changelog): clean leading emojis during matching
+
+### ♻️ Αναδιαρθρώσεις
+
+- refactor(run): update run to address review findings
+- refactor(Write-BridgeLog): update Write-BridgeLog to address review findings
+- refactor(Send-BridgePushoverRequest): update Send-BridgePushoverRequest to address review findings
+- refactor(Send-BridgeNotification): update Send-BridgeNotification to address review findings
+- refactor(Invoke-BridgeOpenedNotification): update Invoke-BridgeOpenedNotification to address review findings
+- refactor(Invoke-BridgeOCRRequest): update Invoke-BridgeOCRRequest to address review findings
+- refactor(Invoke-BridgeOCRGoogleCloud): update Invoke-BridgeOCRGoogleCloud to address review findings
+- refactor(Invoke-BridgeClosedNotification): update Invoke-BridgeClosedNotification to address review findings
+- refactor(Get-BridgeStatusFromHtml): update Get-BridgeStatusFromHtml to address review findings
+- refactor(Get-BridgePushoverPayload): update Get-BridgePushoverPayload to address review findings
+- refactor(Get-BridgeImage): update Get-BridgeImage to address review findings
+- refactor(Get-BridgeHtml): update Get-BridgeHtml to address review findings
+- refactor(Export-BridgeStatusJson): update Export-BridgeStatusJson to address review findings
+- refactor(ConvertFrom-BridgeHtml): update ConvertFrom-BridgeHtml to address review findings
+- refactor(BridgeWatcher): update BridgeWatcher to address review findings
+
+### 🧪 Δοκιμές
+
+- test(Write-BridgeLog.Tests): update Write-BridgeLog.Tests to address review findings
+- test(Test-BridgeResult.Tests): update Test-BridgeResult.Tests to address review findings
+- test(Test-BridgeResult-Simple.Tests): update Test-BridgeResult-Simple.Tests to address review findings
+- test(Send-BridgePushoverRequest.Tests): update Send-BridgePushoverRequest.Tests to address review findings
+- test(Send-BridgePushover.Tests): update Send-BridgePushover.Tests to address review findings
+- test(Resolve-BridgeStatus.Tests): update Resolve-BridgeStatus.Tests to address review findings
+- test(Resolve-BridgeStateForChange.Tests): update Resolve-BridgeStateForChange.Tests to address review findings
+- test(New-BridgeResult.Tests): update New-BridgeResult.Tests to address review findings
+- test(Invoke-BridgeStatusComparison.Tests): update Invoke-BridgeStatusComparison.Tests to address review findings
+- test(Invoke-BridgeOpenedNotification.Tests): update Invoke-BridgeOpenedNotification.Tests to address review findings
+- test(Invoke-BridgeOCRRequest.Tests): update Invoke-BridgeOCRRequest.Tests to address review findings
+- test(Invoke-BridgeOCRGoogleCloud.Tests): update Invoke-BridgeOCRGoogleCloud.Tests to address review findings
+- test(Invoke-BridgeClosedNotification.Tests): update Invoke-BridgeClosedNotification.Tests to address review findings
+- test(Get-BridgeStatusObject.Tests): update Get-BridgeStatusObject.Tests to address review findings
+- test(Get-BridgeStatusMonitor.Tests): update Get-BridgeStatusMonitor.Tests to address review findings
+- test(Get-BridgeStatusFromHtml.Tests): update Get-BridgeStatusFromHtml.Tests to address review findings
+- test(Get-BridgeStatusComparison.Tests): update Get-BridgeStatusComparison.Tests to address review findings
+- test(Get-BridgeStatusAdvice.Tests): update Get-BridgeStatusAdvice.Tests to address review findings
+- test(Get-BridgeStatus.Tests): update Get-BridgeStatus.Tests to address review findings
+- test(Get-BridgeStatus-Refactored.Tests): update Get-BridgeStatus-Refactored.Tests to address review findings
+- test(Get-BridgePushoverPayload.Tests): update Get-BridgePushoverPayload.Tests to address review findings
+- test(Get-BridgePreviousStatus.Tests): update Get-BridgePreviousStatus.Tests to address review findings
+- test(Get-BridgeOCRRequestBody.Tests): update Get-BridgeOCRRequestBody.Tests to address review findings
+- test(Get-BridgeNameFromUri.Tests): update Get-BridgeNameFromUri.Tests to address review findings
+- test(Get-BridgeImages.Tests): update Get-BridgeImages.Tests to address review findings
+- test(Get-BridgeHtml.Tests): update Get-BridgeHtml.Tests to address review findings
+- test(Export-BridgeStatusJson.Tests): update Export-BridgeStatusJson.Tests to address review findings
+- test(ConvertTo-BridgeTimeRange.Tests): update ConvertTo-BridgeTimeRange.Tests to address review findings
+- test(ConvertTo-BridgeClosedDuration.Tests): update ConvertTo-BridgeClosedDuration.Tests to address review findings
+- test(ConvertFrom-BridgeOCRResult.Tests): update ConvertFrom-BridgeOCRResult.Tests to address review findings
+- test(ConvertFrom-BridgeHtml.Tests): update ConvertFrom-BridgeHtml.Tests to address review findings
+- test(integration): create live HTML parsing integration tests
+
+### 🎨 Στυλ & Μορφοποίηση
+
+- 🚨 style(changelog): fix markdown line length and trailing blank lines
 
 ## [1.0.78] - 2026-06-25
 
@@ -392,4 +480,5 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml for powershellgallery
+
 
