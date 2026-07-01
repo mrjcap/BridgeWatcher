@@ -41,4 +41,3 @@ Describe 'Resolve-BridgeStatus' {
         $result.src | Should -Match 'no-schedule\.php'
     }
 }
-
