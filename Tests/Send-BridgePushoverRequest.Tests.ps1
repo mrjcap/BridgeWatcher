@@ -174,5 +174,15 @@ Describe 'Send-BridgePushoverRequest' {
             $result.request | Should -Be 'success123'
         }
     }
+    Context 'Επιπλέον κάλυψη για retries και WebException' {
+        It 'Πετάει σφάλμα 400 Bad Request όταν το Exception έχει response' {
+            Mock Invoke-RestMethod {
+                throw [System.Net.WebException]::new("Mock WebException", $null, [System.Net.WebExceptionStatus]::ProtocolError, $null)
+            }
+            Mock Write-BridgeLog
+            { Send-BridgePushoverRequest -Payload @{ token='t'; user='u'; message='m'} } | Should -Throw
+        }
+    }
 }
+
 
