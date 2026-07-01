@@ -123,18 +123,20 @@ Describe 'Get-BridgeStatusMonitor' {
     }
     Context 'Προεπιλεγμένες Παράμετροι' {
         It 'Χρησιμοποιεί DefaultMaxIterations και DefaultIntervalSeconds αν δεν δοθούν' {
-            Mock Update-BridgeStatus { return [PSCustomObject]@{ Success = $true } }
-            
+            Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
+
             # Use real configuration object, which is available because we dot-source New-BridgeConfiguration
             $mockConfig = New-BridgeConfiguration
             $mockConfig.DefaultMaxIterations = 1
-            $mockConfig.DefaultIntervalSeconds = 0
-            
-            # Δεν περνάμε -MaxIterations και -IntervalSeconds
-            Get-BridgeStatusMonitor -Configuration $mockConfig
+            $mockConfig.DefaultIntervalSeconds = 1
+
+            # Δεν περνάμε -MaxIterations και -IntervalSeconds, αλλά δίνουμε dummy παραμέτρους για το Update-BridgeStatus
+            Get-BridgeStatusMonitor -Configuration $mockConfig -OutputFile 'test.json' -ApiKey 'dummy' -PoUserKey 'dummy' -PoApiKey 'dummy'
             Assert-MockCalled Update-BridgeStatus -Exactly 1
         }
     }
 }
+
+
 
 
