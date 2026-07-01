@@ -84,7 +84,7 @@ Describe 'Write-BridgeLog' {
             $script:LogStream = $mockStream
             $script:LogStreamPath = "oldpath.log"
             $config = New-BridgeConfiguration
-            $config.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogs"
+            $config.Defaults.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogs"
             Mock New-Object { $null } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
             try {
                 { Write-BridgeLog -Stage 'Ανάλυση' -Message "Test" -Configuration $config -Verbose } | Should -Not -Throw
@@ -120,19 +120,19 @@ Describe 'Write-BridgeLog' {
             Mock New-Object { $mockWriter } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
 
             $config = New-BridgeConfiguration
-            $config.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogs"
+            $config.Defaults.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogs"
 
             try {
                 # First run: creates StreamWriter
                 { Write-BridgeLog -Stage 'Ανάλυση' -Message 'StreamWriter Test' -Configuration $config } | Should -Not -Throw
                 $script:LogStream | Should -Not -BeNullOrEmpty
-                $script:LogStreamPath | Should -BeLike (Join-Path $config.LogDirectory "BridgeWatcher-*.log")
+                $script:LogStreamPath | Should -BeLike (Join-Path $config.Defaults.LogDirectory "BridgeWatcher-*.log")
 
                 # Second run: uses existing StreamWriter
                 { Write-BridgeLog -Stage 'Ανάλυση' -Message 'StreamWriter Test 2' -Configuration $config } | Should -Not -Throw
 
                 # Third run: changes log path
-                $script:LogStreamPath = Join-Path $config.LogDirectory "different.log"
+                $script:LogStreamPath = Join-Path $config.Defaults.LogDirectory "different.log"
                 { Write-BridgeLog -Stage 'Ανάλυση' -Message 'StreamWriter Test 3' -Configuration $config } | Should -Not -Throw
             }
             finally {
@@ -145,7 +145,6 @@ Describe 'Write-BridgeLog' {
         }
     }
 }
-
 
 
 
