@@ -1,4 +1,10 @@
 ﻿function Get-BridgeStatusMonitor {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'ApiKey',
+        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey',
+        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey',
+        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -37,9 +43,9 @@
         [Parameter()][ValidateRange(0, [int]::MaxValue)][int]$MaxIterations,
         [Parameter()][ValidateRange(1, 3600)][int]$IntervalSeconds,
         [Parameter()][ValidateNotNullOrEmpty()][string]$OutputFile,
-        [Parameter()][ValidateNotNullOrEmpty()][string]$ApiKey,
-        [Parameter()][ValidateNotNullOrEmpty()][string]$PoUserKey,
-        [Parameter()][ValidateNotNullOrEmpty()][string]$PoApiKey,
+        [Parameter()][SecureString]$ApiKey,
+        [Parameter()][SecureString]$PoUserKey,
+        [Parameter()][SecureString]$PoApiKey,
 
         [Parameter()]
         [PSCustomObject]$Configuration,
@@ -83,7 +89,8 @@
         Write-BridgeLog @writeBridgeLogSplat
     }
     process {
-        while ($infiniteLoop -or $iteration -lt $MaxIterations) {
+        $consecutiveFailures = 0
+        while ((-not $CancellationToken.IsCancellationRequested) -and ($infiniteLoop -or $iteration -lt $MaxIterations)) {
             try {
                 $iteration++
                 $updateBridgeStatusSplat = @{

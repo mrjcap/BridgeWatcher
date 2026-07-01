@@ -73,3 +73,4 @@ Describe 'Invoke-BridgeClosedNotification' {
         }
     }
 }
+

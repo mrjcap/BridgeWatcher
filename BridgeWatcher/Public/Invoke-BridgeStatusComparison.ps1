@@ -1,4 +1,10 @@
 ﻿function Invoke-BridgeStatusComparison {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'ApiKey',
+        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey',
+        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey',
+        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
     <#
     .SYNOPSIS
     Συγκρίνει τις λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
@@ -42,12 +48,10 @@
         [object[]]$CurrentState,
 
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$ApiKey,
+        [SecureString]$ApiKey,
 
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PoUserKey,
+        [SecureString]$PoUserKey,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]

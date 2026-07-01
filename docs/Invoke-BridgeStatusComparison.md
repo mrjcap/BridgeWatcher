@@ -9,33 +9,51 @@ schema: 2.0.0
 
 ## SYNOPSIS
 
-Συγκρίνει δύο λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
+{{ Fill in the Synopsis }}
 
 ## SYNTAX
 
 ```
-Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Object[]> [-ApiKey] <String>
- [-PoUserKey] <String> [-PoApiKey] <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Object[]> [-ApiKey] <SecureString>
+ [-PoUserKey] <SecureString> [-PoApiKey] <SecureString> [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-Η Invoke-BridgeStatusComparison συγκρίνει την προηγούμενη και την τρέχουσα
-κατάσταση γεφυρών και καλεί ειδικούς handlers για αλλαγές (άνοιγμα/κλείσιμο).
+{{ Fill in the Description }}
 
 ## EXAMPLES
 
-### EXAMPLE 1
+### Example 1
 
 ```powershell
-Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -ApiKey 'abc' -PoUserKey 'user' -PoApiKey 'token'
+PS C:\> {{ Add example code here }}
 ```
+
+{{ Add example description here }}
 
 ## PARAMETERS
 
-### -PreviousState
+### -ApiKey
 
-Η προηγούμενη λίστα καταστάσεων.
+{{ Fill ApiKey Description }}
+
+```yaml
+Type: SecureString
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CurrentState
+
+{{ Fill CurrentState Description }}
 
 ```yaml
 Type: Object[]
@@ -49,44 +67,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -CurrentState
+### -PoApiKey
 
-Η τρέχουσα λίστα καταστάσεων.
-
-```yaml
-Type: Object[]
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 2
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ApiKey
-
-Το API Key για OCR αν απαιτηθεί.
+{{ Fill PoApiKey Description }}
 
 ```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 3
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PoUserKey
-
-Το User Key για Pushover ειδοποίηση.
-
-```yaml
-Type: String
+Type: SecureString
 Parameter Sets: (All)
 Aliases:
 
@@ -97,17 +83,33 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PoApiKey
+### -PoUserKey
 
-Το API Token για Pushover ειδοποίηση.
+{{ Fill PoUserKey Description }}
 
 ```yaml
-Type: String
+Type: SecureString
 Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 5
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PreviousState
+
+{{ Fill PreviousState Description }}
+
+```yaml
+Type: Object[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -135,12 +137,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-## OUTPUTS
-
 ### None
 
-## NOTES
+## OUTPUTS
 
-Καταγράφει αλλαγές και ενεργοποιεί κατάλληλες ειδοποιήσεις.
+### System.Boolean
+
+## NOTES
 
 ## RELATED LINKS

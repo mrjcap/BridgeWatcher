@@ -9,6 +9,7 @@
 . "$PSScriptRoot\Public\Get-BridgeStatusMonitor.ps1"
 
 # region Private Functions
+. "$PSScriptRoot\Private\Get-SafeBridgeConfiguration.ps1"
 . "$PSScriptRoot\Private\New-BridgeConfiguration.ps1"
 . "$PSScriptRoot\Private\New-BridgeResult.ps1"
 . "$PSScriptRoot\Private\Test-BridgeResult.ps1"

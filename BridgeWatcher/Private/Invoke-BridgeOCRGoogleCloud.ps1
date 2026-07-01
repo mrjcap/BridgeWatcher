@@ -25,7 +25,7 @@
 
     [OutputType([pscustomobject[]])]
     param (
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter(Mandatory)][SecureString]$ApiKey,
         [Parameter(Mandatory)][ValidateScript({
                 if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
                     $true

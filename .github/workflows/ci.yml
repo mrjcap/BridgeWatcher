@@ -22,6 +22,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Run Gitleaks secret scanning
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
         with:
@@ -58,14 +63,14 @@ jobs:
             Write-Error "PSScriptAnalyzer found $($analysisResults.Count) issues!"
             exit 1
           } else {
-            Write-Verbose " No PSScriptAnalyzer issues found"
+            Write-Verbose "No PSScriptAnalyzer issues found"
           }
 
       - name: Validate module manifest
         shell: pwsh
         run: |
           Write-Verbose "Validating module manifest..."
-          $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse | Where-Object { $_.Directory.Name -notmatch "Tests|\.git" } | Select-Object -First 1
+          $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse | Where-Object { $_.BaseName -eq $_.Directory.Name } | Select-Object -First 1
           if (-not $manifestPath) {
             Write-Error "Module manifest (.psd1) not found!"
             exit 1
@@ -107,20 +112,15 @@ jobs:
             coverage.xml
           retention-days: 7
 
-      - name: Check coverage file exists
-        id: check_coverage
-        shell: pwsh
-        run: |
-          if (Test-Path './coverage.xml') {
-            Write-Verbose " Coverage file found"
-            echo "coverage_exists=true" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Verbose " Coverage file not found"
-            echo "coverage_exists=false" >> $env:GITHUB_OUTPUT
-          }
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: testResults.xml
+          report_type: test_results
 
       - name: Upload coverage to Codecov
-        if: success() && steps.check_coverage.outputs.coverage_exists == 'true'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -128,3 +128,5 @@ jobs:
           flags: unittests
           name: codecov-ubuntu-latest-v7.6.3
           fail_ci_if_error: true
+
+

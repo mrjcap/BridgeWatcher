@@ -44,3 +44,4 @@ Describe 'New-PushoverPayload' {
         $payload['device'] | Should -BeNullOrEmpty
     }
 }
+

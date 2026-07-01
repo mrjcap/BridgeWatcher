@@ -1,0 +1,1 @@
+class MockWebResponse : System.Net.WebResponse { [System.Net.HttpStatusCode]$StatusCode = 401 }; $response = [MockWebResponse]::new(); $ex = [System.Net.WebException]::new("Error", $null, [System.Net.WebExceptionStatus]::ProtocolError, $response); Write-Output $ex.Response.StatusCode

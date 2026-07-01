@@ -56,7 +56,7 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
             ItemType = 'Directory'
             Force    = $true
         }
-        New-Item @newItemSplat | Out-Null
+        [void](New-Item @newItemSplat)
     }
     $dateStr = (Get-Date).ToString('yyyy-MM-dd')
     $timeStr = (Get-Date).ToString('HH:mm:ss')

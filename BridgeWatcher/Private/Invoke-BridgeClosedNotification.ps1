@@ -1,4 +1,5 @@
 ﻿function Invoke-BridgeClosedNotification {
+
     [CmdletBinding()]
     <#
     .SYNOPSIS

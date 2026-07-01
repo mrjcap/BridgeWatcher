@@ -85,7 +85,7 @@ jobs:
           Write-Verbose "Validating module manifest..."
 
           $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse |
-            Where-Object { $_.Directory.Name -notmatch 'Tests|\.git|config' } |
+            Where-Object { $_.BaseName -eq $_.Directory.Name } |
             Select-Object -First 1
 
           if (-not $manifestPath) {
@@ -126,15 +126,34 @@ jobs:
             Write-Verbose "Importing module: $moduleName"
             Import-Module $manifestPath -Force -Verbose:$false
 
-            # Check if documentation already exists
+            # Hide non-cmdlet docs temporarily to avoid PlatyPS parsing errors
+            $tempDocs = Join-Path (Resolve-Path ~).Path 'docs_backup'
+            New-Item -ItemType Directory -Path $tempDocs -Force | Out-Null
+            $cmdlets = Get-Command -Module $moduleName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
+            $nonCmdletDocs = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue | Where-Object { 
+              $name = $_.BaseName
+              $name -notmatch '^about_' -and $cmdlets -notcontains $name
+            }
+            if ($nonCmdletDocs) {
+              $nonCmdletDocs | Move-Item -Destination $tempDocs
+            }
+
+            # Check if cmdlet documentation already exists
             $existingDocs = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
 
             if ($existingDocs) {
               Write-Verbose "Updating existing documentation..."
               Update-MarkdownHelp -Path $docsPath -Force -Verbose:$false
+              Write-Verbose "Creating missing documentation..."
+              New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force -Verbose:$false
             } else {
               Write-Verbose "Creating new documentation..."
               New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force -Verbose:$false
+            }
+
+            # Restore non-cmdlet docs
+            if (Test-Path "$tempDocs\*.md") {
+              Get-ChildItem "$tempDocs\*.md" | Move-Item -Destination $docsPath -Force
             }
 
             # Generate module page if it doesn't exist

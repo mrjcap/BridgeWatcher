@@ -46,8 +46,12 @@ try {
     Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat
 } catch {
     Write-Error "Monitor failed: $_"
-    # Send alert?
-    # Retry logic?
+    # F-10: Alert on monitoring failure via Pushover
+    try {
+        Send-BridgePushover -PoUserKey $POUSER_KEY -PoApiKey $POAPI_KEY -Message "⚠️ BridgeWatcher monitor failed: $($_.Exception.Message)" -Title 'BridgeWatcher Alert' -Priority 1
+    } catch {
+        Write-Warning "Failed to send failure alert: $($_.Exception.Message)"
+    }
     exit 1  # Container θα κάνει restart αν έχεις --restart policy
 }
 

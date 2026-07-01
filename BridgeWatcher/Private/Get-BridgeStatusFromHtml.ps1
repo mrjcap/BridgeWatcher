@@ -54,7 +54,7 @@
             ($Configuration.Statuses.Open)                 = 'image-bridge-open-no-schedule\.php\?\d+'
         }
     }
-    $result = @()
+    $result = [System.Collections.Generic.List[PSCustomObject]]::new()
     foreach ($location in $patterns.Keys) {
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
@@ -127,10 +127,10 @@
 
                 $newBridgeStatusObjectSplat.Configuration = $Configuration
                 $object = Get-BridgeStatusObject @newBridgeStatusObjectSplat
-                $result += $object
+                $result.Add($object)
                 break
             }
         }
     }
-    return $result
+    return $result.ToArray()
 }

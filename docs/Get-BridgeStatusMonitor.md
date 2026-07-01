@@ -5,7 +5,7 @@ online version:
 schema: 2.0.0
 ---
 
-# Send-BridgePushover
+# Get-BridgeStatusMonitor
 
 ## SYNOPSIS
 
@@ -14,9 +14,10 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Send-BridgePushover [-PoUserKey] <SecureString> [-PoApiKey] <SecureString> [-Message] <String>
- [[-Device] <String>] [[-Title] <String>] [[-Url] <String>] [[-UrlTitle] <String>] [[-Priority] <Int32>]
- [[-Sound] <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-BridgeStatusMonitor [[-MaxIterations] <Int32>] [[-IntervalSeconds] <Int32>] [[-OutputFile] <String>]
+ [[-ApiKey] <SecureString>] [[-PoUserKey] <SecureString>] [[-PoApiKey] <SecureString>]
+ [[-Configuration] <PSObject>] [[-CancellationToken] <CancellationToken>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -35,12 +36,12 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
-### -Device
+### -ApiKey
 
-{{ Fill Device Description }}
+{{ Fill ApiKey Description }}
 
 ```yaml
-Type: String
+Type: SecureString
 Parameter Sets: (All)
 Aliases:
 
@@ -51,16 +52,80 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Message
+### -CancellationToken
 
-{{ Fill Message Description }}
+{{ Fill CancellationToken Description }}
+
+```yaml
+Type: CancellationToken
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 7
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Configuration
+
+{{ Fill Configuration Description }}
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 6
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IntervalSeconds
+
+{{ Fill IntervalSeconds Description }}
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxIterations
+
+{{ Fill MaxIterations Description }}
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutputFile
+
+{{ Fill OutputFile Description }}
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: 2
 Default value: None
 Accept pipeline input: False
@@ -76,8 +141,8 @@ Type: SecureString
 Parameter Sets: (All)
 Aliases:
 
-Required: True
-Position: 1
+Required: False
+Position: 5
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -92,89 +157,8 @@ Type: SecureString
 Parameter Sets: (All)
 Aliases:
 
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Priority
-
-{{ Fill Priority Description }}
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 7
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Sound
-
-{{ Fill Sound Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-Accepted values: pushover, bike, bugle, cashregister, classical, cosmic, falling, gamelan, incoming, intermission, magic, mechanical, pianobar, siren, spacealarm, tugboat, alien, climb, persistent, echo, updown, none
-
-Required: False
-Position: 8
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Title
-
-{{ Fill Title Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
 Required: False
 Position: 4
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Url
-
-{{ Fill Url Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 5
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -UrlTitle
-
-{{ Fill UrlTitle Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 6
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

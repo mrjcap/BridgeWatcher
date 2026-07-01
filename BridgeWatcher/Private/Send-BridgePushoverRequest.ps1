@@ -52,7 +52,22 @@
             Body        = $Payload
             ErrorAction = 'Stop'
         }
-        return Invoke-RestMethod @invokeRestMethodSplat
+        $maxRetries = 3
+        for ($i = 1; $i -le $maxRetries; $i++) {
+            try {
+                return Invoke-RestMethod @invokeRestMethodSplat
+            } catch [System.Net.WebException] {
+                $response = $_.Exception.Response
+                if ($response -and $response.StatusCode -in @(400, 401, 403)) {
+                    throw
+                }
+                if ($i -eq $maxRetries) { throw }
+                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+            } catch {
+                if ($i -eq $maxRetries) { throw }
+                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+            }
+        }
     } catch {
         $writeBridgeLogSplat = @{
             Stage   = $errorStage

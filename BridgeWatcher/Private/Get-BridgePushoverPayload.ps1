@@ -29,8 +29,8 @@
 
     [OutputType([hashtable])]
     param (
-        [Parameter(Mandatory)][string]$PoUserKey,
-        [Parameter(Mandatory)][string]$PoApiKey,
+        [Parameter(Mandatory)][SecureString]$PoUserKey,
+        [Parameter(Mandatory)][SecureString]$PoApiKey,
         [Parameter(Mandatory)][string]$Message,
         [string]$Device,
         [string]$Title,
@@ -39,9 +39,13 @@
         [int]$Priority,
         [string]$Sound
     )
+
+    $plainPoApiKey = [System.Net.NetworkCredential]::new('', $PoApiKey).Password
+    $plainPoUserKey = [System.Net.NetworkCredential]::new('', $PoUserKey).Password
+
     $data = @{
-        token   = $PoApiKey
-        user    = $PoUserKey
+        token   = $plainPoApiKey
+        user    = $plainPoUserKey
         message = $Message
     }
     if ($PSBoundParameters.ContainsKey('Device') -and $Device) { $data.device = $Device }

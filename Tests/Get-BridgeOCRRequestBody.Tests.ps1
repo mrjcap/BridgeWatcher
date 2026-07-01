@@ -16,3 +16,4 @@ Describe 'New-OCRRequestBody' {
         $json.requests[0].features[0].type | Should -Be 'DOCUMENT_TEXT_DETECTION'
     }
 }
+

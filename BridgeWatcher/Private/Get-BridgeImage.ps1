@@ -63,5 +63,5 @@
             $null = $imageList.Add([pscustomobject]@{ src = $src })
         }
     }
-    return $imageList
+    return [System.Collections.ArrayList]::new([object[]]@($imageList))
 }

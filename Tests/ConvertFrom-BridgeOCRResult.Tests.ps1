@@ -182,3 +182,4 @@ Describe 'ConvertFrom-BridgeOCRResult Tests' {
             Assert-MockCalled Write-BridgeLog -Exactly 2 -Scope It
     }
 }
+

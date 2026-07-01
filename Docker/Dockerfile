@@ -39,7 +39,7 @@ COPY --chown=${PUID}:${PGID} ./BridgeWatcher ./modules/BridgeWatcher
 COPY --chown=${PUID}:${PGID} Docker/entrypoint.sh /home/appuser/scripts/entrypoint.sh
 COPY --chown=${PUID}:${PGID} run.ps1 .
 
-EXPOSE 8090
+# EXPOSE 8090  # Re-enable when REST API is implemented
 
 ENTRYPOINT ["sh", "./entrypoint.sh"]
 

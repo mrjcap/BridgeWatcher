@@ -1,4 +1,4 @@
-﻿@{
+@{
     Run          = @{
         Path          = './Tests'
         Parameters    = @{
@@ -28,7 +28,7 @@
     }
     TestResult   = @{
         Enabled        = $true
-        OutputFormat   = 'NUnitXml'
+        OutputFormat   = 'JUnitXml'
         OutputPath     = 'testResults.xml'
         OutputEncoding = 'utf8BOM'
         TestSuiteName  = 'BridgeWatcher'

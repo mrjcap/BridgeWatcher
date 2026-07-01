@@ -29,7 +29,7 @@
 
     [OutputType([object])]
     param (
-        [Parameter(Mandatory)][string]$ApiKey,
+        [Parameter(Mandatory)][SecureString]$ApiKey,
         [Parameter(Mandatory)][string]$RequestBody,
         [Parameter()][PSCustomObject]$Configuration
     )
@@ -56,6 +56,7 @@
             Method      = 'Post'
             Body        = $RequestBody
             ContentType = 'application/json'
+            Headers     = @{ 'X-Goog-Api-Key' = $plainApiKey }
             ErrorAction = 'Stop'
         }
         $writeBridgeLogSplat = @{
@@ -63,7 +64,23 @@
             Message = $startMessage
         }
         Write-BridgeLog @writeBridgeLogSplat
-        return Invoke-RestMethod @invokeRestMethodSplat
+
+        $maxRetries = 3
+        for ($i = 1; $i -le $maxRetries; $i++) {
+            try {
+                return Invoke-RestMethod @invokeRestMethodSplat
+            } catch [System.Net.WebException] {
+                $response = $_.Exception.Response
+                if ($response -and $response.StatusCode -in @(400, 401, 403)) {
+                    throw
+                }
+                if ($i -eq $maxRetries) { throw }
+                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+            } catch {
+                if ($i -eq $maxRetries) { throw }
+                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+            }
+        }
     } catch {
         $writeBridgeLogSplat = @{
             Stage   = $errorStage

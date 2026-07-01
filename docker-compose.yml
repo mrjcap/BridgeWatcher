@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  bridgewatcher:
+    image: mrjcap/bridgewatcher:latest
+    container_name: bridgewatcher
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 256m
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:rw,noexec,nosuid
+    volumes:
+      - log-data:/app/logs
+    secrets:
+      - api_key
+      - pushover_token
+      - pushover_user
+    # Option A: Active Syslog Forwarding (Docker Daemon Level)
+    # To enable, uncomment the logging section below and configure your SIEM endpoint.
+    # logging:
+    #   driver: syslog
+    #   options:
+    #     syslog-address: "tcp://your-siem-syslog-host:514"
+    #     tag: "bridgewatcher"
+
+  # Option B: Filebeat sidecar container to forward logs to external SIEM
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.12.0
+    container_name: bridgewatcher-filebeat
+    restart: unless-stopped
+    user: root
+    volumes:
+      - log-data:/var/log/bridgewatcher:ro
+      - ./Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+    depends_on:
+      - bridgewatcher
+
+volumes:
+  log-data:
+
+secrets:
+  api_key:
+    file: ./secrets/api_key
+  pushover_token:
+    file: ./secrets/pushover_token
+  pushover_user:
+    file: ./secrets/pushover_user

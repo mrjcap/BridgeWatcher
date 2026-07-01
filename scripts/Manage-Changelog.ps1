@@ -62,26 +62,70 @@ param(
     [string]$ChangelogPath = './CHANGELOG.md',
 
     [Parameter()]
-    [string[]]$Added,
+    [string[]]$Feat,
 
     [Parameter()]
-    [string[]]$Changed,
+    [string[]]$Fix,
 
     [Parameter()]
-    [string[]]$Fixed,
+    [string[]]$Refactor,
 
     [Parameter()]
-    [string[]]$Removed,
+    [string[]]$Docs,
 
     [Parameter()]
-    [string[]]$Security,
+    [string[]]$Ci,
 
     [Parameter()]
-    [string[]]$Deprecated,
+    [string[]]$Build,
 
     [Parameter()]
-    [string[]]$Documentation
+    [string[]]$Test,
+
+    [Parameter()]
+    [string[]]$Chore,
+
+    [Parameter()]
+    [string[]]$Style,
+
+    [Parameter()]
+    [string[]]$Perf,
+
+    [Parameter()]
+    [string[]]$Revert,
+
+    [Parameter()]
+    [string[]]$Other
 )
+
+function Format-WrapLine {
+    param(
+        [string]$Line,
+        [int]$MaxLen = 120
+    )
+    if ($Line.Length -le $MaxLen) { return $Line }
+
+    # Determine indentation prefix
+    $prefix = ""
+    if ($Line -match '^(\s*-\s+|\s+)') {
+        $prefix = $Matches[1]
+    }
+    $indent = " " * $prefix.Length
+
+    $chunks = @()
+    $current = $Line
+
+    while ($current.Length -gt $MaxLen) {
+        $breakIdx = $current.LastIndexOf(' ', $MaxLen - 1)
+        if ($breakIdx -lt $indent.Length + 10) {
+            $breakIdx = $MaxLen
+        }
+        $chunks += $current.Substring(0, $breakIdx)
+        $current = $indent + $current.Substring($breakIdx).TrimStart()
+    }
+    $chunks += $current
+    return $chunks -join "`n"
+}
 
 switch ($Action) {
     'Update' {
@@ -97,7 +141,7 @@ switch ($Action) {
         }
 
         # If sections are provided directly, use them; otherwise get from commits
-        if ($Added -or $Changed -or $Fixed -or $Removed -or $Security -or $Deprecated -or $Documentation) {
+        if ($Feat -or $Fix -or $Refactor -or $Docs -or $Ci -or $Build -or $Test -or $Chore -or $Style -or $Perf -or $Revert -or $Other) {
             # Use provided sections
             Write-Verbose "Using provided changelog sections"
         } else {
@@ -113,24 +157,34 @@ switch ($Action) {
             $sections = & "$PSScriptRoot\Convert-GreekChangelogCommitsToSections.ps1" -Commits $commits
 
             # Map sections to parameters
-            $Added = $sections.'Προστέθηκαν'
-            $Changed = $sections.'Αλλαγές'
-            $Fixed = $sections.'Διορθώθηκαν'
-            $Removed = $sections.'Αφαιρέθηκαν'
-            $Security = $sections.'Ασφάλεια'
-            $Deprecated = $sections.'Υποψήφια προς απόσυρση'
-            $Documentation = $sections.'Τεκμηρίωση'
+            $Feat = $sections.feat
+            $Fix = $sections.fix
+            $Refactor = $sections.refactor
+            $Docs = $sections.docs
+            $Ci = $sections.ci
+            $Build = $sections.build
+            $Test = $sections.test
+            $Chore = $sections.chore
+            $Style = $sections.style
+            $Perf = $sections.perf
+            $Revert = $sections.revert
+            $Other = $sections.other
         }
 
         # Build changelog entry
         $sectionData = @(
-            @{ Title = '✨ Προστέθηκαν'; Items = $Added },
-            @{ Title = '🔄 Αλλαγές'; Items = $Changed },
-            @{ Title = '⚠️ Υποψήφια προς απόσυρση'; Items = $Deprecated },
-            @{ Title = '❌ Αφαιρέθηκαν'; Items = $Removed },
-            @{ Title = '🐛 Διορθώθηκαν'; Items = $Fixed },
-            @{ Title = '🔒 Ασφάλεια'; Items = $Security },
-            @{ Title = '📝 Τεκμηρίωση'; Items = $Documentation }
+            @{ Title = '✨ Χαρακτηριστικά'; Items = $Feat },
+            @{ Title = '🐛 Διορθώσεις'; Items = $Fix },
+            @{ Title = '♻️ Αναδιαρθρώσεις'; Items = $Refactor },
+            @{ Title = '📝 Τεκμηρίωση'; Items = $Docs },
+            @{ Title = '⚙️ CI/CD (Συνεχής Ενοποίηση)'; Items = $Ci },
+            @{ Title = '🛠️ Κατασκευή'; Items = $Build },
+            @{ Title = '🧪 Δοκιμές'; Items = $Test },
+            @{ Title = '🧹 Εργασίες Συντήρησης'; Items = $Chore },
+            @{ Title = '🎨 Στυλ & Μορφοποίηση'; Items = $Style },
+            @{ Title = '⚡ Απόδοση'; Items = $Perf },
+            @{ Title = '⏪ Επαναφορές'; Items = $Revert },
+            @{ Title = '❓ Άλλες Αλλαγές'; Items = $Other }
         )
 
         # Read existing changelog or create header
@@ -167,7 +221,23 @@ switch ($Action) {
             if ($items.Count -gt 0) {
                 $newEntry += "`n### $($section.Title)`n`n"
                 foreach ($item in $items) {
-                    $newEntry += "- $item`n"
+                    $parts = $item -split ' \- '
+                    $formattedItem = ""
+                    if ($parts.Count -gt 1) {
+                        $formattedItem = "- $($parts[0])"
+                        for ($i = 1; $i -lt $parts.Count; $i++) {
+                            $formattedItem += "`n  - $($parts[$i])"
+                        }
+                    } else {
+                        $formattedItem = "- $item"
+                    }
+
+                    # Wrap each line in the formatted item to 120 chars
+                    $wrappedLines = @()
+                    foreach ($l in ($formattedItem -split "`n")) {
+                        $wrappedLines += Format-WrapLine -Line $l
+                    }
+                    $newEntry += ($wrappedLines -join "`n") + "`n"
                 }
             }
         }
@@ -238,4 +308,5 @@ switch ($Action) {
         }
     }
 }
+
 
