@@ -57,4 +57,3 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
         { Invoke-BridgeOCRGoogleCloud -ApiKey 'dummy' -ImageUri 'https://image.jpg' -Verbose -ErrorAction SilentlyContinue } | Should -Throw 'Simulated OCR failure'
     }
 }
-
