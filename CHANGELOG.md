@@ -1,9 +1,97 @@
-# Αρχείο Αλλαγών (Changelog)
+﻿# Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.87] - 2026-07-01
+
+### ♻️ Αναδιαρθρώσεις
+
+- refactor(Update-BridgeStatus): translate comments, documentation, and logs to Greek
+- refactor(Send-BridgePushover): translate comments, documentation, and logs to Greek
+- refactor(Invoke-BridgeStatusComparison): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgeStatusMonitor): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgeStatus): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgePreviousStatus): translate comments, documentation, and logs to Greek
+- refactor(Write-BridgeLog): translate comments, documentation, and logs to Greek
+- refactor(Test-BridgeResult): translate comments, documentation, and logs to Greek
+- refactor(Send-BridgePushoverRequest): translate comments, documentation, and logs to Greek
+- refactor(Send-BridgeNotification): translate comments, documentation, and logs to Greek
+- refactor(Resolve-BridgeStatus): translate comments, documentation, and logs to Greek
+- refactor(Resolve-BridgeStateForChange): translate comments, documentation, and logs to Greek
+- refactor(New-BridgeResult): translate comments, documentation, and logs to Greek
+- refactor(New-BridgeConfiguration): translate comments, documentation, and logs to Greek
+- refactor(Invoke-BridgeOpenedNotification): translate comments, documentation, and logs to Greek
+- refactor(Invoke-BridgeOCRRequest): translate comments, documentation, and logs to Greek
+- refactor(Invoke-BridgeOCRGoogleCloud): translate comments, documentation, and logs to Greek
+- refactor(Invoke-BridgeClosedNotification): translate comments, documentation, and logs to Greek
+- refactor(Get-SafeBridgeConfiguration): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgeStatusObject): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgeStatusFromHtml): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgeStatusAdvice): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgePushoverPayload): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgeOCRRequestBody): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgeNameFromUri): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgeImage): translate comments, documentation, and logs to Greek
+- refactor(Get-BridgeHtml): translate comments, documentation, and logs to Greek
+- refactor(Export-BridgeStatusJson): translate comments, documentation, and logs to Greek
+- refactor(ConvertTo-BridgeTimeRange): translate comments, documentation, and logs to Greek
+- refactor(ConvertTo-BridgeClosedDuration): translate comments, documentation, and logs to Greek
+- refactor(ConvertFrom-BridgeOCRResult): translate comments, documentation, and logs to Greek
+- refactor(ConvertFrom-BridgeHtml): translate comments, documentation, and logs to Greek
+- refactor(module): clean up region markers and set strict mode module-wide
+
+### 🧪 Δοκιμές
+
+- test(Invoke-BridgeOCRRequest): fix file BOM encoding for compliance
+- test(ConvertFrom-BridgeHtml): fix file BOM encoding for compliance
+- test(Write-BridgeLog): translate test blocks, descriptions, and comments to Greek
+- test(Update-BridgeStatus): translate test blocks, descriptions, and comments to Greek
+- test(Test-BridgeResult): translate test blocks, descriptions, and comments to Greek
+- test(Test-BridgeResult): translate test blocks, descriptions, and comments to Greek
+- test(Send-BridgePushoverRequest): translate test blocks, descriptions, and comments to Greek
+- test(Send-BridgePushover): translate test blocks, descriptions, and comments to Greek
+- test(Send-BridgeNotification): translate test blocks, descriptions, and comments to Greek
+- test(RunScript): translate test blocks, descriptions, and comments to Greek
+- test(Resolve-BridgeStatus): translate test blocks, descriptions, and comments to Greek
+- test(Resolve-BridgeStateForChange): translate test blocks, descriptions, and comments to Greek
+- test(PesterConfiguration): translate test blocks, descriptions, and comments to Greek
+- test(PSScriptAnalyzerSettings): translate test blocks, descriptions, and comments to Greek
+- test(New-BridgeResult): translate test blocks, descriptions, and comments to Greek
+- test(New-BridgeConfiguration): translate test blocks, descriptions, and comments to Greek
+- test(ModuleExports): translate test blocks, descriptions, and comments to Greek
+- test(MockHelper): translate test blocks, descriptions, and comments to Greek
+- test(Invoke-BridgeStatusComparison): translate test blocks, descriptions, and comments to Greek
+- test(Invoke-BridgeOpenedNotification): translate test blocks, descriptions, and comments to Greek
+- test(Invoke-BridgeOCRRequest): translate test blocks, descriptions, and comments to Greek
+- test(Invoke-BridgeOCRGoogleCloud): translate test blocks, descriptions, and comments to Greek
+- test(Invoke-BridgeClosedNotification): translate test blocks, descriptions, and comments to Greek
+- test(Integration): translate test blocks, descriptions, and comments to Greek
+- test(Get-SafeBridgeConfiguration): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeStatusObject): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeStatusMonitor): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeStatusFromHtml): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeStatusAdvice): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeStatus): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeStatus-Refactored): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgePushoverPayload): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgePreviousStatus): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeOCRRequestBody): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeNameFromUri): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeImage): translate test blocks, descriptions, and comments to Greek
+- test(Get-BridgeHtml): translate test blocks, descriptions, and comments to Greek
+- test(Export-BridgeStatusJson): translate test blocks, descriptions, and comments to Greek
+- test(DockerBuildWorkflow): translate test blocks, descriptions, and comments to Greek
+- test(ConvertTo-BridgeTimeRange): translate test blocks, descriptions, and comments to Greek
+- test(ConvertTo-BridgeClosedDuration): translate test blocks, descriptions, and comments to Greek
+- test(ConvertFrom-BridgeOCRResult): translate test blocks, descriptions, and comments to Greek
+- test(ConvertFrom-BridgeHtml): translate test blocks, descriptions, and comments to Greek
+
+### 🎨 Στυλ & Μορφοποίηση
+
+- style(docs): fix table formatting in README.md for better readability
 
 ## [1.0.86] - 2026-07-01
 
@@ -462,3 +550,4 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
+
