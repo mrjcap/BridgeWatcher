@@ -1,6 +1,10 @@
-# Test Results
+﻿# Test Results
 coverage.xml
 testResults.xml
+
+# Runtime/debug artifacts
+out.json
+test.json
 
 # Logs
 logs/
