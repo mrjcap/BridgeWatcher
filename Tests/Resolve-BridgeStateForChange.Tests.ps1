@@ -10,7 +10,7 @@ Describe 'Resolve-BridgeStateForChange' {
     }
     Context 'Όταν SideIndicator είναι =>' {
         It 'Επιστρέφει state από CurrentState για νέα κατάσταση' {
-            # Mock test data
+            # Mock του test data
             $mockPreviousState = @(
                 [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-01-01T10:00:00' },
                 [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή για συντήρηση'; Timestamp = '2025-01-01T10:00:00' }
@@ -34,7 +34,7 @@ Describe 'Resolve-BridgeStateForChange' {
         }
 
         It 'Επιστρέφει κενό array όταν δεν βρίσκει την γέφυρα στο CurrentState' {
-            # Mock test data
+            # Mock του test data
             $mockPreviousState = @(
                 [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-01-01T10:00:00' },
                 [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή για συντήρηση'; Timestamp = '2025-01-01T10:00:00' }
@@ -62,7 +62,7 @@ Describe 'Resolve-BridgeStateForChange' {
 
     Context 'Όταν SideIndicator είναι <=' {
         It 'Επιστρέφει state από CurrentState πρώτα για παλιά κατάσταση' {
-            # Mock test data
+            # Mock του test data
             $mockPreviousState = @(
                 [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-01-01T10:00:00' },
                 [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή για συντήρηση'; Timestamp = '2025-01-01T10:00:00' }
@@ -86,7 +86,7 @@ Describe 'Resolve-BridgeStateForChange' {
         }
 
         It 'Επιστρέφει state από PreviousState όταν δεν υπάρχει στο CurrentState (fallback)' {
-            # Mock test data
+            # Mock του test data
             $mockPreviousState = @(
                 [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-01-01T10:00:00' },
                 [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή για συντήρηση'; Timestamp = '2025-01-01T10:00:00' }
@@ -113,7 +113,7 @@ Describe 'Resolve-BridgeStateForChange' {
 
     Context 'Edge Cases' {
         It 'Επιστρέφει πάντα array ακόμα και για single result' {
-            # Mock test data
+            # Mock του test data
             $mockPreviousState = @(
                 [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-01-01T10:00:00' },
                 [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή για συντήρηση'; Timestamp = '2025-01-01T10:00:00' }
@@ -141,7 +141,7 @@ Describe 'Resolve-BridgeStateForChange' {
         }
 
         It 'Χειρίζεται case-insensitive σύγκριση ονομάτων' {
-            # Mock test data
+            # Mock του test data
             $mockPreviousState = @(
                 [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-01-01T10:00:00' },
                 [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή για συντήρηση'; Timestamp = '2025-01-01T10:00:00' }
@@ -169,4 +169,3 @@ Describe 'Resolve-BridgeStateForChange' {
         }
     }
 }
-
