@@ -66,6 +66,9 @@
         }
     }
     catch {
+        if ($_.FullyQualifiedErrorId -eq 'NotEnoughDateTimes' -or ($_.Exception -and $_.Exception.Message -like '*Δεν βρέθηκαν επαρκείς ημερομηνίες*')) {
+            throw $_
+        }
         $errorRecord = [System.Management.Automation.ErrorRecord]::new(
             ([System.Exception]::new("Αποτυχία ανάλυσης ημερομηνιών: $($_.Exception.Message)")),
             'BridgeTimeParseError',
@@ -75,4 +78,5 @@
         throw $errorRecord
     }
 }
+
 
