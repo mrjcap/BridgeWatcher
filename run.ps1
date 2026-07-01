@@ -1,8 +1,22 @@
-﻿Import-Module './modules/BridgeWatcher/BridgeWatcher.psm1' -Force -Verbose
+﻿$ModulePath = "$PSScriptRoot/modules/BridgeWatcher/BridgeWatcher.psd1"
+if (-not (Test-Path $ModulePath)) {
+    $ModulePath = "$PSScriptRoot/BridgeWatcher/BridgeWatcher.psd1"
+}
+Import-Module $ModulePath -Force -Verbose
 
-$API_KEY = Get-Content '/run/secrets/API_KEY' -Raw
-$POAPI_KEY = Get-Content '/run/secrets/POAPI_KEY' -Raw
-$POUSER_KEY = Get-Content '/run/secrets/POUSER_KEY' -Raw
+$API_KEY = if ($Env:API_KEY) { $Env:API_KEY.Trim() } else { $null }
+$POAPI_KEY = if ($Env:POAPI_KEY) { $Env:POAPI_KEY.Trim() } else { $null }
+$POUSER_KEY = if ($Env:POUSER_KEY) { $Env:POUSER_KEY.Trim() } else { $null }
+
+if ([string]::IsNullOrWhiteSpace($API_KEY) -and (Test-Path '/run/secrets/API_KEY')) {
+    $API_KEY = (Get-Content '/run/secrets/API_KEY' -Raw).Trim()
+}
+if ([string]::IsNullOrWhiteSpace($POAPI_KEY) -and (Test-Path '/run/secrets/POAPI_KEY')) {
+    $POAPI_KEY = (Get-Content '/run/secrets/POAPI_KEY' -Raw).Trim()
+}
+if ([string]::IsNullOrWhiteSpace($POUSER_KEY) -and (Test-Path '/run/secrets/POUSER_KEY')) {
+    $POUSER_KEY = (Get-Content '/run/secrets/POUSER_KEY' -Raw).Trim()
+}
 
 if (-not $API_KEY -or -not $POAPI_KEY -or -not $POUSER_KEY) {
     throw 'One or more secrets are missing or empty'

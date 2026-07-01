@@ -52,7 +52,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Verbose "Running PSScriptAnalyzer..."
-          $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -EnableExit
+          $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary
           if ($analysisResults) {
             $analysisResults | Format-Table -AutoSize
             Write-Error "PSScriptAnalyzer found $($analysisResults.Count) issues!"

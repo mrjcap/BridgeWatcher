@@ -1,7 +1,14 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'ConvertFrom-BridgeHtml Tests' {
+Describe 'ConvertFrom-BridgeHtml Tests' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusFromHtml.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeHtml.ps1"
+    }
         Context 'Configuration Error Handling' {
             It 'Returns BridgeResult with error when configuration initialization fails' {
                 # Mock New-BridgeConfiguration to throw an error to trigger lines 45-47
@@ -80,5 +87,4 @@ InModuleScope 'BridgeWatcher' {
             }
         }
     }
-}
 

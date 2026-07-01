@@ -1,4 +1,4 @@
-function Get-BridgeStatusObject {
+﻿function Get-BridgeStatusObject {
     [CmdletBinding()]
     <#
     .SYNOPSIS

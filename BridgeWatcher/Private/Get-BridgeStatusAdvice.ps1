@@ -1,4 +1,4 @@
-function Get-BridgeStatusAdvice {
+﻿function Get-BridgeStatusAdvice {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -50,7 +50,7 @@ function Get-BridgeStatusAdvice {
 
     $waitMessage = $Configuration.AdviceMessages.Wait
 
-    if ($MinutesUntilOpen -gt $MaxWaitTimeMinutes) {
+    if ($MinutesUntilOpen -le 0 -or $MinutesUntilOpen -gt $MaxWaitTimeMinutes) {
         return $doNotWaitMessage
     }
     return $waitMessage

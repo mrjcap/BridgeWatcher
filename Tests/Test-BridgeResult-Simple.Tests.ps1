@@ -1,18 +1,24 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'Test-BridgeResult Simple Mock Test' {
-        BeforeEach {
-            Mock Write-BridgeLog
-        }
+Describe 'Test-BridgeResult Simple Mock Test' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+    }
 
-        It 'Mocks Write-BridgeLog correctly' {
-            $errorResult = New-BridgeResult -Success $false -ErrorMessage 'test error'
+    BeforeEach {
+        Mock Write-BridgeLog
+    }
 
-            Test-BridgeResult -Result $errorResult | Should -Be $false
+    It 'Mocks Write-BridgeLog correctly' {
+        $errorResult = New-BridgeResult -Success $false -ErrorMessage 'test error'
 
-            Assert-MockCalled Write-BridgeLog -Times 1
-        }
+        Test-BridgeResult -Result $errorResult | Should -Be $false
+
+        Assert-MockCalled Write-BridgeLog -Times 1
     }
 }
+
 

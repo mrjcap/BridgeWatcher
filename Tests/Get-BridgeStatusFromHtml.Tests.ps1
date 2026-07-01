@@ -1,34 +1,42 @@
-Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'Get-BridgeStatusFromHtml' {
-        Context 'Debug branch' {
-            It 'γράφει Write-Debug όταν δεν βρίσκει match για status' {
-                # Mock το Get-BridgeImage να επιστρέφει έστω μία εικόνα
-                Mock Get-BridgeImage { @(@{ src = 'not-matching.jpg' }) }
-                # Mock το Resolve-BridgeStatus να επιστρέφει $null (κανένα status δεν ταιριάζει)
-                Mock Resolve-BridgeStatus { $null }
-                # Mock το Get-BridgeStatusObject για να μην εκτελεστεί ποτέ (θα μπει μόνο στο else)
-                Mock Get-BridgeStatusObject {}
-                $html = '<div>dummy</div>'
-                $timestamp = '2025-04-18T08:00:00'
-                # Πρέπει να ενεργοποιήσεις το Debug output!
-                $result = Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp -Debug
-                $result
-                # Εναλλακτικά, μπορείς να τσεκάρεις αν το Write-Debug εκτελέστηκε:
-                Assert-MockCalled Resolve-BridgeStatus -Exactly 8 -Scope It # Καλείται για κάθε status
-                # Το σημαντικό: το Write-Debug της "Δεν ταιριάζει" θα εκτελεστεί για κάθε status
-            }
-        }
-        Context 'Όταν δεν βρίσκονται εικόνες' {
-            It 'Πετάει σφάλμα BridgeImagesNotFound όταν δεν επιστρέφονται εικόνες' {
-                # Mock το Get-BridgeImage να επιστρέφει $null
-                Mock Get-BridgeImage { $null }
-                $html = '<html><body>no images</body></html>'
-                $timestamp = '2025-04-18T08:00:00'
-                { Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp } | Should -Throw -ErrorId 'BridgeImagesNotFound,Get-BridgeStatusFromHtml'
-            }
-        }
+Describe 'Get-BridgeStatusFromHtml' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusFromHtml.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeImage.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStatus.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusObject.ps1"
+    }
 
+    Context 'Debug branch' {
+        It 'γράφει Write-Debug όταν δεν βρίσκει match για status' {
+            # Mock το Get-BridgeImage να επιστρέφει έστω μία εικόνα
+            Mock Get-BridgeImage { @(@{ src = 'not-matching.jpg' }) }
+            # Mock το Resolve-BridgeStatus να επιστρέφει $null (κανένα status δεν ταιριάζει)
+            Mock Resolve-BridgeStatus { $null }
+            # Mock το Get-BridgeStatusObject για να μην εκτελεστεί ποτέ (θα μπει μόνο στο else)
+            Mock Get-BridgeStatusObject {}
+            $html = '<div>dummy</div>'
+            $timestamp = '2025-04-18T08:00:00'
+            # Πρέπει να ενεργοποιήσεις το Debug output!
+            $result = Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp -Debug
+            $result
+            # Εναλλακτικά, μπορείς να τσεκάρεις αν το Write-Debug εκτελέστηκε:
+            Assert-MockCalled Resolve-BridgeStatus -Exactly 8 -Scope It # Καλείται για κάθε status
+            # Το σημαντικό: το Write-Debug της "Δεν ταιριάζει" θα εκτελεστεί για κάθε status
+        }
+    }
+    Context 'Όταν δεν βρίσκονται εικόνες' {
+        It 'Πετάει σφάλμα BridgeImagesNotFound όταν δεν επιστρέφονται εικόνες' {
+            # Mock το Get-BridgeImage να επιστρέφει $null
+            Mock Get-BridgeImage { $null }
+            $html = '<html><body>no images</body></html>'
+            $timestamp = '2025-04-18T08:00:00'
+            { Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp } | Should -Throw -ErrorId 'BridgeImagesNotFound,Get-BridgeStatusFromHtml'
+        }
     }
 }

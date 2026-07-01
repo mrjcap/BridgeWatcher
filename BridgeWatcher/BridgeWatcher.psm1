@@ -1,9 +1,9 @@
-# BridgeWatcher.psm1
+﻿# BridgeWatcher.psm1
 
-# region Public Functions
+# Public Functions
 . "$PSScriptRoot\Public\Get-BridgeStatus.ps1"
 . "$PSScriptRoot\Public\Get-BridgePreviousStatus.ps1"
-. "$PSScriptRoot\Public\Get-BridgeStatusComparison.ps1"
+. "$PSScriptRoot\Public\Update-BridgeStatus.ps1"
 . "$PSScriptRoot\Public\Invoke-BridgeStatusComparison.ps1"
 . "$PSScriptRoot\Public\Send-BridgePushover.ps1"
 . "$PSScriptRoot\Public\Get-BridgeStatusMonitor.ps1"
@@ -36,4 +36,4 @@
 . "$PSScriptRoot\Private\Resolve-BridgeStateForChange.ps1"
 
 # Export only public functions
-Export-ModuleMember -Function Get-BridgeStatus, Get-BridgePreviousStatus, Get-BridgeStatusComparison, Invoke-BridgeStatusComparison, Send-BridgePushover, Get-BridgeStatusMonitor
+Export-ModuleMember -Function Get-BridgeStatus, Get-BridgePreviousStatus, Update-BridgeStatus, Invoke-BridgeStatusComparison, Send-BridgePushover, Get-BridgeStatusMonitor

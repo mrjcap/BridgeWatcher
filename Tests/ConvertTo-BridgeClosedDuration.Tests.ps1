@@ -1,7 +1,13 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDuration' {
+Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDuration' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeClosedDuration.ps1"
+    }
         It "θα επιστρέψει 'ημέρα' για διάρκεια 1 ημέρας" {
             $duration = [timespan]::FromDays(1)
             $result = ConvertTo-BridgeClosedDuration -Duration $duration
@@ -50,7 +56,6 @@ InModuleScope 'BridgeWatcher' {
             # Ελέγχουμε αν περιέχει τις λέξεις "ημέρες", "ώρες", και "λεπτά"
             $result | Should -Contain '2 ημέρες, 3 ώρες, 5 λεπτά'
         }
-    }
     Context 'Όταν το Duration είναι null' {
         It 'Πετάει σφάλμα όταν το Duration είναι null' {
             { ConvertTo-BridgeClosedDuration -Duration $null } | Should -Throw -ErrorId 'ParameterArgumentTransformationError,ConvertTo-BridgeClosedDuration'
@@ -59,13 +64,20 @@ InModuleScope 'BridgeWatcher' {
             { ConvertTo-BridgeClosedDuration -Duration $null } | Should -Throw -ErrorId 'ParameterArgumentTransformationError,ConvertTo-BridgeClosedDuration'
         }
     }
-    Describe 'ConvertTo-BridgeClosedDuration' {
-        Context 'Όταν παρέχεται αρνητικό TimeSpan' {
-            It 'Πρέπει να ρίξει σφάλμα όταν η διάρκεια είναι αρνητική' {
-                {
-                    ConvertTo-BridgeClosedDuration -Duration ([timespan]::FromMinutes(-5))
-                } | Should -Throw -ErrorId 'NegativeDurationNotAllowed,ConvertTo-BridgeClosedDuration'
-            }
+}
+Describe 'ConvertTo-BridgeClosedDuration' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeClosedDuration.ps1"
+    }
+    Context 'Όταν παρέχεται αρνητικό TimeSpan' {
+        It 'Πρέπει να ρίξει σφάλμα όταν η διάρκεια είναι αρνητική' {
+            {
+                ConvertTo-BridgeClosedDuration -Duration ([timespan]::FromMinutes(-5))
+            } | Should -Throw -ErrorId 'NegativeDurationNotAllowed,ConvertTo-BridgeClosedDuration'
         }
     }
 }

@@ -31,10 +31,37 @@
     param (
         [Parameter(Mandatory)][object[]]$CurrentState,
         [Parameter(Mandatory)][string]$PoUserKey,
-        [Parameter(Mandatory)][string]$PoApiKey
+        [Parameter(Mandatory)][string]$PoApiKey,
+        [Parameter()][PSCustomObject]$Configuration,
+        [Parameter()][scriptblock]$NotificationProvider
     )
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
+    $null = $PoUserKey; $null = $PoApiKey; $null = $NotificationProvider
+
+    $SendNotification = {
+        param(
+            [string]$Title,
+            [string]$Message,
+            [string]$Type
+        )
+        if ($NotificationProvider) {
+            & $NotificationProvider -Title $Title -Message $Message -Type $Type
+        } else {
+            $pushoverSplat = @{
+                PoUserKey   = $PoUserKey
+                PoApiKey    = $PoApiKey
+                Title       = $Title
+                Message     = $Message
+                ErrorAction = 'Stop'
+            }
+            Send-BridgePushover @pushoverSplat
+        }
+    }
+
     foreach ($entry in $CurrentState) {
-        if ($entry.gefyraStatus -eq 'Ανοιχτή') {
+        if ($entry.gefyraStatus -eq $Configuration.Statuses.Open) {
             try {
                 # Συνδυασμός log messages για αποφυγή spam
                 $logDetails = @(
@@ -49,14 +76,7 @@
                     Message = $logDetails
                 }
                 Write-BridgeLog @writeBridgeLogSplat
-                $sendPushoverSplat = @{
-                    PoUserKey   = $PoUserKey
-                    PoApiKey    = $PoApiKey
-                    Title       = 'Γέφυρα Ανοιχτή!'
-                    Message     = "Η γέφυρα της $($entry.gefyraName)ς άνοιξε"
-                    ErrorAction = 'Stop'
-                }
-                Send-BridgePushover @sendPushoverSplat
+                & $SendNotification -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα της $($entry.gefyraName)ς άνοιξε" -Type 'Opened'
             } catch {
                 $writeBridgeLogSplat = @{
                     Stage   = 'Σφάλμα'

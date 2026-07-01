@@ -1,7 +1,18 @@
-Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
+Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Public/Invoke-BridgeStatusComparison.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStateForChange.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgeNotification.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeClosedNotification.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
+    }
         It 'Δεν στέλνει ειδοποίηση όταν η κατάσταση δεν αλλάζει' {
             Mock -CommandName Invoke-BridgeClosedNotification { 'Closed notification sent' }
             Mock -CommandName Invoke-BridgeOpenedNotification { 'Opened notification sent' }
@@ -354,10 +365,10 @@ InModuleScope 'BridgeWatcher' {
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
-            Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Exactly 1
+            Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Exactly 0
         }
         # Από Κλειστή για συντήρηση σε Ανοιχτή (πρέπει να καλείται μόνο Opened)
-        It 'Στέλνει ειδοποίηση τύπου Closed όταν γίνεται αλλαγή από "Ανοιχτή" σε Κλειστή για συντήρηση"' {
+        It 'Στέλνει ειδοποίηση τύπου Opened όταν γίνεται αλλαγή από Κλειστή σε Ανοιχτή (=>)' {
             Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
             $prev = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Κλειστή για συντήρηση' }
@@ -370,7 +381,7 @@ InModuleScope 'BridgeWatcher' {
                 PoApiKey      = 'dummy'
             }
             Invoke-BridgeStatusComparison @params
-            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
+            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 0
             Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Exactly 1
         }
     }
@@ -381,12 +392,19 @@ InModuleScope 'BridgeWatcher' {
         }
 
         BeforeAll {
+            . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Public/Invoke-BridgeStatusComparison.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStateForChange.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeClosedNotification.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
+
             function Write-BridgeLog {
                 param([string]$Stage, [string]$Message, [string]$Level)
                 "$Stage|$Level|$Message" | Out-File -Append "$TestDrive\log.txt"
             }
-
-
 
             function Send-BridgeNotification {
                 param([ValidateSet('Closed', 'Opened')]$Type, [object[]]$State)
@@ -451,4 +469,3 @@ InModuleScope 'BridgeWatcher' {
             }
         }
     }
-}

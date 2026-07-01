@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Updates the version in a PowerShell module manifest (.psd1).
 .DESCRIPTION
@@ -70,7 +70,8 @@ try {
     }
 
     $newContent = Update-ModuleVersionContent -Content $content -OldVersion $currentVersion -NewVersion $newVersion
-    Set-Content $Path -Value $newContent
+    $utf8Bom = New-Object System.Text.UTF8Encoding $true
+    [System.IO.File]::WriteAllText($Path, $newContent, $utf8Bom)
     Write-Output "Updated version to: $newVersion"
 
     if ($GitHubEnv) {

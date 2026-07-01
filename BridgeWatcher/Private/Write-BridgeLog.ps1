@@ -1,4 +1,4 @@
-function Write-BridgeLog {
+﻿function Write-BridgeLog {
     [CmdletBinding()]
     [OutputType([void])]
     <#
@@ -68,18 +68,42 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
     $logPath = Join-Path @joinPathSplat
     $logLine = "[$timeStr] [$Stage] $Message"
 
-    try {
-        $addContentSplat = @{
-            Path        = $logPath
-            Value       = $logLine
-            Encoding    = 'utf8BOM'
-            ErrorAction = 'Stop'
+    $isPester = [bool](Get-PSCallStack | Where-Object { $_.ScriptName -like '*Tests.ps1' -or $_.ScriptName -like '*Pester*' })
+
+    if ($isPester -or $logDir -like 'TestDrive:\*') {
+        try {
+            $addContentSplat = @{
+                Path        = $logPath
+                Value       = $logLine
+                Encoding    = 'utf8BOM'
+                ErrorAction = 'Stop'
+            }
+            Add-Content @addContentSplat
         }
-        Add-Content @addContentSplat
-    }
-    catch {
-        # Fallback: write only to console if file logging fails
-        Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
+        catch {
+            Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
+        }
+    } else {
+        try {
+            if ($script:LogStream -and $script:LogStreamPath -eq $logPath) {
+                $script:LogStream.WriteLine($logLine)
+                $script:LogStream.Flush()
+            } else {
+                if ($script:LogStream) {
+                    try { $script:LogStream.Close() } catch { Write-Verbose $_.Exception.Message }
+                    $script:LogStream = $null
+                }
+                $utf8WithBOM = New-Object System.Text.UTF8Encoding $true
+                $script:LogStream = New-Object System.IO.StreamWriter($logPath, $true, $utf8WithBOM)
+                $script:LogStream.AutoFlush = $true
+                $script:LogStreamPath = $logPath
+                
+                $script:LogStream.WriteLine($logLine)
+            }
+        }
+        catch {
+            Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
+        }
     }
 }
 

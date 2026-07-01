@@ -32,11 +32,37 @@
         [Parameter(Mandatory)][object[]]$CurrentState,
         [Parameter(Mandatory)][string]$ApiKey,
         [Parameter(Mandatory)][string]$PoUserKey,
-        [Parameter(Mandatory)][string]$PoApiKey
+        [Parameter(Mandatory)][string]$PoApiKey,
+        [Parameter()][PSCustomObject]$Configuration,
+        [Parameter()][scriptblock]$NotificationProvider
     )
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
+    $null = $PoUserKey; $null = $PoApiKey; $null = $NotificationProvider
+
+    $SendNotification = {
+        param(
+            [string]$Title,
+            [string]$Message,
+            [string]$Type
+        )
+        if ($NotificationProvider) {
+            & $NotificationProvider -Title $Title -Message $Message -Type $Type
+        } else {
+            $pushoverSplat = @{
+                PoUserKey = $PoUserKey
+                PoApiKey  = $PoApiKey
+                Title     = $Title
+                Message   = $Message
+            }
+            Send-BridgePushover @pushoverSplat
+        }
+    }
+
     foreach ($entry in $CurrentState) {
         switch ($entry.gefyraStatus) {
-            'Κλειστή για συντήρηση' {
+            ($Configuration.Statuses.ClosedForMaintenance) {
 
                 $logDetails = @(
                     "🛑 Κλειστή για συντήρηση: $($entry.gefyraName)",
@@ -50,15 +76,11 @@
                     Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
-                $pushoverSplat = @{
-                    PoUserKey = $PoUserKey
-                    PoApiKey  = $PoApiKey
-                    Title     = "🚧 Η γέφυρα της $($entry.gefyraName)ς είναι κλειστή για συντήρηση"
-                    Message   = "Η γέφυρα $($entry.gefyraName)ς είναι κλειστή για συντήρηση. Επιλέξτε άλλη διαδρομή."
-                }
-                Send-BridgePushover @pushoverSplat
+                $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς είναι κλειστή για συντήρηση"
+                $message = "Η γέφυρα $($entry.gefyraName)ς είναι κλειστή για συντήρηση. Επιλέξτε άλλη διαδρομή."
+                & $SendNotification -Title $title -Message $message -Type 'Closed'
             }
-            'Μόνιμα κλειστή' {
+            ($Configuration.Statuses.PermanentlyClosed) {
 
                 $logDetails = @(
                     "🛑 Μόνιμα κλειστή: $($entry.gefyraName)",
@@ -72,15 +94,11 @@
                     Level   = 'Debug'
                 }
                 Write-BridgeLog @writeBridgeLogSplat
-                $pushoverSplat = @{
-                    PoUserKey = $PoUserKey
-                    PoApiKey  = $PoApiKey
-                    Title     = "🚧 Η γέφυρα της $($entry.gefyraName)ς είναι μόνιμα κλειστή"
-                    Message   = "Η γέφυρα $($entry.gefyraName)ς είναι μόνιμα κλειστή. Επιλέξτε άλλη διαδρομή."
-                }
-                Send-BridgePushover @pushoverSplat
+                $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς είναι μόνιμα κλειστή"
+                $message = "Η γέφυρα $($entry.gefyraName)ς είναι μόνιμα κλειστή. Επιλέξτε άλλη διαδρομή."
+                & $SendNotification -Title $title -Message $message -Type 'Closed'
             }
-            'Κλειστή με πρόγραμμα' {
+            ($Configuration.Statuses.ClosedWithSchedule) {
 
                 $logDetails = @(
                     "📸 Κλειστή με πρόγραμμα: $($entry.gefyraName)",
@@ -103,13 +121,9 @@
                 try {
                     $ocrResult = Invoke-BridgeOCRGoogleCloud @ocrSplat
                     if ($ocrResult) {
-                        $pushoverSplat = @{
-                            PoUserKey = $PoUserKey
-                            PoApiKey  = $PoApiKey
-                            Title     = "🚧 Η γέφυρα της $($entry.gefyraName)ς έκλεισε"
-                            Message   = ($ocrResult | Out-String)
-                        }
-                        Send-BridgePushover @pushoverSplat
+                        $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς έκλεισε"
+                        $message = ($ocrResult | Out-String)
+                        & $SendNotification -Title $title -Message $message -Type 'Closed'
                     }
                 } catch {
                     $writeBridgeLogSplat = @{

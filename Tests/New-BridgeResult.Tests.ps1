@@ -1,7 +1,12 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'New-BridgeResult' {
+Describe 'New-BridgeResult' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+    }
         Context 'Success Result Creation' {
             It 'Δημιουργεί επιτυχημένο αποτέλεσμα με δεδομένα' {
                 $data = @{ TestKey = 'TestValue' }
@@ -133,5 +138,4 @@ InModuleScope 'BridgeWatcher' {
             }
         }
     }
-}
 

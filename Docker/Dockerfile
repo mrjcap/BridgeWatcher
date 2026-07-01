@@ -1,28 +1,13 @@
-FROM mcr.microsoft.com/dotnet/runtime:10.0.9-alpine3.23
+FROM mcr.microsoft.com/powershell:7.4-alpine
 
 ARG PUID=99
 ARG PGID=100
 
-# Install PowerShell and dependencies
+# Install dependencies and set timezone
 RUN apk update && \
     apk add --no-cache \
         tzdata=2026b-r0 \
-        ca-certificates=20260611-r0 \
-        curl=8.19.0-r0 \
-        icu-libs=76.1-r1 \
-        krb5-libs=1.22.1-r0 \
-        libgcc=15.2.0-r2 \
-        libintl=0.24.1-r1 \
-        libssl3=3.5.7-r0 \
-        libstdc++=15.2.0-r2 \
-        zlib=1.3.2-r0 && \
-    curl -L https://github.com/PowerShell/PowerShell/releases/download/v7.6.3/powershell-7.6.3-linux-musl-x64.tar.gz \
-        -o /tmp/powershell.tar.gz && \
-    mkdir -p /opt/microsoft/powershell/7 && \
-    tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
-    chmod +x /opt/microsoft/powershell/7/pwsh && \
-    ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh && \
-    rm /tmp/powershell.tar.gz && \
+        su-exec && \
     cp /usr/share/zoneinfo/Europe/Athens /etc/localtime && \
     echo "Europe/Athens" > /etc/timezone && \
     rm -rf /var/cache/apk/*
@@ -47,7 +32,7 @@ RUN mkdir -p /home/appuser/scripts/modules \
 
 RUN mkdir -p /tmp && chmod 1777 /tmp
 
-USER appuser
+# USER appuser (run as root to read secrets, then drop privileges in entrypoint.sh via su-exec)
 WORKDIR /home/appuser/scripts
 
 COPY --chown=${PUID}:${PGID} ./BridgeWatcher ./modules/BridgeWatcher
@@ -59,4 +44,4 @@ EXPOSE 8090
 ENTRYPOINT ["sh", "./entrypoint.sh"]
 
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD pwsh -Command "if (Test-Path '/home/appuser/output/bridge_status.json' -NewerThan (Get-Date).AddMinutes(-10)) { exit 0 } else { exit 1 }"
+    CMD pwsh -Command "\$outDir = \$Env:BRIDGEWATCHER_OUT; if ([string]::IsNullOrWhiteSpace(\$outDir)) { \$outDir = '/home/appuser/output' }; if (Test-Path \"\$outDir/bridge_status.json\" -NewerThan (Get-Date).AddMinutes(-10)) { exit 0 } else { exit 1 }"

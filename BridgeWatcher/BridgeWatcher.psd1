@@ -1,4 +1,4 @@
-@{
+﻿@{
     RootModule         = 'BridgeWatcher.psm1'
     ModuleVersion = '1.0.78'
     GUID               = 'e7c0fd85-a740-47f4-8179-d952e33edb9f'
@@ -16,7 +16,7 @@
     FunctionsToExport  = @(
         'Get-BridgeStatus',
         'Get-BridgePreviousStatus',
-        'Get-BridgeStatusComparison',
+        'Update-BridgeStatus',
         'Invoke-BridgeStatusComparison',
         'Send-BridgePushover',
         'Get-BridgeStatusMonitor'

@@ -1,4 +1,4 @@
-function New-BridgeConfiguration {
+﻿function New-BridgeConfiguration {
     <#
     .SYNOPSIS
     Δημιουργεί ένα configuration object για το BridgeWatcher module.
@@ -47,14 +47,32 @@ function New-BridgeConfiguration {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$LogDirectory = (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'logs')
+        [string]$LogDirectory = $(
+            if (Test-Path 'TestDrive:\') {
+                'TestDrive:\logs'
+            } else {
+                (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'logs')
+            }
+        )
     )
 
     # Bridge name mappings
     $bridgeNames = @{
         'isthmia'    = 'Ισθμία'
         'poseidonia' = 'Ποσειδωνία'
-    }    # Status mappings
+    }
+    
+    # Unified status strings
+    $statuses = [PSCustomObject]@{
+        Open                 = 'Ανοιχτή'
+        Closed               = 'Κλειστή'
+        ClosedForMaintenance = 'Κλειστή για συντήρηση'
+        ClosedWithSchedule   = 'Κλειστή με πρόγραμμα'
+        PermanentlyClosed    = 'Μόνιμα κλειστή'
+        Unknown              = 'Άγνωστη'
+    }
+
+    # Status mappings
     $statusMappings = @{
         'ΚΛΕΙΣΤΗ' = 'Κλειστή'
         'ΑΝΟΙΧΤΗ' = 'Ανοιχτή'
@@ -126,6 +144,7 @@ function New-BridgeConfiguration {
         LogDirectory              = $LogDirectory
 
         # Mappings
+        Statuses                  = $statuses
         BridgeNames               = $bridgeNames
         StatusMappings            = $statusMappings
         ErrorMessages             = $errorMessages

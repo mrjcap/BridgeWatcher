@@ -26,40 +26,48 @@
     #>    [OutputType([object[]])]
     param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$InputFile,
-        [Parameter()][ValidateRange(1, 20)][int]$JsonDepth = 10
+        [Parameter()][ValidateRange(1, 20)][int]$JsonDepth = 10,
+        [Parameter()][PSCustomObject]$Configuration
     )
-    if (-not (Test-Path $InputFile)) {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = "Το αρχείο $($InputFile) δεν βρέθηκε – επιστρέφεται κενό array."
-            Level   = 'Warning'
+    begin {
+        if (-not $Configuration) {
+            $Configuration = New-BridgeConfiguration
         }
-        Write-BridgeLog @writeBridgeLogSplat
-        return @()
-    }    try {
-        $getContentSplat = @{
-            Path     = $InputFile
-            Raw      = $true
-            Encoding = 'utf8BOM'
-        }
-        $convertFromJsonSplat = @{
-            Depth = $JsonDepth
-        }
-        return Get-Content @getContentSplat | ConvertFrom-Json @convertFromJsonSplat
-    } catch {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = "Σφάλμα κατά την ανάλυση JSON: $($_.Exception.Message)"
-            Level   = 'Warning'
-        }
-        Write-BridgeLog @writeBridgeLogSplat
-        $PSCmdlet.ThrowTerminatingError(
-            [System.Management.Automation.ErrorRecord]::new(
-                ([System.Exception]::new("Σφάλμα κατά την ανάλυση JSON: $($_.Exception.Message)")),
-                'BridgeJsonParseError',
-                [System.Management.Automation.ErrorCategory]::InvalidData,
-                $InputFile
+    }
+    process {
+        if (-not (Test-Path $InputFile)) {
+            $writeBridgeLogSplat = @{
+                Stage   = $Configuration.LoggingConfig.ErrorStage
+                Message = "Το αρχείο $($InputFile) δεν βρέθηκε – επιστρέφεται κενό array."
+                Level   = $Configuration.LoggingConfig.WarningLevel
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+            return @()
+        }        try {
+            $getContentSplat = @{
+                Path     = $InputFile
+                Raw      = $true
+                Encoding = 'utf8BOM'
+            }
+            $convertFromJsonSplat = @{
+                Depth = $JsonDepth
+            }
+            return Get-Content @getContentSplat | ConvertFrom-Json @convertFromJsonSplat
+        } catch {
+            $writeBridgeLogSplat = @{
+                Stage   = $Configuration.LoggingConfig.ErrorStage
+                Message = "Σφάλμα κατά την ανάλυση JSON: $($_.Exception.Message)"
+                Level   = $Configuration.LoggingConfig.WarningLevel
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+            $PSCmdlet.ThrowTerminatingError(
+                [System.Management.Automation.ErrorRecord]::new(
+                    ([System.Exception]::new("Σφάλμα κατά την ανάλυση JSON: $($_.Exception.Message)")),
+                    'BridgeJsonParseError',
+                    [System.Management.Automation.ErrorCategory]::InvalidData,
+                    $InputFile
+                )
             )
-        )
+        }
     }
 }

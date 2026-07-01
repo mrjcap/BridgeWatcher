@@ -1,7 +1,13 @@
-Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'Export-BridgeStatusJson Tests' {
+Describe 'Export-BridgeStatusJson Tests' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
+    }
         Context 'Όταν συμβαίνει σφάλμα κατά την αποθήκευση JSON' {
             It 'Επιστρέφει BridgeResult με σφάλμα και γράφει το κατάλληλο μήνυμα' {
                 # Mock το Test-Path να επιστρέφει true για να μην αποτύχει πρόωρα
@@ -152,4 +158,3 @@ InModuleScope 'BridgeWatcher' {
             }
         }
     }
-}

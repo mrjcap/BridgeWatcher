@@ -34,12 +34,19 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$State,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
+        [Parameter()][PSCustomObject]$Configuration,
+        [Parameter()][scriptblock]$NotificationProvider
     )
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
     $splat = @{
-        CurrentState = $State
-        PoUserKey    = $PoUserKey
-        PoApiKey     = $PoApiKey
+        CurrentState         = $State
+        PoUserKey            = $PoUserKey
+        PoApiKey             = $PoApiKey
+        Configuration        = $Configuration
+        NotificationProvider = $NotificationProvider
     }
     if ($Type -eq 'Closed') {
         $splat.ApiKey = $ApiKey

@@ -1,93 +1,124 @@
-Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'Get-BridgeStatusMonitor' {
-        Context 'Default Parameters' {
-            It 'Καλεί Get-BridgeStatusComparison  και Start-Sleep σε loop' {
-                Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
-                $monitorParams = @{
-                    OutputFile = 'test.json'
-                    ApiKey     = 'dummy-api-key'
-                    PoUserKey  = 'dummy-user-key'
-                    PoApiKey   = 'dummy-app-key'
-                }
-                Mock -CommandName Start-Sleep
-                Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1
-                Should -Invoke Get-BridgeStatusComparison -Exactly 2
-                Should -Invoke Start-Sleep -Exactly 1
+Describe 'Get-BridgeStatusMonitor' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Public/Update-BridgeStatus.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatusMonitor.ps1"
+    }
+
+    Context 'Default Parameters' {
+        It 'Καλεί Update-BridgeStatus και Start-Sleep σε loop' {
+            Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
+            Mock -CommandName Start-Sleep
+
+            $monitorParams = @{
+                OutputFile = 'test.json'
+                ApiKey     = 'dummy-api-key'
+                PoUserKey  = 'dummy-user-key'
+                PoApiKey   = 'dummy-app-key'
             }
-        }
-        Context 'Όταν ζητείται μόνο μία επανάληψη' {
-            It 'Δεν κάνει Sleep μετά την πρώτη' {
-                Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
-                $monitorParams = @{
-                    OutputFile = 'test.json'
-                    ApiKey     = 'dummy-api-key'
-                    PoUserKey  = 'dummy-user-key'
-                    PoApiKey   = 'dummy-app-key'
-                }
-                Mock -CommandName Get-BridgeStatusComparison
-                Mock -CommandName Start-Sleep
-                Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 10
-                Should -Invoke Get-BridgeStatusComparison -Exactly 1
-                Should -Not -Invoke Start-Sleep
-            }
-        }
-        Context 'Με ενεργοποιημένο Verbose' {
-            It 'Εκτυπώνει verbose μηνύματα' {
-                Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
-                $monitorParams = @{
-                    OutputFile = 'test.json'
-                    ApiKey     = 'dummy-api-key'
-                    PoUserKey  = 'dummy-user-key'
-                    PoApiKey   = 'dummy-app-key'
-                }
-                Mock -CommandName Start-Sleep
-                { Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 1 -Verbose } | Should -Not -Throw
-            }
-        }
-        Context 'Ελέγχει παραμέτρους' {
-            It 'Χρησιμοποιεί την τιμή του IntervalSeconds' {
-                Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
-                $monitorParams = @{
-                    OutputFile = 'test.json'
-                    ApiKey     = 'dummy-api-key'
-                    PoUserKey  = 'dummy-user-key'
-                    PoApiKey   = 'dummy-app-key'
-                }
-                Mock -CommandName Start-Sleep
-                Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123
-                Should -Invoke Start-Sleep -ParameterFilter { $Seconds -eq 123 } -Exactly 1
-            }
+
+            Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1
+            Assert-MockCalled Update-BridgeStatus -Exactly 2
+            Assert-MockCalled Start-Sleep -Exactly 1
         }
     }
-    Describe 'Get-BridgeStatusMonitor Function' {
-        # Mocking Write-BridgeLog για να τεστάρουμε την καταγραφή χωρίς να γράφουμε πραγματικά logs
+
+    Context 'Όταν ζητείται μόνο μία επανάληψη' {
+        It 'Δεν κάνει Sleep μετά την πρώτη' {
+            Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
+            Mock -CommandName Start-Sleep
+
+            $monitorParams = @{
+                OutputFile = 'test.json'
+                ApiKey     = 'dummy-api-key'
+                PoUserKey  = 'dummy-user-key'
+                PoApiKey   = 'dummy-app-key'
+            }
+
+            Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 10
+            Assert-MockCalled Update-BridgeStatus -Exactly 1
+            Assert-MockCalled Start-Sleep -Times 0 -Exactly
+        }
+    }
+
+    Context 'Με ενεργοποιημένο Verbose' {
+        It 'Εκτυπώνει verbose μηνύματα' {
+            Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
+            Mock -CommandName Start-Sleep
+
+            $monitorParams = @{
+                OutputFile = 'test.json'
+                ApiKey     = 'dummy-api-key'
+                PoUserKey  = 'dummy-user-key'
+                PoApiKey   = 'dummy-app-key'
+            }
+
+            { Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 1 -Verbose } | Should -Not -Throw
+        }
+    }
+
+    Context 'Ελέγχει παραμέτρους' {
+        It 'Χρησιμοποιεί την τιμή του IntervalSeconds' {
+            Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
+            Mock -CommandName Start-Sleep
+
+            $monitorParams = @{
+                OutputFile = 'test.json'
+                ApiKey     = 'dummy-api-key'
+                PoUserKey  = 'dummy-user-key'
+                PoApiKey   = 'dummy-app-key'
+            }
+
+            Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123
+            Assert-MockCalled Start-Sleep -ParameterFilter { $Seconds -eq 123 } -Exactly 1
+        }
+    }
+
+    Context 'Custom Action Parameter' {
+        It 'Executes custom Action instead of Update-BridgeStatus' {
+            Mock -CommandName Update-BridgeStatus -MockWith { }
+            Mock -CommandName Start-Sleep
+
+            $tracker = @{ Called = $false }
+            $customAction = {
+                $tracker.Called = $true
+            }
+
+            $monitorParams = @{
+                OutputFile = 'test.json'
+                ApiKey     = 'dummy-api-key'
+                PoUserKey  = 'dummy-user-key'
+                PoApiKey   = 'dummy-app-key'
+                Action     = $customAction
+            }
+
+            Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1
+            $tracker.Called | Should -Be $true
+            Assert-MockCalled Update-BridgeStatus -Times 0 -Exactly
+        }
+    }
+
+    Context 'Exception Handling' {
         It 'Πρέπει να καταγράφεται το σφάλμα όταν προκύπτει εξαίρεση' {
             Mock Write-BridgeLog {}
-            # Προετοιμασία των παραμέτρων
-            $maxIterations = 3
-            $intervalSeconds = 1
-            $outputFile = 'C:\Logs\bridge.json'
-            $apiKey = 'api123'
-            $poUserKey = 'user123'
-            $poApiKey = 'token123'
-            # Δημιουργία mock που θα ρίξει εξαίρεση στην Get-BridgeStatusComparison
-            Mock Get-BridgeStatusComparison { throw 'Test Exception' }
-            # Εκτέλεση της συνάρτησης
+            Mock Start-Sleep
+            Mock Update-BridgeStatus { throw 'Test Exception' }
+
             $startBridgeStatusMonitorSplat = @{
-                MaxIterations   = $maxIterations
-                IntervalSeconds = $intervalSeconds
-                OutputFile      = $outputFile
-                ApiKey          = $apiKey
-                PoUserKey       = $poUserKey
-                PoApiKey        = $poApiKey
+                MaxIterations   = 3
+                IntervalSeconds = 1
+                OutputFile      = 'C:\Logs\bridge.json'
+                ApiKey          = 'api123'
+                PoUserKey       = 'user123'
+                PoApiKey        = 'token123'
             }
+
             Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat
-            # Επαληθεύουμε ότι η Write-BridgeLog καλείται για το σφάλμα
-            Assert-MockCalled Write-BridgeLog -Exactly 5 -Scope It  # 1 για το μήνυμα εκκίνησης, 1 για το μήνυμα σφάλματος
+            # 1 για το μήνυμα εκκίνησης, 3 για το μήνυμα σφάλματος σε κάθε επανάληψη, 1 για το μήνυμα ολοκλήρωσης
+            Assert-MockCalled Write-BridgeLog -Exactly 5
         }
     }
-
 }
-

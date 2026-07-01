@@ -1,8 +1,19 @@
-﻿
-Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'ConvertFrom-BridgeOCRResult Tests' {
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
+
+Describe 'ConvertFrom-BridgeOCRResult Tests' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeNameFromUri.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeTimeRange.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeClosedDuration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusAdvice.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
+    }
+        Mock Write-BridgeLog {}
         Context 'Όταν η ανάλυση OCR κειμένου αποτυγχάνει' {
             It 'Πρέπει να ρίχνει σφάλμα "Δεν κατέστη δυνατή η ανάλυση του κειμένου."' {
                 $mockApiResponse = @{
@@ -116,8 +127,46 @@ InModuleScope 'BridgeWatcher' {
             $result = ConvertFrom-BridgeOCRResult -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
             $result.'Σημείωση 2' | Should -Match 'ήδη κλειστή από τις'
         }
+        It 'Καταγράφει επιτυχές μήνυμα κατά την επιτυχή OCR ανάλυση' {
+            $calledMessage = $null
+            Mock Write-BridgeLog {
+                param($Stage, $Message, $Level, $Configuration)
+                if ($Message -like '*Successfully parsed*' -or $Message -like '*No text annotations*') {
+                    $script:calledMessage = $Message
+                }
+            }
+            $mockResponse = @{
+                responses = @(
+                    @{ textAnnotations = @(@{ description = '25/04/2025 14:00 έως 25/04/2025 14:30' }) }
+                )
+            }
+            Mock Get-BridgeNameFromUri { 'Ισθμία' }
+            Mock ConvertTo-BridgeTimeRange { [pscustomobject]@{
+                    From      = [datetime]::ParseExact('25/04/2025 14:00', 'dd/MM/yyyy HH:mm', $null)
+                    To        = [datetime]::ParseExact('25/04/2025 14:30', 'dd/MM/yyyy HH:mm', $null)
+                    ClosedFor = [timespan]::FromMinutes(30)
+                } }
+            Mock ConvertTo-BridgeClosedDuration { '30 λεπτά' }
+            Mock Get-BridgeStatusAdvice { 'Επέστρεψε μετά τις 00:00' }
+            
+            $result = ConvertFrom-BridgeOCRResult -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
+            
+            $script:calledMessage | Should -Not -Match 'No text annotations'
+            $script:calledMessage | Should -Match 'Successfully parsed'
+        }
     }
     Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος ανάλυσης κειμένου' {
+        BeforeAll {
+            . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeNameFromUri.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeTimeRange.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeClosedDuration.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusAdvice.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
+        }
         It 'Πρέπει να καλει το Write-BridgeLog όταν αποτυγχάνει η ανάλυση OCR' {
             Mock Write-BridgeLog {}
             $mockApiResponse = @{
@@ -131,6 +180,5 @@ InModuleScope 'BridgeWatcher' {
             }
             { ConvertFrom-BridgeOCRResult -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } | Should -Throw
             Assert-MockCalled Write-BridgeLog -Exactly 2 -Scope It
-        }
     }
 }

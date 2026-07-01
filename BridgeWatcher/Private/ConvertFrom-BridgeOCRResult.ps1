@@ -73,7 +73,7 @@
     $timeRange = ConvertTo-BridgeTimeRange @convertToBridgeTimeRangeSplat
     $writeBridgeLogSplat = @{
         Stage   = 'Ανάλυση'
-        Message = "OCR ➤ No text annotations found in response. $($timeRange)"
+        Message = "OCR ➤ Successfully parsed time range: From = $($timeRange.From), To = $($timeRange.To), ClosedFor = $($timeRange.ClosedFor)"
     }
     Write-BridgeLog @writeBridgeLogSplat
     if (-not $timeRange) {

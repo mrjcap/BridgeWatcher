@@ -1,7 +1,13 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'Invoke-BridgeOpenedNotification' {
+Describe 'Invoke-BridgeOpenedNotification' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
+    }
         Context 'Όταν η γέφυρα είναι ανοιχτή' {
             It 'Στέλνει Pushover ειδοποίηση και γράφει log' {
                 Mock -CommandName Send-BridgePushover -MockWith { }
@@ -39,5 +45,4 @@ InModuleScope 'BridgeWatcher' {
             }
         }
     }
-}
 

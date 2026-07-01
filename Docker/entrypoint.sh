@@ -16,8 +16,13 @@ for secret in API_KEY POAPI_KEY POUSER_KEY; do
   fi
 done
 
+# Read and export secrets so they are available in-memory to appuser
+export API_KEY=$(cat /run/secrets/API_KEY | tr -d '\r\n' | xargs)
+export POAPI_KEY=$(cat /run/secrets/POAPI_KEY | tr -d '\r\n' | xargs)
+export POUSER_KEY=$(cat /run/secrets/POUSER_KEY | tr -d '\r\n' | xargs)
+
 # Change to user directory για write access
 cd /home/appuser/scripts
 
 echo "✅ All secrets validated, starting BridgeWatcher..."
-exec pwsh -NoLogo -NoProfile -File ./run.ps1
+exec su-exec appuser pwsh -NoLogo -NoProfile -File ./run.ps1

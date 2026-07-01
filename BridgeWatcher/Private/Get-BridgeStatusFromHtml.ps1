@@ -1,4 +1,4 @@
-function Get-BridgeStatusFromHtml {
+﻿function Get-BridgeStatusFromHtml {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -42,16 +42,16 @@ function Get-BridgeStatusFromHtml {
     $baseUrl = $Configuration.BaseImageUrl
     $patterns = @{
         'poseidonia' = @{
-            'Κλειστή για συντήρηση' = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
-            'Κλειστή με πρόγραμμα'  = 'image-bridge-open-with-schedule-posidonia\.php(\?\d+)?'
-            'Μόνιμα κλειστή'        = 'image-bridge-always-close\.php(\?\d+)?'
-            'Ανοιχτή'               = 'image-bridge-open-no-schedule\.php\?\d+'
+            ($Configuration.Statuses.ClosedForMaintenance) = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
+            ($Configuration.Statuses.ClosedWithSchedule)   = 'image-bridge-open-with-schedule-posidonia\.php(\?\d+)?'
+            ($Configuration.Statuses.PermanentlyClosed)    = 'image-bridge-always-close\.php(\?\d+)?'
+            ($Configuration.Statuses.Open)                 = 'image-bridge-open-no-schedule\.php\?\d+'
         }
         'isthmia'    = @{
-            'Κλειστή για συντήρηση' = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
-            'Κλειστή με πρόγραμμα'  = 'image-bridge-open-with-schedule-isthmia\.php(\?\d+)?'
-            'Μόνιμα κλειστή'        = 'image-bridge-always-close\.php(\?\d+)?'
-            'Ανοιχτή'               = 'image-bridge-open-no-schedule\.php\?\d+'
+            ($Configuration.Statuses.ClosedForMaintenance) = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
+            ($Configuration.Statuses.ClosedWithSchedule)   = 'image-bridge-open-with-schedule-isthmia\.php(\?\d+)?'
+            ($Configuration.Statuses.PermanentlyClosed)    = 'image-bridge-always-close\.php(\?\d+)?'
+            ($Configuration.Statuses.Open)                 = 'image-bridge-open-no-schedule\.php\?\d+'
         }
     }
     $result = @()
@@ -107,7 +107,7 @@ function Get-BridgeStatusFromHtml {
                 Status           = $status
                 Pattern          = $pattern
                 BridgeImages     = $bridgeImages
-                RequireInfoImage = ($status -eq 'Ανοιχτή')
+                RequireInfoImage = ($status -eq $Configuration.Statuses.Open)
             }
             $image = Resolve-BridgeStatus @resolveBridgeStatusSplat
             if ($image) {

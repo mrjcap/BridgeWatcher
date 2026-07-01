@@ -1,4 +1,4 @@
-function Get-BridgeStatusMonitor {
+﻿function Get-BridgeStatusMonitor {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -42,7 +42,10 @@ function Get-BridgeStatusMonitor {
         [Parameter()][ValidateNotNullOrEmpty()][string]$PoApiKey,
 
         [Parameter()]
-        [PSCustomObject]$Configuration
+        [PSCustomObject]$Configuration,
+
+        [Parameter()]
+        [scriptblock]$Action
     )
 
     begin {
@@ -58,6 +61,13 @@ function Get-BridgeStatusMonitor {
 
         if (-not $PSBoundParameters.ContainsKey('IntervalSeconds')) {
             $IntervalSeconds = $Configuration.DefaultIntervalSeconds
+        }
+
+        if (-not $PSBoundParameters.ContainsKey('Action')) {
+            $Action = {
+                param($splat)
+                Update-BridgeStatus @splat
+            }
         }
 
         $iteration = 0
@@ -76,21 +86,15 @@ function Get-BridgeStatusMonitor {
         while ($infiniteLoop -or $iteration -lt $MaxIterations) {
             try {
                 $iteration++
-                $getBridgeStatusComparisonSplat = @{
+                $updateBridgeStatusSplat = @{
                     OutputFile = $OutputFile
                     ApiKey     = $ApiKey
                     PoUserKey  = $PoUserKey
                     PoApiKey   = $PoApiKey
                 }
 
-                # Note: Get-BridgeStatusComparison doesn't support Configuration parameter yet
-                # Will be added in future refactoring iteration
-                Get-BridgeStatusComparison @getBridgeStatusComparisonSplat
-                if (-not $infiniteLoop -and $iteration -ge $MaxIterations) { break }
-                $startSleepSplat = @{
-                    Seconds = $IntervalSeconds
-                }
-                Start-Sleep @startSleepSplat } catch {
+                & $Action $updateBridgeStatusSplat
+            } catch {
                 $errorMessage = $Configuration.ErrorMessages.MonitoringError
 
                 $writeBridgeLogSplat = @{
@@ -99,7 +103,15 @@ function Get-BridgeStatusMonitor {
                     Level   = $Configuration.LoggingConfig.DebugLevel
                 }
                 Write-BridgeLog @writeBridgeLogSplat
-            } }
+            } finally {
+                if ($infiniteLoop -or $iteration -lt $MaxIterations) {
+                    $startSleepSplat = @{
+                        Seconds = $IntervalSeconds
+                    }
+                    Start-Sleep @startSleepSplat
+                }
+            }
+        }
 
         $monitoringCompleteMessage = $Configuration.StatusMessages.MonitoringComplete
 

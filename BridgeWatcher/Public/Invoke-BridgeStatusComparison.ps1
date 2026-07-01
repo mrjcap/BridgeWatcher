@@ -1,4 +1,4 @@
-function Invoke-BridgeStatusComparison {
+﻿function Invoke-BridgeStatusComparison {
     <#
     .SYNOPSIS
     Συγκρίνει τις λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
@@ -51,11 +51,17 @@ function Invoke-BridgeStatusComparison {
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$PoApiKey
+        [string]$PoApiKey,
+
+        [Parameter()]
+        [PSCustomObject]$Configuration
     )
     Set-StrictMode -Version Latest
-
     try {
+        if (-not $Configuration) {
+            $Configuration = New-BridgeConfiguration
+        }
+
         $compareSplat = @{
             ReferenceObject  = $PreviousState
             DifferenceObject = $CurrentState
@@ -74,14 +80,14 @@ function Invoke-BridgeStatusComparison {
         }
 
         $handlerMap = @{
-            'Κλειστή για συντήρηση|=>' = 'Closed'
-            'Κλειστή για συντήρηση|<=' = 'Closed'
-            'Κλειστή με πρόγραμμα|=>'  = 'Closed'
-            'Κλειστή με πρόγραμμα|<='  = 'Closed'
-            'Μόνιμα κλειστή|=>'        = 'Closed'
-            'Μόνιμα κλειστή|<='        = 'Closed'
-            'Ανοιχτή|=>'               = 'Opened'
-            'Ανοιχτή|<='               = 'Opened'
+            "$($Configuration.Statuses.ClosedForMaintenance)|=>" = 'Closed'
+            "$($Configuration.Statuses.ClosedForMaintenance)|<=" = 'Closed'
+            "$($Configuration.Statuses.ClosedWithSchedule)|=>"   = 'Closed'
+            "$($Configuration.Statuses.ClosedWithSchedule)|<="   = 'Closed'
+            "$($Configuration.Statuses.PermanentlyClosed)|=>"    = 'Closed'
+            "$($Configuration.Statuses.PermanentlyClosed)|<="    = 'Closed'
+            "$($Configuration.Statuses.Open)|=>"                 = 'Opened'
+            "$($Configuration.Statuses.Open)|<="                 = 'Opened'
         }
 
         foreach ($change in $diff) {
@@ -100,6 +106,10 @@ function Invoke-BridgeStatusComparison {
                 Write-BridgeLog @writeBridgeLogSplat
                 continue
             }
+            if ($change.SideIndicator -ne '=>') {
+                # Skip any '<=' side indicators to prevent double notifications
+                continue
+            }
             $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
             if ($handlerMap.ContainsKey($key)) {
                 $type = $handlerMap[$key]
@@ -112,11 +122,12 @@ function Invoke-BridgeStatusComparison {
                 $changedBridgeState = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
                 if ($changedBridgeState.Count -gt 0) {
                     $sendBridgeNotificationSplat = @{
-                        Type      = $type
-                        State     = $changedBridgeState
-                        ApiKey    = $ApiKey
-                        PoUserKey = $PoUserKey
-                        PoApiKey  = $PoApiKey
+                        Type          = $type
+                        State         = $changedBridgeState
+                        ApiKey        = $ApiKey
+                        PoUserKey     = $PoUserKey
+                        PoApiKey      = $PoApiKey
+                        Configuration = $Configuration
                     }
                     Send-BridgeNotification @sendBridgeNotificationSplat
                 }

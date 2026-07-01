@@ -49,7 +49,12 @@
             try {
                 $Configuration = New-BridgeConfiguration
             } catch {
-                return New-BridgeResult -Success $false -ErrorMessage "Configuration initialization failed: $($_.Exception.Message)" -ErrorCode 'CONFIG_ERROR'
+                $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+                    [System.Exception]::new("Configuration initialization failed: $($_.Exception.Message)"),
+                    'CONFIG_ERROR',
+                    [System.Management.Automation.ErrorCategory]::InvalidOperation,
+                    $null
+                ))
             }
         }
     }    process { # Stage 1: Data Acquisition - Get HTML content

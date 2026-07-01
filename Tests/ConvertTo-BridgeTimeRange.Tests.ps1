@@ -1,7 +1,13 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-InModuleScope 'BridgeWatcher' {
-    Describe 'ConvertTo-BridgeTimeRange' {
+Describe 'ConvertTo-BridgeTimeRange' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeTimeRange.ps1"
+    }
         Context 'Όταν το OCR κείμενο δεν περιέχει έγκυρες ημερομηνίες' {
             It 'Πρέπει να ρίχνει σφάλμα "Αποτυχία ανάλυσης ημερομηνιών: Cannot index into a null array."' {
                 # Δημιουργούμε input που θα αποτύχει στο parsing
@@ -14,5 +20,16 @@ InModuleScope 'BridgeWatcher' {
                 } | Should -Throw
             }
         }
+        Context 'Όταν οι ημερομηνίες είναι εκτός χρονολογικής σειράς στο OCR' {
+            It 'Πρέπει να ταξινομεί τις ημερομηνίες χρονολογικά και να επιστρέφει θετικό ClosedFor' {
+                $lines = @(
+                    'Έως 25/04/2025 14:30',
+                    'Από 25/04/2025 14:00'
+                )
+                $result = ConvertTo-BridgeTimeRange -Lines $lines
+                $result.From | Should -Be ([datetime]::ParseExact('25/04/2025 14:00', 'dd/MM/yyyy HH:mm', $null))
+                $result.To | Should -Be ([datetime]::ParseExact('25/04/2025 14:30', 'dd/MM/yyyy HH:mm', $null))
+                $result.ClosedFor | Should -Be ([timespan]'00:30:00')
+            }
+        }
     }
-}

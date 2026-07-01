@@ -274,7 +274,6 @@ jobs:
           rm -rf dist/ build/ out/ || true
           docker container prune -f || true
           docker image prune -f || true
-          docker system prune -af --volumes || true
           docker logout || true
           git clean -fdx || true
           git reset --hard || true

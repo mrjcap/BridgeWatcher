@@ -1,4 +1,4 @@
-function Send-BridgePushoverRequest {
+﻿function Send-BridgePushoverRequest {
     [CmdletBinding()]
     <#
     .SYNOPSIS

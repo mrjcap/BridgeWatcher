@@ -1,4 +1,4 @@
-function Get-BridgeImage {
+﻿function Get-BridgeImage {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -32,10 +32,13 @@ function Get-BridgeImage {
         [Parameter()]
         [PSCustomObject]$Configuration = (New-BridgeConfiguration)
     )
-    $bridgeLabel = $Configuration.BridgeNames[$Location].ToUpper()
+    $bridgeLabel = $Configuration.BridgeNames[$Location]
 
-    $blocks = $HtmlContent -split '<div class="panel panel-primary\s*">'
-    $block = $blocks | Where-Object { $_ -match "<b>$bridgeLabel</b>" }
+    # Split using robust regex to handle case-insensitivity, single/double quotes, and variable spacing/classes
+    $blocks = [regex]::Split($HtmlContent, '(?i)<div[^>]+class=["''][^"'']*panel\s+panel-primary[^"'']*["''][^>]*>')
+    
+    # Match block case-insensitively based on bridge label
+    $block = $blocks | Where-Object { $_ -match "(?i)$bridgeLabel" }
     if (-not $block) {
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
@@ -51,7 +54,8 @@ function Get-BridgeImage {
         )
         $PSCmdlet.ThrowTerminatingError($errorRecord)
     }
-    $bmatches = [regex]::Matches($block, '<img[^>]+src="([^"]+)"')
+    # Match img tags with case-insensitivity, single/double quotes, and arbitrary order of src
+    $bmatches = [regex]::Matches($block, '(?i)<img[^>]+src=["'']([^"'']+)["'']')
     $imageList = [System.Collections.ArrayList]::new()
     foreach ($m in $bmatches) {
         $src = $m.Groups[1].Value
