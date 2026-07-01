@@ -7,16 +7,19 @@ This document defines the supply chain security standards and procedures for Bri
 To prevent dependency confusion, typosquatting, and malicious package injection, the following policies apply:
 
 ### 1.1 Docker Base Images
+
 - All base images must be sourced from official, trusted registries (e.g., Docker Hub official alpine image).
 - Images must specify an exact version tag and be pinned by their cryptographic SHA256 digest to ensure builds are reproducible and immutable.
 - Example: `alpine:3.23@sha256:57a4d1f2e4...`
 
 ### 1.2 GitHub Actions Workflows
+
 - All third-party GitHub Actions must be pinned to a full 40-character git commit SHA rather than a mutable branch or version tag.
 - Version tags may be added as end-of-line comments for readability and tool updates (e.g., Dependabot).
 - Example: `uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2`
 
 ### 1.3 PowerShell Modules
+
 - PowerShell modules installed at runtime or during build (e.g., Pester, PSScriptAnalyzer) must declare minimum or exact version limits.
 - Public galleries should be trusted explicitly in build environments only after verification.
 

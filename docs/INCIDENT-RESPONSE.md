@@ -10,12 +10,14 @@ tracks Corinth Canal bridge status using Google Vision API
 (OCR) and Pushover (notifications), deployed in Docker.
 
 **In scope:**
+
 - API credential compromise or exposure
 - Service outages affecting bridge monitoring
 - Container-level security incidents
 - Monitoring gaps and false notifications
 
 **Out of scope:**
+
 - Infrastructure outside the BridgeWatcher stack
 - Upstream Google/Pushover platform outages
 
@@ -75,7 +77,7 @@ echo "<new-key>" | docker secret create google_api_key -
 echo "<new-token>" | docker secret create pushover_token -
 ```
 
-4. Verify the new keys work before going live:
+1. Verify the new keys work before going live:
 
 ```powershell
 # Quick API health check
@@ -219,12 +221,13 @@ docker run --rm aquasec/trivy image bridgewatcher:latest
 
 | Role | Name | Contact | Escalation Path |
 |------|------|---------|-----------------|
-| Primary Operator | Jay Cap (@mrjcap) | GitHub Issues / mrjcap@users.noreply.github.com | First responder |
-| Project Owner | Jay Cap (@mrjcap) | GitHub Issues / mrjcap@users.noreply.github.com | SEV-1 escalation |
-| Security Lead | Jay Cap (@mrjcap) | GitHub Issues / mrjcap@users.noreply.github.com | Compromise events |
+| Primary Operator | Jay Cap (@mrjcap) | GitHub Issues / <mrjcap@users.noreply.github.com> | First responder |
+| Project Owner | Jay Cap (@mrjcap) | GitHub Issues / <mrjcap@users.noreply.github.com> | SEV-1 escalation |
+| Security Lead | Jay Cap (@mrjcap) | GitHub Issues / <mrjcap@users.noreply.github.com> | Compromise events |
 | Google Cloud Admin | Jay Cap (@mrjcap) | Google Cloud Console / Console Admin | API key rotation |
 
 **External Resources:**
+
 - [Google Cloud Support](https://cloud.google.com/support)
 - [Pushover Support](https://pushover.net/support)
 - [Docker Security](https://docs.docker.com/engine/security/)

@@ -44,8 +44,8 @@ For the full security audit, see
 
 | Role | Name | Date |
 |------|------|------|
-| Project Owner | ________________ | ____-__-__ |
-| Security Lead | ________________ | ____-__-__ |
+| Project Owner | ________________ | ____-**-__ |
+| Security Lead | ________________ | ____-**-__ |
 
 ---
 *Document created: 2026-06-26*
