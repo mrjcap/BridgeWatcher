@@ -25,4 +25,4 @@ export POUSER_KEY=$(cat /run/secrets/POUSER_KEY | tr -d '\r\n' | xargs)
 cd /home/appuser/scripts
 
 echo "✅ All secrets validated, starting BridgeWatcher..."
-exec su-exec appuser pwsh -NoLogo -NoProfile -File ./run.ps1
+exec pwsh -NoLogo -NoProfile -File ./run.ps1
