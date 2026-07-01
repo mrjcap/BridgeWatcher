@@ -5,6 +5,18 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.82] - 2026-07-01
+
+### ✨ Χαρακτηριστικά
+
+- feat: make log directory configurable via New-BridgeConfiguration
+
+### 🐛 Διορθώσεις
+
+- fix: resolve final PSScriptAnalyzer violations to secure CI pipeline
+- fix: ensure BOM is preserved when updating module version
+- fix: correct Greek accents and URL concatenation
+
 ## [1.0.81] - 2026-07-01
 
 ### 🐛 Διορθώσεις
@@ -492,6 +504,7 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml for powershellgallery
+
 
 
 
