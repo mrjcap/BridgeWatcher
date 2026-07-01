@@ -1,7 +1,7 @@
 ﻿
 Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-Describe 'ConvertFrom-BridgeOCRResult Tests' {
+Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
     BeforeAll {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -47,7 +47,7 @@ Describe 'ConvertFrom-BridgeOCRResult Tests' {
             { ConvertFrom-BridgeOCRResult -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } | Should -Throw 'Δεν βρέθηκε κείμενο OCR στην απόκριση.'
         }
     }
-    It 'should call Write-Verbose and Write-Warning when time range is not found' {
+    It 'πρέπει να καλεί τα Write-Verbose και Write-Warning όταν δεν βρίσκεται το εύρος χρόνου' {
         # Δημιουργία mock δεδομένων όπου το ConvertTo-BridgeTimeRange επιστρέφει $null
         $mockApiResponse = @{
             responses = @(
@@ -69,7 +69,7 @@ Describe 'ConvertFrom-BridgeOCRResult Tests' {
         Assert-MockCalled Write-Verbose -Exactly 3 -Scope It
         Assert-MockCalled Write-Warning -Exactly 1 -Scope It
     }
-    It 'should return an empty array when time range is not found' {
+    It 'πρέπει να επιστρέφει κενό πίνακα όταν δεν βρίσκεται το εύρος χρόνου' {
         # Δημιουργία mock δεδομένων όπου το ConvertTo-BridgeTimeRange επιστρέφει $null
         $mockApiResponse = @{
             responses = @(
@@ -132,7 +132,7 @@ Describe 'ConvertFrom-BridgeOCRResult Tests' {
         Mock Write-BridgeLog {
             param($Stage, $Message, $Level, $Configuration)
             $null = $Stage; $null = $Level; $null = $Configuration
-            if ($Message -like '*Successfully parsed*' -or $Message -like '*No text annotations*') {
+            if ($Message -like '*Επιτυχής ανάλυση*' -or $Message -like '*No text annotations*') {
                 $script:calledMessage = $Message
             }
         }
@@ -153,7 +153,7 @@ Describe 'ConvertFrom-BridgeOCRResult Tests' {
         $null = ConvertFrom-BridgeOCRResult -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
 
         $script:calledMessage | Should -Not -Match 'No text annotations'
-        $script:calledMessage | Should -Match 'Successfully parsed'
+        $script:calledMessage | Should -Match 'Επιτυχής ανάλυση'
     }
 }
 Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος ανάλυσης κειμένου' {
@@ -183,4 +183,3 @@ Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος α
         Assert-MockCalled Write-BridgeLog -Exactly 2 -Scope It
     }
 }
-
