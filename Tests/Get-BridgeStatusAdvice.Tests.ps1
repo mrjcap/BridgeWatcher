@@ -19,7 +19,7 @@ InModuleScope 'BridgeWatcher' {
         Context 'Configuration Coverage Tests' {
             It 'Καλύπτει Configuration.DefaultMaxWaitTimeMinutes path' {
                 $config = [PSCustomObject]@{
-                    DefaultMaxWaitTimeMinutes    = 15
+                    DefaultMaxWaitTimeMinutes = 15
                 }
 
                 # Test with minutes above custom threshold
@@ -34,7 +34,7 @@ InModuleScope 'BridgeWatcher' {
             It 'Καλύπτει Configuration.AdviceMessages.DoNotWait path' {
                 $config = [PSCustomObject]@{
                     AdviceMessages = @{
-                        DoNotWait    = 'Custom message - do not wait'
+                        DoNotWait = 'Custom message - do not wait'
                     }
                 }
 
@@ -45,7 +45,7 @@ InModuleScope 'BridgeWatcher' {
             It 'Καλύπτει Configuration.AdviceMessages.Wait path' {
                 $config = [PSCustomObject]@{
                     AdviceMessages = @{
-                        Wait    = 'Custom message - wait'
+                        Wait = 'Custom message - wait'
                     }
                 }
 

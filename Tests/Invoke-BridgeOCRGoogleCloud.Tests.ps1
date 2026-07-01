@@ -34,7 +34,7 @@ InModuleScope 'BridgeWatcher' {
         It 'Γράφει Error όταν αποτυγχάνει η κλήση' {
             Mock Invoke-BridgeOCRRequest { 'Simulated OCR failure' }
             $invokeOCRGoogleCloudSplat = @{
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
                 ImageUri      = 'https://image.jpg'
                 Verbose       = $true
                 ErrorAction   = 'SilentlyContinue'

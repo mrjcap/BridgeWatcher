@@ -78,7 +78,7 @@ InModuleScope 'BridgeWatcher' {
                 $testPath = Join-Path $TestDrive 'test.json'
 
                 $config = [PSCustomObject]@{
-                    DefaultJsonDepth    = 8
+                    DefaultJsonDepth = 8
                 }
 
                 Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path $testPath -Configuration $config
@@ -91,10 +91,10 @@ InModuleScope 'BridgeWatcher' {
 
                 $config = [PSCustomObject]@{
                     ExportMessages = @{
-                        Success    = 'Custom success message'
+                        Success = 'Custom success message'
                     }
                     LoggingConfig  = @{
-                        InfoStage    = 'Ανάλυση'
+                        InfoStage = 'Ανάλυση'
                     }
                 }
 
@@ -108,7 +108,7 @@ InModuleScope 'BridgeWatcher' {
 
                 $config = [PSCustomObject]@{
                     ExportMessages = @{
-                        Failed    = 'Custom failed message'
+                        Failed = 'Custom failed message'
                     }
                     LoggingConfig  = @{
                         ErrorStage   = 'Σφάλμα'
@@ -151,7 +151,7 @@ InModuleScope 'BridgeWatcher' {
 
                 $config = [PSCustomObject]@{
                     ExportMessages = @{
-                        Success    = 'Success'
+                        Success = 'Success'
                     }
                     LoggingConfig  = @{
                         InfoStage    = 'Ανάλυση'

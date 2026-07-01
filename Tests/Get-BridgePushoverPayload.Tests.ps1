@@ -5,7 +5,7 @@ InModuleScope 'BridgeWatcher' {
         It 'Δημιουργεί σωστό payload με όλα τα πεδία' {
             $newPushoverPayloadSplat = @{
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'u1').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'a1').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'a1').SecurePassword)
                 Message   = 'msg'
                 Device    = 'dev1'
                 Title     = 'test'
@@ -29,7 +29,7 @@ InModuleScope 'BridgeWatcher' {
         It 'Δεν περιλαμβάνει optional πεδία όταν είναι null' {
             $newPushoverPayloadSplat = @{
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'u1').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'a1').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'a1').SecurePassword)
                 Message   = 'msg'
             }
             $payload = Get-BridgePushoverPayload @newPushoverPayloadSplat

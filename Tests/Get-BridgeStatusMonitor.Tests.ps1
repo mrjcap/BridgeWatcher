@@ -7,9 +7,9 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
                 $monitorParams = @{
                     OutputFile = 'test.json'
-                    ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
-                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
-                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
+                    ApiKey     = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
+                    PoUserKey  = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
+                    PoApiKey   = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
                 }
                 Mock -CommandName Start-Sleep
                 Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1
@@ -22,9 +22,9 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
                 $monitorParams = @{
                     OutputFile = 'test.json'
-                    ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
-                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
-                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
+                    ApiKey     = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
+                    PoUserKey  = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
+                    PoApiKey   = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
                 }
                 Mock -CommandName Get-BridgeStatusComparison
                 Mock -CommandName Start-Sleep
@@ -38,9 +38,9 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
                 $monitorParams = @{
                     OutputFile = 'test.json'
-                    ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
-                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
-                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
+                    ApiKey     = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
+                    PoUserKey  = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
+                    PoApiKey   = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
                 }
                 Mock -CommandName Start-Sleep
                 { Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 1 -Verbose } | Should -Not -Throw
@@ -51,9 +51,9 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
                 $monitorParams = @{
                     OutputFile = 'test.json'
-                    ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
-                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
-                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
+                    ApiKey     = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
+                    PoUserKey  = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
+                    PoApiKey   = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
                 }
                 Mock -CommandName Start-Sleep
                 Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123

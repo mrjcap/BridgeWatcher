@@ -11,7 +11,7 @@ InModuleScope 'BridgeWatcher' {
             Mock -CommandName Write-BridgeLog -MockWith { }
             $sendPushoverSplat = @{
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
             }
             Send-BridgePushover @sendPushoverSplat
@@ -26,7 +26,7 @@ InModuleScope 'BridgeWatcher' {
 
             $sendPushoverSplat = @{
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
             }
 
@@ -46,7 +46,7 @@ InModuleScope 'BridgeWatcher' {
 
             $sendPushoverSplat = @{
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
                 Url       = 'https://example.com'
             }
@@ -62,7 +62,7 @@ InModuleScope 'BridgeWatcher' {
 
             $sendPushoverSplat = @{
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
                 Url       = 'http://example.com'
             }
@@ -73,7 +73,7 @@ InModuleScope 'BridgeWatcher' {
         It 'Απορρίπτει άκυρο URL' {
             $sendPushoverSplat = @{
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
                 Url       = 'invalid-url'
             }

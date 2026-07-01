@@ -6,7 +6,7 @@ labels: ['compliance', 'security', 'governance']
 assignees: ['mrjcap']
 ---
 
-# Annual Compliance & Risk Review
+## Annual Compliance & Risk Review
 
 This issue tracks the annual security review for **BridgeWatcher**, aligned with NIST CSF 2.0 (GV.RM) and ISO 27001:2022 (A.5.36).
 

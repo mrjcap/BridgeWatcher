@@ -50,9 +50,9 @@ InModuleScope 'BridgeWatcher' {
             # Εκτέλεση της συνάρτησης Get-BridgeStatusComparison
             $getBridgeStatusComparisonSplat = @{
                 OutputFile = $jsonFile
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummyApiKey').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummyPoUserKey').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummyPoApiKey').SecurePassword)
+                ApiKey     = ([System.Net.NetworkCredential]::new('', 'dummyApiKey').SecurePassword)
+                PoUserKey  = ([System.Net.NetworkCredential]::new('', 'dummyPoUserKey').SecurePassword)
+                PoApiKey   = ([System.Net.NetworkCredential]::new('', 'dummyPoApiKey').SecurePassword)
             }
             { Get-BridgeStatusComparison @getBridgeStatusComparisonSplat } | Should -Not -Throw
             # Ελέγχουμε αν η συνάρτηση Get-BridgeStatus καλείται με το σωστό OutputFile και τα flags Verbose/Debug

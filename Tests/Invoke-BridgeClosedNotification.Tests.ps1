@@ -12,9 +12,9 @@ InModuleScope 'BridgeWatcher' {
                     CurrentState = @(
                         @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; imageUrl = 'https://example.com/img.jpg'; timestamp = (Get-Date) }
                     )
-                    ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                    ApiKey       = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                    PoUserKey    = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                    PoApiKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
                 }
                 Invoke-BridgeClosedNotification @params
                 Assert-MockCalled -CommandName Invoke-BridgeOCRGoogleCloud -Exactly 1

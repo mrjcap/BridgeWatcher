@@ -10,8 +10,8 @@ InModuleScope 'BridgeWatcher' {
                     CurrentState = @(
                         @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
                     )
-                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                    PoUserKey    = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                    PoApiKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
                 }
                 Invoke-BridgeOpenedNotification @params
                 Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
@@ -25,8 +25,8 @@ InModuleScope 'BridgeWatcher' {
                     CurrentState = @(
                         @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
                     )
-                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                    PoUserKey    = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                    PoApiKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
                 }
 
                 { Invoke-BridgeOpenedNotification @params } | Should -Throw '*Αποτυχία αποστολής ειδοποίησης ανοίγματος*'

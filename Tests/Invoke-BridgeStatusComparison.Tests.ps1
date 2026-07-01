@@ -16,9 +16,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $sameState
                 CurrentState  = $sameState
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             Should -Invoke -CommandName Invoke-BridgeClosedNotification -Exactly 0
@@ -33,9 +33,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previous
                 CurrentState  = $current
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -49,9 +49,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previous
                 CurrentState  = $current
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -67,9 +67,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previous
                 CurrentState  = $current
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Send-BridgePushover -Times 1
@@ -86,9 +86,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $same
                 CurrentState  = $same
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
@@ -102,9 +102,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή' }
                 CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
         }
@@ -115,9 +115,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
                 CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'ανικτή'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
         }
@@ -129,9 +129,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $base
                 CurrentState  = $base.Clone()
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             $params.CurrentState.timestamp = (Get-Date).AddMinutes(5)
             Invoke-BridgeStatusComparison @params
@@ -141,9 +141,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
                 CurrentState  = $null
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Throw
         }
@@ -151,9 +151,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $null
                 CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Throw
         }
@@ -163,9 +163,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
                 CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = $null }
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 1
@@ -186,9 +186,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previousState
                 CurrentState  = $currentState
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             # ✅ Αναμένουμε 2 κλήσεις (μία για κάθε αλλαγή)
@@ -203,9 +203,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $base
                 CurrentState  = $copy
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
@@ -225,9 +225,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $previousState
                 CurrentState  = $currentState
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             # ✅ Περιμένουμε μία κλήση σε κάθε notification
@@ -245,14 +245,14 @@ InModuleScope 'BridgeWatcher' {
         It 'Γράφει Exception όταν CurrentState ή PreviousState είναι κενό array' {
             $paramsMissingCurrent = @{
                 PreviousState = @(@{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' })
-                CurrentState = @()
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword); PoUserKey = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword); PoApiKey = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
+                CurrentState  = @()
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword); PoUserKey = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword); PoApiKey = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
             }
             { Invoke-BridgeStatusComparison @paramsMissingCurrent } | Should -Throw
             $paramsMissingPrevious = @{
                 PreviousState = @()
-                CurrentState = @(@{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' })
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword); PoUserKey = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword); PoApiKey = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
+                CurrentState  = @(@{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' })
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword); PoUserKey = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword); PoApiKey = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
             }
             { Invoke-BridgeStatusComparison @paramsMissingPrevious } | Should -Throw
         }
@@ -265,9 +265,9 @@ InModuleScope 'BridgeWatcher' {
             }
             $params = @{
                 PreviousState = @($state)
-                CurrentState = @($state)
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword); PoUserKey = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword); PoApiKey = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
-                Verbose = $true
+                CurrentState  = @($state)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword); PoUserKey = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword); PoApiKey = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
+                Verbose       = $true
             }
             { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
         }
@@ -282,9 +282,9 @@ InModuleScope 'BridgeWatcher' {
                 $invokeBridgeStatusComparisonSplat = @{
                     PreviousState = @($state)
                     CurrentState  = @($state)
-                    ApiKey = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword)
-                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword)
-                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
+                    ApiKey        = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword)
+                    PoUserKey     = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword)
+                    PoApiKey      = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
                     Verbose       = $true
                 }
                 Invoke-BridgeStatusComparison @invokeBridgeStatusComparisonSplat
@@ -299,18 +299,18 @@ InModuleScope 'BridgeWatcher' {
             { $invokeBridgeStatusComparisonSplat = @{
                     PreviousState = @($state)
                     CurrentState  = @($state)
-                    ApiKey = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword)
-                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword)
-                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
+                    ApiKey        = ([System.Net.NetworkCredential]::new('', 'X').SecurePassword)
+                    PoUserKey     = ([System.Net.NetworkCredential]::new('', 'Y').SecurePassword)
+                    PoApiKey      = ([System.Net.NetworkCredential]::new('', 'Z').SecurePassword)
                     Verbose       = $true
                 }
                 Invoke-BridgeStatusComparison @invokeBridgeStatusComparisonSplat } | Should -Not -Throw
         }
         It 'πρέπει να στείλει ειδοποίηση τύπου Closed' {
             $defaultParams = @{
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'fake-key').SecurePassword)
+                ApiKey    = ([System.Net.NetworkCredential]::new('', 'fake-key').SecurePassword)
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'user-key').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'app-key').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'app-key').SecurePassword)
             }
             # Redefine Send-BridgeNotification to write to notify.txt for this test
             function Send-BridgeNotification {
@@ -324,9 +324,9 @@ InModuleScope 'BridgeWatcher' {
         }
         It 'πυροδοτεί handler για Μόνιμα κλειστή|<=' {
             $defaultParams = @{
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'fake-key').SecurePassword)
+                ApiKey    = ([System.Net.NetworkCredential]::new('', 'fake-key').SecurePassword)
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'user-key').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'app-key').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'app-key').SecurePassword)
             }
             # current είναι Ανοιχτή        =>μπήκε παλιά
             # previous είναι Μόνιμα κλειστή=>τώρα εμφανίζεται=><=
@@ -348,9 +348,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $prev
                 CurrentState  = $curr
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -365,9 +365,9 @@ InModuleScope 'BridgeWatcher' {
             $params = @{
                 PreviousState = $prev
                 CurrentState  = $curr
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                ApiKey        = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoUserKey     = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
+                PoApiKey      = ([System.Net.NetworkCredential]::new('', 'dummy').SecurePassword)
             }
             Invoke-BridgeStatusComparison @params
             Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
@@ -400,9 +400,9 @@ InModuleScope 'BridgeWatcher' {
                 "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
             }
             $defaultParams = @{
-                ApiKey = ([System.Net.NetworkCredential]::new('', 'fake-key').SecurePassword)
+                ApiKey    = ([System.Net.NetworkCredential]::new('', 'fake-key').SecurePassword)
                 PoUserKey = ([System.Net.NetworkCredential]::new('', 'user-key').SecurePassword)
-                PoApiKey = ([System.Net.NetworkCredential]::new('', 'app-key').SecurePassword)
+                PoApiKey  = ([System.Net.NetworkCredential]::new('', 'app-key').SecurePassword)
             }
             $defaultParams
         }
