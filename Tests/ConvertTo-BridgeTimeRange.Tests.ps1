@@ -32,4 +32,24 @@ Describe 'ConvertTo-BridgeTimeRange' {
                 $result.ClosedFor | Should -Be ([timespan]'00:30:00')
             }
         }
-    }
+            Context 'Έλεγχος ανεπαρκών matches και εξαιρέσεων' {
+            It 'Πετάει σφάλμα NotEnoughDateTimes όταν υπάρχει μόνο 1 ημερομηνία' {
+                { ConvertTo-BridgeTimeRange -Lines @('Μόνο μία: 25/04/2025 14:00') } | Should -Throw "Δεν βρέθηκαν επαρκείς ημερομηνίες"
+            }
+            It 'Πετάει σφάλμα BridgeTimeParseError όταν αποτυγχάνει το parse' {
+                { ConvertTo-BridgeTimeRange -Lines @('99/99/2025 14:00', '25/04/2025 14:00') } | Should -Throw "Αποτυχία ανάλυσης ημερομηνιών"
+            }
+        }
+        Context 'Όταν η πρώτη ημερομηνία είναι μεγαλύτερη της δεύτερης' {
+            It 'Πρέπει να αντιστρέφει from και to' {
+                $lines = @(
+                    'Πρώτη: 25/04/2025 14:30',
+                    'Δεύτερη: 25/04/2025 14:00'
+                )
+                $result = ConvertTo-BridgeTimeRange -Lines $lines
+                $result.From | Should -Be ([datetime]::ParseExact('25/04/2025 14:00', 'dd/MM/yyyy HH:mm', $null))
+                $result.To | Should -Be ([datetime]::ParseExact('25/04/2025 14:30', 'dd/MM/yyyy HH:mm', $null))
+            }
+        }
+}
+
