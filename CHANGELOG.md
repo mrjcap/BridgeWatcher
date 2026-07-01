@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.80] - 2026-07-01
+
+### 🐛 Διορθώσεις
+
+- fix: github action pipelines
+
 ## [1.0.79] - 2026-06-30
 
 ### ✨ Χαρακτηριστικά
@@ -480,5 +486,6 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml for powershellgallery
+
 
 
