@@ -50,7 +50,7 @@
                 $Configuration = New-BridgeConfiguration
             } catch {
                 $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                    [System.Exception]::new("Configuration initialization failed: $($_.Exception.Message)"),
+                    [System.Exception]::new("Η αρχικοποίηση της διαμόρφωσης απέτυχε: $($_.Exception.Message)"),
                     'CONFIG_ERROR',
                     [System.Management.Automation.ErrorCategory]::InvalidOperation,
                     $null
