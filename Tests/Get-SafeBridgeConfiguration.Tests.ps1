@@ -5,7 +5,7 @@ Describe 'Get-SafeBridgeConfiguration' {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-SafeBridgeConfiguration.ps1"
     }
-    
+
     It 'Επιστρέφει το Configuration αν πετύχει' {
         $result = Get-SafeBridgeConfiguration
         $result | Should -Not -BeNullOrEmpty

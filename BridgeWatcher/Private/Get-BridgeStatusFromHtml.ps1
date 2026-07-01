@@ -66,8 +66,6 @@
             HtmlContent = $Html
             Location    = $location
         }
-
-        $getBridgeImagesSplat.Configuration = $Configuration
         $bridgeImages = Get-BridgeImage @getBridgeImagesSplat
         if (-not $bridgeImages -or $bridgeImages.Count -eq 0) {
             $writeBridgeLogSplat = @{
@@ -134,3 +132,4 @@
     }
     return $result.ToArray()
 }
+

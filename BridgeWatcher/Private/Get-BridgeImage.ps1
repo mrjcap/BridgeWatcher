@@ -27,13 +27,9 @@
 
     [OutputType([System.Collections.ArrayList])]
     param (        [Parameter(Mandatory)][string]$HtmlContent,
-        [Parameter(Mandatory)][ValidateSet('poseidonia', 'isthmia')] [string]$Location,
-
-        [Parameter()]
-        [PSCustomObject]$Configuration = (New-BridgeConfiguration)
+        [Parameter(Mandatory)][ValidateSet('poseidonia', 'isthmia')] [string]$Location
     )
-    $bridgeLabel = $Configuration.BridgeNames[$Location]
-    # Remove accents from pattern to match both accented and unaccented Greek text
+        # Remove accents from pattern to match both accented and unaccented Greek text
     $bridgePattern = if ($Location -eq 'poseidonia') { 'Ποσειδων[ιίΙΊ]α' } else { 'Ισθμ[ιίΙΊ]α' }
 
     # Split using robust regex to handle case-insensitivity, single/double quotes, and variable spacing/classes
@@ -67,3 +63,6 @@
     }
     return [System.Collections.ArrayList]::new([object[]]@($imageList))
 }
+
+
+

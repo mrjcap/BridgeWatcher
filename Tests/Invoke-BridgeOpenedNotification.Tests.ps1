@@ -14,8 +14,7 @@ Describe 'Invoke-BridgeOpenedNotification' {
         It 'Εκτελεί custom NotificationProvider αντί για Send-BridgePushover' {
             $providerCalled = $false
             $mockProvider = {
-                param($Title, $Message, $Type)
-                $script:providerCalled = $true
+                                $script:providerCalled = $true
             }
             Mock -CommandName Write-BridgeLog -MockWith { }
             $params = @{
@@ -64,3 +63,4 @@ Describe 'Invoke-BridgeOpenedNotification' {
         }
     }
 }
+
