@@ -127,8 +127,8 @@ Describe 'Get-BridgeStatusMonitor' {
 
             # Use real configuration object, which is available because we dot-source New-BridgeConfiguration
             $mockConfig = New-BridgeConfiguration
-            $mockConfig.DefaultMaxIterations = 1
-            $mockConfig.DefaultIntervalSeconds = 1
+            $mockConfig.Defaults.MaxIterations = 1
+            $mockConfig.Defaults.IntervalSeconds = 1
 
             # Δεν περνάμε -MaxIterations και -IntervalSeconds, αλλά δίνουμε dummy παραμέτρους για το Update-BridgeStatus
             Get-BridgeStatusMonitor -Configuration $mockConfig -OutputFile 'test.json' -ApiKey 'dummy' -PoUserKey 'dummy' -PoApiKey 'dummy'
@@ -136,7 +136,6 @@ Describe 'Get-BridgeStatusMonitor' {
         }
     }
 }
-
 
 
 
