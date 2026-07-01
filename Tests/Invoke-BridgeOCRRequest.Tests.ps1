@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
 Describe 'Invoke-BridgeOCRRequest' {
     BeforeAll {
@@ -67,31 +67,31 @@ Describe 'Invoke-BridgeOCRRequest' {
         { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw 'Google Vision API call failed: Simulated API failure'
     }
 
-                It 'Σταματάει χωρίς retries όταν η API επιστρέφει 401 Unauthorized' {
-            Mock Invoke-RestMethod {
-                $response = [PSCustomObject]@{ StatusCode = 401 }
-                $ex = New-Object System.Net.WebException("Unauthorized")
-                $ex | Add-Member -MemberType NoteProperty -Name Response -Value $response -Force
-                throw $ex
-            }
-            { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Google Vision API call failed: Unauthorized"
-            Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
+    It 'Σταματάει χωρίς retries όταν η API επιστρέφει 401 Unauthorized' {
+        Mock Invoke-RestMethod {
+            $response = [PSCustomObject]@{ StatusCode = 401 }
+            $ex = New-Object System.Net.WebException("Unauthorized")
+            $ex | Add-Member -MemberType NoteProperty -Name Response -Value $response -Force
+            throw $ex
         }
+        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Google Vision API call failed: Unauthorized"
+        Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
+    }
 
-        It 'Κάνει retries και πετάει το σφάλμα αν εξαντληθούν (π.χ. 500 Internal Server Error)' {
-            Mock Invoke-RestMethod {
-                $response = [PSCustomObject]@{ StatusCode = 500 }
-                $ex = New-Object System.Net.WebException("Internal Error")
-                $ex | Add-Member -MemberType NoteProperty -Name Response -Value $response -Force
-                throw $ex
-            }
-            Mock Start-Sleep {}
-            { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Google Vision API call failed: Internal Error"
-            Assert-MockCalled Invoke-RestMethod -Times 3 -Exactly
-            Assert-MockCalled Start-Sleep -Times 2 -Exactly
+    It 'Κάνει retries και πετάει το σφάλμα αν εξαντληθούν (π.χ. 500 Internal Server Error)' {
+        Mock Invoke-RestMethod {
+            $response = [PSCustomObject]@{ StatusCode = 500 }
+            $ex = New-Object System.Net.WebException("Internal Error")
+            $ex | Add-Member -MemberType NoteProperty -Name Response -Value $response -Force
+            throw $ex
         }
+        Mock Start-Sleep {}
+        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Google Vision API call failed: Internal Error"
+        Assert-MockCalled Invoke-RestMethod -Times 3 -Exactly
+        Assert-MockCalled Start-Sleep -Times 2 -Exactly
+    }
 
-        It 'Καλύπτει Configuration.OCRApiUrl path' {
+    It 'Καλύπτει Configuration.OCRApiUrl path' {
 
         Mock Invoke-RestMethod {
             return @{ responses = @(@{ textAnnotations = @(@{ description = 'test' }) }) }

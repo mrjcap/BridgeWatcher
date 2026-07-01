@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
 Describe 'Invoke-BridgeOpenedNotification' {
     BeforeAll {
@@ -14,15 +14,15 @@ Describe 'Invoke-BridgeOpenedNotification' {
         It 'Εκτελεί custom NotificationProvider αντί για Send-BridgePushover' {
             $providerCalled = $false
             $mockProvider = {
-                                $script:providerCalled = $true
+                $script:providerCalled = $true
             }
             Mock -CommandName Write-BridgeLog -MockWith { }
             $params = @{
-                CurrentState = @(
+                CurrentState         = @(
                     @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
                 )
-                PoUserKey    = 'dummy'
-                PoApiKey     = 'dummy'
+                PoUserKey            = 'dummy'
+                PoApiKey             = 'dummy'
                 NotificationProvider = $mockProvider
             }
             Invoke-BridgeOpenedNotification @params
