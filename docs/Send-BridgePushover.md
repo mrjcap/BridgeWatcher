@@ -9,7 +9,7 @@ schema: 2.0.0
 
 ## SYNOPSIS
 
-{{ Fill in the Synopsis }}
+Αποστέλλει ειδοποίηση μέσω Pushover για κατάσταση γέφυρας.
 
 ## SYNTAX
 
@@ -21,55 +21,22 @@ Send-BridgePushover [-PoUserKey] <String> [-PoApiKey] <String> [-Message] <Strin
 
 ## DESCRIPTION
 
-{{ Fill in the Description }}
+Η Send-BridgePushover δημιουργεί payload και αποστέλλει ειδοποίηση
+στο σύστημα Pushover, χρησιμοποιώντας παρεχόμενα διαπιστευτήρια.
 
 ## EXAMPLES
 
-### Example 1
+### EXAMPLE 1
 
-```powershell
-PS C:\> {{ Add example code here }}
 ```
-
-{{ Add example description here }}
+Send-BridgePushover -PoUserKey 'user123' -PoApiKey 'token123' -Message 'Η γέφυρα είναι ανοιχτή.'
+```
 
 ## PARAMETERS
 
-### -Device
+### -PoUserKey
 
-{{ Fill Device Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 3
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Message
-
-{{ Fill Message Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 2
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PoApiKey
-
-{{ Fill PoApiKey Description }}
+Το User Key του παραλήπτη στο Pushover.
 
 ```yaml
 Type: String
@@ -83,9 +50,9 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PoUserKey
+### -PoApiKey
 
-{{ Fill PoUserKey Description }}
+Το API Token της εφαρμογής.
 
 ```yaml
 Type: String
@@ -93,48 +60,31 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 0
+Position: 2
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Priority
+### -Message
 
-{{ Fill Priority Description }}
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 7
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Sound
-
-{{ Fill Sound Description }}
+Το μήνυμα της ειδοποίησης.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
-Accepted values: pushover, bike, bugle, cashregister, classical, cosmic, falling, gamelan, incoming, intermission, magic, mechanical, pianobar, siren, spacealarm, tugboat, alien, climb, persistent, echo, updown, none
 
-Required: False
-Position: 8
+Required: True
+Position: 3
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Title
+### -Device
 
-{{ Fill Title Description }}
+Η συσκευή στόχος (προαιρετικό).
 
 ```yaml
 Type: String
@@ -148,9 +98,9 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Url
+### -Title
 
-{{ Fill Url Description }}
+Ο τίτλος της ειδοποίησης (προαιρετικό).
 
 ```yaml
 Type: String
@@ -164,9 +114,9 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -UrlTitle
+### -Url
 
-{{ Fill UrlTitle Description }}
+URL που θα επισυνάπτεται στην ειδοποίηση (προαιρετικό).
 
 ```yaml
 Type: String
@@ -175,6 +125,54 @@ Aliases:
 
 Required: False
 Position: 6
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UrlTitle
+
+Ο τίτλος για το επισυναπτόμενο URL (προαιρετικό).
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 7
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Priority
+
+Η προτεραιότητα ειδοποίησης (προαιρετικό).
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 8
+Default value: 0
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Sound
+
+Ο ήχος ειδοποίησης (προαιρετικό).
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 9
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -202,12 +200,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
-
 ## OUTPUTS
 
-### System.Void
+### None
 
 ## NOTES
+
+Χρησιμοποιεί εσωτερικές helper συναρτήσεις για payload και αποστολή.
 
 ## RELATED LINKS

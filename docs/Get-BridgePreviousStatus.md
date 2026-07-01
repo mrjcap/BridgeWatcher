@@ -9,7 +9,7 @@ schema: 2.0.0
 
 ## SYNOPSIS
 
-{{ Fill in the Synopsis }}
+Ανακτά προηγούμενη αποθηκευμένη κατάσταση γέφυρας από JSON.
 
 ## SYNTAX
 
@@ -20,19 +20,56 @@ Get-BridgePreviousStatus [-InputFile] <String> [[-JsonDepth] <Int32>] [[-Configu
 
 ## DESCRIPTION
 
-{{ Fill in the Description }}
+Η Get-BridgePreviousStatus διαβάζει αρχείο JSON που περιέχει
+καταγεγραμμένη κατάσταση γεφυρών.
 
 ## EXAMPLES
 
-### Example 1
+### EXAMPLE 1
 
-```powershell
-PS C:\> {{ Add example code here }}
+```
+Get-BridgePreviousStatus -InputFile 'C:\Logs\previous-status.json'
 ```
 
-{{ Add example description here }}
+### EXAMPLE 2
+
+```
+Get-BridgePreviousStatus -InputFile 'C:\Logs\previous-status.json' -JsonDepth 5
+```
 
 ## PARAMETERS
+
+### -InputFile
+
+Η διαδρομή του αρχείου JSON.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -JsonDepth
+
+Το βάθος deserialization του JSON (προεπιλογή: 10).
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: 10
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -Configuration
 
@@ -44,39 +81,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 2
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -InputFile
-
-{{ Fill InputFile Description }}
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -JsonDepth
-
-{{ Fill JsonDepth Description }}
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 1
+Position: 3
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -104,12 +109,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
-
 ## OUTPUTS
 
-### System.Object[]
+### Λίστα καταστάσεων ή κενό array αν δεν υπάρχει
 
 ## NOTES
+
+Ασφαλής ανάγνωση με structured error handling και fallback.
 
 ## RELATED LINKS
