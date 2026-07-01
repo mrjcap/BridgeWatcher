@@ -84,6 +84,7 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           VERSION: ${{ inputs.version }}
+          DOCKER_CONTENT_TRUST: 0
         run: |
           echo "Testing Docker image functionality..."
 
