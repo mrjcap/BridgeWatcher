@@ -50,4 +50,3 @@ Describe 'Get-BridgeHtml' {
         }
     }
 }
-
