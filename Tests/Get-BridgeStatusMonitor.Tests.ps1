@@ -7,9 +7,9 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
                 $monitorParams = @{
                     OutputFile = 'test.json'
-                    ApiKey = (ConvertTo-SecureString 'dummy-api-key' -AsPlainText -Force)
-                    PoUserKey = (ConvertTo-SecureString 'dummy-user-key' -AsPlainText -Force)
-                    PoApiKey = (ConvertTo-SecureString 'dummy-app-key' -AsPlainText -Force)
+                    ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
+                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
+                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
                 }
                 Mock -CommandName Start-Sleep
                 Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1
@@ -22,9 +22,9 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
                 $monitorParams = @{
                     OutputFile = 'test.json'
-                    ApiKey = (ConvertTo-SecureString 'dummy-api-key' -AsPlainText -Force)
-                    PoUserKey = (ConvertTo-SecureString 'dummy-user-key' -AsPlainText -Force)
-                    PoApiKey = (ConvertTo-SecureString 'dummy-app-key' -AsPlainText -Force)
+                    ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
+                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
+                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
                 }
                 Mock -CommandName Get-BridgeStatusComparison
                 Mock -CommandName Start-Sleep
@@ -38,9 +38,9 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
                 $monitorParams = @{
                     OutputFile = 'test.json'
-                    ApiKey = (ConvertTo-SecureString 'dummy-api-key' -AsPlainText -Force)
-                    PoUserKey = (ConvertTo-SecureString 'dummy-user-key' -AsPlainText -Force)
-                    PoApiKey = (ConvertTo-SecureString 'dummy-app-key' -AsPlainText -Force)
+                    ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
+                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
+                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
                 }
                 Mock -CommandName Start-Sleep
                 { Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 1 -Verbose } | Should -Not -Throw
@@ -51,9 +51,9 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Get-BridgeStatusComparison -MockWith { @{ dummy = $true } }
                 $monitorParams = @{
                     OutputFile = 'test.json'
-                    ApiKey = (ConvertTo-SecureString 'dummy-api-key' -AsPlainText -Force)
-                    PoUserKey = (ConvertTo-SecureString 'dummy-user-key' -AsPlainText -Force)
-                    PoApiKey = (ConvertTo-SecureString 'dummy-app-key' -AsPlainText -Force)
+                    ApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-api-key').SecurePassword)
+                    PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummy-user-key').SecurePassword)
+                    PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummy-app-key').SecurePassword)
                 }
                 Mock -CommandName Start-Sleep
                 Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123
@@ -69,9 +69,9 @@ InModuleScope 'BridgeWatcher' {
             $maxIterations = 3
             $intervalSeconds = 1
             $outputFile = 'C:\Logs\bridge.json'
-            $ApiKey = (ConvertTo-SecureString 'api123' -AsPlainText -Force)
-            $PoUserKey = (ConvertTo-SecureString 'user123' -AsPlainText -Force)
-            $poApiKey = (ConvertTo-SecureString 'token123' -AsPlainText -Force)
+            $ApiKey = ([System.Net.NetworkCredential]::new('', 'api123').SecurePassword)
+            $PoUserKey = ([System.Net.NetworkCredential]::new('', 'user123').SecurePassword)
+            $poApiKey = ([System.Net.NetworkCredential]::new('', 'token123').SecurePassword)
             # Δημιουργία mock που θα ρίξει εξαίρεση στην Get-BridgeStatusComparison
             Mock Get-BridgeStatusComparison { throw 'Test Exception' }
             # Εκτέλεση της συνάρτησης
@@ -96,7 +96,7 @@ InModuleScope 'BridgeWatcher' {
             Mock Start-Sleep { }
 
             # Call without specifying MaxIterations and IntervalSeconds to test defaults
-            { Get-BridgeStatusMonitor -OutputFile 'test.json' -ApiKey (ConvertTo-SecureString 'key' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'user' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'app' -AsPlainText -Force) } | Should -Not -Throw
+            { Get-BridgeStatusMonitor -OutputFile 'test.json' -ApiKey ([System.Net.NetworkCredential]::new('', 'key').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'user').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'app').SecurePassword) } | Should -Not -Throw
         }
 
         It 'Χρησιμοποιεί configuration defaults όταν παράμετροι δεν παρέχονται' {
@@ -115,7 +115,7 @@ InModuleScope 'BridgeWatcher' {
             Mock Get-BridgeStatusComparison { @{ dummy = $true } }
             Mock Start-Sleep { }
 
-            { Get-BridgeStatusMonitor -Configuration $mockConfig -OutputFile 'test.json' -ApiKey (ConvertTo-SecureString 'key' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'user' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'app' -AsPlainText -Force) } | Should -Not -Throw
+            { Get-BridgeStatusMonitor -Configuration $mockConfig -OutputFile 'test.json' -ApiKey ([System.Net.NetworkCredential]::new('', 'key').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'user').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'app').SecurePassword) } | Should -Not -Throw
         }
 
         It 'Χρησιμοποιεί fallback error messages όταν Configuration είναι null' {
@@ -123,7 +123,7 @@ InModuleScope 'BridgeWatcher' {
             Mock Start-Sleep { }
             Mock Write-BridgeLog { }
 
-            { Get-BridgeStatusMonitor -Configuration $null -MaxIterations 1 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey (ConvertTo-SecureString 'key' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'user' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'app' -AsPlainText -Force) } | Should -Not -Throw
+            { Get-BridgeStatusMonitor -Configuration $null -MaxIterations 1 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey ([System.Net.NetworkCredential]::new('', 'key').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'user').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'app').SecurePassword) } | Should -Not -Throw
 
             # Verify fallback error message is used
             Assert-MockCalled Write-BridgeLog -ParameterFilter {
@@ -141,7 +141,7 @@ InModuleScope 'BridgeWatcher' {
             Mock Write-BridgeLog { }
 
             # Call without Configuration parameter to trigger fallback creation
-            { Get-BridgeStatusMonitor -MaxIterations 1 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey (ConvertTo-SecureString 'key' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'user' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'app' -AsPlainText -Force) } | Should -Not -Throw
+            { Get-BridgeStatusMonitor -MaxIterations 1 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey ([System.Net.NetworkCredential]::new('', 'key').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'user').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'app').SecurePassword) } | Should -Not -Throw
 
             # Verify all three fallback paths are covered:
             # 1. Fallback error message (line 122)
@@ -158,7 +158,7 @@ InModuleScope 'BridgeWatcher' {
             Mock Start-Sleep { }
             Mock Write-BridgeLog { }
 
-            { Get-BridgeStatusMonitor -Configuration $null -MaxIterations 1 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey (ConvertTo-SecureString 'key' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'user' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'app' -AsPlainText -Force) } | Should -Not -Throw
+            { Get-BridgeStatusMonitor -Configuration $null -MaxIterations 1 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey ([System.Net.NetworkCredential]::new('', 'key').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'user').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'app').SecurePassword) } | Should -Not -Throw
 
             # Verify fallback completion message is used
             Assert-MockCalled Write-BridgeLog -ParameterFilter {

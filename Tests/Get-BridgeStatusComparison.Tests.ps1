@@ -22,7 +22,7 @@ InModuleScope 'BridgeWatcher' {
             Mock Write-Verbose {}
             # Κλήση υπό δοκιμή
             {
-                Get-BridgeStatusComparison -OutputFile $jsonFile -ApiKey (ConvertTo-SecureString 'a' -AsPlainText -Force) -PoUserKey (ConvertTo-SecureString 'u' -AsPlainText -Force) -PoApiKey (ConvertTo-SecureString 'k' -AsPlainText -Force)
+                Get-BridgeStatusComparison -OutputFile $jsonFile -ApiKey ([System.Net.NetworkCredential]::new('', 'a').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'u').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'k').SecurePassword)
             } | Should -Not -Throw
             # Καθαρισμός
             if (Test-Path $jsonFile) { Remove-Item $jsonFile -Force }
@@ -50,9 +50,9 @@ InModuleScope 'BridgeWatcher' {
             # Εκτέλεση της συνάρτησης Get-BridgeStatusComparison
             $getBridgeStatusComparisonSplat = @{
                 OutputFile = $jsonFile
-                ApiKey = (ConvertTo-SecureString 'dummyApiKey' -AsPlainText -Force)
-                PoUserKey = (ConvertTo-SecureString 'dummyPoUserKey' -AsPlainText -Force)
-                PoApiKey = (ConvertTo-SecureString 'dummyPoApiKey' -AsPlainText -Force)
+                ApiKey = ([System.Net.NetworkCredential]::new('', 'dummyApiKey').SecurePassword)
+                PoUserKey = ([System.Net.NetworkCredential]::new('', 'dummyPoUserKey').SecurePassword)
+                PoApiKey = ([System.Net.NetworkCredential]::new('', 'dummyPoApiKey').SecurePassword)
             }
             { Get-BridgeStatusComparison @getBridgeStatusComparisonSplat } | Should -Not -Throw
             # Ελέγχουμε αν η συνάρτηση Get-BridgeStatus καλείται με το σωστό OutputFile και τα flags Verbose/Debug

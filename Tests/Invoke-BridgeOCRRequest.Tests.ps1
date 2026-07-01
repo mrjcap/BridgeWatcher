@@ -9,7 +9,7 @@ InModuleScope 'BridgeWatcher' {
             Mock -CommandName Invoke-RestMethod -MockWith {
                 return @{ responses = @(@{ textAnnotations = @(@{ description = 'fake text' }) }) }
             }
-            $response = Invoke-BridgeOCRRequest -ApiKey (ConvertTo-SecureString 'test-key' -AsPlainText -Force) -RequestBody '{}'
+            $response = Invoke-BridgeOCRRequest -ApiKey ([System.Net.NetworkCredential]::new('', 'test-key').SecurePassword) -RequestBody '{}'
             $response.responses[0].textAnnotations[0].description | Should -Be 'fake text'
             Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
         }
@@ -53,7 +53,8 @@ InModuleScope 'BridgeWatcher' {
 
         It 'Επιστρέφει exception όταν αποτυγχάνει η κλήση στο API' {
             Mock Invoke-RestMethod { throw 'Simulated API failure' }
-            { Invoke-BridgeOCRRequest -ApiKey (ConvertTo-SecureString 'abc' -AsPlainText -Force) -RequestBody '{}' } | Should -Throw 'Google Vision API call failed: Simulated API failure'
+            Mock Start-Sleep {}
+            { Invoke-BridgeOCRRequest -ApiKey ([System.Net.NetworkCredential]::new('', 'abc').SecurePassword) -RequestBody '{}' } | Should -Throw 'Google Vision API call failed: Simulated API failure'
         }
 
         It 'Καλύπτει Configuration.OCRApiUrl path' {
@@ -67,7 +68,7 @@ InModuleScope 'BridgeWatcher' {
                 OCRApiUrl = 'https://custom-ocr-api.com/annotate'
             }
 
-            $result = Invoke-BridgeOCRRequest -ApiKey (ConvertTo-SecureString 'test-key' -AsPlainText -Force) -RequestBody '{"test": "data"}' -Configuration $config
+            $result = Invoke-BridgeOCRRequest -ApiKey ([System.Net.NetworkCredential]::new('', 'test-key').SecurePassword) -RequestBody '{"test": "data"}' -Configuration $config
 
             $result | Should -Not -BeNullOrEmpty
             $result.responses[0].textAnnotations[0].description | Should -Be 'test'
@@ -87,7 +88,7 @@ InModuleScope 'BridgeWatcher' {
                 }
             }
 
-            Invoke-BridgeOCRRequest -ApiKey (ConvertTo-SecureString 'test-key' -AsPlainText -Force) -RequestBody '{}' -Configuration $config
+            Invoke-BridgeOCRRequest -ApiKey ([System.Net.NetworkCredential]::new('', 'test-key').SecurePassword) -RequestBody '{}' -Configuration $config
 
             Assert-MockCalled Write-BridgeLog -ParameterFilter {
                 $Message -eq 'Custom start OCR message'
@@ -108,7 +109,7 @@ InModuleScope 'BridgeWatcher' {
                 }
             }
 
-            { Invoke-BridgeOCRRequest -ApiKey (ConvertTo-SecureString 'test-key' -AsPlainText -Force) -RequestBody '{}' -Configuration $config } | Should -Throw
+            { Invoke-BridgeOCRRequest -ApiKey ([System.Net.NetworkCredential]::new('', 'test-key').SecurePassword) -RequestBody '{}' -Configuration $config } | Should -Throw
             Assert-MockCalled Write-BridgeLog -ParameterFilter {
                 $Message -like 'Custom OCR failed message*' -and
                 $Stage -eq 'Σφάλμα' -and
@@ -129,7 +130,7 @@ InModuleScope 'BridgeWatcher' {
                 }
             }
 
-            Invoke-BridgeOCRRequest -ApiKey (ConvertTo-SecureString 'test-key' -AsPlainText -Force) -RequestBody '{}' -Configuration $config
+            Invoke-BridgeOCRRequest -ApiKey ([System.Net.NetworkCredential]::new('', 'test-key').SecurePassword) -RequestBody '{}' -Configuration $config
 
             Assert-MockCalled Write-BridgeLog -ParameterFilter {
                 $Stage -eq 'Ανάλυση'
@@ -153,7 +154,7 @@ InModuleScope 'BridgeWatcher' {
                 }
             }
 
-            $result = Invoke-BridgeOCRRequest -ApiKey (ConvertTo-SecureString 'test-key' -AsPlainText -Force) -RequestBody '{"test": "data"}' -Configuration $config
+            $result = Invoke-BridgeOCRRequest -ApiKey ([System.Net.NetworkCredential]::new('', 'test-key').SecurePassword) -RequestBody '{"test": "data"}' -Configuration $config
 
             $result | Should -Not -BeNullOrEmpty
             $result.responses[0].textAnnotations[0].description | Should -Be 'success'
@@ -161,6 +162,33 @@ InModuleScope 'BridgeWatcher' {
             Assert-MockCalled Write-BridgeLog -ParameterFilter {
                 $Message -eq 'Custom start message' -and $Stage -eq 'Ανάλυση'
             } -Times 1
+        }
+
+        It 'Κάνει retry και throw όταν WebException δεν έχει 400, 401, 403 status code' {
+            Mock Invoke-RestMethod { throw [System.Net.WebException]::new("Timeout") }
+            Mock Start-Sleep {}
+            { Invoke-BridgeOCRRequest -ApiKey ([System.Net.NetworkCredential]::new('', 'abc').SecurePassword) -RequestBody '{}' } | Should -Throw
+            Assert-MockCalled Start-Sleep -Times 2
+            Assert-MockCalled Invoke-RestMethod -Times 3
+        }
+
+        It 'Κάνει throw αμέσως όταν WebException έχει 401 status code' {
+            if (-not ("MockWebResponse" -as [type])) {
+                Add-Type -TypeDefinition '
+                using System;
+                using System.Net;
+                public class MockWebResponse : WebResponse {
+                    public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.Unauthorized;
+                }
+                '
+            }
+            $response = [MockWebResponse]::new()
+            $ex = [System.Net.WebException]::new("Unauthorized", $null, [System.Net.WebExceptionStatus]::ProtocolError, $response)
+            Mock Invoke-RestMethod { throw $ex }
+            Mock Start-Sleep {}
+            { Invoke-BridgeOCRRequest -ApiKey ([System.Net.NetworkCredential]::new('', 'abc').SecurePassword) -RequestBody '{}' } | Should -Throw
+            Assert-MockCalled Start-Sleep -Times 0
+            Assert-MockCalled Invoke-RestMethod -Times 1
         }
     }
 }

@@ -10,8 +10,8 @@ InModuleScope 'BridgeWatcher' {
             }
             Mock -CommandName Write-BridgeLog -MockWith { }
             $sendPushoverSplat = @{
-                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
-                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
+                PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
+                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
             }
             Send-BridgePushover @sendPushoverSplat
@@ -25,8 +25,8 @@ InModuleScope 'BridgeWatcher' {
             Mock -CommandName Write-BridgeLog -MockWith { }
 
             $sendPushoverSplat = @{
-                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
-                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
+                PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
+                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
             }
 
@@ -45,8 +45,8 @@ InModuleScope 'BridgeWatcher' {
             Mock -CommandName Write-BridgeLog -MockWith { }
 
             $sendPushoverSplat = @{
-                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
-                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
+                PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
+                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
                 Url       = 'https://example.com'
             }
@@ -61,8 +61,8 @@ InModuleScope 'BridgeWatcher' {
             Mock -CommandName Write-BridgeLog -MockWith { }
 
             $sendPushoverSplat = @{
-                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
-                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
+                PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
+                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
                 Url       = 'http://example.com'
             }
@@ -72,8 +72,8 @@ InModuleScope 'BridgeWatcher' {
 
         It 'Απορρίπτει άκυρο URL' {
             $sendPushoverSplat = @{
-                PoUserKey = (ConvertTo-SecureString 'U' -AsPlainText -Force)
-                PoApiKey = (ConvertTo-SecureString 'T' -AsPlainText -Force)
+                PoUserKey = ([System.Net.NetworkCredential]::new('', 'U').SecurePassword)
+                PoApiKey = ([System.Net.NetworkCredential]::new('', 'T').SecurePassword)
                 Message   = 'hello'
                 Url       = 'invalid-url'
             }
