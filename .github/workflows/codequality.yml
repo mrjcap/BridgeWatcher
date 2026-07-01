@@ -19,5 +19,6 @@ jobs:
           output: text
           upload: true
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          skip-uncommitted-files-check: true
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
