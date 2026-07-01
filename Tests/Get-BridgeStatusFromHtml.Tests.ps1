@@ -40,4 +40,3 @@ Describe 'Get-BridgeStatusFromHtml' {
         }
     }
 }
-
