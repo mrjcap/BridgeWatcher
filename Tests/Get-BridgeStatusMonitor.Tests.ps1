@@ -121,4 +121,20 @@ Describe 'Get-BridgeStatusMonitor' {
             Assert-MockCalled Write-BridgeLog -Exactly 5
         }
     }
+    Context 'Προεπιλεγμένες Παράμετροι' {
+        It 'Χρησιμοποιεί DefaultMaxIterations και DefaultIntervalSeconds αν δεν δοθούν' {
+            Mock Update-BridgeStatus { return [PSCustomObject]@{ Success = $true } }
+            
+            # Use real configuration object, which is available because we dot-source New-BridgeConfiguration
+            $mockConfig = New-BridgeConfiguration
+            $mockConfig.DefaultMaxIterations = 1
+            $mockConfig.DefaultIntervalSeconds = 0
+            
+            # Δεν περνάμε -MaxIterations και -IntervalSeconds
+            Get-BridgeStatusMonitor -Configuration $mockConfig
+            Assert-MockCalled Update-BridgeStatus -Exactly 1
+        }
+    }
 }
+
+
