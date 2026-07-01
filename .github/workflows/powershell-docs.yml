@@ -85,7 +85,7 @@ jobs:
           Write-Verbose "Validating module manifest..."
 
           $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse |
-            Where-Object { $_.Directory.Name -notmatch 'Tests|\.git|config' -and $_.Name -ne 'PSScriptAnalyzerSettings.psd1' } |
+            Where-Object { $_.Directory.Name -notmatch 'Tests|\.git|config' } |
             Select-Object -First 1
 
           if (-not $manifestPath) {

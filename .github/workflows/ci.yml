@@ -77,7 +77,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Verbose "Validating module manifest..."
-          $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse | Where-Object { $_.Directory.Name -notmatch "Tests|\.git" -and $_.Name -ne "PSScriptAnalyzerSettings.psd1" } | Select-Object -First 1
+          $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse | Where-Object { $_.Directory.Name -notmatch "Tests|\.git" } | Select-Object -First 1
           if (-not $manifestPath) {
             Write-Error "Module manifest (.psd1) not found!"
             exit 1
