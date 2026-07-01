@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Send-BridgePushoverRequest' {
@@ -154,6 +154,35 @@ InModuleScope 'BridgeWatcher' {
                 } -Times 1
                 $result.status | Should -Be 1
                 $result.request | Should -Be 'success123'
+            }
+        }
+
+        Context 'Exceptions and Retries' {
+            It 'Κάνει retry και throw όταν WebException δεν έχει 400, 401, 403 status code' {
+                Mock Invoke-RestMethod { throw [System.Net.WebException]::new("Timeout") }
+                Mock Start-Sleep {}
+                { Send-BridgePushoverRequest -Payload @{ message = 'test' } } | Should -Throw
+                Assert-MockCalled Start-Sleep -Times 2
+                Assert-MockCalled Invoke-RestMethod -Times 3
+            }
+
+            It 'Κάνει throw αμέσως όταν WebException έχει 401 status code' {
+                if (-not ("MockWebResponse" -as [type])) {
+                    Add-Type -TypeDefinition '
+                    using System;
+                    using System.Net;
+                    public class MockWebResponse : WebResponse {
+                        public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.Unauthorized;
+                    }
+                    '
+                }
+                $response = [MockWebResponse]::new()
+                $ex = [System.Net.WebException]::new("Unauthorized", $null, [System.Net.WebExceptionStatus]::ProtocolError, $response)
+                Mock Invoke-RestMethod { throw $ex }
+                Mock Start-Sleep {}
+                { Send-BridgePushoverRequest -Payload @{ message = 'test' } } | Should -Throw
+                Assert-MockCalled Start-Sleep -Times 0
+                Assert-MockCalled Invoke-RestMethod -Times 1
             }
         }
     }

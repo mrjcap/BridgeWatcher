@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Get-BridgeStatusComparison' {
@@ -26,6 +26,29 @@ InModuleScope 'BridgeWatcher' {
             } | Should -Not -Throw
             # Καθαρισμός
             if (Test-Path $jsonFile) { Remove-Item $jsonFile -Force }
+        }
+        It 'Πρέπει να καλείται μόνο το Get-BridgeStatus και να το περνάει ως previousState όταν το αρχείο ΔΕΝ υπάρχει' {
+            $jsonFile = Join-Path $PSScriptRoot 'bridge_status_test.json'
+            Mock Test-Path { return $false }
+            Mock Get-BridgeStatus -ModuleName 'BridgeWatcher' -MockWith {
+                return @(
+                    @{ Bridge = 'Ποσειδωνία'; Status = 'Ανοικτή' },
+                    @{ Bridge = 'Ισθμία'; Status = 'Ανοικτή' }
+                )
+            }
+            Mock Invoke-BridgeStatusComparison {}
+            Mock Set-Content {}
+            Mock Write-Verbose {}
+
+            $getBridgeStatusComparisonSplat = @{
+                OutputFile = $jsonFile
+                ApiKey     = ([System.Net.NetworkCredential]::new('', 'dummyApiKey').SecurePassword)
+                PoUserKey  = ([System.Net.NetworkCredential]::new('', 'dummyPoUserKey').SecurePassword)
+                PoApiKey   = ([System.Net.NetworkCredential]::new('', 'dummyPoApiKey').SecurePassword)
+            }
+            { Get-BridgeStatusComparison @getBridgeStatusComparisonSplat } | Should -Not -Throw
+
+            Assert-MockCalled Get-BridgeStatus -Exactly 1 -Scope It -ParameterFilter { $OutputFile -eq $jsonFile }
         }
         It 'Πρέπει να καλούνται Get-BridgePreviousStatus και Get-BridgeStatus με τα σωστά parameters όταν το αρχείο υπάρχει' {
             $jsonFile = Join-Path $PSScriptRoot 'bridge_status_test.json'

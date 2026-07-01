@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Get-BridgeStatusMonitor' {
@@ -58,6 +58,62 @@ InModuleScope 'BridgeWatcher' {
                 Mock -CommandName Start-Sleep
                 Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123
                 Should -Invoke Start-Sleep -ParameterFilter { $Seconds -eq 123 } -Exactly 1
+            }
+        }
+        Context 'CancellationToken and Circuit Breaker' {
+            It 'Breaks wait when CancellationToken is canceled on success' {
+                $cts = [System.Threading.CancellationTokenSource]::new()
+                Mock Get-BridgeStatusComparison { $cts.Cancel() }
+                Mock Write-BridgeLog {}
+                Mock Start-Sleep {}
+
+                Get-BridgeStatusMonitor -MaxIterations 10 -IntervalSeconds 1 -CancellationToken $cts.Token -OutputFile 'test.json' -ApiKey ([System.Net.NetworkCredential]::new('', 'key').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'user').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'app').SecurePassword)
+
+                Assert-MockCalled Get-BridgeStatusComparison -Exactly 1
+            }
+
+            It 'Breaks wait when CancellationToken is canceled on failure' {
+                $cts = [System.Threading.CancellationTokenSource]::new()
+                Mock Get-BridgeStatusComparison {
+                    $cts.Cancel()
+                    throw "Simulated failure"
+                }
+                Mock Write-BridgeLog {}
+                Mock Start-Sleep {}
+
+                Get-BridgeStatusMonitor -MaxIterations 10 -IntervalSeconds 1 -CancellationToken $cts.Token -OutputFile 'test.json' -ApiKey ([System.Net.NetworkCredential]::new('', 'key').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'user').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'app').SecurePassword)
+
+                Assert-MockCalled Get-BridgeStatusComparison -Exactly 1
+            }
+
+            It 'Circuit breaker triggers after 5 failures without CancellationToken' {
+                Mock Get-BridgeStatusComparison { throw "Simulated failure" }
+                Mock Write-BridgeLog {}
+                Mock Start-Sleep {}
+
+                Get-BridgeStatusMonitor -MaxIterations 6 -IntervalSeconds 1 -OutputFile 'test.json' -ApiKey ([System.Net.NetworkCredential]::new('', 'key').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'user').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'app').SecurePassword)
+
+                Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like "*Circuit breaker triggered*" } -Exactly 1
+                Assert-MockCalled Start-Sleep -ParameterFilter { $Seconds -eq 900 } -Exactly 1
+            }
+
+            It 'Circuit breaker respects CancellationToken' {
+                $cts = [System.Threading.CancellationTokenSource]::new()
+                $script:calls = 0
+                Mock Get-BridgeStatusComparison {
+                    $script:calls++
+                    if ($script:calls -eq 5) {
+                        $cts.Cancel()
+                    }
+                    throw "Simulated failure"
+                }
+                Mock Write-BridgeLog {}
+                Mock Start-Sleep {}
+
+                Get-BridgeStatusMonitor -MaxIterations 10 -IntervalSeconds 1 -CancellationToken $cts.Token -OutputFile 'test.json' -ApiKey ([System.Net.NetworkCredential]::new('', 'key').SecurePassword) -PoUserKey ([System.Net.NetworkCredential]::new('', 'user').SecurePassword) -PoApiKey ([System.Net.NetworkCredential]::new('', 'app').SecurePassword)
+
+                Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like "*Circuit breaker triggered*" } -Exactly 1
+                Assert-MockCalled Start-Sleep -ParameterFilter { $Seconds -eq 900 } -Exactly 0
             }
         }
     }
