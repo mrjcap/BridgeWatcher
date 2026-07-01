@@ -26,7 +26,7 @@ Describe 'run.ps1 Script Execution' {
         $Env:POAPI_KEY = 'env-po-api-key'
         $Env:POUSER_KEY = 'env-po-user-key'
 
-        # Mock Get-BridgeStatusMonitor in both scopes to intercept all calls
+        # Mock του Get-BridgeStatusMonitor in both scopes to intercept all calls
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
             $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
