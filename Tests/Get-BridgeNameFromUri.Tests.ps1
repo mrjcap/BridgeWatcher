@@ -45,4 +45,3 @@ Describe 'Get-BridgeNameFromUri' {
         }
     }
 }
-
