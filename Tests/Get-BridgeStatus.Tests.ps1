@@ -261,7 +261,7 @@ Describe 'Get-BridgeStatus Configuration Fallbacks' {
         }
         Mock Write-BridgeLog { }
 
-        { Get-BridgeStatus -OutputFile 'test.json' } | Should -Throw "Configuration initialization failed: Configuration error"
+        { Get-BridgeStatus -OutputFile 'test.json' } | Should -Throw "Η αρχικοποίηση της διαμόρφωσης απέτυχε: Configuration error"
     }
 
     It 'Χρησιμοποιεί σωστό configuration όταν περνιέται ρητά' {
@@ -286,6 +286,6 @@ Describe 'Get-BridgeStatus Configuration Fallbacks' {
         Mock New-BridgeConfiguration { throw "Configuration failed" }
         Mock Get-BridgeHtml { $null }
 
-        { Get-BridgeStatus } | Should -Throw "Configuration initialization failed: Configuration failed"
+        { Get-BridgeStatus } | Should -Throw "Η αρχικοποίηση της διαμόρφωσης απέτυχε: Configuration failed"
     }
 }
