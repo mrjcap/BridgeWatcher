@@ -129,7 +129,11 @@ jobs:
             # Hide non-cmdlet docs temporarily to avoid PlatyPS parsing errors
             $tempDocs = Join-Path (Resolve-Path ~).Path 'docs_backup'
             New-Item -ItemType Directory -Path $tempDocs -Force | Out-Null
-            $nonCmdletDocs = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch '^[a-zA-Z]+-[a-zA-Z]+' -and $_.Name -notmatch '^about_' }
+            $cmdlets = Get-Command -Module $moduleName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
+            $nonCmdletDocs = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue | Where-Object { 
+              $name = $_.BaseName
+              $name -notmatch '^about_' -and $cmdlets -notcontains $name
+            }
             if ($nonCmdletDocs) {
               $nonCmdletDocs | Move-Item -Destination $tempDocs
             }
