@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
 Describe 'Invoke-BridgeOCRRequest' {
     BeforeAll {
@@ -64,7 +64,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
     It 'Επιστρέφει exception όταν αποτυγχάνει η κλήση στο API' {
         Mock Invoke-RestMethod { throw 'Simulated API failure' }
-        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw 'Google Vision API call failed: Simulated API failure'
+        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw 'Η κλήση του Google Vision API απέτυχε: Simulated API failure'
     }
 
     It 'Σταματάει χωρίς retries όταν η API επιστρέφει 401 Unauthorized' {
@@ -74,7 +74,7 @@ Describe 'Invoke-BridgeOCRRequest' {
             $ex | Add-Member -MemberType NoteProperty -Name Response -Value $response -Force
             throw $ex
         }
-        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Google Vision API call failed: Unauthorized"
+        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Unauthorized"
         Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
     }
 
@@ -86,7 +86,7 @@ Describe 'Invoke-BridgeOCRRequest' {
             throw $ex
         }
         Mock Start-Sleep {}
-        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Google Vision API call failed: Internal Error"
+        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Internal Error"
         Assert-MockCalled Invoke-RestMethod -Times 3 -Exactly
         Assert-MockCalled Start-Sleep -Times 2 -Exactly
     }
@@ -100,10 +100,12 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $config = New-BridgeConfiguration
         $config = [PSCustomObject]@{
-            OCRApiUrl        = 'https://custom-ocr-api.com/annotate'
+            Urls             = [PSCustomObject]@{
+                OCRApi      = 'https://custom-ocr-api.com/annotate'
+                PushoverApi = $config.Urls.PushoverApi
+            }
             OCRMessages      = $config.OCRMessages
             LoggingConfig    = $config.LoggingConfig
-            PushoverApiUrl   = $config.PushoverApiUrl
             PushoverMessages = $config.PushoverMessages
         }
 
@@ -123,7 +125,9 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $baseConfig = New-BridgeConfiguration
         $config = [PSCustomObject]@{
-            OCRApiUrl     = $baseConfig.OCRApiUrl
+            Urls          = [PSCustomObject]@{
+                OCRApi = $baseConfig.Urls.OCRApi
+            }
             OCRMessages   = @{
                 StartOCR  = 'Custom start OCR message'
                 OCRFailed = $baseConfig.OCRMessages.OCRFailed
@@ -169,7 +173,9 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $baseConfig = New-BridgeConfiguration
         $config = [PSCustomObject]@{
-            OCRApiUrl     = $baseConfig.OCRApiUrl
+            Urls          = [PSCustomObject]@{
+                OCRApi = $baseConfig.Urls.OCRApi
+            }
             OCRMessages   = $baseConfig.OCRMessages
             LoggingConfig = @{
                 InfoStage    = 'Ανάλυση'
@@ -193,7 +199,9 @@ Describe 'Invoke-BridgeOCRRequest' {
         Mock Write-BridgeLog {}
 
         $config = [PSCustomObject]@{
-            OCRApiUrl     = 'https://custom-api.com/test'
+            Urls          = [PSCustomObject]@{
+                OCRApi = 'https://custom-api.com/test'
+            }
             OCRMessages   = @{
                 StartOCR = 'Custom start message'
             }
