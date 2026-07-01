@@ -71,19 +71,85 @@ Describe 'Write-BridgeLog' {
             }
         }
     }
+
     Context 'Όταν κλείνει το LogStream και προκύπτει σφάλμα' {
         It 'Κάνει catch το σφάλμα και εκτυπώνει Verbose' {
-            $mockStream = [pscustomobject]@{
-                Close = { throw "Close error" }
+            function Get-PSCallStack {
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
+                param()
+                return @()
             }
+            $mockStream = New-Object PSObject
+            $mockStream | Add-Member -MemberType ScriptMethod -Name Close -Value { throw "Close error" }
             $script:LogStream = $mockStream
             $script:LogStreamPath = "oldpath.log"
             $config = New-BridgeConfiguration
-            $config.LoggingConfig.LogDirectory = "TestDrive:\newlogs"
+            $config.LogDirectory = "C:\TempLogs"
             Mock New-Object { $null } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
-            { Write-BridgeLog -Message "Test" -Configuration $config -Verbose } | Should -Not -Throw
+            try {
+                { Write-BridgeLog -Stage 'Ανάλυση' -Message "Test" -Configuration $config -Verbose } | Should -Not -Throw
+            }
+            finally {
+                Remove-Item -Path function:Get-PSCallStack -ErrorAction SilentlyContinue
+            }
+        }
+    }
+
+    Context 'StreamWriter Logging (Else Block)' {
+        BeforeEach {
+            $script:LogStream = $null
+            $script:LogStreamPath = $null
+        }
+        AfterEach {
+            if ($script:LogStream) {
+                try { $script:LogStream.Close() } catch { $null = $_ }
+                $script:LogStream = $null
+            }
+        }
+        It 'Γράφει σε αρχείο χρησιμοποιώντας StreamWriter' {
+            function Get-PSCallStack {
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
+                param()
+                return @()
+            }
+            $mockWriter = New-Object PSObject
+            $mockWriter | Add-Member -MemberType ScriptMethod -Name WriteLine -Value { param($line) [void]$line }
+            $mockWriter | Add-Member -MemberType ScriptMethod -Name Flush -Value { }
+            $mockWriter | Add-Member -MemberType ScriptMethod -Name Close -Value { }
+            $mockWriter | Add-Member -MemberType NoteProperty -Name AutoFlush -Value $true
+            Mock New-Object { $mockWriter } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
+
+            $config = New-BridgeConfiguration
+            $config.LogDirectory = "C:\TempLogs"
+
+            try {
+                # First run: creates StreamWriter
+                { Write-BridgeLog -Stage 'Ανάλυση' -Message 'StreamWriter Test' -Configuration $config } | Should -Not -Throw
+                $script:LogStream | Should -Not -BeNullOrEmpty
+                $script:LogStreamPath | Should -BeLike "C:\TempLogs\BridgeWatcher-*.log"
+
+                # Second run: uses existing StreamWriter
+                { Write-BridgeLog -Stage 'Ανάλυση' -Message 'StreamWriter Test 2' -Configuration $config } | Should -Not -Throw
+
+                # Third run: changes log path
+                $script:LogStreamPath = "C:\TempLogs\different.log"
+                { Write-BridgeLog -Stage 'Ανάλυση' -Message 'StreamWriter Test 3' -Configuration $config } | Should -Not -Throw
+            }
+            finally {
+                Remove-Item -Path function:Get-PSCallStack -ErrorAction SilentlyContinue
+                if ($script:LogStream) {
+                    try { $script:LogStream.Close() } catch { $null = $_ }
+                    $script:LogStream = $null
+                }
+            }
         }
     }
 }
+
+
+
+
+
+
 
 
