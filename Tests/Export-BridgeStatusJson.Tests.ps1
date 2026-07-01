@@ -1,6 +1,6 @@
 ﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-Describe 'Export-BridgeStatusJson Tests' {
+Describe 'Δοκιμές Export-BridgeStatusJson' {
     BeforeAll {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -16,7 +16,7 @@ Describe 'Export-BridgeStatusJson Tests' {
             # Mock Set-Content για να προκαλέσουμε σφάλμα
             Mock ConvertTo-Json { throw 'Fake error during file write' }
             Mock Move-Item {}
-            # Mock Write-BridgeLog
+            # Mock του Write-BridgeLog
             Mock Write-BridgeLog {}
 
             $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
@@ -90,7 +90,7 @@ Describe 'Export-BridgeStatusJson Tests' {
             $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
         }
     }
-    Context 'Configuration Coverage Tests' {
+    Context 'Configuration Coverage Δοκιμές' {
         It 'Καλύπτει Configuration.DefaultJsonDepth path' {
             Mock Test-Path { $true }
             Mock New-Item { }
@@ -99,7 +99,7 @@ Describe 'Export-BridgeStatusJson Tests' {
             Mock ConvertTo-Json { '{"test": "data"}' }
 
             $config = New-BridgeConfiguration
-            $config.DefaultJsonDepth = 8
+            $config.Defaults.JsonDepth = 8
 
             Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
 
@@ -168,4 +168,3 @@ Describe 'Export-BridgeStatusJson Tests' {
         }
     }
 }
-
