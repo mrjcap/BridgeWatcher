@@ -1,37 +1,37 @@
-﻿function Get-SafeBridgeConfiguration {
+﻿function Get-SafeBridgeConfiguration {
     <#
     .SYNOPSIS
-    Returns a safe bridge configuration, creating a new one if necessary.
+    Επιστρέφει ασφαλές configuration γέφυρας, δημιουργώντας νέο αν χρειάζεται.
 
     .DESCRIPTION
-    Get-SafeBridgeConfiguration reduces boilerplate in the main functions by handling
-    configuration fallback logic.
+    Η Get-SafeBridgeConfiguration μειώνει τον επαναλαμβανόμενο κώδικα στις κύριες
+    συναρτήσεις χειριζόμενη τη λογική εναλλακτικού configuration.
 
     .PARAMETER Configuration
-    The existing configuration object, if any.
+    Το υπάρχον configuration object, αν υπάρχει.
 
     .PARAMETER Quiet
-    If set, suppresses exceptions and returns $null on failure.
+    Αν οριστεί, αποκρύπτει εξαιρέσεις και επιστρέφει $null σε αποτυχία.
 
     .OUTPUTS
     [PSCustomObject]
-    #>
-    [CmdletBinding()]
-    param(
-        [PSCustomObject]$Configuration,
-        [switch]$Quiet
-    )
-
-    if ($Configuration) {
-        return $Configuration
-    }
-
-    try {
-        return New-BridgeConfiguration
-    } catch {
-        if ($Quiet) {
-            return $null
-        }
-        throw $_
-    }
-}
+    #>
+    [CmdletBinding()]
+    param(
+        [PSCustomObject]$Configuration,
+        [switch]$Quiet
+    )
+
+    if ($Configuration) {
+        return $Configuration
+    }
+
+    try {
+        return New-BridgeConfiguration
+    } catch {
+        if ($Quiet) {
+            return $null
+        }
+        throw $_
+    }
+}
