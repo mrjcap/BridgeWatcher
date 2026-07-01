@@ -166,4 +166,3 @@ Describe 'Test-BridgeResult' {
     }
 }
 
-
