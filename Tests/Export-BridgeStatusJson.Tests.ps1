@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot\..\BridgeWatcher\BridgeWatcher.psm1" -Force
 
 InModuleScope 'BridgeWatcher' {
     Describe 'Export-BridgeStatusJson Tests' {
@@ -9,8 +9,8 @@ InModuleScope 'BridgeWatcher' {
                 # Mock Write-BridgeLog
                 Mock Write-BridgeLog {}
 
-                $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\invalid\path\file.json'
-
+                $testPath = Join-Path $TestDrive 'file.json'
+                $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path $testPath
                 $result | Should -Not -BeNullOrEmpty
                 $result.Success | Should -Be $false
                 $result.ErrorMessage | Should -Match 'Fake error during file write'
