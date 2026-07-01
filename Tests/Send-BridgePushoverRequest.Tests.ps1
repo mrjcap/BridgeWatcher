@@ -180,9 +180,7 @@ Describe 'Send-BridgePushoverRequest' {
                 throw [System.Net.WebException]::new("Mock WebException", $null, [System.Net.WebExceptionStatus]::ProtocolError, $null)
             }
             Mock Write-BridgeLog
-            { Send-BridgePushoverRequest -Payload @{ token='t'; user='u'; message='m'} } | Should -Throw
+            { Send-BridgePushoverRequest -Payload @{ token = 't'; user = 'u'; message = 'm' } } | Should -Throw
         }
     }
 }
-
-
