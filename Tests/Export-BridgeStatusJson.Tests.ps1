@@ -12,6 +12,7 @@ Describe 'Export-BridgeStatusJson Tests' {
         It 'Επιστρέφει BridgeResult με σφάλμα και γράφει το κατάλληλο μήνυμα' {
             # Mock το Test-Path να επιστρέφει true για να μην αποτύχει πρόωρα
             Mock Test-Path { $true }
+            Mock New-Item { }
             # Mock Set-Content για να προκαλέσουμε σφάλμα
             Mock ConvertTo-Json { throw 'Fake error during file write' }
             Mock Move-Item {}
@@ -33,6 +34,7 @@ Describe 'Export-BridgeStatusJson Tests' {
     Context 'Όταν η αποθήκευση JSON είναι επιτυχής' {
         It 'Επιστρέφει BridgeResult με επιτυχία' {
             Mock Test-Path { $true }
+            Mock New-Item { }
 
             Mock Move-Item {}
             Mock Write-BridgeLog {}
@@ -49,6 +51,7 @@ Describe 'Export-BridgeStatusJson Tests' {
         }
         It 'Πρέπει να καταγράψει επιτυχές μήνυμα (Write-BridgeLog)' {
             Mock Test-Path { $true }
+            Mock New-Item { }
 
             Mock Move-Item {}
             Mock Write-BridgeLog {}
@@ -59,6 +62,7 @@ Describe 'Export-BridgeStatusJson Tests' {
     }
     Context 'Έλεγχος Validation παραμέτρων' { It 'Δέχεται κενό array όταν το Data είναι κενό' {
             Mock Test-Path { $true }
+            Mock New-Item { }
             Mock ConvertTo-Json { '[]' }
 
             Mock Move-Item {}
@@ -89,6 +93,7 @@ Describe 'Export-BridgeStatusJson Tests' {
     Context 'Configuration Coverage Tests' {
         It 'Καλύπτει Configuration.DefaultJsonDepth path' {
             Mock Test-Path { $true }
+            Mock New-Item { }
 
             Mock Move-Item {}
             Mock ConvertTo-Json { '{"test": "data"}' }
@@ -102,6 +107,7 @@ Describe 'Export-BridgeStatusJson Tests' {
         }
         It 'Καλύπτει Configuration.ExportMessages.Success path' {
             Mock Test-Path { $true }
+            Mock New-Item { }
 
             Mock Move-Item {}
             Mock Write-BridgeLog {}
@@ -115,6 +121,7 @@ Describe 'Export-BridgeStatusJson Tests' {
         }
         It 'Καλύπτει Configuration.ExportMessages.Failed σε σφάλμα' {
             Mock Test-Path { $true }
+            Mock New-Item { }
             Mock ConvertTo-Json { throw 'Test error' }
             Mock Move-Item {}
             Mock Write-BridgeLog {}
@@ -147,6 +154,7 @@ Describe 'Export-BridgeStatusJson Tests' {
         }
         It 'Καλύπτει Configuration.LoggingConfig paths' {
             Mock Test-Path { $true }
+            Mock New-Item { }
 
             Mock Move-Item {}
             Mock Write-BridgeLog {}
@@ -160,3 +168,4 @@ Describe 'Export-BridgeStatusJson Tests' {
         }
     }
 }
+
