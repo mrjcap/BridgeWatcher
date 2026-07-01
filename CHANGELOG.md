@@ -1,4 +1,4 @@
-﻿# Αρχείο Αλλαγών (Changelog)
+# Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
@@ -9,135 +9,135 @@
 
 ### 🐛 Διορθώσεις
 
-- fix(docker): replace useless cat with input redirection (SC2002)
+- fix(docker): αντικατάσταση περιττού cat με ανακατεύθυνση εισόδου (SC2002)
 
 ### 🎨 Στυλ & Μορφοποίηση
 
-- style(tests): fix indentation and alignment for Codacy compliance
+- style(tests): διόρθωση indentation και alignment για συμμόρφωση με Codacy
 
 ## [1.0.85] - 2026-07-01
 
 ### 🐛 Διορθώσεις
 
-- fix(ci): enable upload of Codacy analysis results
+- fix(ci): ενεργοποίηση upload αποτελεσμάτων ανάλυσης Codacy
 
 ## [1.0.84] - 2026-07-01
 
 ### 🐛 Διορθώσεις
 
-- fix(docker): remove su-exec from entrypoint since container runs as appuser
+- fix(docker): αφαίρεση su-exec από το entrypoint καθώς το container τρέχει ως appuser
 
 ## [1.0.82] - 2026-07-01
 
 ### ✨ Χαρακτηριστικά
 
-- feat: make log directory configurable via New-BridgeConfiguration
+- feat: ρυθμιζόμενος κατάλογος log μέσω New-BridgeConfiguration
 
 ### 🐛 Διορθώσεις
 
-- fix: resolve final PSScriptAnalyzer violations to secure CI pipeline
-- fix: ensure BOM is preserved when updating module version
-- fix: correct Greek accents and URL concatenation
+- fix: επίλυση τελικών παραβιάσεων PSScriptAnalyzer για εξασφάλιση CI pipeline
+- fix: διασφάλιση διατήρησης BOM κατά την ενημέρωση έκδοσης module
+- fix: διόρθωση ελληνικών τόνων και συνένωσης URL
 
 ## [1.0.81] - 2026-07-01
 
 ### 🐛 Διορθώσεις
 
-- fix: disable DOCKER_CONTENT_TRUST globally to fix Trivy action
+- fix: απενεργοποίηση DOCKER_CONTENT_TRUST καθολικά για διόρθωση Trivy action
 
 ## [1.0.80] - 2026-07-01
 
 ### 🐛 Διορθώσεις
 
-- fix: github action pipelines
+- fix: διόρθωση GitHub Actions pipelines
 
 ## [1.0.79] - 2026-06-30
 
 ### ✨ Χαρακτηριστικά
 
-- feat(ci): pin Codecov actions to commit SHA fb8b3582
-- feat(ci): migrate Codecov steps to use codecov-action@v7
-- feat(ci): update Codecov test results action version to v5
-- feat(ci): add Codecov test results upload step
-- feat(Send-BridgePushover): update Send-BridgePushover to address review findings
-- feat(Invoke-BridgeStatusComparison): update Invoke-BridgeStatusComparison to address review findings
-- feat(Get-BridgeStatusMonitor): update Get-BridgeStatusMonitor to address review findings
-- feat(Get-BridgeStatusComparison): update Get-BridgeStatusComparison to address review findings
-- feat(Get-BridgeStatus): update Get-BridgeStatus to address review findings
-- feat(config): add Get-SafeBridgeConfiguration helper for safe configuration null checks
-- feat: add script to automate changelog sectioning and update existing entries
-- feat: implement Manage-Changelog.ps1 and helper script to automate changelog updates and PR creation
-- feat: introduce Manage-Changelog.ps1 to consolidate changelog update, formatting, and PR creation workflows
-- feat: add scripts to automate changelog updates and commit history conversion
+- feat(ci): σταθεροποίηση (pin) Codecov actions στο commit SHA fb8b3582
+- feat(ci): μετάβαση βημάτων Codecov σε χρήση codecov-action@v7
+- feat(ci): ενημέρωση έκδοσης Codecov test results action σε v5
+- feat(ci): προσθήκη βήματος upload αποτελεσμάτων δοκιμών Codecov
+- feat(Send-BridgePushover): ενημέρωση Send-BridgePushover βάσει ευρημάτων αναθεώρησης
+- feat(Invoke-BridgeStatusComparison): ενημέρωση Invoke-BridgeStatusComparison βάσει ευρημάτων αναθεώρησης
+- feat(Get-BridgeStatusMonitor): ενημέρωση Get-BridgeStatusMonitor βάσει ευρημάτων αναθεώρησης
+- feat(Get-BridgeStatusComparison): ενημέρωση Get-BridgeStatusComparison βάσει ευρημάτων αναθεώρησης
+- feat(Get-BridgeStatus): ενημέρωση Get-BridgeStatus βάσει ευρημάτων αναθεώρησης
+- feat(config): προσθήκη βοηθητικού Get-SafeBridgeConfiguration για ασφαλείς ελέγχους null στη ρύθμιση
+- feat: προσθήκη script για αυτοματοποίηση κατηγοριοποίησης changelog και ενημέρωση υπαρχόντων εγγραφών
+- feat: υλοποίηση Manage-Changelog.ps1 και βοηθητικού script για αυτόματες ενημερώσεις changelog και δημιουργία PR
+- feat: εισαγωγή Manage-Changelog.ps1 για ενοποίηση ροών ενημέρωσης, μορφοποίησης changelog και δημιουργίας PR
+- feat: προσθήκη scripts για αυτοματοποίηση ενημερώσεων changelog και μετατροπή ιστορικού commits
 
 ### 🐛 Διορθώσεις
 
-- fix(scripts): remove call to missing Translate-CommitMessage.ps1
-- fix(scripts): use Join-Path for cross-platform script invocations
-- fix(lint): resolve all PSScriptAnalyzer errors and warnings
-- fix(ci): fix PSScriptAnalyzer path and Codecov report_type parameter
-- fix(ci): correct Gitleaks action version in ci.yml
-- fix(PesterConfiguration): change TestResult output format to JUnitXml
-- fix: update regex for module version replacement to support multiline matching
-- fix: improve commit message processing by stripping leading emojis and whitespace
-- 🐛 fix(changelog): clean leading emojis during matching
+- fix(scripts): αφαίρεση κλήσης στο ανύπαρκτο Translate-CommitMessage.ps1
+- fix(scripts): χρήση Join-Path για cross-platform κλήσεις scripts
+- fix(lint): επίλυση όλων των σφαλμάτων και προειδοποιήσεων PSScriptAnalyzer
+- fix(ci): διόρθωση διαδρομής PSScriptAnalyzer και παραμέτρου report_type του Codecov
+- fix(ci): διόρθωση έκδοσης Gitleaks action στο ci.yml
+- fix(PesterConfiguration): αλλαγή μορφής εξόδου TestResult σε JUnitXml
+- fix: ενημέρωση regex αντικατάστασης έκδοσης module για υποστήριξη πολυγραμμικής αντιστοίχισης
+- fix: βελτίωση επεξεργασίας μηνυμάτων commit με αφαίρεση εμπρόσθιων emojis και κενών
+- 🐛 fix(changelog): καθαρισμός εμπρόσθιων emojis κατά την αντιστοίχιση
 
 ### ♻️ Αναδιαρθρώσεις
 
-- refactor(run): update run to address review findings
-- refactor(Write-BridgeLog): update Write-BridgeLog to address review findings
-- refactor(Send-BridgePushoverRequest): update Send-BridgePushoverRequest to address review findings
-- refactor(Send-BridgeNotification): update Send-BridgeNotification to address review findings
-- refactor(Invoke-BridgeOpenedNotification): update Invoke-BridgeOpenedNotification to address review findings
-- refactor(Invoke-BridgeOCRRequest): update Invoke-BridgeOCRRequest to address review findings
-- refactor(Invoke-BridgeOCRGoogleCloud): update Invoke-BridgeOCRGoogleCloud to address review findings
-- refactor(Invoke-BridgeClosedNotification): update Invoke-BridgeClosedNotification to address review findings
-- refactor(Get-BridgeStatusFromHtml): update Get-BridgeStatusFromHtml to address review findings
-- refactor(Get-BridgePushoverPayload): update Get-BridgePushoverPayload to address review findings
-- refactor(Get-BridgeImage): update Get-BridgeImage to address review findings
-- refactor(Get-BridgeHtml): update Get-BridgeHtml to address review findings
-- refactor(Export-BridgeStatusJson): update Export-BridgeStatusJson to address review findings
-- refactor(ConvertFrom-BridgeHtml): update ConvertFrom-BridgeHtml to address review findings
-- refactor(BridgeWatcher): update BridgeWatcher to address review findings
+- refactor(run): ενημέρωση run βάσει ευρημάτων αναθεώρησης
+- refactor(Write-BridgeLog): ενημέρωση Write-BridgeLog βάσει ευρημάτων αναθεώρησης
+- refactor(Send-BridgePushoverRequest): ενημέρωση Send-BridgePushoverRequest βάσει ευρημάτων αναθεώρησης
+- refactor(Send-BridgeNotification): ενημέρωση Send-BridgeNotification βάσει ευρημάτων αναθεώρησης
+- refactor(Invoke-BridgeOpenedNotification): ενημέρωση Invoke-BridgeOpenedNotification βάσει ευρημάτων αναθεώρησης
+- refactor(Invoke-BridgeOCRRequest): ενημέρωση Invoke-BridgeOCRRequest βάσει ευρημάτων αναθεώρησης
+- refactor(Invoke-BridgeOCRGoogleCloud): ενημέρωση Invoke-BridgeOCRGoogleCloud βάσει ευρημάτων αναθεώρησης
+- refactor(Invoke-BridgeClosedNotification): ενημέρωση Invoke-BridgeClosedNotification βάσει ευρημάτων αναθεώρησης
+- refactor(Get-BridgeStatusFromHtml): ενημέρωση Get-BridgeStatusFromHtml βάσει ευρημάτων αναθεώρησης
+- refactor(Get-BridgePushoverPayload): ενημέρωση Get-BridgePushoverPayload βάσει ευρημάτων αναθεώρησης
+- refactor(Get-BridgeImage): ενημέρωση Get-BridgeImage βάσει ευρημάτων αναθεώρησης
+- refactor(Get-BridgeHtml): ενημέρωση Get-BridgeHtml βάσει ευρημάτων αναθεώρησης
+- refactor(Export-BridgeStatusJson): ενημέρωση Export-BridgeStatusJson βάσει ευρημάτων αναθεώρησης
+- refactor(ConvertFrom-BridgeHtml): ενημέρωση ConvertFrom-BridgeHtml βάσει ευρημάτων αναθεώρησης
+- refactor(BridgeWatcher): ενημέρωση BridgeWatcher βάσει ευρημάτων αναθεώρησης
 
 ### 🧪 Δοκιμές
 
-- test(Write-BridgeLog.Tests): update Write-BridgeLog.Tests to address review findings
-- test(Test-BridgeResult.Tests): update Test-BridgeResult.Tests to address review findings
-- test(Test-BridgeResult-Simple.Tests): update Test-BridgeResult-Simple.Tests to address review findings
-- test(Send-BridgePushoverRequest.Tests): update Send-BridgePushoverRequest.Tests to address review findings
-- test(Send-BridgePushover.Tests): update Send-BridgePushover.Tests to address review findings
-- test(Resolve-BridgeStatus.Tests): update Resolve-BridgeStatus.Tests to address review findings
-- test(Resolve-BridgeStateForChange.Tests): update Resolve-BridgeStateForChange.Tests to address review findings
-- test(New-BridgeResult.Tests): update New-BridgeResult.Tests to address review findings
-- test(Invoke-BridgeStatusComparison.Tests): update Invoke-BridgeStatusComparison.Tests to address review findings
-- test(Invoke-BridgeOpenedNotification.Tests): update Invoke-BridgeOpenedNotification.Tests to address review findings
-- test(Invoke-BridgeOCRRequest.Tests): update Invoke-BridgeOCRRequest.Tests to address review findings
-- test(Invoke-BridgeOCRGoogleCloud.Tests): update Invoke-BridgeOCRGoogleCloud.Tests to address review findings
-- test(Invoke-BridgeClosedNotification.Tests): update Invoke-BridgeClosedNotification.Tests to address review findings
-- test(Get-BridgeStatusObject.Tests): update Get-BridgeStatusObject.Tests to address review findings
-- test(Get-BridgeStatusMonitor.Tests): update Get-BridgeStatusMonitor.Tests to address review findings
-- test(Get-BridgeStatusFromHtml.Tests): update Get-BridgeStatusFromHtml.Tests to address review findings
-- test(Get-BridgeStatusComparison.Tests): update Get-BridgeStatusComparison.Tests to address review findings
-- test(Get-BridgeStatusAdvice.Tests): update Get-BridgeStatusAdvice.Tests to address review findings
-- test(Get-BridgeStatus.Tests): update Get-BridgeStatus.Tests to address review findings
-- test(Get-BridgeStatus-Refactored.Tests): update Get-BridgeStatus-Refactored.Tests to address review findings
-- test(Get-BridgePushoverPayload.Tests): update Get-BridgePushoverPayload.Tests to address review findings
-- test(Get-BridgePreviousStatus.Tests): update Get-BridgePreviousStatus.Tests to address review findings
-- test(Get-BridgeOCRRequestBody.Tests): update Get-BridgeOCRRequestBody.Tests to address review findings
-- test(Get-BridgeNameFromUri.Tests): update Get-BridgeNameFromUri.Tests to address review findings
-- test(Get-BridgeImages.Tests): update Get-BridgeImages.Tests to address review findings
-- test(Get-BridgeHtml.Tests): update Get-BridgeHtml.Tests to address review findings
-- test(Export-BridgeStatusJson.Tests): update Export-BridgeStatusJson.Tests to address review findings
-- test(ConvertTo-BridgeTimeRange.Tests): update ConvertTo-BridgeTimeRange.Tests to address review findings
-- test(ConvertTo-BridgeClosedDuration.Tests): update ConvertTo-BridgeClosedDuration.Tests to address review findings
-- test(ConvertFrom-BridgeOCRResult.Tests): update ConvertFrom-BridgeOCRResult.Tests to address review findings
-- test(ConvertFrom-BridgeHtml.Tests): update ConvertFrom-BridgeHtml.Tests to address review findings
-- test(integration): create live HTML parsing integration tests
+- test(Write-BridgeLog.Tests): ενημέρωση Write-BridgeLog.Tests βάσει ευρημάτων αναθεώρησης
+- test(Test-BridgeResult.Tests): ενημέρωση Test-BridgeResult.Tests βάσει ευρημάτων αναθεώρησης
+- test(Test-BridgeResult-Simple.Tests): ενημέρωση Test-BridgeResult-Simple.Tests βάσει ευρημάτων αναθεώρησης
+- test(Send-BridgePushoverRequest.Tests): ενημέρωση Send-BridgePushoverRequest.Tests βάσει ευρημάτων αναθεώρησης
+- test(Send-BridgePushover.Tests): ενημέρωση Send-BridgePushover.Tests βάσει ευρημάτων αναθεώρησης
+- test(Resolve-BridgeStatus.Tests): ενημέρωση Resolve-BridgeStatus.Tests βάσει ευρημάτων αναθεώρησης
+- test(Resolve-BridgeStateForChange.Tests): ενημέρωση Resolve-BridgeStateForChange.Tests βάσει ευρημάτων αναθεώρησης
+- test(New-BridgeResult.Tests): ενημέρωση New-BridgeResult.Tests βάσει ευρημάτων αναθεώρησης
+- test(Invoke-BridgeStatusComparison.Tests): ενημέρωση Invoke-BridgeStatusComparison.Tests βάσει ευρημάτων αναθεώρησης
+- test(Invoke-BridgeOpenedNotification.Tests): ενημέρωση Invoke-BridgeOpenedNotification.Tests βάσει ευρημάτων αναθεώρησης
+- test(Invoke-BridgeOCRRequest.Tests): ενημέρωση Invoke-BridgeOCRRequest.Tests βάσει ευρημάτων αναθεώρησης
+- test(Invoke-BridgeOCRGoogleCloud.Tests): ενημέρωση Invoke-BridgeOCRGoogleCloud.Tests βάσει ευρημάτων αναθεώρησης
+- test(Invoke-BridgeClosedNotification.Tests): ενημέρωση Invoke-BridgeClosedNotification.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeStatusObject.Tests): ενημέρωση Get-BridgeStatusObject.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeStatusMonitor.Tests): ενημέρωση Get-BridgeStatusMonitor.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeStatusFromHtml.Tests): ενημέρωση Get-BridgeStatusFromHtml.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeStatusComparison.Tests): ενημέρωση Get-BridgeStatusComparison.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeStatusAdvice.Tests): ενημέρωση Get-BridgeStatusAdvice.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeStatus.Tests): ενημέρωση Get-BridgeStatus.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeStatus-Refactored.Tests): ενημέρωση Get-BridgeStatus-Refactored.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgePushoverPayload.Tests): ενημέρωση Get-BridgePushoverPayload.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgePreviousStatus.Tests): ενημέρωση Get-BridgePreviousStatus.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeOCRRequestBody.Tests): ενημέρωση Get-BridgeOCRRequestBody.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeNameFromUri.Tests): ενημέρωση Get-BridgeNameFromUri.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeImages.Tests): ενημέρωση Get-BridgeImages.Tests βάσει ευρημάτων αναθεώρησης
+- test(Get-BridgeHtml.Tests): ενημέρωση Get-BridgeHtml.Tests βάσει ευρημάτων αναθεώρησης
+- test(Export-BridgeStatusJson.Tests): ενημέρωση Export-BridgeStatusJson.Tests βάσει ευρημάτων αναθεώρησης
+- test(ConvertTo-BridgeTimeRange.Tests): ενημέρωση ConvertTo-BridgeTimeRange.Tests βάσει ευρημάτων αναθεώρησης
+- test(ConvertTo-BridgeClosedDuration.Tests): ενημέρωση ConvertTo-BridgeClosedDuration.Tests βάσει ευρημάτων αναθεώρησης
+- test(ConvertFrom-BridgeOCRResult.Tests): ενημέρωση ConvertFrom-BridgeOCRResult.Tests βάσει ευρημάτων αναθεώρησης
+- test(ConvertFrom-BridgeHtml.Tests): ενημέρωση ConvertFrom-BridgeHtml.Tests βάσει ευρημάτων αναθεώρησης
+- test(integration): δημιουργία integration tests ζωντανής ανάλυσης HTML
 
 ### 🎨 Στυλ & Μορφοποίηση
 
-- 🚨 style(changelog): fix markdown line length and trailing blank lines
+- 🚨 style(changelog): διόρθωση μήκους γραμμής markdown και κενών γραμμών στο τέλος
 
 ## [1.0.78] - 2026-06-25
 
@@ -525,12 +525,4 @@
 
 ### ✨ Χαρακτηριστικά
 
-- feat: προσθήκη publish.yml for powershellgallery
-
-
-
-
-
-
-
-
+- feat: προσθήκη publish.yml για το PowerShell Gallery
