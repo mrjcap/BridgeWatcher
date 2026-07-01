@@ -13,19 +13,19 @@ Describe 'New-BridgeConfiguration' {
 
         It 'Has default intervals and iterations configured' {
             $config = New-BridgeConfiguration
-            $config.DefaultIntervalSeconds | Should -Be 300
-            $config.DefaultMaxIterations | Should -Be 100
+            $config.Defaults.IntervalSeconds | Should -Be 300
+            $config.Defaults.MaxIterations | Should -Be 100
         }
 
         It 'Normalizes URLs' {
             $config = New-BridgeConfiguration -BaseUrl 'https://example.com'
-            $config.SourceUrl | Should -Be 'https://example.com/'
-            $config.BaseImageUrl | Should -Be 'https://example.com'
+            $config.Urls.Source | Should -Be 'https://example.com/'
+            $config.Urls.BaseImage | Should -Be 'https://example.com'
         }
 
         It 'Defaults LogDirectory to TestDrive:\logs when running in Pester' {
             $config = New-BridgeConfiguration
-            $config.LogDirectory | Should -Be 'TestDrive:\logs'
+            $config.Defaults.LogDirectory | Should -Be 'TestDrive:\logs'
         }
 
         It 'Contains a unified Statuses dictionary with Greek translations' {
@@ -43,8 +43,8 @@ Describe 'New-BridgeConfiguration' {
     Context 'Custom Instantiation' {
         It 'Allows overriding default intervals and iterations' {
             $config = New-BridgeConfiguration -DefaultIntervalSeconds 120 -DefaultMaxIterations 50
-            $config.DefaultIntervalSeconds | Should -Be 120
-            $config.DefaultMaxIterations | Should -Be 50
+            $config.Defaults.IntervalSeconds | Should -Be 120
+            $config.Defaults.MaxIterations | Should -Be 50
         }
 
         It 'Applies ValidateRange constraint on DefaultIntervalSeconds' {
