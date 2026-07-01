@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.85] - 2026-07-01
+
+### 🐛 Διορθώσεις
+
+- fix(ci): enable upload of Codacy analysis results
+
 ## [1.0.84] - 2026-07-01
 
 ### 🐛 Διορθώσεις
@@ -510,6 +516,7 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml for powershellgallery
+
 
 
 
