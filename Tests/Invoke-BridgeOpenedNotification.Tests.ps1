@@ -63,4 +63,3 @@ Describe 'Invoke-BridgeOpenedNotification' {
         }
     }
 }
-
