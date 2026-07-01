@@ -21,4 +21,3 @@ Describe 'Test-BridgeResult Simple Mock Test' {
     }
 }
 
-
