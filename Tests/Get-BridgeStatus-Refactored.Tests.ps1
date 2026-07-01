@@ -1,6 +1,6 @@
 ﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-Describe 'Get-BridgeStatus Refactored Pipeline Tests' {
+Describe 'Get-BridgeStatus Refactored Pipeline Δοκιμές' {
     BeforeAll {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -19,12 +19,12 @@ Describe 'Get-BridgeStatus Refactored Pipeline Tests' {
     }
     Context 'New Pipeline Data Flow - Backward Compatibility' {
         It 'Returns raw data array for successful operation' {
-            # Mock successful HTML retrieval
+            # Mock του successful HTML retrieval
             Mock Get-BridgeHtml {
                 return New-BridgeResult -Success $true -Data '<html>mock data</html>'
             }
 
-            # Mock successful bridge status parsing
+            # Mock του successful bridge status parsing
             Mock ConvertFrom-BridgeHtml {
                 $bridgeData = @(
                     @{
@@ -52,19 +52,19 @@ Describe 'Get-BridgeStatus Refactored Pipeline Tests' {
             }
         }
         It 'Throws terminating error when HTML retrieval fails' {
-            # Mock failed HTML retrieval
+            # Mock του failed HTML retrieval
             Mock Get-BridgeHtml {
                 return New-BridgeResult -Success $false -ErrorMessage 'Network error' -ErrorCode 'HTTP_ERROR'
             }
             { Get-BridgeStatus } | Should -Throw 'Network error'
         }
         It 'Throws terminating error when HTML parsing fails' {
-            # Mock successful HTML retrieval
+            # Mock του successful HTML retrieval
             Mock Get-BridgeHtml {
                 return New-BridgeResult -Success $true -Data '<html>mock data</html>'
             }
 
-            # Mock failed bridge status parsing
+            # Mock του failed bridge status parsing
             Mock ConvertFrom-BridgeHtml {
                 return New-BridgeResult -Success $false -ErrorMessage 'Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο' -ErrorCode 'NO_BRIDGES_FOUND'
             }
@@ -162,22 +162,22 @@ Describe 'ConvertFrom-BridgeHtml' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-SafeBridgeConfiguration.ps1"
     }
 
-    Context 'Configuration Error Handling' {
-        It 'Returns BridgeResult with error when configuration initialization fails' {
-            # Mock New-BridgeConfiguration to throw an error
+    Context 'Διαχείριση Σφαλμάτων Διαμόρφωσης' {
+        It 'Επιστρέφει BridgeResult με σφάλμα όταν αποτυγχάνει η αρχικοποίηση της διαμόρφωσης' {
+            # Mock του New-BridgeConfiguration to throw an error
             Mock New-BridgeConfiguration { throw "Configuration error" }
 
             $result = ConvertFrom-BridgeHtml -Html '<html>test</html>'
 
             $result | Should -Not -BeNullOrEmpty
             $result.Success | Should -Be $false
-            $result.ErrorMessage | Should -Match 'Configuration initialization failed'
+            $result.ErrorMessage | Should -Match 'Η αρχικοποίηση της διαμόρφωσης απέτυχε'
             $result.ErrorCode | Should -Be 'CONFIG_ERROR'
         }
     }
 
-    Context 'No Bridges Found Scenario' {
-        It 'Returns error when no bridges are found in HTML' {
+    Context 'Σενάριο Μη Εύρεσης Γεφυρών' {
+        It 'Επιστρέφει σφάλμα όταν δεν βρίσκονται γέφυρες στο HTML' {
             Mock Get-BridgeStatusFromHtml {
                 return @()  # Empty array - no bridges found
             }
@@ -197,9 +197,9 @@ Describe 'ConvertFrom-BridgeHtml' {
         }
     }
 
-    Context 'Successful Conversion' {
-        It 'Returns successful result when bridges are found' {
-            # Mock successful scenario to ensure normal path works
+    Context 'Επιτυχής Μετατροπή' {
+        It 'Επιστρέφει επιτυχές αποτέλεσμα όταν βρίσκονται γέφυρες' {
+            # Mock του successful scenario to ensure normal path works
             Mock Get-BridgeStatusFromHtml {
                 return @(
                     @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
@@ -217,7 +217,7 @@ Describe 'ConvertFrom-BridgeHtml' {
 
     Context 'General Exception Handling' {
         It 'Returns BridgeResult with error when Get-BridgeStatusFromHtml throws exception' {
-            # Mock Get-BridgeStatusFromHtml to throw an exception
+            # Mock του Get-BridgeStatusFromHtml to throw an exception
             Mock Get-BridgeStatusFromHtml { throw "Unexpected parsing error" }
             Mock Write-BridgeLog { }
 
@@ -236,14 +236,14 @@ Describe 'ConvertFrom-BridgeHtml' {
             } -Exactly 1
         }
         It 'Returns BridgeResult with error when New-BridgeResult throws exception during success path' {
-            # Mock Get-BridgeStatusFromHtml to return valid data
+            # Mock του Get-BridgeStatusFromHtml to return valid data
             Mock Get-BridgeStatusFromHtml {
                 return @(
                     @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
                 )
             }
             Mock Write-BridgeLog { }
-            # Mock New-BridgeResult to throw on success path (second call)
+            # Mock του New-BridgeResult to throw on success path (second call)
             Mock New-BridgeResult {
                 if ($Success -eq $true) {
                     throw "BridgeResult creation error"
