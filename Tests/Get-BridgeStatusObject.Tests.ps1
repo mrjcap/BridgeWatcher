@@ -49,4 +49,3 @@ Describe 'Get-BridgeStatusObject' {
         }
     }
 }
-
