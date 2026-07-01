@@ -1,5 +1,4 @@
-﻿function Send-BridgeNotification {
-    [OutputType([void])]
+﻿function Send-BridgeNotification {
     <#
     .SYNOPSIS
     Στέλνει ειδοποίηση ανάλογα με την κατάσταση της γέφυρας (άνοιγμα ή κλείσιμο).
@@ -28,31 +27,33 @@
     .NOTES
     Οι μεταβλητές $PoUserKey, $PoApiKey και (για 'Closed') $ApiKey πρέπει να υπάρχουν στο scope της function.
     Η function χρησιμοποιεί splatting για καθαρότητα και ευκολία επεκτασιμότητας.
-    #>    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)][ValidateSet('Closed', 'Opened')]$Type,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$State,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
-        [Parameter()][PSCustomObject]$Configuration,
-        [Parameter()][scriptblock]$NotificationProvider
-    )
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
-    $splat = @{
-        CurrentState         = $State
-        PoUserKey            = $PoUserKey
-        PoApiKey             = $PoApiKey
-        Configuration        = $Configuration
-        NotificationProvider = $NotificationProvider
-    }
-    if ($Type -eq 'Closed') {
-        $splat.ApiKey = $ApiKey
-        Invoke-BridgeClosedNotification @splat
-    }
-    else {
-        Invoke-BridgeOpenedNotification @splat
-    }
-}
+    #>
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory)][ValidateSet('Closed', 'Opened')]$Type,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][object[]]$State,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
+        [Parameter()][PSCustomObject]$Configuration,
+        [Parameter()][scriptblock]$NotificationProvider
+    )
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
+    $splat = @{
+        CurrentState         = $State
+        PoUserKey            = $PoUserKey
+        PoApiKey             = $PoApiKey
+        Configuration        = $Configuration
+        NotificationProvider = $NotificationProvider
+    }
+    if ($Type -eq 'Closed') {
+        $splat.ApiKey = $ApiKey
+        Invoke-BridgeClosedNotification @splat
+    }
+    else {
+        Invoke-BridgeOpenedNotification @splat
+    }
+}
