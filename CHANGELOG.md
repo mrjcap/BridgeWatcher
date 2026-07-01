@@ -80,7 +80,7 @@
 - fix(PesterConfiguration): αλλαγή μορφής εξόδου TestResult σε JUnitXml
 - fix: ενημέρωση regex αντικατάστασης έκδοσης module για υποστήριξη πολυγραμμικής αντιστοίχισης
 - fix: βελτίωση επεξεργασίας μηνυμάτων commit με αφαίρεση εμπρόσθιων emojis και κενών
-- 🐛 fix(changelog): καθαρισμός εμπρόσθιων emojis κατά την αντιστοίχιση
+- fix(changelog): καθαρισμός εμπρόσθιων emojis κατά την αντιστοίχιση
 
 ### ♻️ Αναδιαρθρώσεις
 
@@ -137,7 +137,7 @@
 
 ### 🎨 Στυλ & Μορφοποίηση
 
-- 🚨 style(changelog): διόρθωση μήκους γραμμής markdown και κενών γραμμών στο τέλος
+- style(changelog): διόρθωση μήκους γραμμής markdown και κενών γραμμών στο τέλος
 
 ## [1.0.78] - 2026-06-25
 
@@ -158,15 +158,11 @@
   - αντικατάσταση μόνο της τιμής έκδοσης μέσα στο εισαγωγικό
   - αποφυγή επανασυγγραφής ολόκληρης της γραμμής ανάθεσης
 
----
-
 ## [1.0.77] - 2026-06-24
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη UTF-8 BOM στο module manifest για συμμόρφωση με το PSScriptAnalyzer
-
----
+- feat: προσθήκη UTF-8 BOM στο module manifest για συμμόρφωση με το PSScriptAnalyzer
 
 ## [1.0.76] - 2026-06-24
 
@@ -182,10 +178,10 @@
   - αναβάθμιση του PowerShell σε 7.6.3 linux-musl-x64
   - ανανέωση των πακέτων Alpine για τη νέα βάση
 - feat: κεντρικοποίηση configuration και επίτευξη 100% test coverage
-- feat: Εξαγωγή Resolve-BridgeStateForChange ως ξεχωριστό Private function με comprehensive tests
-- feat: Προσθήκη [OutputType()] attributes για καλύτερη τεκμηρίωση
-- feat(error-handling): Βελτίωση error handling, validation και test coverage
-- feat(docs): Εναρμόνιση comment-based help σε Private functions
+- feat: εξαγωγή Resolve-BridgeStateForChange ως ξεχωριστό Private function με comprehensive tests
+- feat: προσθήκη [OutputType()] attributes για καλύτερη τεκμηρίωση
+- feat(error-handling): βελτίωση error handling, validation και test coverage
+- feat(docs): εναρμόνιση comment-based help σε Private functions
 
 ### 🐛 Διορθώσεις
 
@@ -194,52 +190,44 @@
     fb8b3582c8e4def4969c97caa2f19720cb33a72f
   - διατήρηση των coverage upload inputs αμετάβλητων
   - διατήρηση της συμπεριφοράς artifact και cache
-- fix: Επίλυση συμβατότητας εξαγωγής JSON με αφαίρεση του μη υποστηριζόμενου ορίσματος Set-Content Encoding
+- fix: επίλυση συμβατότητας εξαγωγής JSON με αφαίρεση του μη υποστηριζόμενου ορίσματος Set-Content Encoding
 - fix: διόρθωση μορφοποίησης και indentation στο Resolve-BridgeStateForChange
-- fix: Βελτίωση formatting και splatting consistency στα Resolve-BridgeStateForChange tests
-- fix: Διόρθωση code style στο Write-BridgeLog.Tests.ps1
-- fix: Διόρθωση syntax errors και ενίσχυση parameter validation
-- fix: Συμμόρφωση με PSScriptAnalyzer και βελτιώσεις επικύρωσης παραμέτρων
-
----
+- fix: βελτίωση formatting και splatting consistency στα Resolve-BridgeStateForChange tests
+- fix: διόρθωση code style στο Write-BridgeLog.Tests.ps1
+- fix: διόρθωση syntax errors και ενίσχυση parameter validation
+- fix: συμμόρφωση με PSScriptAnalyzer και βελτιώσεις επικύρωσης παραμέτρων
 
 ## [1.0.75] - 2025-06-13
 
 ### ✨ Χαρακτηριστικά
 
-- feat(ci): προσθέτει έλεγχο για υπάρχουσα έκδοση μονάδας στο PSGallery
+- feat(ci): προσθήκη ελέγχου για υπάρχουσα έκδοση μονάδας στο PSGallery
 
 ### 🐛 Διορθώσεις
 
-- fix(bridgestatuscomparison): Ενημέρωση λογικής για μη εύρεση bridge state
-
----
+- fix(bridgestatuscomparison): ενημέρωση λογικής για μη εύρεση bridge state
 
 ## [1.0.74] - 2025-06-12
 
 ### 🐛 Διορθώσεις
 
-- fix(release.yml): Διορθώσεις ασφαλείας και CI στο release workflow
-- fix: Security fix: Αντιμετώπιση shell injection vulnerabilities στο release.yml
+- fix(release.yml): διορθώσεις ασφαλείας και CI στο release workflow
+- fix(security): αντιμετώπιση shell injection vulnerabilities στο release.yml
 - fix(dockerfile): αλλαγή έκδοσης curl σε 8.14.1-r0
-
----
 
 ## [1.0.73] - 2025-06-12
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη Semgrep ignore comments για PowerShell workflows
-- feat: Προσθήκη version pinning για Docker packages
+- feat: προσθήκη Semgrep ignore comments για PowerShell workflows
+- feat: προσθήκη version pinning για Docker packages
 
 ### 🐛 Διορθώσεις
 
-- fix: Security fix: Αντιμετώπιση shell injection vulnerabilities
-- fix: Διόρθωση security issues σε workflow αρχεία
+- fix(security): αντιμετώπιση shell injection vulnerabilities
+- fix: διόρθωση security issues σε workflow αρχεία
 - fix(notifications): διόρθωση λογικής εύρεσης bridge state για αποστολή ειδοποιήσεων
 - fix(encoding): μαζική διόρθωση encoding σε UTF8BOM για όλα τα αρχεία
-
----
 
 ## [1.0.72] - 2025-06-12
 
@@ -259,25 +247,21 @@
 - fix: αντικατάσταση null-coalescing operator για PowerShell compatibility
 - fix(scripts): διόρθωση empty changelog generation στο Update-ReleaseChangeLog.ps1
 
----
-
 ## [1.0.71] - 2025-06-11
 
 ### ✨ Χαρακτηριστικά
 
 - feat(docker): προσθήκη Docker container για BridgeWatcher
 
----
-
 ## [1.0.70] - 2025-06-11
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Revert "ci(workflows): προσθήκη manual trigger στο CI workflow"
-- feat: Revert "ci(workflows): προσθήκη manual trigger στο code quality workflow"
-- feat: Revert "ci(workflows): προσθήκη manual trigger στο Docker build workflow"
-- feat: Revert "ci(workflows): προσθήκη manual trigger στο documentation workflow"
-- feat: Revert "ci(workflows): προσθήκη manual trigger στο publish workflow"
+- feat: revert "ci(workflows): προσθήκη manual trigger στο CI workflow"
+- feat: revert "ci(workflows): προσθήκη manual trigger στο code quality workflow"
+- feat: revert "ci(workflows): προσθήκη manual trigger στο Docker build workflow"
+- feat: revert "ci(workflows): προσθήκη manual trigger στο documentation workflow"
+- feat: revert "ci(workflows): προσθήκη manual trigger στο publish workflow"
 - feat(scripts): προσθήκη demo script για changelog format validation
 - feat(scripts): προσθήκη perfect validation demo script
 - feat(scripts): νέο content validation script για commits
@@ -292,15 +276,11 @@
 - fix(scripts): διόρθωση syntax error στο changelog workflow test
 - fix(scripts): διόρθωση duplicate function name και function call
 
----
-
 ## [1.0.68] - 2025-06-10
 
 ### 🐛 Διορθώσεις
 
 - fix: διόρθωση Alpine user/group conflicts και typo στο Dockerfile
-
----
 
 ## [1.0.67] - 2025-06-10
 
@@ -308,31 +288,23 @@
 
 - fix: διόρθωση Alpine Linux user creation syntax στο Dockerfile
 
----
-
 ## [1.0.66] - 2025-06-10
 
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη dynamic UID/GID support για Unraid compatibility
 
----
-
 ## [1.0.65] - 2025-06-10
 
 ### 🐛 Διορθώσεις
 
-- fix: Διόρθωση paths και secrets management για Docker environment
-
----
+- fix: διόρθωση paths και secrets management για Docker environment
 
 ## [1.0.64] - 2025-06-10
 
 ### 🐛 Διορθώσεις
 
 - fix: διόρθωση αποστολής ειδοποιήσεων μόνο για την επηρεαζόμενη γέφυρα
-
----
 
 ## [1.0.62] - 2025-06-05
 
@@ -343,10 +315,8 @@
 ### 🐛 Διορθώσεις
 
 - fix(convertfrom-bridgeocrresult): απλοποίηση return για επιστροφή null αντί κενής λίστας
-- fix(bridgeocr): διορθώθηκε OutputType σε PSCustomObject
+- fix(bridgeocr): διόρθωση OutputType σε PSCustomObject
 - fix(ocr): διόρθωση ορθογραφίας σε "Ανοίγει σε"
-
----
 
 ## [1.0.60] - 2025-06-03
 
@@ -358,8 +328,6 @@
 ### 🐛 Διορθώσεις
 
 - fix(ci): διόρθωση συνθήκης εκκίνησης job ci από gatekeeper σε pre-release
-
----
 
 ## [1.0.59] - 2025-06-03
 
@@ -374,23 +342,19 @@
 ### 🐛 Διορθώσεις
 
 - fix(ci): απόκρυψη επιπλέον ροών εξόδου στο Invoke-Pester (#7)
-- fix(script): Διόρθωση Join-Path να χρησιμοποιεί named parameters αντί για positional
-- fix(test): Αφαίρεση unused variable
-- fix(script): Αφαίρεση Write-Host
-- fix(script): Αφαίρεση CRLF
-- fix: fix(script) Test-ChangelogWorkflow.ps1 αλλαγή encoding σε UTF8BOM
+- fix(script): διόρθωση Join-Path να χρησιμοποιεί named parameters αντί για positional
+- fix(test): αφαίρεση unused variable
+- fix(script): αφαίρεση Write-Host
+- fix(script): αφαίρεση CRLF
+- fix(script): αλλαγή encoding του Test-ChangelogWorkflow.ps1 σε UTF8BOM
 - fix(ci): ασφαλής ανάθεση VERSION_BUMP_TYPE μέσω περιβάλλοντος
 - fix(update-releasechangelog): χρήση ονομαστικών παραμέτρων για Join-Path
-
----
 
 ## [1.0.53] - 2025-05-31
 
 ### ✨ Χαρακτηριστικά
 
 - feat(scripts): έξυπνη επιλογή From ref με Get-LatestTagOnCurrentBranch και απλοποίηση logic git log
-
----
 
 ## [1.0.52] - 2025-05-30
 
@@ -399,127 +363,99 @@
 - feat(scripts): προσθήκη ExcludeHousekeeping switch στο Update-ReleaseChangeLog.ps1 και έξυπνο commit filtering
 - feat(scripts): έξυπνη επιλογή From/To refs, προσθήκη ExcludeHousekeeping & IncludeMergeCommits flags με advanced
   filtering
-- feat: Προσθήκη συγχρονισμού branch πριν το push
+- feat: προσθήκη συγχρονισμού branch πριν το push
 
 ### 🐛 Διορθώσεις
 
 - fix(run.ps1): προσθήκη BOM και διασφάλιση συμβατότητας Unicode
 
----
-
 ## [1.0.51] - 2025-05-29
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη ξεχωριστού βήματος tagging εικόνας ως latest
-
----
+- feat: προσθήκη ξεχωριστού βήματος tagging εικόνας ως latest
 
 ## [1.0.49] - 2025-05-29
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη Set-FinalModuleVersion.ps1 για ενημέρωση module manifest
-- feat: Προσθήκη Get-PotentialNextVersion.ps1 για υπολογισμό επόμενης έκδοσης
-- feat: Προσθήκη gatekeeper job και επιλογής bump τύπου έκδοσης
-
----
+- feat: προσθήκη Set-FinalModuleVersion.ps1 για ενημέρωση module manifest
+- feat: προσθήκη Get-PotentialNextVersion.ps1 για υπολογισμό επόμενης έκδοσης
+- feat: προσθήκη gatekeeper job και επιλογής bump τύπου έκδοσης
 
 ## [1.0.46] - 2025-05-29
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Αποφυγή δημιουργίας tag αν το “v${{ env.new_version }}” υπάρχει ήδη στο βήμα Create Tag
-- feat: Βελτιώθηκε το workflow Publish με έλεγχο νέων commits, αποθήκευση flag, debug βήμα και ορθή εξαγωγή του
+- feat: αποφυγή δημιουργίας tag αν το "v${{ env.new_version }}" υπάρχει ήδη στο βήμα Create Tag
+- feat: βελτίωση του workflow Publish με έλεγχο νέων commits, αποθήκευση flag, debug βήμα και ορθή εξαγωγή του
   new_version.
-
----
 
 ## [1.0.45] - 2025-05-29
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη εισαγωγής των helper functions Send-BridgeNotification και Write-BridgeStage στο BridgeWatcher.psm1
-- feat: Προσθήκη workflow_call trigger με required secrets, έξοδος module_published μέσω set_output και αφαίρεση
+- feat: προσθήκη εισαγωγής των helper functions Send-BridgeNotification και Write-BridgeStage στο BridgeWatcher.psm1
+- feat: προσθήκη workflow_call trigger με required secrets, έξοδος module_published μέσω set_output και αφαίρεση
   βημάτων Pester/tests.
-
----
 
 ## [1.0.38] - 2025-05-20
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη ελέγχου για μη κενές optional παραμέτρους στο New-BridgePushoverPayload
-
----
+- feat: προσθήκη ελέγχου για μη κενές optional παραμέτρους στο New-BridgePushoverPayload
 
 ## [1.0.36] - 2025-05-17
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη υποστήριξης custom format view για Bridge.Status αντικείμενα
-
----
+- feat: προσθήκη υποστήριξης custom format view για Bridge.Status αντικείμενα
 
 ## [1.0.32] - 2025-05-16
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη χειρισμού "Κλειστή για συντήρηση" στο Invoke-BridgeStatusComparison
-- feat: Προσθήκη υποστήριξης ειδοποίησης για "Κλειστή για συντήρηση" στο Invoke-BridgeClosedNotification
-- feat: Προσθήκη υποστήριξης status "Κλειστή για συντήρηση" στη Get-BridgeStatusFromHtml
-
----
+- feat: προσθήκη χειρισμού "Κλειστή για συντήρηση" στο Invoke-BridgeStatusComparison
+- feat: προσθήκη υποστήριξης ειδοποίησης για "Κλειστή για συντήρηση" στο Invoke-BridgeClosedNotification
+- feat: προσθήκη υποστήριξης status "Κλειστή για συντήρηση" στη Get-BridgeStatusFromHtml
 
 ## [1.0.29] - 2025-05-06
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη emojis στα release notes και βελτιωμένο help στο Get-FormattedReleaseNotes
-
----
+- feat: προσθήκη emojis στα release notes και βελτιωμένο help στο Get-FormattedReleaseNotes
 
 ## [1.0.27] - 2025-05-01
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη script για αυτόματη αύξηση patch version σε PowerShell module manifest
-
----
+- feat: προσθήκη script για αυτόματη αύξηση patch version σε PowerShell module manifest
 
 ## [1.0.24] - 2025-05-01
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη script για αυτόματη εξαγωγή release notes & βελτιώσεις workflow
-
----
+- feat: προσθήκη script για αυτόματη εξαγωγή release notes & βελτιώσεις workflow
 
 ## [1.0.20] - 2025-05-01
 
 ### ✨ Χαρακτηριστικά
 
-- feat: Προσθήκη συστήματος αυτόματης ενημέρωσης CHANGELOG στο /scripts/
-
----
+- feat: προσθήκη συστήματος αυτόματης ενημέρωσης CHANGELOG στο /scripts/
 
 ## [1.0.18] - 2025-05-01
 
 ### 🐛 Διορθώσεις
 
-- fix: Mετέφραση description και διόρθωση αναμενόμενων κλήσεων Write-BridgeLog σε Start-BridgeStatusMonitor.Tests
-
----
+- fix: μετάφραση description και διόρθωση αναμενόμενων κλήσεων Write-BridgeLog σε Start-BridgeStatusMonitor.Tests
 
 ## [1.0.9] - 2025-04-29
 
 ### ✨ Χαρακτηριστικά
 
-- feat(docker): Προσθήκη entrypoint.sh για εκκίνηση Docker container
-- feat(config): Προσθήκη αρχείου .env για παραμετροποίηση μεταβλητών περιβάλλοντος
-- feat(docker): Προσθήκη Dockerfile για containerization του BridgeWatcher
-
----
+- feat(docker): προσθήκη entrypoint.sh για εκκίνηση Docker container
+- feat(config): προσθήκη αρχείου .env για παραμετροποίηση μεταβλητών περιβάλλοντος
+- feat(docker): προσθήκη Dockerfile για containerization του BridgeWatcher
 
 ## [1.0.3] - 2025-04-27
 
