@@ -1,10 +1,10 @@
-﻿function Invoke-BridgeStatusComparison {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'ApiKey',
-        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey',
-        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey',
-        Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
+﻿function Invoke-BridgeStatusComparison {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'ApiKey',
+        Justification = 'Το κλειδί API διαβάζεται από τα Docker secrets κατά το runtime, όχι από είσοδο χρήστη. Η μετατροπή σε SecureString δεν προσφέρει κανένα όφελος σε αυτό το μη διαδραστικό pipeline.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey',
+        Justification = 'Το κλειδί API διαβάζεται από τα Docker secrets κατά το runtime, όχι από είσοδο χρήστη. Η μετατροπή σε SecureString δεν προσφέρει κανένα όφελος σε αυτό το μη διαδραστικό pipeline.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey',
+        Justification = 'Το κλειδί API διαβάζεται από τα Docker secrets κατά το runtime, όχι από είσοδο χρήστη. Η μετατροπή σε SecureString δεν προσφέρει κανένα όφελος σε αυτό το μη διαδραστικό pipeline.')]
     <#
     .SYNOPSIS
     Συγκρίνει τις λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
@@ -29,130 +29,134 @@
     Το API Token για Pushover ειδοποίηση.
 
     .OUTPUTS
-    None.
+    [System.Boolean]
 
     .EXAMPLE
     Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -ApiKey 'abc' -PoUserKey 'user' -PoApiKey 'token'
 
     .NOTES
     Καταγράφει αλλαγές και ενεργοποιεί κατάλληλες ειδοποιήσεις.
-    #>    [CmdletBinding()]
-    [OutputType([System.Boolean])]
-    param (
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [object[]]$PreviousState,
-
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [object[]]$CurrentState,
-
-        [Parameter(Mandatory)]
-        [string]$ApiKey,
-
-        [Parameter(Mandatory)]
-        [string]$PoUserKey,
-
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PoApiKey,
-
-        [Parameter()]
-        [PSCustomObject]$Configuration
-    )
-    Set-StrictMode -Version Latest
-    try {
-        if (-not $Configuration) {
-            $Configuration = New-BridgeConfiguration
-        }
-
-        $compareSplat = @{
-            ReferenceObject  = $PreviousState
-            DifferenceObject = $CurrentState
-            Property         = 'gefyraName', 'gefyraStatus'
-            IncludeEqual     = $true
-        }
-        $diff = Compare-Object @compareSplat
-        if (-not $diff) {
-            $writeBridgeLogSplat = @{
-                Level   = 'Verbose'
-                Stage   = 'Ανάλυση'
-                Message = '✅ Καμία αλλαγή στις γέφυρες.'
-            }
-            Write-BridgeLog @writeBridgeLogSplat
-            return $false
-        }
-
-        $handlerMap = @{
-            "$($Configuration.Statuses.ClosedForMaintenance)|=>" = 'Closed'
-            "$($Configuration.Statuses.ClosedForMaintenance)|<=" = 'Closed'
-            "$($Configuration.Statuses.ClosedWithSchedule)|=>"   = 'Closed'
-            "$($Configuration.Statuses.ClosedWithSchedule)|<="   = 'Closed'
-            "$($Configuration.Statuses.PermanentlyClosed)|=>"    = 'Closed'
-            "$($Configuration.Statuses.PermanentlyClosed)|<="    = 'Closed'
-            "$($Configuration.Statuses.Open)|=>"                 = 'Opened'
-            "$($Configuration.Statuses.Open)|<="                 = 'Opened'
-        }
-
-        foreach ($change in $diff) {
-            $writeBridgeLogSplat = @{
-                Level   = 'Verbose'
-                Stage   = 'Ανάλυση'
-                Message = "🌉 $($change.gefyraName) ➜ $($change.gefyraStatus) ($($change.SideIndicator))"
-            }
-            Write-BridgeLog @writeBridgeLogSplat
-            if ($change.SideIndicator -eq '==') {
-                $writeBridgeLogSplat = @{
-                    Level   = 'Verbose'
-                    Stage   = 'Ανάλυση'
-                    Message = "Καμία ουσιαστική αλλαγή στην $($change.gefyraName)."
-                }
-                Write-BridgeLog @writeBridgeLogSplat
-                continue
-            }
-            if ($change.SideIndicator -ne '=>') {
-                # Skip any '<=' side indicators to prevent double notifications
-                continue
-            }
-            $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
-            if ($handlerMap.ContainsKey($key)) {
-                $type = $handlerMap[$key]
-                # Χρήση helper function για επίλυση bridge state
-                $resolveBridgeStateForChangeSplat = @{
-                    Change        = $change
-                    PreviousState = $PreviousState
-                    CurrentState  = $CurrentState
-                }
-                $changedBridgeState = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
-                if ($changedBridgeState.Count -gt 0) {
-                    $sendBridgeNotificationSplat = @{
-                        Type          = $type
-                        State         = $changedBridgeState
-                        ApiKey        = $ApiKey
-                        PoUserKey     = $PoUserKey
-                        PoApiKey      = $PoApiKey
-                        Configuration = $Configuration
-                    }
-                    Send-BridgeNotification @sendBridgeNotificationSplat
-                }
-                continue
-            } else {
-                $writeBridgeLogSplat = @{
-                    Stage   = 'Σφάλμα'
-                    Message = "❓ Άγνωστο combo: $key"
-                    Level   = 'Warning'
-                }
-                Write-BridgeLog @writeBridgeLogSplat
-            }
-        }
-        return $true
-    } catch {
-        $writeBridgeLogSplat = @{
-            Level   = 'Warning'
-            Stage   = 'Σφάλμα'
-            Message = "❌ $($_.Exception.Message)"
-        }
-        Write-BridgeLog @writeBridgeLogSplat
-        throw
-    }
-}
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [object[]]$PreviousState,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [object[]]$CurrentState,
+
+        [Parameter(Mandatory)]
+        [string]$ApiKey,
+
+        [Parameter(Mandatory)]
+        [string]$PoUserKey,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PoApiKey,
+
+        [Parameter()]
+        [PSCustomObject]$Configuration
+    )
+    try {
+        if (-not $Configuration) {
+            $Configuration = New-BridgeConfiguration
+        }
+
+        $compareSplat = @{
+            ReferenceObject  = $PreviousState
+            DifferenceObject = $CurrentState
+            Property         = 'gefyraName', 'gefyraStatus'
+            IncludeEqual     = $true
+        }
+        $diff = Compare-Object @compareSplat
+        if (-not $diff) {
+            $writeBridgeLogSplat = @{
+                Level   = 'Verbose'
+                Stage   = 'Ανάλυση'
+                Message = '✅ Καμία αλλαγή στις γέφυρες.'
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+            return $false
+        }
+
+        $changesTriggered = $false
+
+        $closedStatuses = @(
+            $Configuration.Statuses.ClosedForMaintenance,
+            $Configuration.Statuses.ClosedWithSchedule,
+            $Configuration.Statuses.PermanentlyClosed
+        )
+
+        $handlerMap = @{}
+        foreach ($status in $closedStatuses) {
+            $handlerMap["$status|=>"] = 'Closed'
+        }
+        $handlerMap["$($Configuration.Statuses.Open)|=>"] = 'Opened'
+
+        foreach ($change in $diff) {
+            $writeBridgeLogSplat = @{
+                Level   = 'Verbose'
+                Stage   = 'Ανάλυση'
+                Message = "🌉 $($change.gefyraName) ➜ $($change.gefyraStatus) ($($change.SideIndicator))"
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+            if ($change.SideIndicator -eq '==') {
+                $writeBridgeLogSplat = @{
+                    Level   = 'Verbose'
+                    Stage   = 'Ανάλυση'
+                    Message = "Καμία ουσιαστική αλλαγή στην $($change.gefyraName)."
+                }
+                Write-BridgeLog @writeBridgeLogSplat
+                continue
+            }
+            if ($change.SideIndicator -ne '=>') {
+                # Skip any '<=' side indicators to prevent double notifications
+                continue
+            }
+            $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
+            if ($handlerMap.ContainsKey($key)) {
+                $type = $handlerMap[$key]
+                # Χρήση helper function για επίλυση bridge state
+                $resolveBridgeStateForChangeSplat = @{
+                    Change        = $change
+                    PreviousState = $PreviousState
+                    CurrentState  = $CurrentState
+                }
+                $changedBridgeState = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
+                if ($changedBridgeState.Count -gt 0) {
+                    $changesTriggered = $true
+                    $sendBridgeNotificationSplat = @{
+                        Type          = $type
+                        State         = $changedBridgeState
+                        ApiKey        = $ApiKey
+                        PoUserKey     = $PoUserKey
+                        PoApiKey      = $PoApiKey
+                        Configuration = $Configuration
+                    }
+                    Send-BridgeNotification @sendBridgeNotificationSplat
+                }
+                continue
+            } else {
+                $writeBridgeLogSplat = @{
+                    Stage   = 'Σφάλμα'
+                    Message = "❓ Άγνωστο combo: $key"
+                    Level   = 'Warning'
+                }
+                Write-BridgeLog @writeBridgeLogSplat
+            }
+        }
+        return $changesTriggered
+    } catch {
+        $writeBridgeLogSplat = @{
+            Level   = 'Warning'
+            Stage   = 'Σφάλμα'
+            Message = "❌ $($_.Exception.Message)"
+        }
+        Write-BridgeLog @writeBridgeLogSplat
+        throw
+    }
+}
