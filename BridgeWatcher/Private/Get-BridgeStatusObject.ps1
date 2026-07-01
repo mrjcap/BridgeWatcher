@@ -1,5 +1,4 @@
-﻿function Get-BridgeStatusObject {
-    [CmdletBinding()]
+﻿function Get-BridgeStatusObject {
     <#
     .SYNOPSIS
     Δημιουργεί αντικείμενο κατάστασης γέφυρας.
@@ -24,42 +23,44 @@
     Το base URL για συμπλήρωση εικόνων (προεπιλογή https://www.topvision.gr/dioriga/).
 
     .OUTPUTS
-    [pscustomobject] - Αντικείμενο κατάστασης.
+    Αντικείμενο κατάστασης.
 
     .EXAMPLE
     Get-BridgeStatusObject -Location 'poseidonia' -Status 'Closed' -Timestamp (Get-Date) -ImageSrc 'bridge1.jpg'
 
     .NOTES
     Επιστρέφει πάντα πλήρες αντικείμενο με σωστά πεδία.
-    #>    [OutputType([pscustomobject])]
-    param (
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Location,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Status,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Timestamp,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ImageSrc, [Parameter()][ValidateScript({
-                if ([string]::IsNullOrEmpty($_) -or [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
-                    $true
-                } else {
-                    throw "The parameter '$_' is not a valid absolute URI."
-                }
-            })][string]$BaseUrl,
-        [Parameter()]
-        [PSCustomObject]$Configuration
-    )
-
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
-
-    # Use configuration or fallback for BaseUrl
-    if (-not $BaseUrl) {
-        $BaseUrl = $Configuration.BaseImageUrl
-    }
-    return [pscustomobject]@{
-        PSTypeName   = 'Bridge.Status'
-        GefyraName   = $Configuration.BridgeNames[$Location]
-        GefyraStatus = $Status
-        Timestamp    = $Timestamp
-        ImageUrl     = if ($ImageSrc -match '^https?://') { $ImageSrc } else { "$($BaseUrl.TrimEnd('/'))/$ImageSrc" }
-    }
-}
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param (
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Location,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Status,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Timestamp,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ImageSrc, [Parameter()][ValidateScript({
+                if ([string]::IsNullOrEmpty($_) -or [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
+                    $true
+                } else {
+                    throw "The parameter '$_' is not a valid absolute URI."
+                }
+            })][string]$BaseUrl,
+        [Parameter()]
+        [PSCustomObject]$Configuration
+    )
+
+    if (-not $Configuration) {
+        $Configuration = New-BridgeConfiguration
+    }
+
+    # Use configuration or fallback for BaseUrl
+    if (-not $BaseUrl) {
+        $BaseUrl = $Configuration.Urls.BaseImage
+    }
+    return [pscustomobject]@{
+        PSTypeName   = 'Bridge.Status'
+        GefyraName   = $Configuration.BridgeNames[$Location]
+        GefyraStatus = $Status
+        Timestamp    = $Timestamp
+        ImageUrl     = if ($ImageSrc -match '^https?://') { $ImageSrc } else { "$($BaseUrl.TrimEnd('/'))/$ImageSrc" }
+    }
+}
