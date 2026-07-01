@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.81] - 2026-07-01
+
+### 🐛 Διορθώσεις
+
+- fix: disable DOCKER_CONTENT_TRUST globally to fix Trivy action
+
 ## [1.0.80] - 2026-07-01
 
 ### 🐛 Διορθώσεις
@@ -486,6 +492,7 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml for powershellgallery
+
 
 
 
