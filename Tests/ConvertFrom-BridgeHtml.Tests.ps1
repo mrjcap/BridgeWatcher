@@ -1,6 +1,6 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
-Describe 'ConvertFrom-BridgeHtml Tests' {
+Describe 'Δοκιμές ConvertFrom-BridgeHtml' {
     BeforeAll {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -10,9 +10,9 @@ Describe 'ConvertFrom-BridgeHtml Tests' {
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-SafeBridgeConfiguration.ps1"
     }
-    Context 'Configuration Error Handling' {
-        It 'Returns BridgeResult with error when configuration initialization fails' {
-            # Mock New-BridgeConfiguration to throw an error to trigger lines 45-47
+    Context 'Διαχείριση Σφαλμάτων Διαμόρφωσης' {
+        It 'Επιστρέφει BridgeResult με σφάλμα όταν αποτυγχάνει η αρχικοποίηση της διαμόρφωσης' {
+            # Mock του New-BridgeConfiguration to throw an error to trigger lines 45-47
             Mock New-BridgeConfiguration { throw "Configuration error" }
             Mock Write-BridgeLog { }
 
@@ -20,14 +20,14 @@ Describe 'ConvertFrom-BridgeHtml Tests' {
 
             $result | Should -Not -BeNullOrEmpty
             $result.Success | Should -Be $false
-            $result.ErrorMessage | Should -Match 'Configuration initialization failed'
+            $result.ErrorMessage | Should -Match 'Η αρχικοποίηση της διαμόρφωσης απέτυχε'
             $result.ErrorCode | Should -Be 'CONFIG_ERROR'
         }
     }
 
-    Context 'No Bridges Found Scenario' {
-        It 'Returns error when no bridges are found in HTML' {
-            # Mock Get-BridgeStatusFromHtml to return empty array to trigger lines 67-74
+    Context 'Σενάριο Μη Εύρεσης Γεφυρών' {
+        It 'Επιστρέφει σφάλμα όταν δεν βρίσκονται γέφυρες στο HTML' {
+            # Mock του Get-BridgeStatusFromHtml to return empty array to trigger lines 67-74
             Mock Get-BridgeStatusFromHtml {
                 return @()  # Empty array - no bridges found
             }
@@ -48,8 +48,8 @@ Describe 'ConvertFrom-BridgeHtml Tests' {
             } -Exactly 1
         }
 
-        It 'Returns error when bridges result is null' {
-            # Mock Get-BridgeStatusFromHtml to return null to trigger lines 67-74
+        It 'Επιστρέφει σφάλμα όταν το αποτέλεσμα των γεφυρών είναι null' {
+            # Mock του Get-BridgeStatusFromHtml to return null to trigger lines 67-74
             Mock Get-BridgeStatusFromHtml {
                 return $null
             }
@@ -70,9 +70,9 @@ Describe 'ConvertFrom-BridgeHtml Tests' {
         }
     }
 
-    Context 'Successful Conversion' {
-        It 'Returns successful result when bridges are found' {
-            # Mock successful scenario to ensure normal path works
+    Context 'Επιτυχής Μετατροπή' {
+        It 'Επιστρέφει επιτυχές αποτέλεσμα όταν βρίσκονται γέφυρες' {
+            # Mock του successful scenario to ensure normal path works
             Mock Get-BridgeStatusFromHtml {
                 return @(
                     @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
@@ -88,4 +88,3 @@ Describe 'ConvertFrom-BridgeHtml Tests' {
         }
     }
 }
-
