@@ -1,4 +1,4 @@
-﻿function Send-BridgePushover {
+function Send-BridgePushover {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey',
         Justification = 'API key is read from Docker secrets at runtime, not user input. SecureString conversion offers no benefit in this non-interactive pipeline.')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey',
@@ -51,8 +51,8 @@
 
     [OutputType([void])]
     param (
-        [Parameter(Mandatory)][SecureString]$PoUserKey,
-        [Parameter(Mandatory)][SecureString]$PoApiKey,
+        [Parameter(Mandatory)][string]$PoUserKey,
+        [Parameter(Mandatory)][string]$PoApiKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [ValidateNotNullOrEmpty()][string]$Device,
         [ValidateNotNullOrEmpty()][string]$Title,

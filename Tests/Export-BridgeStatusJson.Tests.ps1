@@ -13,7 +13,7 @@ Describe 'Export-BridgeStatusJson Tests' {
                 # Mock το Test-Path να επιστρέφει true για να μην αποτύχει πρόωρα
                 Mock Test-Path { $true }
                 # Mock Set-Content για να προκαλέσουμε σφάλμα
-                Mock Set-Content { throw 'Fake error during file write' }
+                Mock ConvertTo-Json { throw 'Fake error during file write' }
                 Mock Move-Item {}
                 # Mock Write-BridgeLog
                 Mock Write-BridgeLog {}
@@ -33,7 +33,7 @@ Describe 'Export-BridgeStatusJson Tests' {
         Context 'Όταν η αποθήκευση JSON είναι επιτυχής' {
             It 'Επιστρέφει BridgeResult με επιτυχία' {
                 Mock Test-Path { $true }
-                Mock Set-Content {}
+
                 Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
@@ -49,7 +49,7 @@ Describe 'Export-BridgeStatusJson Tests' {
             }
             It 'Πρέπει να καταγράψει επιτυχές μήνυμα (Write-BridgeLog)' {
                 Mock Test-Path { $true }
-                Mock Set-Content {}
+
                 Mock Move-Item {}
                 Mock Write-BridgeLog {}
                 Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
@@ -60,7 +60,7 @@ Describe 'Export-BridgeStatusJson Tests' {
         Context 'Έλεγχος Validation παραμέτρων' { It 'Δέχεται κενό array όταν το Data είναι κενό' {
                 Mock Test-Path { $true }
                 Mock ConvertTo-Json { '[]' }
-                Mock Set-Content { }
+
                 Mock Move-Item {}
                 Mock Write-BridgeLog { }
 
@@ -75,6 +75,7 @@ Describe 'Export-BridgeStatusJson Tests' {
             }
 
             It 'Επιστρέφει BridgeResult με σφάλμα όταν αποτυγχάνει η εγγραφή JSON' {
+                Mock ConvertTo-Json { throw 'Ο φάκελος προορισμού δεν υπάρχει' }
                 Mock Write-BridgeLog
 
                 $result = Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path 'fake.json' -Verbose
@@ -82,13 +83,13 @@ Describe 'Export-BridgeStatusJson Tests' {
                 $result | Should -Not -BeNullOrEmpty
                 $result.Success | Should -Be $false
                 $result.ErrorMessage | Should -Match 'Ο φάκελος προορισμού δεν υπάρχει'
-                $result.ErrorCode | Should -Be 'DIRECTORY_NOT_EXISTS'
+                $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
             }
         }
         Context 'Configuration Coverage Tests' {
             It 'Καλύπτει Configuration.DefaultJsonDepth path' {
                 Mock Test-Path { $true }
-                Mock Set-Content {}
+
                 Mock Move-Item {}
                 Mock ConvertTo-Json { '{"test": "data"}' }
 
@@ -101,7 +102,7 @@ Describe 'Export-BridgeStatusJson Tests' {
             }
             It 'Καλύπτει Configuration.ExportMessages.Success path' {
                 Mock Test-Path { $true }
-                Mock Set-Content {}
+
                 Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
@@ -114,7 +115,7 @@ Describe 'Export-BridgeStatusJson Tests' {
             }
             It 'Καλύπτει Configuration.ExportMessages.Failed σε σφάλμα' {
                 Mock Test-Path { $true }
-                Mock Set-Content { throw 'Test error' }
+                Mock ConvertTo-Json { throw 'Test error' }
                 Mock Move-Item {}
                 Mock Write-BridgeLog {}
 
@@ -131,6 +132,7 @@ Describe 'Export-BridgeStatusJson Tests' {
             It 'Καλύπτει Configuration.ExportMessages.DirectoryNotExists' {
                 Mock Test-Path { $false }
                 Mock Split-Path { 'invalid/path' }
+                Mock New-Item { throw 'Custom directory not exists' }
                 Mock Write-BridgeLog {}
 
                 $config = New-BridgeConfiguration
@@ -145,7 +147,7 @@ Describe 'Export-BridgeStatusJson Tests' {
             }
             It 'Καλύπτει Configuration.LoggingConfig paths' {
                 Mock Test-Path { $true }
-                Mock Set-Content {}
+
                 Mock Move-Item {}
                 Mock Write-BridgeLog {}
 

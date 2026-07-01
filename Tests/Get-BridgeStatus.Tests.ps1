@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 Describe 'Test Get-BridgeStatus function' {
     BeforeAll {
@@ -9,6 +9,7 @@ Describe 'Test Get-BridgeStatus function' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-SafeBridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
 
         # Μόκ για εξωτερικές συναρτήσεις
@@ -135,6 +136,7 @@ Describe 'Get-BridgeStatus Integration' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-SafeBridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
 
         # Include dependendent private functions invoked during integration
@@ -142,6 +144,7 @@ Describe 'Get-BridgeStatus Integration' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeImage.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStatus.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusObject.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-SafeBridgeConfiguration.ps1"
     }
 
     It 'Επιστρέφει σωστά αποτελέσματα για Ποσειδωνία και Ισθμία από mocked HTML' {
@@ -220,6 +223,7 @@ Describe 'Get-BridgeStatus Integration - Error Handling' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-SafeBridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
     }
 
@@ -240,6 +244,7 @@ Describe 'Get-BridgeStatus Configuration Fallbacks' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-SafeBridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
     }
 

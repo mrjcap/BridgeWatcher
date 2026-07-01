@@ -43,9 +43,9 @@
         [Parameter()][ValidateRange(0, [int]::MaxValue)][int]$MaxIterations,
         [Parameter()][ValidateRange(1, 3600)][int]$IntervalSeconds,
         [Parameter()][ValidateNotNullOrEmpty()][string]$OutputFile,
-        [Parameter()][SecureString]$ApiKey,
-        [Parameter()][SecureString]$PoUserKey,
-        [Parameter()][SecureString]$PoApiKey,
+        [Parameter()][string]$ApiKey,
+        [Parameter()][string]$PoUserKey,
+        [Parameter()][string]$PoApiKey,
 
         [Parameter()]
         [PSCustomObject]$Configuration,

@@ -1,4 +1,4 @@
-﻿function Get-BridgePushoverPayload {
+function Get-BridgePushoverPayload {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -29,8 +29,8 @@
 
     [OutputType([hashtable])]
     param (
-        [Parameter(Mandatory)][SecureString]$PoUserKey,
-        [Parameter(Mandatory)][SecureString]$PoApiKey,
+        [Parameter(Mandatory)][string]$PoUserKey,
+        [Parameter(Mandatory)][string]$PoApiKey,
         [Parameter(Mandatory)][string]$Message,
         [string]$Device,
         [string]$Title,
@@ -40,12 +40,9 @@
         [string]$Sound
     )
 
-    $plainPoApiKey = [System.Net.NetworkCredential]::new('', $PoApiKey).Password
-    $plainPoUserKey = [System.Net.NetworkCredential]::new('', $PoUserKey).Password
-
     $data = @{
-        token   = $plainPoApiKey
-        user    = $plainPoUserKey
+        token   = $PoApiKey
+        user    = $PoUserKey
         message = $Message
     }
     if ($PSBoundParameters.ContainsKey('Device') -and $Device) { $data.device = $Device }

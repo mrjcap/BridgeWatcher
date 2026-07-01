@@ -48,10 +48,10 @@
         [object[]]$CurrentState,
 
         [Parameter(Mandatory)]
-        [SecureString]$ApiKey,
+        [string]$ApiKey,
 
         [Parameter(Mandatory)]
-        [SecureString]$PoUserKey,
+        [string]$PoUserKey,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]

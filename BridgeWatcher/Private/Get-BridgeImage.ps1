@@ -1,4 +1,4 @@
-﻿function Get-BridgeImage {
+function Get-BridgeImage {
     [CmdletBinding()]
     <#
     .SYNOPSIS
@@ -33,12 +33,14 @@
         [PSCustomObject]$Configuration = (New-BridgeConfiguration)
     )
     $bridgeLabel = $Configuration.BridgeNames[$Location]
+    # Remove accents from pattern to match both accented and unaccented Greek text
+    $bridgePattern = if ($Location -eq 'poseidonia') { 'Ποσειδων[ιίΙΊ]α' } elseif ($Location -eq 'isthmia') { 'Ισθμ[ιίΙΊ]α' } else { $bridgeLabel }
 
     # Split using robust regex to handle case-insensitivity, single/double quotes, and variable spacing/classes
     $blocks = [regex]::Split($HtmlContent, '(?i)<div[^>]+class=["''][^"'']*panel\s+panel-primary[^"'']*["''][^>]*>')
 
-    # Match block case-insensitively based on bridge label
-    $block = $blocks | Where-Object { $_ -match "(?i)$bridgeLabel" }
+    # Match block case-insensitively based on bridge pattern
+    $block = $blocks | Where-Object { $_ -match "(?i)$bridgePattern" }
     if (-not $block) {
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'

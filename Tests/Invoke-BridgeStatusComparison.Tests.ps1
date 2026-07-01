@@ -1,4 +1,4 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
+Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
 Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
     BeforeAll {
@@ -324,7 +324,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
                 PoApiKey  = 'app-key'
             }
             # Redefine Send-BridgeNotification to write to notify.txt for this test
-            function Send-BridgeNotification {
+            Mock -CommandName Send-BridgeNotification -MockWith {
                 param([ValidateSet('Closed', 'Opened')]$Type, [object[]]$State)
                 "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
             }
@@ -344,7 +344,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
             $current = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
             $previous = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Μόνιμα κλειστή' }
             # παρατηρούμε:ΔΕΝ κάνουμε mock το Send-BridgeNotification
-            function Send-BridgeNotification {
+            Mock -CommandName Send-BridgeNotification -MockWith {
                 param([ValidateSet('Closed', 'Opened')]$Type, [object[]]$State)
                 "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
             }
@@ -400,13 +400,14 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
             . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeClosedNotification.ps1"
             . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
             . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+            . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgeNotification.ps1"
 
-            function Write-BridgeLog {
+            Mock -CommandName Write-BridgeLog -MockWith {
                 param([string]$Stage, [string]$Message, [string]$Level)
                 "$Stage|$Level|$Message" | Out-File -Append "$TestDrive\log.txt"
             }
-
-            function Send-BridgeNotification {
+            Mock -CommandName Send-BridgeNotification -MockWith {
                 param([ValidateSet('Closed', 'Opened')]$Type, [object[]]$State)
                 "NOTIFY:$($Type):$($State[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
             }

@@ -29,7 +29,7 @@
 
     [OutputType([object])]
     param (
-        [Parameter(Mandatory)][SecureString]$ApiKey,
+        [Parameter(Mandatory)][string]$ApiKey,
         [Parameter(Mandatory)][string]$RequestBody,
         [Parameter()][PSCustomObject]$Configuration
     )
