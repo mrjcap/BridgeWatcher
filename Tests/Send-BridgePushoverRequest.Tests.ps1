@@ -51,14 +51,16 @@ Describe 'Send-BridgePushoverRequest' {
         $result.request | Should -Be 'abc123'
     }
 
-    Context 'Configuration Coverage Tests' {
+    Context 'Configuration Coverage Δοκιμές' {
         It 'Καλύπτει Configuration.PushoverApiUrl path' {
             Mock Invoke-RestMethod {
                 return @{ status = 1 }
             }
 
             $config = [PSCustomObject]@{
-                PushoverApiUrl = 'https://custom-pushover-api.com/messages'
+                Urls = [PSCustomObject]@{
+                    PushoverApi = 'https://custom-pushover-api.com/messages'
+                }
             }
 
             $payload = @{ token = 'test'; user = 'user'; message = 'msg' }
@@ -75,7 +77,9 @@ Describe 'Send-BridgePushoverRequest' {
 
             $baseConfig = New-BridgeConfiguration
             $config = [PSCustomObject]@{
-                PushoverApiUrl   = $baseConfig.PushoverApiUrl
+                Urls             = [PSCustomObject]@{
+                    PushoverApi = $baseConfig.Urls.PushoverApi
+                }
                 PushoverMessages = @{
                     SendFailed = 'Custom send failed message'
                 }
@@ -95,7 +99,9 @@ Describe 'Send-BridgePushoverRequest' {
             Mock Write-BridgeLog {}
             $baseConfig = New-BridgeConfiguration
             $config = [PSCustomObject]@{
-                PushoverApiUrl   = $baseConfig.PushoverApiUrl
+                Urls             = [PSCustomObject]@{
+                    PushoverApi = $baseConfig.Urls.PushoverApi
+                }
                 PushoverMessages = $baseConfig.PushoverMessages
                 LoggingConfig    = @{
                     ErrorStage   = 'Σφάλμα'
@@ -115,7 +121,9 @@ Describe 'Send-BridgePushoverRequest' {
             Mock Write-BridgeLog {}
             $baseConfig = New-BridgeConfiguration
             $config = [PSCustomObject]@{
-                PushoverApiUrl   = $baseConfig.PushoverApiUrl
+                Urls             = [PSCustomObject]@{
+                    PushoverApi = $baseConfig.Urls.PushoverApi
+                }
                 PushoverMessages = $baseConfig.PushoverMessages
                 LoggingConfig    = @{
                     ErrorStage   = $baseConfig.LoggingConfig.ErrorStage
@@ -134,7 +142,9 @@ Describe 'Send-BridgePushoverRequest' {
             Mock Invoke-RestMethod { throw 'Complete test failure' }
             Mock Write-BridgeLog {}
             $config = [PSCustomObject]@{
-                PushoverApiUrl   = 'https://custom-error-api.com/test'
+                Urls             = [PSCustomObject]@{
+                    PushoverApi = 'https://custom-error-api.com/test'
+                }
                 PushoverMessages = @{
                     SendFailed = 'Complete custom error'
                 }
@@ -161,7 +171,9 @@ Describe 'Send-BridgePushoverRequest' {
             }
 
             $config = [PSCustomObject]@{
-                PushoverApiUrl = 'https://custom-success-api.com/messages'
+                Urls           = [PSCustomObject]@{
+                    PushoverApi = 'https://custom-success-api.com/messages'
+                }
             }
 
             $payload = @{ token = 'test'; user = 'user'; message = 'success' }
