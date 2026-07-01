@@ -14,8 +14,8 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-BridgeStatusComparison [-OutputFile] <String> [-ApiKey] <String> [-PoUserKey] <String> [-PoApiKey] <String>
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-BridgeStatusComparison [-OutputFile] <String> [-ApiKey] <SecureString> [-PoUserKey] <SecureString>
+ [-PoApiKey] <SecureString> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -39,7 +39,7 @@ PS C:\> {{ Add example code here }}
 {{ Fill ApiKey Description }}
 
 ```yaml
-Type: String
+Type: SecureString
 Parameter Sets: (All)
 Aliases:
 
@@ -71,7 +71,7 @@ Accept wildcard characters: False
 {{ Fill PoApiKey Description }}
 
 ```yaml
-Type: String
+Type: SecureString
 Parameter Sets: (All)
 Aliases:
 
@@ -87,7 +87,7 @@ Accept wildcard characters: False
 {{ Fill PoUserKey Description }}
 
 ```yaml
-Type: String
+Type: SecureString
 Parameter Sets: (All)
 Aliases:
 
@@ -124,7 +124,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## OUTPUTS
 
-### System.Object
+### System.Void
 
 ## NOTES
 

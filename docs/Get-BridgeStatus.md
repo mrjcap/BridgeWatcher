@@ -9,7 +9,7 @@ schema: 2.0.0
 
 ## SYNOPSIS
 
-{{ Fill in the Synopsis }}
+Ανακτά την τρέχουσα κατάσταση γεφυρών από διαδικτυακή σελίδα.
 
 ## SYNTAX
 
@@ -20,23 +20,35 @@ Get-BridgeStatus [[-OutputFile] <String>] [[-Configuration] <PSObject>] [-Progre
 
 ## DESCRIPTION
 
-{{ Fill in the Description }}
+Η Get-BridgeStatus ανακτά HTML, αναλύει την κατάσταση
+και επιστρέφει λίστα καταστάσεων γεφυρών χρησιμοποιώντας
+τα utility functions New-BridgeResult και Test-BridgeResult
+για καλύτερο error handling και DRY compliance.
 
 ## EXAMPLES
 
-### Example 1
+### EXAMPLE 1
 
-```powershell
-PS C:\> {{ Add example code here }}
+```
+Get-BridgeStatus -OutputFile 'C:\Logs\current-status.json'
 ```
 
-{{ Add example description here }}
+### EXAMPLE 2
+
+```
+$result = Get-BridgeStatus
+if (Test-BridgeResult $result) {
+    Write-Host "Success: $($result.Data.Count) bridges found"
+} else {
+    Write-Warning "Error: $($result.ErrorMessage)"
+}
+```
 
 ## PARAMETERS
 
 ### -OutputFile
 
-{{ Fill OutputFile Description }}
+(Προαιρετικό) Το αρχείο όπου θα αποθηκευτεί η τρέχουσα κατάσταση.
 
 ```yaml
 Type: String
@@ -52,7 +64,8 @@ Accept wildcard characters: False
 
 ### -Configuration
 
-(Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
+(Προαιρετικό) Αντικείμενο διαμόρφωσης.
+Αν δεν παρέχεται, δημιουργείται αυτόματα.
 
 ```yaml
 Type: PSObject
@@ -88,12 +101,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
-
 ## OUTPUTS
 
-### System.Object[]
+### [PSCustomObject] - Αντικείμενο αποτελέσματος με Success, Data, ErrorMessage, ErrorCode και Timestamp
 
 ## NOTES
+
+Χρησιμοποιεί pipeline approach με New-BridgeResult/Test-BridgeResult για καλύτερο error handling.
 
 ## RELATED LINKS
