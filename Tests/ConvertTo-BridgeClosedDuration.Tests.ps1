@@ -81,4 +81,3 @@ Describe 'ConvertTo-BridgeClosedDuration' {
         }
     }
 }
-
