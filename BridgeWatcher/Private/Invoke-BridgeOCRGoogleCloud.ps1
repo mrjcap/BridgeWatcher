@@ -1,5 +1,4 @@
-﻿function Invoke-BridgeOCRGoogleCloud {
-    [CmdletBinding()]
+﻿function Invoke-BridgeOCRGoogleCloud {
     <#
     .SYNOPSIS
     Αναλύει εικόνα με OCR μέσω Google Cloud.
@@ -21,44 +20,46 @@
     Invoke-BridgeOCRGoogleCloud -ApiKey 'your-api-key' -ImageUri 'https://example.com/image.jpg'
 
     .NOTES
-    Απαιτεί έγκυρο API Key και δημόσια προσβάσιμες εικόνες.    #>
-
-    [OutputType([pscustomobject[]])]
-    param (
-        [Parameter(Mandatory)][string]$ApiKey,
-        [Parameter(Mandatory)][ValidateScript({
-                if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
-                    $true
-                } else {
-                    throw "The parameter '$_' is not a valid absolute URI."
-                }
-            })][string]$ImageUri
-    )
-
-    try {
-        $newOCRRequestBodySplat = @{
-            ImageUri = $ImageUri
-        }
-        $requestBody = Get-BridgeOCRRequestBody @newOCRRequestBodySplat
-        $invokeOCRRequestSplat = @{
-            ApiKey      = $ApiKey
-            RequestBody = $requestBody
-        }
-        $apiResponse = Invoke-BridgeOCRRequest @invokeOCRRequestSplat
-        $convertFromOCRResultSplat = @{
-            ApiResponse = $apiResponse
-            ImageUri    = $ImageUri
-        }
-        $result = ConvertFrom-BridgeOCRResult @convertFromOCRResultSplat
-        return $result
-    } catch {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = "❌ OCR Request failed: $_"
-            Level   = 'Warning'
-        }
-        Write-BridgeLog @writeBridgeLogSplat
-        throw
-    }
-    # Removed verbose END log in finally block to reduce spam - completion is implied by return or exception
-}
+    Απαιτεί έγκυρο API Key και δημόσια προσβάσιμες εικόνες.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject[]])]
+    param (
+        [Parameter(Mandatory)][string]$ApiKey,
+        [Parameter(Mandatory)][ValidateScript({
+                if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
+                    $true
+                } else {
+                    throw "Η παράμετρος '$_' δεν είναι ένα έγκυρο απόλυτο URI."
+                }
+            })][string]$ImageUri
+    )
+
+    try {
+        $newOCRRequestBodySplat = @{
+            ImageUri = $ImageUri
+        }
+        $requestBody = Get-BridgeOCRRequestBody @newOCRRequestBodySplat
+        $invokeOCRRequestSplat = @{
+            ApiKey      = $ApiKey
+            RequestBody = $requestBody
+        }
+        $apiResponse = Invoke-BridgeOCRRequest @invokeOCRRequestSplat
+        $convertFromOCRResultSplat = @{
+            ApiResponse = $apiResponse
+            ImageUri    = $ImageUri
+        }
+        $result = ConvertFrom-BridgeOCRResult @convertFromOCRResultSplat
+        return $result
+    } catch {
+        $writeBridgeLogSplat = @{
+            Stage   = 'Σφάλμα'
+            Message = "❌ Η αίτηση OCR απέτυχε: $_"
+            Level   = 'Warning'
+        }
+        Write-BridgeLog @writeBridgeLogSplat
+        throw
+    }
+    # Αφαιρέθηκε η λεπτομερής καταγραφή END στο μπλοκ finally για μείωση του spam - η ολοκλήρωση υπονοείται από την επιστροφή ή την εξαίρεση
+}
+
