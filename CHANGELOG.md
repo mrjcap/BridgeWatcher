@@ -5,6 +5,16 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.86] - 2026-07-01
+
+### 🐛 Διορθώσεις
+
+- fix(docker): replace useless cat with input redirection (SC2002)
+
+### 🎨 Στυλ & Μορφοποίηση
+
+- style(tests): fix indentation and alignment for Codacy compliance
+
 ## [1.0.85] - 2026-07-01
 
 ### 🐛 Διορθώσεις
@@ -516,6 +526,7 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml for powershellgallery
+
 
 
 
