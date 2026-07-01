@@ -138,4 +138,3 @@ Describe 'New-BridgeResult' {
         }
     }
 }
-
