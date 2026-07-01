@@ -2,6 +2,7 @@
 
 Describe 'Send-BridgePushoverRequest' {
     BeforeAll {
+        Mock -CommandName Start-Sleep -MockWith { }
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
@@ -31,7 +32,8 @@ Describe 'Send-BridgePushoverRequest' {
         # Act
         try {
             $result = Send-BridgePushoverRequest -Payload $payload
-        } catch {
+        }
+        catch {
             Write-Verbose 'Expected error, ignoring for test.'
         }
         $result | Should -BeNullOrEmpty
@@ -145,9 +147,7 @@ Describe 'Send-BridgePushoverRequest' {
             $payload = @{ token = 'test'; user = 'user'; message = 'msg' }
             { Send-BridgePushoverRequest -Payload $payload -Configuration $config } | Should -Throw
 
-            Assert-MockCalled Invoke-RestMethod -ParameterFilter {
-                $Uri -eq 'https://custom-error-api.com/test'
-            } -Times 1
+            Assert-MockCalled Invoke-RestMethod -ParameterFilter { $Uri -eq 'https://custom-error-api.com/test' } -Times 3
             Assert-MockCalled Write-BridgeLog -ParameterFilter {
                 $Message -like 'Complete custom error*' -and
                 $Stage -eq 'Σφάλμα' -and

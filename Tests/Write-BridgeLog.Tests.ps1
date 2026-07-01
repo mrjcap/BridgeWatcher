@@ -71,4 +71,83 @@ Describe 'Write-BridgeLog' {
             }
         }
     }
+
+    Context 'Log Stream Logic (non-Pester path)' {
+        BeforeAll {
+            . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+            $script:tempLogDir = Join-Path ([System.IO.Path]::GetTempPath()) "BridgeWatcherLogTest_$([guid]::NewGuid())"
+            New-Item -Path $script:tempLogDir -ItemType Directory -Force | Out-Null
+        }
+        AfterAll {
+            if ($script:LogStream) {
+                try { $script:LogStream.Close() } catch { }
+                $script:LogStream = $null
+            }
+            Remove-Item $script:tempLogDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
+        It 'Δημιουργεί νέο LogStream όταν δεν υπάρχει' {
+            Mock Get-PSCallStack { @() }
+            $config = New-BridgeConfiguration
+            $config.LogDirectory = $script:tempLogDir
+            
+            Write-BridgeLog -Stage 'Ανάλυση' -Message 'Test message 1' -Configuration $config
+            
+            $script:LogStream | Should -Not -BeNullOrEmpty
+            $script:LogStream.BaseStream.CanWrite | Should -Be $true
+            
+            # Δοκιμή ότι γράφει στο ίδιο stream
+            Write-BridgeLog -Stage 'Ανάλυση' -Message 'Test message 2' -Configuration $config
+            
+            # Καθαρισμός για να κλείσει το αρχείο και να διαβαστεί
+            $script:LogStream.Close()
+            $script:LogStream = $null
+            
+            $files = Get-ChildItem $script:tempLogDir
+            $content = Get-Content $files[0].FullName
+            $content.Count | Should -Be 2
+            $content[0] | Should -Match 'Test message 1'
+            $content[1] | Should -Match 'Test message 2'
+        }
+
+        It 'Κλείνει το παλιό stream αν αλλάξει το log path (π.χ. νέα μέρα)' {
+            Mock Get-PSCallStack { @() }
+            $config = New-BridgeConfiguration
+            $config.LogDirectory = $script:tempLogDir
+            
+            # Αρχικό
+            Write-BridgeLog -Stage 'Ανάλυση' -Message 'Test message A' -Configuration $config
+            
+            $oldStream = $script:LogStream
+            
+            # Αλλάζουμε τεχνητά το LogStreamPath για να προσομοιώσουμε αλλαγή μέρας
+            $script:LogStreamPath = "dummy.log"
+            
+            Write-BridgeLog -Stage 'Ανάλυση' -Message 'Test message B' -Configuration $config
+            
+            $oldStream.BaseStream.CanWrite | Should -Be $false
+            $script:LogStream.BaseStream.CanWrite | Should -Be $true
+            
+            $script:LogStream.Close()
+            $script:LogStream = $null
+        }
+
+        It 'Πιάνει σφάλματα κατά το γράψιμο στο stream και κάνει Write-Warning' {
+            Mock Get-PSCallStack { @() }
+            $config = New-BridgeConfiguration
+            $config.LogDirectory = $script:tempLogDir
+            
+            Write-BridgeLog -Stage 'Ανάλυση' -Message 'Test message' -Configuration $config
+            
+            # Κλείνουμε το stream, το επόμενο γράψιμο θα πετάξει exception
+            $script:LogStream.Close()
+            
+            Mock Write-Warning { }
+            Write-BridgeLog -Stage 'Ανάλυση' -Message 'Test message error' -Configuration $config
+            Assert-MockCalled Write-Warning -Times 1 -Exactly
+            
+            $script:LogStream = $null
+        }
+    }
 }
+

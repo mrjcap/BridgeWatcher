@@ -34,7 +34,7 @@
     )
     $bridgeLabel = $Configuration.BridgeNames[$Location]
     # Remove accents from pattern to match both accented and unaccented Greek text
-    $bridgePattern = if ($Location -eq 'poseidonia') { 'Ποσειδων[ιίΙΊ]α' } elseif ($Location -eq 'isthmia') { 'Ισθμ[ιίΙΊ]α' } else { $bridgeLabel }
+    $bridgePattern = if ($Location -eq 'poseidonia') { 'Ποσειδων[ιίΙΊ]α' } else { 'Ισθμ[ιίΙΊ]α' }
 
     # Split using robust regex to handle case-insensitivity, single/double quotes, and variable spacing/classes
     $blocks = [regex]::Split($HtmlContent, '(?i)<div[^>]+class=["''][^"'']*panel\s+panel-primary[^"'']*["''][^>]*>')

@@ -33,6 +33,7 @@ Describe 'Get-BridgeImage' {
             { Get-BridgeImage -HtmlContent $html -Location 'isthmia' } | Should -Throw "Δεν βρέθηκε block για τη θέση isthmia."
         }
 
+        
         It 'Επιστρέφει εικόνες όταν η HTML χρησιμοποιεί μονά εισαγωγικά, επιπλέον classes, ή lowercase tags' {
             $html = @'
 <DIV class='panel panel-primary flex-row'>

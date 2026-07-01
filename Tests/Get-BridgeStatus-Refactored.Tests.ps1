@@ -45,7 +45,8 @@ Describe 'Get-BridgeStatus Refactored Pipeline Tests' {
                 $result.Count | Should -BeGreaterThan 0
                 $result[0].gefyraName | Should -Be 'Ισθμία'
                 $result[0].gefyraStatus | Should -Be 'Ανοιχτή'
-            } else {
+            }
+            else {
                 $result.gefyraName | Should -Be 'Ισθμία'
                 $result.gefyraStatus | Should -Be 'Ανοιχτή'
             }
@@ -95,7 +96,9 @@ Describe 'Get-BridgeStatus Refactored Pipeline Tests' {
             if ($result -is [Array]) {
                 $result.Count | Should -BeGreaterThan 0
                 $result[0].gefyraName | Should -Be 'Ισθμία'
-            } else { $result.gefyraName | Should -Be 'Ισθμία'
+            }
+            else {
+                $result.gefyraName | Should -Be 'Ισθμία'
             }
         }
     }
