@@ -17,9 +17,9 @@ for secret in API_KEY POAPI_KEY POUSER_KEY; do
 done
 
 # Read and export secrets so they are available in-memory to appuser
-export API_KEY=$(cat /run/secrets/API_KEY | tr -d '\r\n' | xargs)
-export POAPI_KEY=$(cat /run/secrets/POAPI_KEY | tr -d '\r\n' | xargs)
-export POUSER_KEY=$(cat /run/secrets/POUSER_KEY | tr -d '\r\n' | xargs)
+export API_KEY=$(tr -d '\r\n' < /run/secrets/API_KEY | xargs)
+export POAPI_KEY=$(tr -d '\r\n' < /run/secrets/POAPI_KEY | xargs)
+export POUSER_KEY=$(tr -d '\r\n' < /run/secrets/POUSER_KEY | xargs)
 
 # Change to user directory για write access
 cd /home/appuser/scripts
