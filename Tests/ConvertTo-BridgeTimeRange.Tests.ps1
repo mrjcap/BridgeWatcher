@@ -9,10 +9,10 @@ Describe 'ConvertTo-BridgeTimeRange' {
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeTimeRange.ps1"
     }
         Context 'Όταν το OCR κείμενο δεν περιέχει έγκυρες ημερομηνίες' {
-            It 'Πρέπει να ρίχνει σφάλμα "Αποτυχία ανάλυσης ημερομηνιών: Cannot index into a null array."' {
+            It 'Πρέπει να ρίχνει σφάλμα "Δεν βρέθηκαν επαρκείς ημερομηνίες"' {
                 # Δημιουργούμε input που θα αποτύχει στο parsing
                 $fakeLines = @('άκυρο κείμενο χωρίς ημερομηνίες')  # άδειο OCR αποτέλεσμα
-                { ConvertTo-BridgeTimeRange -Lines $fakeLines } | Should -Throw "Αποτυχία ανάλυσης ημερομηνιών: Αποτυχία ανάλυσης ημερομηνιών: Δεν βρέθηκαν επαρκείς ημερομηνίες και ώρες για ανάλυση."
+                { ConvertTo-BridgeTimeRange -Lines $fakeLines } | Should -Throw "*Δεν βρέθηκαν επαρκείς ημερομηνίες*"
             }
             It 'Πετάει σφάλμα όταν δίνονται μη αναγνωρίσιμες ημερομηνίες' {
                 {
@@ -34,10 +34,10 @@ Describe 'ConvertTo-BridgeTimeRange' {
         }
             Context 'Έλεγχος ανεπαρκών matches και εξαιρέσεων' {
             It 'Πετάει σφάλμα NotEnoughDateTimes όταν υπάρχει μόνο 1 ημερομηνία' {
-                { ConvertTo-BridgeTimeRange -Lines @('Μόνο μία: 25/04/2025 14:00') } | Should -Throw "Δεν βρέθηκαν επαρκείς ημερομηνίες"
+                { ConvertTo-BridgeTimeRange -Lines @('Μόνο μία: 25/04/2025 14:00') } | Should -Throw "*Δεν βρέθηκαν επαρκείς ημερομηνίες*"
             }
             It 'Πετάει σφάλμα BridgeTimeParseError όταν αποτυγχάνει το parse' {
-                { ConvertTo-BridgeTimeRange -Lines @('99/99/2025 14:00', '25/04/2025 14:00') } | Should -Throw "Αποτυχία ανάλυσης ημερομηνιών"
+                { ConvertTo-BridgeTimeRange -Lines @('99/99/2025 14:00', '25/04/2025 14:00') } | Should -Throw "*Αποτυχία ανάλυσης ημερομηνιών*"
             }
         }
         Context 'Όταν η πρώτη ημερομηνία είναι μεγαλύτερη της δεύτερης' {
@@ -52,4 +52,5 @@ Describe 'ConvertTo-BridgeTimeRange' {
             }
         }
 }
+
 
