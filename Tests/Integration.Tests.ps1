@@ -23,7 +23,7 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
         $config = New-BridgeConfiguration
 
         $getBridgeHtmlSplat = @{
-            Uri           = $config.SourceUrl
+            Uri           = $config.Urls.Source
             Configuration = $config
         }
         $htmlResult = Get-BridgeHtml @getBridgeHtmlSplat
