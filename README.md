@@ -68,7 +68,7 @@
 βεβαιώσου ότι έχεις εξασφαλίσει τα ακόλουθα:
 
 | Απαίτηση | Περιγραφή | Πώς να το αποκτήσεις |
-|----------|-----------|----------------------|
+| -------- | --------- | -------------------- |
 | **Google Vision API Key** | Απαραίτητο για OCR λειτουργίες | [Google Cloud Console](https://console.cloud.google.com/) |
 | **Pushover API Key** | Για αποστολή ειδοποιήσεων | [Pushover Dashboard](https://pushover.net/apps) |
 | **Pushover User Key** | Για προσωποποιημένες ειδοποιήσεις | [Pushover Account](https://pushover.net/) |
@@ -171,7 +171,7 @@ Get-BridgeStatusMonitor @params
 ### Get-BridgeStatusMonitor Parameters
 
 | Παράμετρος | Τύπος | Περιγραφή | Προεπιλογή |
-|------------|-------|-----------|------------|
+| ---------- | ----- | --------- | ---------- |
 | `MaxIterations` | int | Αριθμός επαναλήψεων (0 = άπειρες) | 0 |
 | `IntervalSeconds` | int | Χρονικό διάστημα μεταξύ ελέγχων | 600 |
 | `PoApiKey` | string | Pushover API Key | - |
