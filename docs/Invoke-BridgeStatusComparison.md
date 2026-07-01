@@ -15,8 +15,8 @@ schema: 2.0.0
 
 ```
 Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Object[]> [-ApiKey] <SecureString>
- [-PoUserKey] <SecureString> [-PoApiKey] <SecureString> [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-PoUserKey] <SecureString> [-PoApiKey] <String> [[-Configuration] <PSObject>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -51,6 +51,22 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Configuration
+
+{{ Fill Configuration Description }}
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 5
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -CurrentState
 
 {{ Fill CurrentState Description }}
@@ -72,7 +88,7 @@ Accept wildcard characters: False
 {{ Fill PoApiKey Description }}
 
 ```yaml
-Type: SecureString
+Type: String
 Parameter Sets: (All)
 Aliases:
 

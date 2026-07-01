@@ -16,7 +16,7 @@ schema: 2.0.0
 ```
 Get-BridgeStatusMonitor [[-MaxIterations] <Int32>] [[-IntervalSeconds] <Int32>] [[-OutputFile] <String>]
  [[-ApiKey] <SecureString>] [[-PoUserKey] <SecureString>] [[-PoApiKey] <SecureString>]
- [[-Configuration] <PSObject>] [[-CancellationToken] <CancellationToken>] [-ProgressAction <ActionPreference>]
+ [[-Configuration] <PSObject>] [[-Action] <ScriptBlock>] [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
 
@@ -36,6 +36,22 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
+### -Action
+
+{{ Fill Action Description }}
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 7
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ApiKey
 
 {{ Fill ApiKey Description }}
@@ -47,22 +63,6 @@ Aliases:
 
 Required: False
 Position: 3
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CancellationToken
-
-{{ Fill CancellationToken Description }}
-
-```yaml
-Type: CancellationToken
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 7
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

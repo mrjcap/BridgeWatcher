@@ -14,8 +14,8 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-BridgePreviousStatus [-InputFile] <String> [[-JsonDepth] <Int32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-BridgePreviousStatus [-InputFile] <String> [[-JsonDepth] <Int32>] [[-Configuration] <PSObject>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -33,6 +33,22 @@ PS C:\> {{ Add example code here }}
 {{ Add example description here }}
 
 ## PARAMETERS
+
+### -Configuration
+
+{{ Fill Configuration Description }}
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -InputFile
 

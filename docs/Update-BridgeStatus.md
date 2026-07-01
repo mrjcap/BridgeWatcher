@@ -5,7 +5,7 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-BridgeStatusComparison
+# Update-BridgeStatus
 
 ## SYNOPSIS
 
@@ -13,9 +13,9 @@ schema: 2.0.0
 
 ## SYNTAX
 
-```powershell
-Get-BridgeStatusComparison [-OutputFile] <String> [-ApiKey] <String> [-PoUserKey] <String> [-PoApiKey] <String>
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+Update-BridgeStatus [-OutputFile] <String> [-ApiKey] <String> [-PoUserKey] <String> [-PoApiKey] <String>
+ [[-Configuration] <PSObject>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -45,6 +45,38 @@ Aliases:
 
 Required: True
 Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Configuration
+
+{{ Fill Configuration Description }}
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 4
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -98,6 +130,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -WhatIf
+
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ProgressAction
 
 {{ Fill ProgressAction Description }}
@@ -124,7 +173,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## OUTPUTS
 
-### System.Object
+### System.Void
 
 ## NOTES
 
