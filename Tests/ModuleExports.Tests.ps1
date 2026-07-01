@@ -1,4 +1,4 @@
-Describe 'Module Cmdlet Exports' {
+﻿Describe 'Module Cmdlet Exports' {
     BeforeAll {
         Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
     }

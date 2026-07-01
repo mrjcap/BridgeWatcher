@@ -1,4 +1,4 @@
-Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 Describe 'Update-BridgeStatus' {
     BeforeAll {
@@ -42,7 +42,7 @@ Describe 'Update-BridgeStatus' {
 
     It 'Πρέπει να καλούνται Get-BridgePreviousStatus και Get-BridgeStatus με τα σωστά parameters όταν το αρχείο υπάρχει' {
         $jsonFile = "TestDrive:\bridge_status_test_exists.json"
-        
+
         # We ensure Test-Path returns true to simulate file existence
         Mock Test-Path { return $true } -ParameterFilter { $Path -eq $jsonFile }
 
@@ -69,7 +69,7 @@ Describe 'Update-BridgeStatus' {
             PoApiKey   = 'dummyPoApiKey'
         }
         { Update-BridgeStatus @updateBridgeStatusSplat } | Should -Not -Throw
-        
+
         # Ελέγχουμε αν η συνάρτηση Get-BridgeStatus καλείται
         Assert-MockCalled Get-BridgeStatus -Exactly 1 -Scope It
         # Ελέγχουμε αν η συνάρτηση Invoke-BridgeStatusComparison κλήθηκε

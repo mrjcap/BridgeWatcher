@@ -1,4 +1,4 @@
-Describe 'Docker Build Workflow Configuration' {
+﻿Describe 'Docker Build Workflow Configuration' {
     It 'Checks out the exact release tag version in build-and-test job' {
         $workflowPath = Join-Path $PSScriptRoot '../.github/workflows/docker-build.yml'
         $content = Get-Content $workflowPath -Raw

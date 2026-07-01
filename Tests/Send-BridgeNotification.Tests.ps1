@@ -1,4 +1,4 @@
-Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 Describe 'Send-BridgeNotification' {
     BeforeAll {
@@ -63,7 +63,7 @@ Describe 'Send-BridgeNotification' {
         It 'Executes custom NotificationProvider instead of Send-BridgePushover' {
             Mock Send-BridgePushover { }
             Mock Invoke-BridgeOCRGoogleCloud { return @{ 'Κλειστή για' = '1 ώρα' } }
-            
+
             $tracker = @{
                 Called = $false
                 Params = $null

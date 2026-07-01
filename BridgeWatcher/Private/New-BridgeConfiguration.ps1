@@ -61,7 +61,7 @@
         'isthmia'    = 'Ισθμία'
         'poseidonia' = 'Ποσειδωνία'
     }
-    
+
     # Unified status strings
     $statuses = [PSCustomObject]@{
         Open                 = 'Ανοιχτή'

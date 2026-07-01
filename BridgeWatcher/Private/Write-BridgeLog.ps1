@@ -97,7 +97,7 @@ Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 
                 $script:LogStream = New-Object System.IO.StreamWriter($logPath, $true, $utf8WithBOM)
                 $script:LogStream.AutoFlush = $true
                 $script:LogStreamPath = $logPath
-                
+
                 $script:LogStream.WriteLine($logLine)
             }
         }

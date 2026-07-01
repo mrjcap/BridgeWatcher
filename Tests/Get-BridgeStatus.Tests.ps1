@@ -1,4 +1,4 @@
-Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 Describe 'Test Get-BridgeStatus function' {
     BeforeAll {
@@ -136,7 +136,7 @@ Describe 'Get-BridgeStatus Integration' {
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
-        
+
         # Include dependendent private functions invoked during integration
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusFromHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeImage.ps1"

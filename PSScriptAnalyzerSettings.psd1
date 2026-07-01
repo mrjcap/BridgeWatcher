@@ -1,4 +1,4 @@
-@{
+﻿@{
     Rules = @{
         PSUseApprovedVerbs = @{
             Enable = $true

@@ -89,7 +89,6 @@
         Write-BridgeLog @writeBridgeLogSplat
     }
     process {
-        $consecutiveFailures = 0
         while ((-not $CancellationToken.IsCancellationRequested) -and ($infiniteLoop -or $iteration -lt $MaxIterations)) {
             try {
                 $iteration++

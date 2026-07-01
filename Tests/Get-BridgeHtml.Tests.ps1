@@ -1,4 +1,4 @@
-Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 Describe 'Get-BridgeHtml' {
     BeforeAll {

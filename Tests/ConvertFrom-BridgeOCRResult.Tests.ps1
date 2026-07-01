@@ -1,4 +1,4 @@
-
+﻿
 Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
 
 Describe 'ConvertFrom-BridgeOCRResult Tests' {
@@ -131,6 +131,7 @@ Describe 'ConvertFrom-BridgeOCRResult Tests' {
             $calledMessage = $null
             Mock Write-BridgeLog {
                 param($Stage, $Message, $Level, $Configuration)
+                $null = $Stage; $null = $Level; $null = $Configuration
                 if ($Message -like '*Successfully parsed*' -or $Message -like '*No text annotations*') {
                     $script:calledMessage = $Message
                 }
@@ -148,9 +149,9 @@ Describe 'ConvertFrom-BridgeOCRResult Tests' {
                 } }
             Mock ConvertTo-BridgeClosedDuration { '30 λεπτά' }
             Mock Get-BridgeStatusAdvice { 'Επέστρεψε μετά τις 00:00' }
-            
-            $result = ConvertFrom-BridgeOCRResult -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
-            
+
+            $null = ConvertFrom-BridgeOCRResult -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
+
             $script:calledMessage | Should -Not -Match 'No text annotations'
             $script:calledMessage | Should -Match 'Successfully parsed'
         }

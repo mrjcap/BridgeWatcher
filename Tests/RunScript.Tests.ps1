@@ -1,4 +1,4 @@
-Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 Describe 'run.ps1 Script Execution' {
     BeforeEach {
@@ -29,6 +29,8 @@ Describe 'run.ps1 Script Execution' {
         # Mock Get-BridgeStatusMonitor in both scopes to intercept all calls
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
                 ApiKey    = $ApiKey
                 PoApiKey  = $PoApiKey
@@ -38,6 +40,8 @@ Describe 'run.ps1 Script Execution' {
 
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
                 ApiKey    = $ApiKey
                 PoApiKey  = $PoApiKey
@@ -61,6 +65,7 @@ Describe 'run.ps1 Script Execution' {
 
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
                 ApiKey    = $ApiKey
                 PoApiKey  = $PoApiKey
@@ -70,6 +75,7 @@ Describe 'run.ps1 Script Execution' {
 
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
                 ApiKey    = $ApiKey
                 PoApiKey  = $PoApiKey
@@ -91,13 +97,14 @@ Describe 'run.ps1 Script Execution' {
         $Env:POUSER_KEY = $null
 
         # Create secret files with newlines and spaces in TestDrive
-        $secretDir = New-Item -ItemType Directory -Path "$TestDrive/run/secrets" -Force
+        $null = New-Item -ItemType Directory -Path "$TestDrive/run/secrets" -Force
         "  file-api-key`n`r  " | Out-File -FilePath "$TestDrive/run/secrets/API_KEY" -NoNewline
         "  file-po-api-key`n  " | Out-File -FilePath "$TestDrive/run/secrets/POAPI_KEY" -NoNewline
         "file-po-user-key`r" | Out-File -FilePath "$TestDrive/run/secrets/POUSER_KEY" -NoNewline
 
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
                 ApiKey    = $ApiKey
                 PoApiKey  = $PoApiKey
@@ -107,6 +114,7 @@ Describe 'run.ps1 Script Execution' {
 
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
                 ApiKey    = $ApiKey
                 PoApiKey  = $PoApiKey

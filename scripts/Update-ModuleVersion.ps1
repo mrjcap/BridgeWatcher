@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Updates the version in a PowerShell module manifest (.psd1).
 .DESCRIPTION

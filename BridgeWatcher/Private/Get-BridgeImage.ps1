@@ -36,7 +36,7 @@
 
     # Split using robust regex to handle case-insensitivity, single/double quotes, and variable spacing/classes
     $blocks = [regex]::Split($HtmlContent, '(?i)<div[^>]+class=["''][^"'']*panel\s+panel-primary[^"'']*["''][^>]*>')
-    
+
     # Match block case-insensitively based on bridge label
     $block = $blocks | Where-Object { $_ -match "(?i)$bridgeLabel" }
     if (-not $block) {

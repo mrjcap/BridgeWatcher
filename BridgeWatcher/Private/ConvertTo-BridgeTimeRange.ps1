@@ -48,7 +48,7 @@
         # Παίρνουμε τα 2 πρώτα matches
         $date1 = [datetime]::ParseExact($bmatches[0].Value, 'dd/MM/yyyy HH:mm', $null)
         $date2 = [datetime]::ParseExact($bmatches[1].Value, 'dd/MM/yyyy HH:mm', $null)
-        
+
         # Ταξινομούμε χρονολογικά
         if ($date1 -gt $date2) {
             $from = $date2
@@ -57,7 +57,7 @@
             $from = $date1
             $to = $date2
         }
-        
+
         # Επιστρέφουμε structured αντικείμενο
         return [PSCustomObject]@{
             From      = $from
