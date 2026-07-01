@@ -14,9 +14,9 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Object[]> [-ApiKey] <SecureString>
- [-PoUserKey] <SecureString> [-PoApiKey] <String> [[-Configuration] <PSObject>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Object[]> [-ApiKey] <String>
+ [-PoUserKey] <String> [-PoApiKey] <String> [[-Configuration] <PSObject>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -40,7 +40,7 @@ PS C:\> {{ Add example code here }}
 {{ Fill ApiKey Description }}
 
 ```yaml
-Type: SecureString
+Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -104,7 +104,7 @@ Accept wildcard characters: False
 {{ Fill PoUserKey Description }}
 
 ```yaml
-Type: SecureString
+Type: String
 Parameter Sets: (All)
 Aliases:
 

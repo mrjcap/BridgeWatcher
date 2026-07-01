@@ -14,9 +14,9 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Send-BridgePushover [-PoUserKey] <SecureString> [-PoApiKey] <SecureString> [-Message] <String>
- [[-Device] <String>] [[-Title] <String>] [[-Url] <String>] [[-UrlTitle] <String>] [[-Priority] <Int32>]
- [[-Sound] <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Send-BridgePushover [-PoUserKey] <String> [-PoApiKey] <String> [-Message] <String> [[-Device] <String>]
+ [[-Title] <String>] [[-Url] <String>] [[-UrlTitle] <String>] [[-Priority] <Int32>] [[-Sound] <String>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -72,7 +72,7 @@ Accept wildcard characters: False
 {{ Fill PoApiKey Description }}
 
 ```yaml
-Type: SecureString
+Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -88,7 +88,7 @@ Accept wildcard characters: False
 {{ Fill PoUserKey Description }}
 
 ```yaml
-Type: SecureString
+Type: String
 Parameter Sets: (All)
 Aliases:
 

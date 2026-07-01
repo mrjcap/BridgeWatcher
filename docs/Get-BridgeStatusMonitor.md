@@ -15,9 +15,8 @@ schema: 2.0.0
 
 ```
 Get-BridgeStatusMonitor [[-MaxIterations] <Int32>] [[-IntervalSeconds] <Int32>] [[-OutputFile] <String>]
- [[-ApiKey] <SecureString>] [[-PoUserKey] <SecureString>] [[-PoApiKey] <SecureString>]
- [[-Configuration] <PSObject>] [[-Action] <ScriptBlock>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [[-ApiKey] <String>] [[-PoUserKey] <String>] [[-PoApiKey] <String>] [[-Configuration] <PSObject>]
+ [[-Action] <ScriptBlock>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -57,7 +56,7 @@ Accept wildcard characters: False
 {{ Fill ApiKey Description }}
 
 ```yaml
-Type: SecureString
+Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -137,7 +136,7 @@ Accept wildcard characters: False
 {{ Fill PoApiKey Description }}
 
 ```yaml
-Type: SecureString
+Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -153,7 +152,7 @@ Accept wildcard characters: False
 {{ Fill PoUserKey Description }}
 
 ```yaml
-Type: SecureString
+Type: String
 Parameter Sets: (All)
 Aliases:
 
