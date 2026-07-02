@@ -99,8 +99,8 @@ Describe 'run.ps1 Script Execution' {
         # Create secret files with newlines and spaces in TestDrive
         $null = New-Item -ItemType Directory -Path "$TestDrive/run/secrets" -Force
         "  file-api-key`n`r  " | Out-File -FilePath "$TestDrive/run/secrets/API_KEY" -NoNewline
-        "  file-po-api-key`n  " | Out-File -FilePath "$TestDrive/run/secrets/POAPI_KEY" -NoNewline
-        "file-po-user-key`r" | Out-File -FilePath "$TestDrive/run/secrets/POUSER_KEY" -NoNewline
+        "  file-po-api-key`n  " | Out-File -FilePath "$TestDrive/run/secrets/PUSHOVER_TOKEN" -NoNewline
+        "file-po-user-key`r" | Out-File -FilePath "$TestDrive/run/secrets/PUSHOVER_USER" -NoNewline
 
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)

@@ -141,6 +141,36 @@ Describe 'Invoke-BridgeClosedNotification' {
 
         }
 
+        It 'Χρησιμοποιεί NotificationProvider αντί Pushover όταν παρέχεται' {
+
+            $script:providerCalled = $false
+            $script:providerTitle = ''
+            $script:providerMessage = ''
+
+            $provider = {
+                param([string]$Title, [string]$Message, [string]$Type)
+                $null = $Type
+                $script:providerCalled = $true
+                $script:providerTitle = $Title
+                $script:providerMessage = $Message
+            }
+
+            $entry = [pscustomobject]@{
+                gefyraName   = 'Ισθμία'
+                gefyraStatus = 'Κλειστή για συντήρηση'
+                timestamp    = (Get-Date)
+                imageUrl     = 'https://example.com/image.jpg'
+            }
+
+            Mock Send-BridgePushover { throw 'Δεν έπρεπε να κληθεί Pushover!' }
+            Mock Write-BridgeLog { }
+
+            Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -NotificationProvider $provider
+
+            $script:providerCalled | Should -BeTrue
+            $script:providerTitle | Should -BeLike '*κλειστή για συντήρηση*'
+        }
+
     }
 
 }

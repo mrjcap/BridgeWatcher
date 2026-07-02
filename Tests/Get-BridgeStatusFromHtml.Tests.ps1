@@ -41,5 +41,42 @@ Describe 'Get-BridgeStatusFromHtml' {
 
     }
 
+    Context 'Όταν υπάρχει Open image αλλά δεν υπάρχει info εικόνα' {
+
+        It 'Παραλείπει Open κατάσταση χωρίς info εικόνα' {
+            $config = New-BridgeConfiguration
+
+            # Mock Get-BridgeImage to return images with Open pattern but no info.php
+            Mock Get-BridgeImage {
+                param($HtmlContent, $Location)
+                $null = $HtmlContent
+                if ($Location -eq 'poseidonia') {
+                    return [System.Collections.ArrayList]@(
+                        [pscustomobject]@{ src = 'image-bridge-open-no-schedule.php?123' }
+                    )
+                }
+                return [System.Collections.ArrayList]@(
+                    [pscustomobject]@{ src = 'image-bridge-open-no-schedule.php?456' }
+                )
+            }
+
+            Mock Write-BridgeLog { }
+
+            $html = '<html><body>dummy</body></html>'
+            $timestamp = '2025-04-18T08:00:00'
+
+            $result = Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp -Configuration $config
+
+            # Should return empty because Open status was skipped (no info image)
+            $result.Count | Should -Be 0
+
+            # Verify the skip log message was written
+            Assert-MockCalled Write-BridgeLog -ParameterFilter {
+                $Message -like '*Παραλείπεται*' -and $Message -like '*info*'
+            } -Times 1 -Scope It
+        }
+
+    }
+
 }
 

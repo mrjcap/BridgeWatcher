@@ -80,4 +80,34 @@ Describe 'Send-Pushover' {
 
         { Send-BridgePushover @sendPushoverSplat } | Should -Throw
     }
+
+    It 'Περνάει όλες τις προαιρετικές παραμέτρους στο payload' {
+        Mock -CommandName Send-BridgePushoverRequest -MockWith {
+            return @{ status = 'ok' }
+        }
+        Mock -CommandName Write-BridgeLog -MockWith { }
+
+        $sendPushoverSplat = @{
+            PoUserKey = 'U'
+            PoApiKey  = 'T'
+            Message   = 'hello'
+            Device    = 'myphone'
+            Title     = 'Test Title'
+            Url       = 'https://example.com'
+            UrlTitle  = 'Click Here'
+            Priority  = 1
+            Sound     = 'siren'
+        }
+
+        Send-BridgePushover @sendPushoverSplat
+
+        Assert-MockCalled Send-BridgePushoverRequest -Times 1 -Exactly -ParameterFilter {
+            $Payload.device -eq 'myphone' -and
+            $Payload.title -eq 'Test Title' -and
+            $Payload.url -eq 'https://example.com' -and
+            $Payload.url_title -eq 'Click Here' -and
+            $Payload.priority -eq 1 -and
+            $Payload.sound -eq 'siren'
+        }
+    }
 }

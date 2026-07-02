@@ -38,7 +38,6 @@ try {
         IntervalSeconds = 300
         MaxIterations   = 0
         OutputFile      = "$OutDir/bridge_status.json"
-        LogDirectory    = '/app/logs'
         ApiKey          = $API_KEY
         PoApiKey        = $POAPI_KEY
         PoUserKey       = $POUSER_KEY
