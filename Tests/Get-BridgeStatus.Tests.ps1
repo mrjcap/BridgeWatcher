@@ -1,4 +1,4 @@
-Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 Describe 'Test Get-BridgeStatus function' {
     BeforeAll {
@@ -17,7 +17,7 @@ Describe 'Test Get-BridgeStatus function' {
         It 'Πρέπει να καλείται Export-BridgeStatusJson με τα σωστά params' {
             $OutputFile = 'C:\mock\path\to\output.json'
             $timestamp = Get-Date -Format o
-            
+
             Mock Invoke-WebRequest {
                 return [pscustomobject]@{ Content = '<html></html>' }
             }
@@ -30,9 +30,9 @@ Describe 'Test Get-BridgeStatus function' {
                 New-BridgeResult -Success $true
             }
             Mock Write-Warning { }
-            
+
             $result = Get-BridgeStatus -OutputFile $OutputFile
-            
+
             $result | Should -Not -BeNullOrEmpty
             $result.Count | Should -Be 1
             $result[0].Location | Should -Be 'Isthmia'
@@ -43,7 +43,7 @@ Describe 'Test Get-BridgeStatus function' {
             Assert-MockCalled Export-BridgeStatusJson -Exactly 1 -Scope It
         }
     }
-    
+
     Context 'Αποτυχία ανάκτησης HTML' {
         It 'Πρέπει να ρίχνει terminating error όταν το Invoke-WebRequest αποτυγχάνει' {
             Mock Invoke-WebRequest { throw 'Σφάλμα δικτύου' }
@@ -55,16 +55,16 @@ Describe 'Test Get-BridgeStatus function' {
             { Get-BridgeStatus } | Should -Throw -ExpectedMessage "*The argument is null or empty*"
         }
     }
-    
+
     Context 'Get-BridgeStatusFromHtml επιστρέφει κενό' {
         It 'Πρέπει να ρίχνει terminating error όταν δεν υπάρχει διαθέσιμο status για αποθήκευση' {
             Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html></html>' } }
             Mock Get-BridgeStatusFromHtml { return @() }
-            
+
             { Get-BridgeStatus } | Should -Throw -ExpectedMessage "*Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο*"
         }
     }
-    
+
     Context 'Σφάλμα κατά την αποθήκευση JSON' {
         It 'Πρέπει να ρίχνει terminating error όταν η αποθήκευση JSON αποτύχει' {
             Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html></html>' } }
@@ -74,7 +74,7 @@ Describe 'Test Get-BridgeStatus function' {
             Mock Export-BridgeStatusJson {
                 return New-BridgeResult -Success $false -ErrorMessage "Error during saving" -ErrorCode 'JSON_EXPORT_FAILURE'
             }
-            
+
             { Get-BridgeStatus -OutputFile 'C:\path\to\output.json' } | Should -Throw -ExpectedMessage "*Error during saving*"
         }
     }
@@ -119,14 +119,14 @@ Describe 'Get-BridgeStatus Integration' {
         }
         $result = Get-BridgeStatus
         $result.Count | Should -Be 2
-        
+
         # Depending on naming in the current object
         if ($result[0].gefyraName -eq 'Ποσειδωνία') {
             $result[0].gefyraName | Should -Be 'Ποσειδωνία'
             $result[0].gefyraStatus | Should -Be 'Κλειστή με πρόγραμμα'
         }
     }
-    
+
     It 'Ρίχνει σφάλμα όταν το html δεν περιέχει καμία γέφυρα' {
         $html = @'
     <div class="panel panel-primary">
@@ -136,6 +136,7 @@ Describe 'Get-BridgeStatus Integration' {
         Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $html } }
         { Get-BridgeStatus } | Should -Throw "*Δεν βρέθηκε block*"
     }
+}
 
 Describe 'Get-BridgeStatus Configuration Fallbacks' {
     BeforeAll {

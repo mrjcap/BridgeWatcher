@@ -1,4 +1,4 @@
-$ModulePath = "$PSScriptRoot/modules/BridgeWatcher/BridgeWatcher.psd1"
+﻿$ModulePath = "$PSScriptRoot/modules/BridgeWatcher/BridgeWatcher.psd1"
 if (-not (Test-Path $ModulePath)) {
     $ModulePath = "$PSScriptRoot/BridgeWatcher/BridgeWatcher.psd1"
 }

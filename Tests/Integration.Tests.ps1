@@ -1,4 +1,4 @@
-$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 $sut = (Split-Path -Parent $here) + "\BridgeWatcher\BridgeWatcher.psd1"
 
