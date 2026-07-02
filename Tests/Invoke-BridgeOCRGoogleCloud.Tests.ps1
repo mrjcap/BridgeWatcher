@@ -1,28 +1,24 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psm1" -Force
+﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 Describe 'Invoke-BridgeOCRGoogleCloud' {
     BeforeAll {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeResult.ps1"
-        . "$PSScriptRoot/../BridgeWatcher/Private/Test-BridgeResult.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOCRGoogleCloud.ps1"
-        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeOCRRequestBody.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOCRRequest.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
     }
 
     It 'Επιστρέφει object από API με orchestrated call' {
         $validUri = 'https://example.com/image-bridge-open-with-schedule-isthmia.php'
-        Mock Get-BridgeOCRRequestBody { return '{}' }
         Mock Invoke-BridgeOCRRequest {
             return @{
                 responses = @(
                     @{
                         textAnnotations = @(
                             @{ description = @(
-                                    'Από', '01/01/2025', '10:00', 'Έως', '01/01/2025', '10:30'
-                                )
+                                     'Από', '01/01/2025', '10:00', 'Έως', '01/01/2025', '10:30'
+                                 )
                             }
                         )
                     }
@@ -34,7 +30,6 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
         }
         $out = Invoke-BridgeOCRGoogleCloud -ApiKey 'abc' -ImageUri $validUri
         $out.mock | Should -Be 'result'
-        Assert-MockCalled Get-BridgeOCRRequestBody -Times 1
         Assert-MockCalled Invoke-BridgeOCRRequest -Times 1
         Assert-MockCalled ConvertFrom-BridgeOCRResult -Times 1
     }

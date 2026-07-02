@@ -1,58 +1,58 @@
-@{
-    Run          = @{
-        Path          = './Tests'
-        Parameters    = @{
-            ModuleName = 'BridgeWatcher'
-        }
-        TestExtension = '.Tests.ps1'
-        Exit          = $false
-        Throw         = $false
-        PassThru      = $true
-    }
-    Filter       = @{
-        Tag        = @()
-        ExcludeTag = @('Integration')
-    }
-    CodeCoverage = @{
-        Enabled               = $true
-        Path                  = @(
-            './BridgeWatcher/Public/*.ps1',
-            './BridgeWatcher/Private/*.ps1'
-        )
-        OutputFormat          = 'JaCoCo'
-        OutputPath            = 'coverage.xml'
-        OutputEncoding        = 'utf8BOM'
-        CoveragePercentTarget = 100
-        ExcludeTests          = $true
-        RecursePaths          = $true
-    }
-    TestResult   = @{
-        Enabled        = $true
-        OutputFormat   = 'JUnitXml'
-        OutputPath     = 'testResults.xml'
-        OutputEncoding = 'utf8BOM'
-        TestSuiteName  = 'BridgeWatcher'
-    }
-    Should       = @{
-        ErrorAction = 'Stop'
-    }
-    Debug        = @{
-        WriteDebugMessages     = $false
-        WriteDebugMessagesFrom = @('Mock', 'CodeCoverage')
-        ShowFullErrors         = $false
-        ShowNavigationMarkers  = $false
-    }
-    Output       = @{
-        Verbosity           = 'Detailed'
-        StackTraceVerbosity = 'Filtered'
-        CIFormat            = 'GithubActions'
-        CILogLevel          = 'Error'
-        RenderMode          = 'Ansi'
-    }
-    TestDrive    = @{
-        Enabled = $true
-    }
-    TestRegistry = @{
-        Enabled = $false
-    }
-}
+﻿@{
+    Run          = @{
+        Path          = './Tests'
+        Parameters    = @{
+            ModuleName = 'BridgeWatcher'
+        }
+        TestExtension = '.Tests.ps1'
+        Exit          = $false
+        Throw         = $false
+        PassThru      = $true
+    }
+    Filter       = @{
+        Tag        = @()
+        ExcludeTag = @('Integration')
+    }
+    CodeCoverage = @{
+        Enabled               = $true
+        Path                  = @(
+            './BridgeWatcher/Public/*.ps1',
+            './BridgeWatcher/Private/*.ps1'
+        )
+        OutputFormat          = 'JaCoCo'
+        OutputPath            = 'coverage.xml'
+        OutputEncoding        = 'utf8BOM'
+        CoveragePercentTarget = 100
+        ExcludeTests          = $true
+        RecursePaths          = $true
+    }
+    TestResult   = @{
+        Enabled        = $true
+        OutputFormat   = 'JUnitXml'
+        OutputPath     = 'testResults.xml'
+        OutputEncoding = 'utf8BOM'
+        TestSuiteName  = 'BridgeWatcher'
+    }
+    Should       = @{
+        ErrorAction = 'Stop'
+    }
+    Debug        = @{
+        WriteDebugMessages     = $false
+        WriteDebugMessagesFrom = @('Mock', 'CodeCoverage')
+        ShowFullErrors         = $false
+        ShowNavigationMarkers  = $false
+    }
+    Output       = @{
+        Verbosity           = 'Detailed'
+        StackTraceVerbosity = 'Filtered'
+        CIFormat            = 'GithubActions'
+        CILogLevel          = 'Error'
+        RenderMode          = 'Ansi'
+    }
+    TestDrive    = @{
+        Enabled = $true
+    }
+    TestRegistry = @{
+        Enabled = $false
+    }
+}

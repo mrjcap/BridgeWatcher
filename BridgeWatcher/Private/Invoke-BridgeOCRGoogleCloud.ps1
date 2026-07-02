@@ -1,4 +1,4 @@
-﻿function Invoke-BridgeOCRGoogleCloud {
+﻿function Invoke-BridgeOCRGoogleCloud {
     <#
     .SYNOPSIS
     Αναλύει εικόνα με OCR μέσω Google Cloud.
@@ -21,45 +21,54 @@
 
     .NOTES
     Απαιτεί έγκυρο API Key και δημόσια προσβάσιμες εικόνες.
-    #>
-    [CmdletBinding()]
-    [OutputType([pscustomobject[]])]
-    param (
-        [Parameter(Mandatory)][string]$ApiKey,
-        [Parameter(Mandatory)][ValidateScript({
-                if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
-                    $true
-                } else {
-                    throw "Η παράμετρος '$_' δεν είναι ένα έγκυρο απόλυτο URI."
-                }
-            })][string]$ImageUri
-    )
-
-    try {
-        $newOCRRequestBodySplat = @{
-            ImageUri = $ImageUri
-        }
-        $requestBody = Get-BridgeOCRRequestBody @newOCRRequestBodySplat
-        $invokeOCRRequestSplat = @{
-            ApiKey      = $ApiKey
-            RequestBody = $requestBody
-        }
-        $apiResponse = Invoke-BridgeOCRRequest @invokeOCRRequestSplat
-        $convertFromOCRResultSplat = @{
-            ApiResponse = $apiResponse
-            ImageUri    = $ImageUri
-        }
-        $result = ConvertFrom-BridgeOCRResult @convertFromOCRResultSplat
-        return $result
-    } catch {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = "❌ Η αίτηση OCR απέτυχε: $_"
-            Level   = 'Warning'
-        }
-        Write-BridgeLog @writeBridgeLogSplat
-        throw
-    }
-    # Αφαιρέθηκε η λεπτομερής καταγραφή END στο μπλοκ finally για μείωση του spam - η ολοκλήρωση υπονοείται από την επιστροφή ή την εξαίρεση
-}
-
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject[]])]
+    param (
+        [Parameter(Mandatory)][string]$ApiKey,
+        [Parameter(Mandatory)][ValidateScript({
+                if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
+                    $true
+                } else {
+                    throw "Η παράμετρος '$_' δεν είναι ένα έγκυρο απόλυτο URI."
+                }
+            })][string]$ImageUri
+    )
+
+    try {
+        $requestObject = @{
+            requests = @(
+                @{
+                    image    = @{ source = @{ imageUri = $ImageUri } }
+                    features = @(
+                        @{
+                            type       = 'DOCUMENT_TEXT_DETECTION'
+                            model      = 'builtin/latest'
+                            maxResults = 50
+                        }
+                    )
+                }
+            )
+        }
+        $requestBody = $requestObject | ConvertTo-Json -Depth 5
+        $invokeOCRRequestSplat = @{
+            ApiKey      = $ApiKey
+            RequestBody = $requestBody
+        }
+        $apiResponse = Invoke-BridgeOCRRequest @invokeOCRRequestSplat
+        $convertFromOCRResultSplat = @{
+            ApiResponse = $apiResponse
+            ImageUri    = $ImageUri
+        }
+        $result = ConvertFrom-BridgeOCRResult @convertFromOCRResultSplat
+        return $result
+    } catch {
+        $writeBridgeLogSplat = @{
+            Stage   = 'Σφάλμα'
+            Message = "❌ Η αίτηση OCR απέτυχε: $_"
+            Level   = 'Warning'
+        }
+        Write-BridgeLog @writeBridgeLogSplat
+        throw
+    }
+}
