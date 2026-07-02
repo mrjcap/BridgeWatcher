@@ -14,7 +14,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Invoke-BridgeStatusComparison [-PreviousState] <Object[]> [-CurrentState] <Object[]> [-ApiKey] <String>
+Invoke-BridgeStatusComparison [[-PreviousState] <Object[]>] [-CurrentState] <Object[]> [-ApiKey] <String>
  [-PoUserKey] <String> [-PoApiKey] <String> [[-Configuration] <PSObject>] [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
@@ -124,7 +124,7 @@ Type: Object[]
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: 0
 Default value: None
 Accept pipeline input: False
