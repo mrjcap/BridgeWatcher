@@ -69,7 +69,7 @@ Describe 'Test Get-BridgeStatus function' {
         It 'Πρέπει να ρίχνει terminating error όταν η αποθήκευση JSON αποτύχει' {
             Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html></html>' } }
             Mock Get-BridgeStatusFromHtml {
-                return @( [pscustomobject]@{Status = 'Open'; Location = 'Isthmia'} )
+                return @( [pscustomobject]@{ Status = 'Open'; Location = 'Isthmia' } )
             }
             Mock Export-BridgeStatusJson {
                 return New-BridgeResult -Success $false -ErrorMessage "Error during saving" -ErrorCode 'JSON_EXPORT_FAILURE'
