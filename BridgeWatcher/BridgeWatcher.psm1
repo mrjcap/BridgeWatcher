@@ -32,3 +32,5 @@ Set-StrictMode -Version Latest
 
 # Export only public functions
 Export-ModuleMember -Function Get-BridgeStatus, Get-BridgePreviousStatus, Update-BridgeStatus, Invoke-BridgeStatusComparison, Send-BridgePushover, Get-BridgeStatusMonitor
+$script:LogStream = $null
+$script:LogStreamPath = $null

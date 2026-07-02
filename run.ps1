@@ -1,4 +1,4 @@
-﻿$ModulePath = "$PSScriptRoot/modules/BridgeWatcher/BridgeWatcher.psd1"
+$ModulePath = "$PSScriptRoot/modules/BridgeWatcher/BridgeWatcher.psd1"
 if (-not (Test-Path $ModulePath)) {
     $ModulePath = "$PSScriptRoot/BridgeWatcher/BridgeWatcher.psd1"
 }
@@ -11,11 +11,11 @@ $POUSER_KEY = if ($Env:POUSER_KEY) { $Env:POUSER_KEY.Trim() } else { $null }
 if ([string]::IsNullOrWhiteSpace($API_KEY) -and (Test-Path '/run/secrets/API_KEY')) {
     $API_KEY = (Get-Content '/run/secrets/API_KEY' -Raw).Trim()
 }
-if ([string]::IsNullOrWhiteSpace($POAPI_KEY) -and (Test-Path '/run/secrets/POAPI_KEY')) {
-    $POAPI_KEY = (Get-Content '/run/secrets/POAPI_KEY' -Raw).Trim()
+if ([string]::IsNullOrWhiteSpace($POAPI_KEY) -and (Test-Path '/run/secrets/PUSHOVER_TOKEN')) {
+    $POAPI_KEY = (Get-Content '/run/secrets/PUSHOVER_TOKEN' -Raw).Trim()
 }
-if ([string]::IsNullOrWhiteSpace($POUSER_KEY) -and (Test-Path '/run/secrets/POUSER_KEY')) {
-    $POUSER_KEY = (Get-Content '/run/secrets/POUSER_KEY' -Raw).Trim()
+if ([string]::IsNullOrWhiteSpace($POUSER_KEY) -and (Test-Path '/run/secrets/PUSHOVER_USER')) {
+    $POUSER_KEY = (Get-Content '/run/secrets/PUSHOVER_USER' -Raw).Trim()
 }
 
 if (-not $API_KEY -or -not $POAPI_KEY -or -not $POUSER_KEY) {
@@ -25,7 +25,7 @@ if (-not $API_KEY -or -not $POAPI_KEY -or -not $POUSER_KEY) {
 # Χρήση του home directory του user για output
 $OutDir = $Env:BRIDGEWATCHER_OUT
 if ([string]::IsNullOrWhiteSpace($OutDir)) {
-    $OutDir = '/home/appuser/output'
+    $OutDir = '/app/logs'
 }
 
 # Ensure output directory exists
@@ -38,6 +38,7 @@ try {
         IntervalSeconds = 300
         MaxIterations   = 0
         OutputFile      = "$OutDir/bridge_status.json"
+        LogDirectory    = '/app/logs'
         ApiKey          = $API_KEY
         PoApiKey        = $POAPI_KEY
         PoUserKey       = $POUSER_KEY

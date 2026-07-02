@@ -2,7 +2,7 @@
 set -e  # Exit on error
 
 # Validate secrets με πιο descriptive errors
-for secret in API_KEY POAPI_KEY POUSER_KEY; do
+for secret in API_KEY PUSHOVER_TOKEN PUSHOVER_USER; do
   if [ ! -f "/run/secrets/$secret" ]; then
     echo "❌ Error: Secret $secret is missing in /run/secrets/" >&2
     echo "   Please ensure the secret is properly mounted" >&2
@@ -18,8 +18,8 @@ done
 
 # Read and export secrets so they are available in-memory to appuser
 export API_KEY=$(tr -d '\r\n' < /run/secrets/API_KEY | xargs)
-export POAPI_KEY=$(tr -d '\r\n' < /run/secrets/POAPI_KEY | xargs)
-export POUSER_KEY=$(tr -d '\r\n' < /run/secrets/POUSER_KEY | xargs)
+export POAPI_KEY=$(tr -d '\r\n' < /run/secrets/PUSHOVER_TOKEN | xargs)
+export POUSER_KEY=$(tr -d '\r\n' < /run/secrets/PUSHOVER_USER | xargs)
 
 # Change to user directory για write access
 cd /home/appuser/scripts
