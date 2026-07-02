@@ -5,6 +5,13 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.91] - 2026-07-02
+
+### 🐛 Διορθώσεις
+
+- fix: send notification on first run when no previous state exists
+- fix(docker): create /app/logs directory and fix healthcheck path
+
 ## [1.0.90] - 2026-07-02
 
 ### 🐛 Διορθώσεις
@@ -568,6 +575,7 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
+
 
 
 
