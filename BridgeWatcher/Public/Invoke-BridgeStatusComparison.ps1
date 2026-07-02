@@ -40,9 +40,10 @@
     [CmdletBinding()]
     [OutputType([System.Boolean])]
     param (
-        [Parameter(Mandatory)]
+        [Parameter()]
+        [AllowNull()]
         [AllowEmptyCollection()]
-        [object[]]$PreviousState,
+        [object[]]$PreviousState = @(),
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
