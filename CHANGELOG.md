@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.88] - 2026-07-02
+
+### 🐛 Διορθώσεις
+
+- fix: replace orphaned  with  in OCR request headers
+
 ## [1.0.87] - 2026-07-01
 
 ### ♻️ Αναδιαρθρώσεις
@@ -550,4 +556,5 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
+
 
