@@ -135,6 +135,14 @@ Describe 'Get-BridgeStatusMonitor' {
             Assert-MockCalled Update-BridgeStatus -Exactly 1
         }
     }
+
+    Context 'Σφάλμα αρχικοποίησης διαμόρφωσης' {
+        It 'Ρίχνει terminating error όταν η New-BridgeConfiguration αποτυγχάνει' {
+            Mock New-BridgeConfiguration { throw "Configuration error" }
+
+            { Get-BridgeStatusMonitor -OutputFile 'test.json' } | Should -Throw "Η αρχικοποίηση της διαμόρφωσης απέτυχε: Configuration error"
+        }
+    }
 }
 
 

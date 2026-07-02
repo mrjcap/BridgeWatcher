@@ -41,7 +41,7 @@
                 $Configuration = New-BridgeConfiguration
             } catch {
                 $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                    [System.Exception]::new("Η αρχικοποίηση της διαμόρφωσης απέτυχε: $($_.Exception.Message)"),
+                    [System.Exception]::new("Η αρχικοποίηση της διαμόρφωσης απέτυχε: $($_.Exception.Message)", $_.Exception),
                     'CONFIG_ERROR',
                     [System.Management.Automation.ErrorCategory]::InvalidOperation,
                     $null
@@ -61,7 +61,7 @@
                 if ($i -eq $maxRetries) {
                     Write-BridgeLog -Stage 'Σφάλμα' -Message "❌ Σφάλμα κατά την ανάκτηση: $($_.Exception.Message)" -Level 'Warning'
                     $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                        [System.Exception]::new($_.Exception.Message),
+                        [System.Exception]::new($_.Exception.Message, $_.Exception),
                         'HTTP_ERROR',
                         [System.Management.Automation.ErrorCategory]::ConnectionError,
                         $null
@@ -83,7 +83,7 @@
         } catch {
             Write-BridgeLog -Stage 'Σφάλμα' -Message "❌ Σφάλμα κατά την ανάλυση HTML: $($_.Exception.Message)" -Level 'Warning'
             $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                [System.Exception]::new($_.Exception.Message),
+                [System.Exception]::new($_.Exception.Message, $_.Exception),
                 'PARSING_ERROR',
                 [System.Management.Automation.ErrorCategory]::ParserError,
                 $null
@@ -94,7 +94,7 @@
             $exportResult = Export-BridgeStatusJson -Data $bridgeStatuses -Path $OutputFile
             if (-not $exportResult.Success) {
                 $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                        [System.Exception]::new($exportResult.ErrorMessage),
+                        [System.Exception]::new($exportResult.ErrorMessage, $_.Exception),
                         $exportResult.ErrorCode,
                         [System.Management.Automation.ErrorCategory]::WriteError,
                         $OutputFile
@@ -102,6 +102,6 @@
             }
         }
         # Return the actual data for backward compatibility
-        return $bridgeStatuses
+        $bridgeStatuses
     }
 }
