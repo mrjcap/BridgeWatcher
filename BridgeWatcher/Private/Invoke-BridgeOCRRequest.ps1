@@ -1,4 +1,4 @@
-﻿function Invoke-BridgeOCRRequest {
+function Invoke-BridgeOCRRequest {
     <#
     .SYNOPSIS
     Αποστέλλει OCR αίτημα σε υπηρεσία.
@@ -55,7 +55,7 @@
             Method      = 'Post'
             Body        = $RequestBody
             ContentType = 'application/json'
-            Headers     = @{ 'X-Goog-Api-Key' = $plainApiKey }
+            Headers     = @{ 'X-Goog-Api-Key' = $ApiKey }
             ErrorAction = 'Stop'
         }
         $writeBridgeLogSplat = @{
