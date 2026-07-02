@@ -1,4 +1,4 @@
-﻿@{
+@{
     Run          = @{
         Path          = './Tests'
         Parameters    = @{
@@ -11,7 +11,7 @@
     }
     Filter       = @{
         Tag        = @()
-        ExcludeTag = @()
+        ExcludeTag = @('Integration')
     }
     CodeCoverage = @{
         Enabled               = $true

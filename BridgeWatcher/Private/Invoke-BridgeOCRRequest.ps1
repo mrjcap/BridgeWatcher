@@ -1,4 +1,4 @@
-function Invoke-BridgeOCRRequest {
+﻿function Invoke-BridgeOCRRequest {
     <#
     .SYNOPSIS
     Αποστέλλει OCR αίτημα σε υπηρεσία.
