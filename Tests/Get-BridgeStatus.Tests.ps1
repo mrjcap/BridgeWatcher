@@ -159,7 +159,7 @@ Describe 'Get-BridgeStatus Configuration Fallbacks' {
     It 'Χρησιμοποιεί σωστό configuration όταν περνιέται ρητά' {
         Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html>test</html>' } }
         Mock Get-BridgeStatusFromHtml {
-            return @( [pscustomobject]@{Status = 'Open'; Location = 'Isthmia'} )
+            return @( [pscustomobject]@{ Status = 'Open'; Location = 'Isthmia' } )
         }
         Mock Export-BridgeStatusJson {
             return New-BridgeResult -Success $true
