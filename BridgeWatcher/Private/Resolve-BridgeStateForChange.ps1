@@ -31,7 +31,10 @@
     [OutputType([object[]])]
     param(
         [Parameter(Mandatory)]$Change,
-        [Parameter(Mandatory)][object[]]$PreviousState,
+        [Parameter()]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [object[]]$PreviousState = @(),
         [Parameter(Mandatory)][object[]]$CurrentState
     )
 
