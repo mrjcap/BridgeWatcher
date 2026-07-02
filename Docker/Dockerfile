@@ -41,9 +41,10 @@ RUN mkdir -p /home/appuser/scripts/modules \
             /home/appuser/logs \
             /home/appuser/output \
             /home/appuser/.cache \
-            /home/appuser/.local && \
-    chown -R ${PUID}:${PGID} /home/appuser && \
-    chmod -R 755 /home/appuser
+            /home/appuser/.local \
+            /app/logs && \
+    chown -R ${PUID}:${PGID} /home/appuser /app/logs && \
+    chmod -R 755 /home/appuser /app/logs
 
 RUN mkdir -p /tmp && chmod 1777 /tmp
 
@@ -59,4 +60,4 @@ EXPOSE 8090
 ENTRYPOINT ["sh", "./entrypoint.sh"]
 
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD pwsh -Command "if (Test-Path '/home/appuser/output/bridge_status.json' -NewerThan (Get-Date).AddMinutes(-10)) { exit 0 } else { exit 1 }"
+    CMD pwsh -Command "if (Test-Path '/app/logs/bridge_status.json' -NewerThan (Get-Date).AddMinutes(-10)) { exit 0 } else { exit 1 }"
