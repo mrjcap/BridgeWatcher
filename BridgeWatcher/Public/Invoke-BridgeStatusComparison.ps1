@@ -41,7 +41,7 @@
     [OutputType([System.Boolean])]
     param (
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [AllowEmptyCollection()]
         [object[]]$PreviousState,
 
         [Parameter(Mandatory)]
@@ -66,13 +66,24 @@
             $Configuration = New-BridgeConfiguration
         }
 
-        $compareSplat = @{
-            ReferenceObject  = $PreviousState
-            DifferenceObject = $CurrentState
-            Property         = 'gefyraName', 'gefyraStatus'
-            IncludeEqual     = $true
+        if (-not $PreviousState -or $PreviousState.Count -eq 0) {
+            # Πρώτη εκτέλεση: όλες οι γέφυρες είναι νέες (=>)
+            $diff = $CurrentState | ForEach-Object {
+                [PSCustomObject]@{
+                    gefyraName    = $_.gefyraName
+                    gefyraStatus  = $_.gefyraStatus
+                    SideIndicator = '=>'
+                }
+            }
+        } else {
+            $compareSplat = @{
+                ReferenceObject  = $PreviousState
+                DifferenceObject = $CurrentState
+                Property         = 'gefyraName', 'gefyraStatus'
+                IncludeEqual     = $true
+            }
+            $diff = Compare-Object @compareSplat
         }
-        $diff = Compare-Object @compareSplat
         if (-not $diff) {
             $writeBridgeLogSplat = @{
                 Level   = 'Verbose'
