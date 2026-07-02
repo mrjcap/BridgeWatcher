@@ -138,6 +138,7 @@ jobs:
           CODACY_USERNAME: mrjcap
           CODACY_PROJECT_NAME: BridgeWatcher
         run: |
-          sed -i 's|sourcefilename="Private/|sourcefilename="|g' coverage.xml
-          sed -i 's|sourcefilename="Public/|sourcefilename="|g' coverage.xml
+          sed -i 's|package name="BridgeWatcher/Private"|package name="BridgeWatcher"|g' coverage.xml
+          sed -i 's|package name="BridgeWatcher/Public"|package name="BridgeWatcher"|g' coverage.xml
+          sed -i 's|package name="BridgeWatcher/Classes"|package name="BridgeWatcher"|g' coverage.xml
           bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
