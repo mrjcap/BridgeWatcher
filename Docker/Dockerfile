@@ -28,6 +28,7 @@ RUN apk update && \
     rm -rf /var/cache/apk/*
 
 ENV TZ=Europe/Athens
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 # Smart user creation - reuse 'users' group for GID 100
 RUN if [ "${PGID}" = "100" ]; then \
