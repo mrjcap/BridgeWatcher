@@ -89,49 +89,55 @@ jobs:
         run: |
           echo "Testing Docker image functionality..."
 
-          # Create test secrets directory
+          # Create test secrets directory with correct names
           mkdir -p test-secrets
           echo "test-api-key" > test-secrets/API_KEY
-          echo "test-po-api-key" > test-secrets/POAPI_KEY
-          echo "test-po-user-key" > test-secrets/POUSER_KEY
+          echo "test-po-api-key" > test-secrets/PUSHOVER_TOKEN
+          echo "test-po-user-key" > test-secrets/PUSHOVER_USER
 
           # Get the built image tag
           IMAGE_TAG="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}:$VERSION"
 
           # Test container startup and basic functionality
           echo "Starting container for testing..."
-          docker run --rm -d \
+          CONTAINER_ID=$(docker run -d \
             --name bridgewatcher-test \
             --health-interval=30s \
             --health-timeout=10s \
             --health-retries=3 \
             -v $(pwd)/test-secrets:/run/secrets:ro \
-            "$IMAGE_TAG" &
+            "$IMAGE_TAG") || {
+            echo "Failed to start container"
+            exit 1
+          }
+          echo "Container started: $CONTAINER_ID"
 
           # Wait for container to start
           sleep 10
 
-          # Check if container is running
-          if ! docker ps | grep bridgewatcher-test; then
-            echo " Container failed to start"
-            docker logs bridgewatcher-test 2>&1 || true
+          # Check if container is running (use ID, not name)
+          if [ -z "$(docker ps -q -f id=$CONTAINER_ID)" ]; then
+            echo "Container not running. Dumping logs and status:"
+            docker logs "$CONTAINER_ID" 2>&1 || true
+            docker ps -a --filter "id=$CONTAINER_ID" --format '{{.ID}} {{.Status}} {{.Names}}' || true
             exit 1
           fi
 
-          echo " Container started successfully"
+          echo "Container started successfully"
 
           # Check container health (if healthcheck is defined)
-          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bridgewatcher-test 2>/dev/null || echo "none")
+          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
           echo "Container health status: $HEALTH_STATUS"
 
           # Test basic functionality
           echo "Testing basic module functionality..."
-          docker exec bridgewatcher-test pwsh -Command "Get-Module BridgeWatcher -ListAvailable" || {
-            echo " BridgeWatcher module not found"
+          docker exec "$CONTAINER_ID" pwsh -Command "Get-Module BridgeWatcher -ListAvailable" || {
+            echo "BridgeWatcher module not found. Container logs:"
+            docker logs "$CONTAINER_ID" 2>&1 || true
             exit 1
           }
 
-          echo " Basic functionality test passed"
+          echo "Basic functionality test passed"
 
       - name: Scan Docker image for vulnerabilities
         uses: aquasecurity/trivy-action@4b9b6fb4ef28b31450391a93ade098bb00de584e
@@ -140,9 +146,20 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
 
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@f0f3afee809481da311ca3a6ff1ff51d81dbeb24
+      - name: Check Trivy SARIF exists
+        id: trivy_sarif_check
         if: always()
+        run: |
+          if [ -f trivy-results.sarif ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "trivy-results.sarif not found; skipping SARIF upload"
+          fi
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && steps.trivy_sarif_check.outputs.exists == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
 
