@@ -14,7 +14,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-BridgeStatusMonitor [[-MaxIterations] <Int32>] [[-IntervalSeconds] <Int32>] [[-OutputFile] <String>]
+Get-BridgeStatusMonitor [[-MaxIterations] <Int32>] [[-IntervalSeconds] <Int32>] [-OutputFile] <String>
  [[-ApiKey] <String>] [[-PoUserKey] <String>] [[-PoApiKey] <String>] [[-Configuration] <PSObject>]
  [[-Action] <ScriptBlock>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
@@ -78,7 +78,7 @@ Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: 3
 Default value: None
 Accept pipeline input: False
