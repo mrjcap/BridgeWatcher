@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.89] - 2026-07-02
+
+### 🐛 Διορθώσεις
+
+- fix: resolve PSScriptAnalyzer violations for UTF8-BOM and trailing whitespaces
+
 ## [1.0.88] - 2026-07-02
 
 ### 🐛 Διορθώσεις
@@ -556,5 +562,6 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
+
 
 
