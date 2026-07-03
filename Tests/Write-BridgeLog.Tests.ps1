@@ -76,6 +76,7 @@ Describe 'Write-BridgeLog' {
         It 'Κάνει catch το σφάλμα και εκτυπώνει Verbose' {
             function Get-PSCallStack {
                 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSProvideCommentHelp', '')]
                 param()
                 return @()
             }
@@ -109,6 +110,7 @@ Describe 'Write-BridgeLog' {
         It 'Γράφει σε αρχείο χρησιμοποιώντας StreamWriter' {
             function Get-PSCallStack {
                 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSProvideCommentHelp', '')]
                 param()
                 return @()
             }
