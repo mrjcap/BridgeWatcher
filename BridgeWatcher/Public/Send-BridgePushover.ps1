@@ -50,8 +50,8 @@
     [CmdletBinding()]
     [OutputType([void])]
     param (
-        [Parameter(Mandatory)][string]$PoUserKey,
-        [Parameter(Mandatory)][string]$PoApiKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [ValidateNotNullOrEmpty()][string]$Device,
         [ValidateNotNullOrEmpty()][string]$Title,
@@ -90,12 +90,12 @@
         Write-BridgeLog @writeBridgeLogSplat
 
         $PSCmdlet.ThrowTerminatingError(
-            [System.Management.Automation.ErrorRecord]::new(
-                ([System.Exception]::new("Αποτυχία αποστολής Pushover: $($_.Exception.Message)")),
-                'PushoverSendError',
-                [System.Management.Automation.ErrorCategory]::ConnectionError,
-                $Message
-            )
-        )
+             [System.Management.Automation.ErrorRecord]::new(
+                 ([System.Exception]::new("Αποτυχία αποστολής Pushover: $($_.Exception.Message)", $_.Exception)),
+                 'PushoverSendError',
+                 [System.Management.Automation.ErrorCategory]::ConnectionError,
+                 $Message
+             )
+         )
     }
 }
