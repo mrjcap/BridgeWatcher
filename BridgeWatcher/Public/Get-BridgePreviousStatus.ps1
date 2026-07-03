@@ -58,7 +58,14 @@
             $convertFromJsonSplat = @{
                 Depth = $JsonDepth
             }
-            return Get-Content @getContentSplat | ConvertFrom-Json @convertFromJsonSplat
+            $results = Get-Content @getContentSplat | ConvertFrom-Json @convertFromJsonSplat
+            # Backfill ImageHash for state files saved before this property existed
+            foreach ($item in @($results)) {
+                if (-not ($item.PSObject.Properties.Name -contains 'ImageHash')) {
+                    $item | Add-Member -MemberType NoteProperty -Name 'ImageHash' -Value $null
+                }
+            }
+            return $results
         } catch {
             $writeBridgeLogSplat = @{
                 Stage   = $Configuration.LoggingConfig.ErrorStage

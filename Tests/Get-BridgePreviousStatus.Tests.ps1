@@ -37,4 +37,18 @@ Describe 'Get-BridgePreviousStatus' {
         '💩 not valid json' | Set-Content -Path $badFile -Encoding UTF8
         { Get-BridgePreviousStatus -InputFile $badFile } | Should -Throw
     }
+    It 'Backfills ImageHash as $null when property is missing from old state files' {
+        $legacyData = @(
+            @{
+                gefyraName   = 'Ποσειδωνία'
+                gefyraStatus = 'Ανοιχτή'
+                ImageUrl     = 'https://example.com/img.png'
+            }
+        )
+        $jsonPath = "TestDrive:\legacy_no_hash.json"
+        $legacyData | ConvertTo-Json -Depth 3 | Set-Content -Path $jsonPath -Encoding UTF8
+        $result = Get-BridgePreviousStatus -InputFile $jsonPath
+        $result.ImageHash | Should -BeNullOrEmpty
+        $result.PSObject.Properties.Name | Should -Contain 'ImageHash'
+    }
 }
