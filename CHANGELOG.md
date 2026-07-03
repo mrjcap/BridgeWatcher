@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.96] - 2026-07-03
+
+### 🐛 Διορθώσεις
+
+- fix: compare ImageUrl in status comparison to detect scheduled closure updates
+
 ## [1.0.93] - 2026-07-02
 
 ### 🐛 Διορθώσεις
@@ -581,6 +587,7 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
+
 
 
 
