@@ -20,7 +20,7 @@ Update-BridgeStatus [-OutputFile] <String> [-ApiKey] <String> [-PoUserKey] <Stri
 
 ## DESCRIPTION
 
-Η Get-BridgeStatusComparison συγκρίνει δύο snapshots γεφυρών
+Η Update-BridgeStatus συγκρίνει δύο snapshots γεφυρών
 και ανιχνεύει αλλαγές κατάστασης.
 
 ## EXAMPLES
@@ -28,7 +28,7 @@ Update-BridgeStatus [-OutputFile] <String> [-ApiKey] <String> [-PoUserKey] <Stri
 ### EXAMPLE 1
 
 ```
-Get-BridgeStatusComparison -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123'
+Update-BridgeStatus -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123'
 ```
 
 ## PARAMETERS
@@ -99,7 +99,8 @@ Accept wildcard characters: False
 
 ### -Configuration
 
-{{ Fill Configuration Description }}
+(Προαιρετικό) Αντικείμενο διαμόρφωσης.
+Αν δεν παρέχεται, δημιουργείται αυτόματα.
 
 ```yaml
 Type: PSObject

@@ -35,6 +35,16 @@ periodically fetching and analyzing the status and storing results.
 Get-BridgeStatusMonitor -MaxIterations 100 -IntervalSeconds 60 -OutputFile 'C:\Logs\bridge.json' -ApiKey 'api123' -PoUserKey 'user123' -PoApiKey 'token123'
 ```
 
+### EXAMPLE 2
+
+```
+Get-BridgeStatusMonitor -OutputFile 'C:\Logs\bridge.json' -Action {
+    param($splat)
+    Write-Host "Custom monitoring action running for $($splat.OutputFile)"
+    Update-BridgeStatus @splat
+}
+```
+
 ## PARAMETERS
 
 ### -MaxIterations
@@ -135,7 +145,8 @@ Accept wildcard characters: False
 
 ### -Configuration
 
-{{ Fill Configuration Description }}
+(Προαιρετικό) Αντικείμενο διαμόρφωσης.
+Αν δεν παρέχεται, δημιουργείται αυτόματα.
 
 ```yaml
 Type: PSObject
@@ -151,7 +162,7 @@ Accept wildcard characters: False
 
 ### -Action
 
-{{ Fill Action Description }}
+(Προαιρετικό) Scriptblock που εκτελείται κατά τη διάρκεια του monitoring αντί για την προεπιλεγμένη Update-BridgeStatus.
 
 ```yaml
 Type: ScriptBlock

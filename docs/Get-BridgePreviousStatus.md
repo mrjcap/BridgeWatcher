@@ -73,7 +73,8 @@ Accept wildcard characters: False
 
 ### -Configuration
 
-{{ Fill Configuration Description }}
+(Προαιρετικό) Αντικείμενο διαμόρφωσης.
+Αν δεν παρέχεται, δημιουργείται αυτόματα.
 
 ```yaml
 Type: PSObject
