@@ -967,7 +967,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
             $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
-            
+
             # Current state failed to download/hash image, so ImageHash is null
             $copy = $base.Clone()
             $copy.ImageHash = $null
