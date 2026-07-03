@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.99] - 2026-07-03
+
+### 🐛 Διορθώσεις
+
+- fix: send fallback Pushover notifications when Google Cloud Vision OCR fails
+
 ## [1.0.98] - 2026-07-03
 
 ### 🐛 Διορθώσεις
@@ -599,6 +605,7 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
+
 
 
 
