@@ -22,6 +22,9 @@
     .PARAMETER PoApiKey
     Το API Token για Pushover ειδοποίηση.
 
+    .PARAMETER Configuration
+    (Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
+
     .OUTPUTS
     [System.Boolean]
 
