@@ -1,4 +1,4 @@
-﻿function Get-BridgeNameFromUri {
+﻿function Get-BridgeNameFromUri {
     <#
     .SYNOPSIS
     Αναγνωρίζει το όνομα γέφυρας από URI εικόνας.
@@ -22,25 +22,26 @@
     .NOTES
     Χρησιμοποιεί regex χωρίς διάκριση πεζών-κεφαλαίων για την αναγνώριση του ονόματος.
     Επιστρέφει 'Άγνωστη' αν η γέφυρα δεν αναγνωριστεί.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param (
-        [Parameter(Mandatory)]
-        [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
-        [string]$ImageUri
-    )
-    switch -Regex ($ImageUri.ToLowerInvariant()) {
-        'isthmia' { return 'Ισθμία' }
-        'posidonia' { return 'Ποσειδωνία' }
-        default {
-            $writeBridgeLogSplat = @{
-                Stage   = 'Ανάλυση'
-                Message = "⚠️ Δεν αναγνωρίστηκε η γέφυρα στο URI: $ImageUri"
-            }
-            Write-BridgeLog @writeBridgeLogSplat
-            return 'Άγνωστη'
-        }
-    }
-}
-
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
+        [ValidateNotNullOrEmpty()]
+        [string]$ImageUri
+    )
+    switch -Regex ($ImageUri.ToLowerInvariant()) {
+        'isthmia' { return 'Ισθμία' }
+        'posidonia' { return 'Ποσειδωνία' }
+        default {
+            $writeBridgeLogSplat = @{
+                Stage   = 'Ανάλυση'
+                Message = "⚠️ Δεν αναγνωρίστηκε η γέφυρα στο URI: $ImageUri"
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+            return 'Άγνωστη'
+        }
+    }
+}
+
