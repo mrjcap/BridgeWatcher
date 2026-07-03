@@ -79,14 +79,26 @@
                     gefyraName    = $_.gefyraName
                     gefyraStatus  = $_.gefyraStatus
                     ImageUrl      = $_.ImageUrl
+                    ImageHash     = $_.ImageHash
                     SideIndicator = '=>'
                 }
             }
         } else {
+            # Use ImageHash if it is present on any ClosedWithSchedule states, otherwise fall back to ImageUrl
+            $hasPreviousHash = $PreviousState | Where-Object { $_.gefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
+            $hasCurrentHash = $CurrentState | Where-Object { $_.gefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
+
+            $compareProperty = @('gefyraName', 'gefyraStatus')
+            if ($hasPreviousHash -and $hasCurrentHash) {
+                $compareProperty += 'ImageHash'
+            } else {
+                $compareProperty += 'ImageUrl'
+            }
+
             $compareSplat = @{
                 ReferenceObject  = $PreviousState
                 DifferenceObject = $CurrentState
-                Property         = 'gefyraName', 'gefyraStatus', 'ImageUrl'
+                Property         = $compareProperty
                 IncludeEqual     = $true
             }
             $diff = Compare-Object @compareSplat
@@ -147,6 +159,18 @@
                     Write-BridgeLog @writeBridgeLogSplat
                     continue
                 } else {
+                    $currentBridge = @($CurrentState) | Where-Object { $_.gefyraName -eq $change.gefyraName } | Select-Object -First 1
+                    if ($currentBridge -and [string]::IsNullOrEmpty($currentBridge.ImageHash) -and -not [string]::IsNullOrEmpty($prevBridge.ImageHash)) {
+                        $currentBridge.ImageHash = $prevBridge.ImageHash
+                        $writeBridgeLogSplat = @{
+                            Level   = 'Verbose'
+                            Stage   = 'Ανάλυση'
+                            Message = "Αποτυχία λήψης νέου hash. Επαναχρησιμοποίηση προηγούμενου hash για την $($change.gefyraName)."
+                        }
+                        Write-BridgeLog @writeBridgeLogSplat
+                        continue
+                    }
+
                     $writeBridgeLogSplat = @{
                         Level   = 'Verbose'
                         Stage   = 'Ανάλυση'

@@ -56,11 +56,35 @@
     if (-not $BaseUrl) {
         $BaseUrl = $Configuration.Urls.BaseImage
     }
+    $ImageUrl = if ($ImageSrc -match '^https?://') { $ImageSrc } else { "$($BaseUrl.TrimEnd('/'))/$ImageSrc" }
+
+    $ImageHash = $null
+    if ($Status -eq $Configuration.Statuses.ClosedWithSchedule) {
+        try {
+            $response = Invoke-WebRequest -Uri $ImageUrl -UseBasicParsing -ErrorAction Stop
+            if ($response -and $response.Content) {
+                $hashStream = [System.IO.MemoryStream]::new($response.Content)
+                $md5 = [System.Security.Cryptography.MD5]::Create()
+                $hashBytes = $md5.ComputeHash($hashStream)
+                $hashStream.Close()
+                $ImageHash = [System.BitConverter]::ToString($hashBytes) -replace '-'
+            }
+        } catch {
+            $writeBridgeLogSplat = @{
+                Stage   = 'Σφάλμα'
+                Message = "❌ Αποτυχία λήψης/hashing εικόνας για $ImageUrl`: $($_.Exception.Message)"
+                Level   = 'Warning'
+            }
+            Write-BridgeLog @writeBridgeLogSplat
+        }
+    }
+
     return [pscustomobject]@{
         PSTypeName   = 'Bridge.Status'
         GefyraName   = $Configuration.BridgeNames[$Location]
         GefyraStatus = $Status
         Timestamp    = $Timestamp
-        ImageUrl     = if ($ImageSrc -match '^https?://') { $ImageSrc } else { "$($BaseUrl.TrimEnd('/'))/$ImageSrc" }
+        ImageUrl     = $ImageUrl
+        ImageHash    = $ImageHash
     }
 }

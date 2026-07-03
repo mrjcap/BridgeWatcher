@@ -925,5 +925,65 @@ Describe 'Invoke-BridgeStatusComparison' {
 
     }
 
+    Context 'ImageHash Comparison' {
+        It 'Στέλνει ειδοποίηση όταν αλλάζει το ImageHash στην Κλειστή με πρόγραμμα' {
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
+
+            $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
+            $copy = $base.Clone()
+            $copy.ImageHash = 'hashB'
+
+            $params = $defaultParams + @{
+                PreviousState = @($base)
+                CurrentState  = @($copy)
+            }
+
+            Invoke-BridgeStatusComparison @params
+
+            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 1
+        }
+
+        It 'Δεν στέλνει ειδοποίηση όταν το ImageHash είναι ίδιο στην Κλειστή με πρόγραμμα' {
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
+
+            $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
+            $copy = $base.Clone()
+            $copy.imageUrl = 'img1_different_query.jpg' # URL changed (query) but hash did not
+
+            $params = $defaultParams + @{
+                PreviousState = @($base)
+                CurrentState  = @($copy)
+            }
+
+            Invoke-BridgeStatusComparison @params
+
+            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
+        }
+
+        It 'Επαναχρησιμοποιεί το προηγούμενο ImageHash αν το νέο είναι κενό/σφάλμα' {
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
+
+            $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
+            
+            # Current state failed to download/hash image, so ImageHash is null
+            $copy = $base.Clone()
+            $copy.ImageHash = $null
+            $copy.imageUrl = 'img1_failed.jpg'
+
+            $params = $defaultParams + @{
+                PreviousState = @($base)
+                CurrentState  = @($copy)
+            }
+
+            Invoke-BridgeStatusComparison @params
+
+            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
+            $copy.ImageHash | Should -Be 'hashA' # check that previous hash was copied back
+        }
+    }
+
 }
 

@@ -46,4 +46,28 @@ Describe 'Get-BridgeStatusObject' {
             $obj.imageUrl | Should -Be 'https://custom.com/test.jpg'
         }
     }
+
+    Context 'ClosedWithSchedule Hashing' {
+        It 'Υπολογίζει το ImageHash όταν η κατάσταση είναι Κλειστή με πρόγραμμα' {
+            $config = New-BridgeConfiguration
+            $contentBytes = [System.Text.Encoding]::UTF8.GetBytes("fake image content")
+            Mock Invoke-WebRequest {
+                return [pscustomobject]@{ Content = $contentBytes }
+            }
+            $obj = Get-BridgeStatusObject -Location 'isthmia' -Status $config.Statuses.ClosedWithSchedule `
+                -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'schedule.php' -Configuration $config
+            $obj.ImageHash | Should -Not -BeNullOrEmpty
+            $obj.ImageHash | Should -Be '50E7825D3A7F7EF39C0D330A69E9AC35'
+        }
+
+        It 'Θέτει το ImageHash σε $null και καταγράφει προειδοποίηση όταν η λήψη αποτυγχάνει' {
+            $config = New-BridgeConfiguration
+            Mock Invoke-WebRequest { throw "Connection timeout" }
+            Mock Write-BridgeLog { }
+            $obj = Get-BridgeStatusObject -Location 'isthmia' -Status $config.Statuses.ClosedWithSchedule `
+                -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'schedule.php' -Configuration $config
+            $obj.ImageHash | Should -BeNullOrEmpty
+            Assert-MockCalled Write-BridgeLog -Times 1 -ParameterFilter { $Stage -eq 'Σφάλμα' -and $Level -eq 'Warning' }
+        }
+    }
 }
