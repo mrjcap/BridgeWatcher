@@ -5,6 +5,12 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.97] - 2026-07-03
+
+### 🐛 Διορθώσεις
+
+- fix: use image content hashing to deduplicate schedule updates
+
 ## [1.0.96] - 2026-07-03
 
 ### 🐛 Διορθώσεις
@@ -587,6 +593,7 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
+
 
 
 
