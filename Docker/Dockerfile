@@ -10,6 +10,7 @@ RUN apk update && \
         ca-certificates=20260611-r0 \
         curl=8.19.0-r0 \
         icu-libs=76.1-r1 \
+        icu-data-full=76.1-r1 \
         krb5-libs=1.22.1-r0 \
         libgcc=15.2.0-r2 \
         libintl=0.24.1-r1 \
@@ -29,6 +30,8 @@ RUN apk update && \
 
 ENV TZ=Europe/Athens
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
 
 # Smart user creation - reuse 'users' group for GID 100
 RUN if [ "${PGID}" = "100" ]; then \
