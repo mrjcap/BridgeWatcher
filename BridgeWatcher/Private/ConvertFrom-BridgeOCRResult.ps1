@@ -1,4 +1,4 @@
-﻿function ConvertFrom-BridgeOCRResult {
+﻿function ConvertFrom-BridgeOCRResult {
     <#
     .SYNOPSIS
     Μετατρέπει το αποτέλεσμα OCR ανάλυσης σε αντικείμενα γέφυρας.
@@ -21,98 +21,99 @@
 
     .NOTES
     Χρησιμοποιείται για την ανάλυση των αποκρίσεων OCR και την εξαγωγή της κατάστασης της γέφυρας.
-    #>
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory)]
-        [ValidateScript({
-                $null -ne $_ -and
-                $null -ne $_.responses -and
-                $_.responses.Count -gt 0 -and
-                $null -ne $_.responses[0] -and
-                $null -ne $_.responses[0].textAnnotations
-            })]
-        [PSCustomObject]$ApiResponse,
-
-        [Parameter(Mandatory)]
-        [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
-        [string]$ImageUri
-    )
-
-    # Ασφαλής πρόσβαση ιδιοτήτων με επικύρωση (έχει ήδη επικυρωθεί στην παράμετρο)
-    $textAnnotations = $ApiResponse.responses[0].textAnnotations
-    $ocrText = $textAnnotations[0].description
-
-    $writeBridgeLogSplat = @{
-        Stage   = 'Ανάλυση'
-        Message = "Απόκριση OCR API: $ocrText"
-    }
-    Write-BridgeLog @writeBridgeLogSplat
-
-    # Πρόσθετη επικύρωση για κενό κείμενο OCR
-    if ([string]::IsNullOrWhiteSpace($ocrText)) {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = 'Δεν κατέστη δυνατή η ανάλυση του κειμένου.'
-            Level   = 'Warning'
-        }
-        Write-BridgeLog @writeBridgeLogSplat
-        throw [System.Management.Automation.ErrorRecord]::new(([System.Exception]::new('Δεν βρέθηκε κείμενο OCR στην απόκριση.')), 'OCRTextNotFound', [System.Management.Automation.ErrorCategory]::InvalidData, $ApiResponse)
-    }
-
-    # Χρήση του ήδη εξαχθέντος ασφαλούς κειμένου
-    $rawText = $ocrText
-    $Lines = $rawText
-
-    $getBridgeNameFromUriSplat = @{
-        ImageUri = $ImageUri
-    }
-    $bridgeName = Get-BridgeNameFromUri @getBridgeNameFromUriSplat
-
-    $convertToBridgeTimeRangeSplat = @{
-        Lines = $Lines
-    }
-    $timeRange = ConvertTo-BridgeTimeRange @convertToBridgeTimeRangeSplat
-    $writeBridgeLogSplat = @{
-        Stage   = 'Ανάλυση'
-        Message = "OCR ➤ Επιτυχής ανάλυση χρονικού εύρους: Από = $($timeRange.From), Έως = $($timeRange.To), ΚλειστήΓια = $($timeRange.ClosedFor)"
-    }
-    Write-BridgeLog @writeBridgeLogSplat
-    if (-not $timeRange) {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = 'Δεν κατέστη δυνατή η ανάλυση χρονικού διαστήματος.'
-            Level   = 'Warning'
-        }
-        Write-BridgeLog @writeBridgeLogSplat
-        return
-    }
-
-    $from = $timeRange.From
-    $to = $timeRange.To
-    $duration = $timeRange.ClosedFor
-    $minutesLeft = [int]($to - (Get-Date)).TotalMinutes
-    $formatBridgeClosedDurationSplat = @{
-        Duration = $duration
-    }
-    $getBridgeStatusAdviceSplat = @{
-        MinutesUntilOpen = $minutesLeft
-    }
-    $closedForText = ConvertTo-BridgeClosedDuration @formatBridgeClosedDurationSplat
-    $advice = Get-BridgeStatusAdvice @getBridgeStatusAdviceSplat
-    $advice2 = if ($from -gt (Get-Date)) {
-        "Η γέφυρα θα κλείσει στις $($from.ToString('HH:mm')) για $closedForText."
-    } else {
-        "Η γέφυρα είναι ήδη κλειστή από τις $($from.ToString('HH:mm'))."
-    }
-    return [PSCustomObject]@{
-        'Γέφυρα'      = $bridgeName
-        'Από'         = $from.ToString('dd/MM/yyyy HH:mm')
-        'Έως'         = $to.ToString('dd/MM/yyyy HH:mm')
-        'Κλειστή για' = $closedForText
-        'Ανοίγει σε'  = "$minutesLeft λεπτά"
-        'Σημείωση 1'  = $advice
-        'Σημείωση 2'  = $advice2
-    }
-}
-
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateScript({
+                $null -ne $_ -and
+                $null -ne $_.responses -and
+                $_.responses.Count -gt 0 -and
+                $null -ne $_.responses[0] -and
+                $null -ne $_.responses[0].textAnnotations
+            })]
+        [PSCustomObject]$ApiResponse,
+
+        [Parameter(Mandatory)]
+        [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
+        [ValidateNotNullOrEmpty()]
+        [string]$ImageUri
+    )
+
+    # Ασφαλής πρόσβαση ιδιοτήτων με επικύρωση (έχει ήδη επικυρωθεί στην παράμετρο)
+    $textAnnotations = $ApiResponse.responses[0].textAnnotations
+    $ocrText = $textAnnotations[0].description
+
+    $writeBridgeLogSplat = @{
+        Stage   = 'Ανάλυση'
+        Message = "Απόκριση OCR API: $ocrText"
+    }
+    Write-BridgeLog @writeBridgeLogSplat
+
+    # Πρόσθετη επικύρωση για κενό κείμενο OCR
+    if ([string]::IsNullOrWhiteSpace($ocrText)) {
+        $writeBridgeLogSplat = @{
+            Stage   = 'Σφάλμα'
+            Message = 'Δεν κατέστη δυνατή η ανάλυση του κειμένου.'
+            Level   = 'Warning'
+        }
+        Write-BridgeLog @writeBridgeLogSplat
+        throw [System.Management.Automation.ErrorRecord]::new(([System.Exception]::new('Δεν βρέθηκε κείμενο OCR στην απόκριση.')), 'OCRTextNotFound', [System.Management.Automation.ErrorCategory]::InvalidData, $ApiResponse)
+    }
+
+    # Χρήση του ήδη εξαχθέντος ασφαλούς κειμένου
+    $rawText = $ocrText
+    $Lines = $rawText
+
+    $getBridgeNameFromUriSplat = @{
+        ImageUri = $ImageUri
+    }
+    $bridgeName = Get-BridgeNameFromUri @getBridgeNameFromUriSplat
+
+    $convertToBridgeTimeRangeSplat = @{
+        Lines = $Lines
+    }
+    $timeRange = ConvertTo-BridgeTimeRange @convertToBridgeTimeRangeSplat
+    $writeBridgeLogSplat = @{
+        Stage   = 'Ανάλυση'
+        Message = "OCR ➤ Επιτυχής ανάλυση χρονικού εύρους: Από = $($timeRange.From), Έως = $($timeRange.To), ΚλειστήΓια = $($timeRange.ClosedFor)"
+    }
+    Write-BridgeLog @writeBridgeLogSplat
+    if (-not $timeRange) {
+        $writeBridgeLogSplat = @{
+            Stage   = 'Σφάλμα'
+            Message = 'Δεν κατέστη δυνατή η ανάλυση χρονικού διαστήματος.'
+            Level   = 'Warning'
+        }
+        Write-BridgeLog @writeBridgeLogSplat
+        return
+    }
+
+    $from = $timeRange.From
+    $to = $timeRange.To
+    $duration = $timeRange.ClosedFor
+    $minutesLeft = [int]($to - (Get-Date)).TotalMinutes
+    $formatBridgeClosedDurationSplat = @{
+        Duration = $duration
+    }
+    $getBridgeStatusAdviceSplat = @{
+        MinutesUntilOpen = $minutesLeft
+    }
+    $closedForText = ConvertTo-BridgeClosedDuration @formatBridgeClosedDurationSplat
+    $advice = Get-BridgeStatusAdvice @getBridgeStatusAdviceSplat
+    $advice2 = if ($from -gt (Get-Date)) {
+        "Η γέφυρα θα κλείσει στις $($from.ToString('HH:mm')) για $closedForText."
+    } else {
+        "Η γέφυρα είναι ήδη κλειστή από τις $($from.ToString('HH:mm'))."
+    }
+    return [PSCustomObject]@{
+        'Γέφυρα'      = $bridgeName
+        'Από'         = $from.ToString('dd/MM/yyyy HH:mm')
+        'Έως'         = $to.ToString('dd/MM/yyyy HH:mm')
+        'Κλειστή για' = $closedForText
+        'Ανοίγει σε'  = "$minutesLeft λεπτά"
+        'Σημείωση 1'  = $advice
+        'Σημείωση 2'  = $advice2
+    }
+}
+
