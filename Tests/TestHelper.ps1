@@ -1,4 +1,8 @@
-﻿function global:New-BridgeResult {
+﻿<#
+.SYNOPSIS
+Δημιουργεί ένα αντικείμενο αποτελέσματος.
+#>
+function global:New-BridgeResult {
     param(
         [bool]$Success,
         $Data,
@@ -14,6 +18,10 @@
     }
 }
 
+<#
+.SYNOPSIS
+Ελέγχει αν το αποτέλεσμα είναι επιτυχές.
+#>
 function global:Test-BridgeResult {
     param($Result)
     if (-not $Result.Success) {
