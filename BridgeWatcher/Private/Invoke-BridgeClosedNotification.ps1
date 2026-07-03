@@ -132,6 +132,10 @@
                         $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς έκλεισε"
                         $message = ($ocrResult | Out-String)
                         & $SendNotification -Title $title -Message $message -Type 'Closed'
+                    } else {
+                        $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς έκλεισε με πρόγραμμα"
+                        $message = "Δεν κατέστη δυνατή η αυτόματη ανάγνωση του προγράμματος κλεισίματος. Δείτε την εικόνα εδώ: $($entry.imageUrl)"
+                        & $SendNotification -Title $title -Message $message -Type 'Closed'
                     }
                 } catch {
                     $writeBridgeLogSplat = @{
@@ -140,6 +144,9 @@
                         Level   = 'Warning'
                     }
                     Write-BridgeLog @writeBridgeLogSplat
+                    $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς έκλεισε με πρόγραμμα"
+                    $message = "Απέτυχε η υπηρεσία OCR. Δείτε την εικόνα εδώ: $($entry.imageUrl)"
+                    & $SendNotification -Title $title -Message $message -Type 'Closed'
                 }
             }
             default {

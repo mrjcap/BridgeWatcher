@@ -110,12 +110,27 @@ Describe 'Invoke-BridgeClosedNotification' {
         It 'Γράφει warning όταν αποτυγχάνει η OCR' {
 
             Mock Invoke-BridgeOCRGoogleCloud { throw 'Fake OCR failure' }
+            Mock Send-BridgePushover -MockWith { }
 
             $entry = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
 
             { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
 
+            Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
         }
+
+        It 'Στέλνει fallback ειδοποίηση όταν το OCR επιστρέφει $null' {
+
+            Mock Invoke-BridgeOCRGoogleCloud { $null }
+            Mock Send-BridgePushover -MockWith { }
+
+            $entry = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
+
+            { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
+
+            Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
+        }
+
 
         It 'Γράφει debug και δεν καλεί Send-BridgePushover για άγνωστη κατάσταση' {
 
