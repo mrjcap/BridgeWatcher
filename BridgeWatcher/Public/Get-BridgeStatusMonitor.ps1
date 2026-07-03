@@ -28,11 +28,24 @@
     .PARAMETER PoApiKey
     Το API Token της εφαρμογής Pushover.
 
+    .PARAMETER Configuration
+    (Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
+
+    .PARAMETER Action
+    (Προαιρετικό) Scriptblock που εκτελείται κατά τη διάρκεια του monitoring αντί για την προεπιλεγμένη Update-BridgeStatus.
+
     .OUTPUTS
     None.
 
     .EXAMPLE
     Get-BridgeStatusMonitor -MaxIterations 100 -IntervalSeconds 60 -OutputFile 'C:\Logs\bridge.json' -ApiKey 'api123' -PoUserKey 'user123' -PoApiKey 'token123'
+
+    .EXAMPLE
+    Get-BridgeStatusMonitor -OutputFile 'C:\Logs\bridge.json' -Action {
+        param($splat)
+        Write-Host "Custom monitoring action running for $($splat.OutputFile)"
+        Update-BridgeStatus @splat
+    }
 
     .NOTES
     Το monitoring συνεχίζει μέχρι να ολοκληρωθούν οι επαναλήψεις ή να τερματιστεί χειροκίνητα.
@@ -106,10 +119,11 @@
             try {
                 $iteration++
                 $updateBridgeStatusSplat = @{
-                    OutputFile = $OutputFile
-                    ApiKey     = $ApiKey
-                    PoUserKey  = $PoUserKey
-                    PoApiKey   = $PoApiKey
+                    OutputFile    = $OutputFile
+                    ApiKey        = $ApiKey
+                    PoUserKey     = $PoUserKey
+                    PoApiKey      = $PoApiKey
+                    Configuration = $Configuration
                 }
 
                 & $Action $updateBridgeStatusSplat
