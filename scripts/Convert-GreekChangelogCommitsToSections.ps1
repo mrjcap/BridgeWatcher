@@ -1,17 +1,17 @@
 ﻿<#
 .SYNOPSIS
-  Κατηγοριοποιεί commit messages σε sections changelog (Προστέθηκαν, Διορθώθηκαν, κ.λπ.) βασισμένο σε ελληνικά ρήματα και μοτίβα τύπου Keep a Changelog.
+    Κατηγοριοποιεί commit messages σε sections changelog (Προστέθηκαν, Διορθώθηκαν, κ.λπ.) βασισμένο σε ελληνικά ρήματα και μοτίβα τύπου Keep a Changelog.
 
 .DESCRIPTION
-  Mapping με βάση φυσική γλώσσα (Ελληνικά) για changelog και release automation.
+    Mapping με βάση φυσική γλώσσα (Ελληνικά) για changelog και release automation.
 
 .PARAMETER Commits
-  Array με commit messages.
+    Array με commit messages.
 
 .EXAMPLE
-  $commits = ./Get-GitCommitsSinceLastRelease.ps1 -To HEAD
-  $sections = ./Convert-GreekChangelogCommitsToSections.ps1 -Commits $commits
-  $sections.Προστέθηκαν
+    $commits = ./Get-GitCommitsSinceLastRelease.ps1 -To HEAD
+    $sections = ./Convert-GreekChangelogCommitsToSections.ps1 -Commits $commits
+    $sections.Προστέθηκαν
 #>
 [CmdletBinding()]
 param(
@@ -140,4 +140,3 @@ foreach ($msg in $Commits) {
 }
 
 [PSCustomObject]$sections
-
