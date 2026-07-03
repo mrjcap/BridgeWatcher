@@ -31,7 +31,7 @@
 
         # Code Clarity Rules
         PSProvideCommentHelp                           = @{
-            Enable                  = $false
+            Enable                  = $true
             ExportedOnly            = $false
             BlockComment            = $true
             VSCodeSnippetCorrection = $true
