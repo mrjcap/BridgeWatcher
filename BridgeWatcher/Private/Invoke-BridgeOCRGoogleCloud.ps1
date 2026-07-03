@@ -25,8 +25,8 @@
     [CmdletBinding()]
     [OutputType([pscustomobject[]])]
     param (
-        [Parameter(Mandatory)][string]$ApiKey,
-        [Parameter(Mandatory)][ValidateScript({
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][ValidateScript({
                 if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
                     $true
                 } else {
