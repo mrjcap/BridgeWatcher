@@ -1,19 +1,19 @@
 ﻿<#
 .SYNOPSIS
-  Updates the version in a PowerShell module manifest (.psd1).
+    Updates the version in a PowerShell module manifest (.psd1).
 .DESCRIPTION
-  Reads a .psd1 file and either increments the patch version or sets a specific version.
-  Optionally, writes the new version to the GITHUB_ENV file for use in GitHub Actions.
+    Reads a .psd1 file and either increments the patch version or sets a specific version.
+    Optionally, writes the new version to the GITHUB_ENV file for use in GitHub Actions.
 .PARAMETER Path
-  The path to the .psd1 file.
+    The path to the .psd1 file.
 .PARAMETER Version
-  The specific version to set (e.g., '1.2.4'). If not provided, increments the patch version.
+    The specific version to set (e.g., '1.2.4'). If not provided, increments the patch version.
 .PARAMETER GitHubEnv
-  Optionally, the path to the GITHUB_ENV file for CI environments.
+    Optionally, the path to the GITHUB_ENV file for CI environments.
 .EXAMPLE
-  Update-ModuleVersion -Path './MyModule.psd1' -Version '1.2.4'
+    Update-ModuleVersion -Path './MyModule.psd1' -Version '1.2.4'
 .EXAMPLE
-  Update-ModuleVersion -Path './MyModule.psd1' -GitHubEnv $env:GITHUB_ENV
+    Update-ModuleVersion -Path './MyModule.psd1' -GitHubEnv $env:GITHUB_ENV
 #>
 [CmdletBinding()]
 param (
