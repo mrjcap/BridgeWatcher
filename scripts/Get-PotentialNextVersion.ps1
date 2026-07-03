@@ -1,16 +1,16 @@
 ﻿<#
 .SYNOPSIS
-  Calculates the next version based on git tags and bump type.
+    Calculates the next version based on git tags and bump type.
 
 .DESCRIPTION
-  Gets the latest version tag from git and calculates the next version
-  based on the specified bump type (major, minor, patch).
+    Gets the latest version tag from git and calculates the next version
+    based on the specified bump type (major, minor, patch).
 
 .PARAMETER BumpType
-  The type of version bump: major, minor, or patch.
+    The type of version bump: major, minor, or patch.
 
 .EXAMPLE
-  Get-PotentialNextVersion -BumpType patch
+    Get-PotentialNextVersion -BumpType patch
 #>
 [CmdletBinding()]
 param (
