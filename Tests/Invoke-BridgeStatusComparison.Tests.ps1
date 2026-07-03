@@ -441,6 +441,40 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
+    It 'Στέλνει ειδοποίηση όταν μόνο το imageUrl αλλάζει και η κατάσταση είναι Κλειστή με πρόγραμμα' {
+
+        Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+
+        Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
+
+        $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
+
+        $copy = $base.Clone()
+
+        $copy.imageUrl = 'img1b.jpg'
+
+        $params = @{
+
+            PreviousState = $base
+
+            CurrentState  = $copy
+
+            ApiKey        = 'dummy'
+
+            PoUserKey     = 'dummy'
+
+            PoApiKey      = 'dummy'
+
+        }
+
+        Invoke-BridgeStatusComparison @params
+
+        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 1
+
+        Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Times 0
+
+    }
+
     It 'Στέλνει σωστά ειδοποιήσεις για κλείσιμο και άνοιγμα όταν αλλάζουν δύο γέφυρες αντίθετα' {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }

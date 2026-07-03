@@ -78,6 +78,7 @@
                 [PSCustomObject]@{
                     gefyraName    = $_.gefyraName
                     gefyraStatus  = $_.gefyraStatus
+                    ImageUrl      = $_.ImageUrl
                     SideIndicator = '=>'
                 }
             }
@@ -85,7 +86,7 @@
             $compareSplat = @{
                 ReferenceObject  = $PreviousState
                 DifferenceObject = $CurrentState
-                Property         = 'gefyraName', 'gefyraStatus'
+                Property         = 'gefyraName', 'gefyraStatus', 'ImageUrl'
                 IncludeEqual     = $true
             }
             $diff = Compare-Object @compareSplat
@@ -133,6 +134,26 @@
             if ($change.SideIndicator -ne '=>') {
                 # Skip any '<=' side indicators to prevent double notifications
                 continue
+            }
+            $prevBridge = @($PreviousState) | Where-Object { $_.gefyraName -eq $change.gefyraName } | Select-Object -First 1
+            if ($prevBridge -and $prevBridge.gefyraStatus -eq $change.gefyraStatus) {
+                # The status did not change. If it is NOT ClosedWithSchedule, skip it!
+                if ($change.gefyraStatus -ne $Configuration.Statuses.ClosedWithSchedule) {
+                    $writeBridgeLogSplat = @{
+                        Level   = 'Verbose'
+                        Stage   = 'Ανάλυση'
+                        Message = "Καμία ουσιαστική αλλαγή στην $($change.gefyraName)."
+                    }
+                    Write-BridgeLog @writeBridgeLogSplat
+                    continue
+                } else {
+                    $writeBridgeLogSplat = @{
+                        Level   = 'Verbose'
+                        Stage   = 'Ανάλυση'
+                        Message = "Εντοπίστηκε ενημέρωση του προγράμματος κλεισίματος για την $($change.gefyraName)."
+                    }
+                    Write-BridgeLog @writeBridgeLogSplat
+                }
             }
             $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
             if ($handlerMap.ContainsKey($key)) {
