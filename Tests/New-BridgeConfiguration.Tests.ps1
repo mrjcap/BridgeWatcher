@@ -53,7 +53,7 @@ Describe 'New-BridgeConfiguration' {
         }
 
         It 'Applies ValidateRange constraint on DefaultMaxIterations' {
-            { New-BridgeConfiguration -DefaultMaxIterations 0 } | Should -Throw
+            { New-BridgeConfiguration -DefaultMaxIterations -1 } | Should -Throw
             { New-BridgeConfiguration -DefaultMaxIterations 1001 } | Should -Throw
         }
     }
