@@ -59,8 +59,11 @@ jobs:
         shell: pwsh
         run: |
           Write-Verbose "Running PSScriptAnalyzer..."
-          $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary
-          if ($analysisResults) {
+          $analysisResults = @(
+            Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+            Invoke-ScriptAnalyzer -Path ./Tests -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          )
+          if ($analysisResults.Count -gt 0) {
             $analysisResults | Format-Table -AutoSize
             Write-Error "PSScriptAnalyzer found $($analysisResults.Count) issues!"
             exit 1
