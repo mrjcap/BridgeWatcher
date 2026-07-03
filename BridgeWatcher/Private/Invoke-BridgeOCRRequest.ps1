@@ -21,8 +21,8 @@
     [CmdletBinding()]
     [OutputType([object])]
     param (
-        [Parameter(Mandatory)][string]$ApiKey,
-        [Parameter(Mandatory)][string]$RequestBody,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$RequestBody,
         [Parameter()][PSCustomObject]$Configuration
     )
     if (-not $Configuration) {
@@ -74,7 +74,7 @@
         }
         Write-BridgeLog @writeBridgeLogSplat
         $errorRecord = [System.Management.Automation.ErrorRecord]::new(
-            ([System.Exception]::new("Η κλήση του Google Vision API απέτυχε: $($_.Exception.Message)")),
+            ([System.Exception]::new("Η κλήση του Google Vision API απέτυχε: $($_.Exception.Message)", $_.Exception)),
             'GoogleVisionRequestFailure',
             [System.Management.Automation.ErrorCategory]::ConnectionError,
             $url
