@@ -4,7 +4,7 @@
     Συγκρίνει προηγούμενη και τρέχουσα κατάσταση γεφυρών.
 
     .DESCRIPTION
-    Η Get-BridgeStatusComparison συγκρίνει δύο snapshots γεφυρών
+    Η Update-BridgeStatus συγκρίνει δύο snapshots γεφυρών
     και ανιχνεύει αλλαγές κατάστασης.
 
     .PARAMETER OutputFile
@@ -19,11 +19,14 @@
     .PARAMETER PoApiKey
     Το API Token της εφαρμογής Pushover.
 
+    .PARAMETER Configuration
+    (Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
+
     .OUTPUTS
     None.
 
     .EXAMPLE
-    Get-BridgeStatusComparison -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123'
+    Update-BridgeStatus -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123'
 
     .NOTES
     Χρησιμοποιεί OCR αν χρειάζεται, συγκρίνει states και αποστέλλει ειδοποιήσεις.
@@ -39,6 +42,8 @@
         [Parameter()][PSCustomObject]$Configuration
     )
     begin {
+        # Initialize configuration. This is safe to run during -WhatIf as it only creates a memory object
+        # and does not modify any system state.
         if (-not $Configuration) {
             $Configuration = New-BridgeConfiguration
         }
