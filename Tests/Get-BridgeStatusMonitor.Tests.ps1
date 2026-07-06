@@ -2,10 +2,12 @@
 
 Describe 'Get-BridgeStatusMonitor' {
     BeforeAll {
+
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Update-BridgeStatus.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatusMonitor.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
     Context 'Default Parameters' {
@@ -20,7 +22,7 @@ Describe 'Get-BridgeStatusMonitor' {
                 PoApiKey   = 'dummy-app-key'
             }
 
-            Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1
+            Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1 -Configuration $script:Config
             Assert-MockCalled Update-BridgeStatus -Exactly 2
             Assert-MockCalled Start-Sleep -Exactly 1
         }
@@ -38,7 +40,7 @@ Describe 'Get-BridgeStatusMonitor' {
                 PoApiKey   = 'dummy-app-key'
             }
 
-            Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 10
+            Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 10 -Configuration $script:Config
             Assert-MockCalled Update-BridgeStatus -Exactly 1
             Assert-MockCalled Start-Sleep -Times 0 -Exactly
         }
@@ -56,7 +58,7 @@ Describe 'Get-BridgeStatusMonitor' {
                 PoApiKey   = 'dummy-app-key'
             }
 
-            { Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 1 -Verbose } | Should -Not -Throw
+            { Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 1 -Verbose -Configuration $script:Config } | Should -Not -Throw
         }
     }
 
@@ -72,7 +74,7 @@ Describe 'Get-BridgeStatusMonitor' {
                 PoApiKey   = 'dummy-app-key'
             }
 
-            Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123
+            Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123 -Configuration $script:Config
             Assert-MockCalled Start-Sleep -ParameterFilter { $Seconds -eq 123 } -Exactly 1
         }
     }
@@ -95,7 +97,7 @@ Describe 'Get-BridgeStatusMonitor' {
                 Action     = $customAction
             }
 
-            Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1
+            Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1 -Configuration $script:Config
             $tracker.Called | Should -Be $true
             Assert-MockCalled Update-BridgeStatus -Times 0 -Exactly
         }
@@ -116,7 +118,7 @@ Describe 'Get-BridgeStatusMonitor' {
                 PoApiKey        = 'token123'
             }
 
-            Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat
+            Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat -Configuration $script:Config
             # 1 για το μήνυμα εκκίνησης, 3 για το μήνυμα σφάλματος σε κάθε επανάληψη, 1 για το μήνυμα ολοκλήρωσης
             Assert-MockCalled Write-BridgeLog -Exactly 5
         }
@@ -136,11 +138,24 @@ Describe 'Get-BridgeStatusMonitor' {
         }
     }
 
-    Context 'Σφάλμα αρχικοποίησης διαμόρφωσης' {
-        It 'Ρίχνει terminating error όταν η New-BridgeConfiguration αποτυγχάνει' {
-            Mock New-BridgeConfiguration { throw "Configuration error" }
 
-            { Get-BridgeStatusMonitor -OutputFile 'test.json' } | Should -Throw "Η αρχικοποίηση της διαμόρφωσης απέτυχε: Configuration error"
+
+    Context 'Loop Failure Contract' {
+        It 'Throws a terminating error if the maximum consecutive failures are reached' {
+            Mock -CommandName Update-BridgeStatus -MockWith { throw "Simulated API Failure" }
+            Mock -CommandName Start-Sleep
+            Mock -CommandName Write-BridgeLog
+
+            $monitorParams = @{
+                OutputFile = 'test.json'
+                ApiKey     = 'dummy'
+                PoUserKey  = 'dummy'
+                PoApiKey   = 'dummy'
+                Configuration = $script:Config
+            }
+
+            { Get-BridgeStatusMonitor @monitorParams -MaxIterations 10 -IntervalSeconds 1 -Configuration $script:Config } | Should -Throw "Monitoring failed 5 consecutive times. Halting."
+            Assert-MockCalled Update-BridgeStatus -Exactly 5
         }
     }
 }

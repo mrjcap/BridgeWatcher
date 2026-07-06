@@ -5,7 +5,6 @@
 Describe 'Get-BridgeStatusFromHtml' {
 
     BeforeAll {
-
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -17,7 +16,7 @@ Describe 'Get-BridgeStatusFromHtml' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStateForChange.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusObject.ps1"
-
+        $script:Config = New-BridgeConfiguration
     }
 
 
@@ -35,7 +34,7 @@ Describe 'Get-BridgeStatusFromHtml' {
 
             $timestamp = '2025-04-18T08:00:00'
 
-            { Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp } | Should -Throw -ErrorId '*BridgeImagesNotFound*'
+            { Get-BridgeStatusFromHtml -Configuration $script:Config -Html $html -Timestamp $timestamp } | Should -Throw -ErrorId '*BridgeImagesNotFound*'
 
         }
 

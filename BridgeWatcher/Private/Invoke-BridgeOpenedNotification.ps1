@@ -31,16 +31,14 @@
         [Parameter(Mandatory)][object[]]$CurrentState,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
-        [Parameter()][PSCustomObject]$Configuration,
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
         [Parameter()][scriptblock]$NotificationProvider
     )
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
     $null = $PoUserKey; $null = $PoApiKey; $null = $NotificationProvider
 
     $SendNotification = {
         param(
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
             [string]$Title,
             [string]$Message,
             [string]$Type
@@ -49,11 +47,12 @@
             & $NotificationProvider -Title $Title -Message $Message -Type $Type
         } else {
             $pushoverSplat = @{
-                PoUserKey   = $PoUserKey
-                PoApiKey    = $PoApiKey
-                Title       = $Title
-                Message     = $Message
-                ErrorAction = 'Stop'
+                PoUserKey     = $PoUserKey
+                PoApiKey      = $PoApiKey
+                Title         = $Title
+                Message       = $Message
+                ErrorAction   = 'Stop'
+                Configuration = $Configuration
             }
             Send-BridgePushover @pushoverSplat
         }
@@ -74,24 +73,22 @@
                     Stage   = 'Ανάλυση'
                     Message = $logDetails
                 }
-                Write-BridgeLog @writeBridgeLogSplat
-                & $SendNotification -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα της $($entry.gefyraName)ς άνοιξε" -Type 'Opened'
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+                & $SendNotification -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα της $($entry.gefyraName)ς άνοιξε" -Type 'Opened' -Configuration $Configuration
             } catch {
+                $err = $_
                 $writeBridgeLogSplat = @{
                     Stage   = 'Σφάλμα'
-                    Message = "❌ Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.gefyraName): $($_.Exception.Message)"
+                    Message = "❌ Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.gefyraName): $($err.Exception.Message)"
                     Level   = 'Warning'
                 }
-                Write-BridgeLog @writeBridgeLogSplat
-
-                $PSCmdlet.ThrowTerminatingError(
-                    [System.Management.Automation.ErrorRecord]::new(
-                        ([System.Exception]::new("Αποτυχία αποστολής ειδοποίησης ανοίγματος: $($_.Exception.Message)", $_.Exception)),
-                        'BridgeOpenedNotificationError',
-                        [System.Management.Automation.ErrorCategory]::ConnectionError,
-                        $entry
-                    )
-                )
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+                $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+                    [System.Exception]::new("Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.gefyraName)", $err.Exception),
+                    'NotificationFailed',
+                    [System.Management.Automation.ErrorCategory]::InvalidOperation,
+                    $entry
+                ))
             }
         }
     }

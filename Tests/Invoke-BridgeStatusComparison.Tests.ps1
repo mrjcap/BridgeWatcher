@@ -5,7 +5,6 @@
 Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     BeforeAll {
-
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -20,7 +19,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
-
+        $script:Config = New-BridgeConfiguration
     }
 
     It 'Δεν στέλνει ειδοποίηση όταν η κατάσταση δεν αλλάζει' {
@@ -51,11 +50,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $sameState
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -85,11 +84,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $current
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -117,11 +116,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $current
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -153,11 +152,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $current
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -191,11 +190,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $same
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -223,11 +222,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -249,11 +248,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'ανικτή'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -277,11 +276,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $base.Clone()
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -301,11 +300,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $null
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -321,11 +320,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -345,11 +344,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = $null }
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -391,11 +390,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $currentState
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -425,11 +424,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $copy
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -459,11 +458,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $copy
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -503,11 +502,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $currentState
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -523,7 +522,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     It 'Γράφει warning όταν λείπει κατάσταση' {
 
-        { Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ gefyraName = 'X'; gefyraStatus = 'Ανοιχτή' } -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' } | Should -Throw
+        { Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ gefyraName = 'X'; gefyraStatus = 'Ανοιχτή' } -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Configuration $script:Config } | Should -Throw
 
     }
 
@@ -533,7 +532,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $same = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; timestamp = Get-Date; imageUrl = 'x.jpg' }
 
-        { Invoke-BridgeStatusComparison -PreviousState $same -CurrentState $same -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
+        { Invoke-BridgeStatusComparison -PreviousState $same -CurrentState $same -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Configuration $script:Config -Verbose } | Should -Not -Throw
 
     }
 
@@ -545,7 +544,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @()
 
-            ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'
+            ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'; Configuration = $script:Config
 
         }
 
@@ -557,7 +556,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @(@{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' })
 
-            ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'
+            ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'; Configuration = $script:Config
 
         }
 
@@ -585,7 +584,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @($state)
 
-            ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'
+            ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'; Configuration = $script:Config
 
             Verbose       = $true
 
@@ -621,7 +620,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
                 PoUserKey     = 'Y'
 
-                PoApiKey      = 'Z'
+                PoApiKey = 'Z'; Configuration = $script:Config
 
                 Verbose       = $true
 
@@ -655,7 +654,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
                 PoUserKey     = 'Y'
 
-                PoApiKey      = 'Z'
+                PoApiKey = 'Z'; Configuration = $script:Config
 
                 Verbose       = $true
 
@@ -673,7 +672,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             PoUserKey = 'user-key'
 
-            PoApiKey  = 'app-key'
+            PoApiKey = 'app-key'; Configuration = $script:Config
 
         }
 
@@ -709,11 +708,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $curr
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -743,11 +742,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $curr
 
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'
 
             PoUserKey     = 'dummy'
 
-            PoApiKey      = 'dummy'
+            PoApiKey = 'dummy'; Configuration = $script:Config
 
         }
 
@@ -797,8 +796,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             param([string]$Stage, [string]$Message, [string]$Level)
 
             "$Stage|$Level|$Message" | Out-File -Append "$TestDrive\log.txt"
-
-        }
+    }
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith {
             param($CurrentState)
@@ -815,7 +813,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             PoUserKey = 'user-key'
 
-            PoApiKey  = 'app-key'
+            PoApiKey = 'app-key'; Configuration = $script:Config
 
         }
 
@@ -986,4 +984,7 @@ Describe 'Invoke-BridgeStatusComparison' {
     }
 
 }
+
+
+
 

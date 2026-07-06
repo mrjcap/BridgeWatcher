@@ -33,12 +33,9 @@
     param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$InputFile,
         [Parameter()][ValidateRange(1, 20)][int]$JsonDepth = 10,
-        [Parameter()][PSCustomObject]$Configuration
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
     begin {
-        if (-not $Configuration) {
-            $Configuration = New-BridgeConfiguration
-        }
     }
     process {
         if (-not (Test-Path $InputFile)) {
@@ -47,7 +44,7 @@
                 Message = "Το αρχείο $($InputFile) δεν βρέθηκε – επιστρέφεται κενό array."
                 Level   = $Configuration.LoggingConfig.WarningLevel
             }
-            Write-BridgeLog @writeBridgeLogSplat
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             return @()
         }        try {
             $getContentSplat = @{
@@ -72,7 +69,7 @@
                 Message = "Σφάλμα κατά την ανάλυση JSON: $($_.Exception.Message)"
                 Level   = $Configuration.LoggingConfig.WarningLevel
             }
-            Write-BridgeLog @writeBridgeLogSplat
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             $PSCmdlet.ThrowTerminatingError(
                 [System.Management.Automation.ErrorRecord]::new(
                     ([System.Exception]::new("Σφάλμα κατά την ανάλυση JSON: $($_.Exception.Message)", $_.Exception)),

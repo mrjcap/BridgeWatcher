@@ -2,30 +2,32 @@
 
 Describe 'Δοκιμές Get-BridgeStatusAdvice' {
     BeforeAll {
+
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusAdvice.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
     It 'πρέπει να επιστρέφει "Είναι προτιμότερο να μην περιμένεις" when more than 12 minutes until open' {
         # Καλέστε τη συνάρτηση με τιμή πάνω από 12 λεπτά
-        $result = Get-BridgeStatusAdvice -MinutesUntilOpen 15
+        $result = Get-BridgeStatusAdvice -Configuration $script:Config -MinutesUntilOpen 15
         $result | Should -Be 'Είναι προτιμότερο να μην περιμένεις'
     }
     It 'πρέπει να επιστρέφει "Είναι προτιμότερο να μην περιμένεις" when minutes until open is negative' {
-        $result = Get-BridgeStatusAdvice -MinutesUntilOpen -5
+        $result = Get-BridgeStatusAdvice -Configuration $script:Config -MinutesUntilOpen -5
         $result | Should -Be 'Είναι προτιμότερο να μην περιμένεις'
     }
     It 'πρέπει να επιστρέφει "Είναι προτιμότερο να μην περιμένεις" when minutes until open is zero' {
-        $result = Get-BridgeStatusAdvice -MinutesUntilOpen 0
+        $result = Get-BridgeStatusAdvice -Configuration $script:Config -MinutesUntilOpen 0
         $result | Should -Be 'Είναι προτιμότερο να μην περιμένεις'
     }
     It 'πρέπει να επιστρέφει "Είναι προτιμότερο να περιμένεις" when 12 minutes or less until open' {
         # Καλέστε τη συνάρτηση με τιμή 12 ή λιγότερο
-        $result = Get-BridgeStatusAdvice -MinutesUntilOpen 12
+        $result = Get-BridgeStatusAdvice -Configuration $script:Config -MinutesUntilOpen 12
         $result | Should -Be 'Είναι προτιμότερο να περιμένεις'
         # Επιπλέον έλεγχος για τιμή 5 λεπτών
-        $result = Get-BridgeStatusAdvice -MinutesUntilOpen 5
+        $result = Get-BridgeStatusAdvice -Configuration $script:Config -MinutesUntilOpen 5
         $result | Should -Be 'Είναι προτιμότερο να περιμένεις'
     }
 

@@ -10,6 +10,7 @@ Describe 'Update-BridgeStatus' {
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgePreviousStatus.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Invoke-BridgeStatusComparison.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Update-BridgeStatus.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
     It 'Εκτελεί όλες τις βασικές λειτουργίες χωρίς σφάλμα' {
@@ -35,7 +36,7 @@ Describe 'Update-BridgeStatus' {
 
         # Κλήση υπό δοκιμή
         {
-            Update-BridgeStatus -OutputFile $jsonFile -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
+            Update-BridgeStatus -Configuration $script:Config -OutputFile $jsonFile -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
         } | Should -Not -Throw
     }
 
@@ -62,10 +63,11 @@ Describe 'Update-BridgeStatus' {
         Mock Write-Verbose {}
 
         $updateBridgeStatusSplat = @{
-            OutputFile = $jsonFile
-            ApiKey     = 'dummyApiKey'
-            PoUserKey  = 'dummyPoUserKey'
-            PoApiKey   = 'dummyPoApiKey'
+            OutputFile    = $jsonFile
+            ApiKey        = 'dummyApiKey'
+            PoUserKey     = 'dummyPoUserKey'
+            PoApiKey      = 'dummyPoApiKey'
+            Configuration = $script:Config
         }
         { Update-BridgeStatus @updateBridgeStatusSplat } | Should -Not -Throw
 

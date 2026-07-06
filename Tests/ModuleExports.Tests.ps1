@@ -1,5 +1,7 @@
 ﻿Describe 'Module Cmdlet Exports' {
     BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        $script:Config = New-BridgeConfiguration
         Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
     }
 

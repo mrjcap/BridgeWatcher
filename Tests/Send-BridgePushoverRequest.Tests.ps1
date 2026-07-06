@@ -2,7 +2,11 @@
 
 Describe 'Send-BridgePushoverRequest' {
     BeforeAll {
-        Mock -CommandName Start-Sleep -MockWith { }
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        $script:Config = New-BridgeConfiguration
+
+        Mock -CommandName Start-Sleep -MockWith {
+    }
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
@@ -13,7 +17,7 @@ Describe 'Send-BridgePushoverRequest' {
         Mock -CommandName Invoke-RestMethod -MockWith {
             return @{ status = 'ok' }
         }
-        $response = Send-BridgePushoverRequest -Payload $payload
+        $response = Send-BridgePushoverRequest -Configuration $script:Config -Payload $payload
         $response.status | Should -Be 'ok'
         Assert-MockCalled -CommandName Invoke-RestMethod -Times 1 -Exactly
     }
@@ -29,7 +33,7 @@ Describe 'Send-BridgePushoverRequest' {
         }
         # Act
         try {
-            $result = Send-BridgePushoverRequest -Payload $payload
+            $result = Send-BridgePushoverRequest -Configuration $script:Config -Payload $payload
         }
         catch {
             Write-Verbose 'Expected error, ignoring for test.'
@@ -44,7 +48,7 @@ Describe 'Send-BridgePushoverRequest' {
             user    = 'x'
             message = 'success'
         }
-        $result = Send-BridgePushoverRequest -Payload $payload
+        $result = Send-BridgePushoverRequest -Configuration $script:Config -Payload $payload
         $result.status | Should -Be 1
         $result.request | Should -Be 'abc123'
     }
@@ -190,7 +194,8 @@ Describe 'Send-BridgePushoverRequest' {
                 throw [System.Net.WebException]::new("Mock WebException", $null, [System.Net.WebExceptionStatus]::ProtocolError, $null)
             }
             Mock Write-BridgeLog
-            { Send-BridgePushoverRequest -Payload @{ token = 't'; user = 'u'; message = 'm' } } | Should -Throw
+            { Send-BridgePushoverRequest -Configuration $script:Config -Payload @{ token = 't'; user = 'u'; message = 'm' } } | Should -Throw
         }
     }
 }
+

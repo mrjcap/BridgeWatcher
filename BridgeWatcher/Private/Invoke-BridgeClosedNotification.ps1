@@ -41,16 +41,14 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
-        [Parameter()][PSCustomObject]$Configuration,
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
         [Parameter()][scriptblock]$NotificationProvider
     )
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
     $null = $PoUserKey; $null = $PoApiKey; $null = $NotificationProvider
 
     $SendNotification = {
         param(
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
             [string]$Title,
             [string]$Message,
             [string]$Type
@@ -59,10 +57,11 @@
             & $NotificationProvider -Title $Title -Message $Message -Type $Type
         } else {
             $pushoverSplat = @{
-                PoUserKey = $PoUserKey
-                PoApiKey  = $PoApiKey
-                Title     = $Title
-                Message   = $Message
+                PoUserKey     = $PoUserKey
+                PoApiKey      = $PoApiKey
+                Title         = $Title
+                Message       = $Message
+                Configuration = $Configuration
             }
             Send-BridgePushover @pushoverSplat
         }
@@ -83,10 +82,10 @@
                     Message = $logDetails
                     Level   = 'Debug'
                 }
-                Write-BridgeLog @writeBridgeLogSplat
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς είναι κλειστή για συντήρηση"
                 $message = "Η γέφυρα $($entry.gefyraName)ς είναι κλειστή για συντήρηση. Επιλέξτε άλλη διαδρομή."
-                & $SendNotification -Title $title -Message $message -Type 'Closed'
+                & $SendNotification -Title $title -Message $message -Type 'Closed' -Configuration $Configuration
             }
             ($Configuration.Statuses.PermanentlyClosed) {
 
@@ -101,10 +100,10 @@
                     Message = $logDetails
                     Level   = 'Debug'
                 }
-                Write-BridgeLog @writeBridgeLogSplat
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς είναι μόνιμα κλειστή"
                 $message = "Η γέφυρα $($entry.gefyraName)ς είναι μόνιμα κλειστή. Επιλέξτε άλλη διαδρομή."
-                & $SendNotification -Title $title -Message $message -Type 'Closed'
+                & $SendNotification -Title $title -Message $message -Type 'Closed' -Configuration $Configuration
             }
             ($Configuration.Statuses.ClosedWithSchedule) {
 
@@ -119,23 +118,24 @@
                     Message = $logDetails
                     Level   = 'Debug'
                 }
-                Write-BridgeLog @writeBridgeLogSplat
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 $ocrSplat = @{
-                    ApiKey      = $ApiKey
-                    ImageUri    = $entry.imageUrl
-                    Verbose     = $true
-                    ErrorAction = 'Stop'
+                    ApiKey        = $ApiKey
+                    ImageUri      = $entry.imageUrl
+                    Verbose       = $true
+                    ErrorAction   = 'Stop'
+                    Configuration = $Configuration
                 }
                 try {
                     $ocrResult = Invoke-BridgeOCRGoogleCloud @ocrSplat
                     if ($ocrResult) {
                         $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς έκλεισε"
                         $message = ($ocrResult | Out-String)
-                        & $SendNotification -Title $title -Message $message -Type 'Closed'
+                        & $SendNotification -Title $title -Message $message -Type 'Closed' -Configuration $Configuration
                     } else {
                         $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς έκλεισε με πρόγραμμα"
                         $message = "Δεν κατέστη δυνατή η αυτόματη ανάγνωση του προγράμματος κλεισίματος. Δείτε την εικόνα εδώ: $($entry.imageUrl)"
-                        & $SendNotification -Title $title -Message $message -Type 'Closed'
+                        & $SendNotification -Title $title -Message $message -Type 'Closed' -Configuration $Configuration
                     }
                 } catch {
                     $writeBridgeLogSplat = @{
@@ -143,10 +143,10 @@
                         Message = "❌ Απέτυχε η OCR για $($entry.imageUrl): $($_.Exception.Message)"
                         Level   = 'Warning'
                     }
-                    Write-BridgeLog @writeBridgeLogSplat
+                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                     $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς έκλεισε με πρόγραμμα"
                     $message = "Απέτυχε η υπηρεσία OCR. Δείτε την εικόνα εδώ: $($entry.imageUrl)"
-                    & $SendNotification -Title $title -Message $message -Type 'Closed'
+                    & $SendNotification -Title $title -Message $message -Type 'Closed' -Configuration $Configuration
                 }
             }
             default {
@@ -155,7 +155,7 @@
                     Message = "ℹ️ Αγνοείται ειδοποίηση για $($entry.gefyraName)ς με κατάσταση: $($entry.gefyraStatus)"
                     Level   = 'Debug'
                 }
-                Write-BridgeLog @writeBridgeLogSplat
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             }
         }
     }

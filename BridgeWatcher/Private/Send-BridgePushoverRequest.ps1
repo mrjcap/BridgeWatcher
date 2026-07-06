@@ -26,12 +26,9 @@
     [OutputType([object])]
     param (
         [Parameter(Mandatory)][hashtable]$Payload,
-        [Parameter()][PSCustomObject]$Configuration
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
 
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
 
     # Get Pushover API URL from configuration
     $pushoverApiUrl = $Configuration.Urls.PushoverApi
@@ -61,10 +58,14 @@
                     throw
                 }
                 if ($i -eq $maxRetries) { throw }
-                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+                $baseSleep = [Math]::Pow(2, $i)
+                $jitter = Get-Random -Minimum 0 -Maximum 3
+                Start-Sleep -Seconds ($baseSleep + $jitter)
             } catch {
                 if ($i -eq $maxRetries) { throw }
-                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+                $baseSleep = [Math]::Pow(2, $i)
+                $jitter = Get-Random -Minimum 0 -Maximum 3
+                Start-Sleep -Seconds ($baseSleep + $jitter)
             }
         }
     } catch {
@@ -73,8 +74,8 @@
             Message = "$errorMessagePrefix`: $($_.Exception.Message)"
             Level   = $warningLevel
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         $errorRecord = [System.Management.Automation.ErrorRecord]::new($_.Exception, 'PushoverSendFailure', [System.Management.Automation.ErrorCategory]::ConnectionError, $null)
-        throw $errorRecord
+        $PSCmdlet.ThrowTerminatingError($errorRecord)
     }
 }

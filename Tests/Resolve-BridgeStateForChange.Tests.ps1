@@ -5,12 +5,12 @@
 Describe 'Resolve-BridgeStateForChange' {
 
     BeforeAll {
-
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStateForChange.ps1"
+        $script:Config = New-BridgeConfiguration
 
     }
 

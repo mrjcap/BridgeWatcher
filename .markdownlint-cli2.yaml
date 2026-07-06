@@ -1,15 +1,14 @@
-﻿fix: true
+fix: true
 config:
   MD024:
     siblings_only: true
   MD013:
     line_length: 120
 ignores:
-
-- .vscode
-- assets
-- tests
-- tools
-- ymal
+  - .vscode
+  - assets
+  - tests
+  - tools
+  - ymal
 noInlineConfig: true
 noProgress: true

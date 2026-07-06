@@ -14,7 +14,7 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
-
+        $script:Config = New-BridgeConfiguration
     }
 
     Context 'Όταν η γέφυρα είναι ανοιχτή' {
@@ -43,13 +43,13 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
                 PoUserKey            = 'dummy'
 
-                PoApiKey             = 'dummy'
+                PoApiKey = 'dummy'; Configuration = $script:Config
 
                 NotificationProvider = $mockProvider
 
             }
 
-            Invoke-BridgeOpenedNotification @params
+            Invoke-BridgeOpenedNotification @params -Configuration $script:Config
 
             $script:providerCalled | Should -Be $true
 
@@ -73,11 +73,11 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
                 PoUserKey    = 'dummy'
 
-                PoApiKey     = 'dummy'
+                PoApiKey = 'dummy'; Configuration = $script:Config
 
             }
 
-            Invoke-BridgeOpenedNotification @params
+            Invoke-BridgeOpenedNotification @params -Configuration $script:Config
 
             Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
 
@@ -103,13 +103,13 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
                 PoUserKey    = 'dummy'
 
-                PoApiKey     = 'dummy'
+                PoApiKey = 'dummy'; Configuration = $script:Config
 
             }
 
 
 
-            { Invoke-BridgeOpenedNotification @params } | Should -Throw '*Αποτυχία αποστολής ειδοποίησης ανοίγματος*'
+            { Invoke-BridgeOpenedNotification @params -Configuration $script:Config } | Should -Throw '*Αποτυχία αποστολής ειδοποίησης ανοίγματος*'
 
             Assert-MockCalled -CommandName Write-BridgeLog -Exactly 2 -Scope It
 

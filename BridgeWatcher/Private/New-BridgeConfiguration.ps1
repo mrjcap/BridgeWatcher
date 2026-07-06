@@ -32,12 +32,10 @@
 
     param(
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [string]$BaseUrl = 'https://www.topvision.gr/dioriga',
+        [string]$BaseUrl,
 
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [string]$OCRApiUrl = 'https://vision.googleapis.com/v1/images:annotate',
+        [string]$OCRApiUrl,
 
         [Parameter()]
         [ValidateRange(1, 3600)]
@@ -46,6 +44,10 @@
         [Parameter()]
         [ValidateRange(0, 1000)]
         [int]$DefaultMaxIterations = 100,
+
+        [Parameter()]
+        [ValidateRange(1, 1440)]
+        [int]$MaxConsecutiveFailures = 60,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -57,6 +59,9 @@
             }
         )
     )
+
+    if (-not $BaseUrl) { $BaseUrl = 'https://www.topvision.gr/dioriga' }
+    if (-not $OCRApiUrl) { $OCRApiUrl = 'https://vision.googleapis.com/v1/images:annotate' }
 
     # Bridge name mappings (add new bridge slugs here)
     $bridgeNames = @{
@@ -145,11 +150,12 @@
 
         # Defaults
         Defaults                  = [PSCustomObject]@{
-            IntervalSeconds    = $DefaultIntervalSeconds
-            MaxIterations      = $DefaultMaxIterations
-            JsonDepth          = 5
-            MaxWaitTimeMinutes = 12
-            LogDirectory       = $LogDirectory
+            IntervalSeconds        = $DefaultIntervalSeconds
+            MaxIterations          = $DefaultMaxIterations
+            MaxConsecutiveFailures = $MaxConsecutiveFailures
+            JsonDepth              = 5
+            MaxWaitTimeMinutes     = 12
+            LogDirectory           = $LogDirectory
         }
 
         # Mappings

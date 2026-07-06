@@ -19,7 +19,8 @@
         'Update-BridgeStatus',
         'Invoke-BridgeStatusComparison',
         'Send-BridgePushover',
-        'Get-BridgeStatusMonitor'
+        'Get-BridgeStatusMonitor',
+        'New-BridgeConfiguration'
     )
     PrivateData        = @{
         PSData = @{

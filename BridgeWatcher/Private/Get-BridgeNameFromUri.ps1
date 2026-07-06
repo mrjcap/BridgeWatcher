@@ -26,6 +26,7 @@
     [CmdletBinding()]
     [OutputType([string])]
     param (
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
         [Parameter(Mandatory)]
         [ValidateScript({ [Uri]::IsWellFormedUriString($_, [UriKind]::Absolute) })]
         [ValidateNotNullOrEmpty()]
@@ -39,7 +40,7 @@
                 Stage   = 'Ανάλυση'
                 Message = "⚠️ Δεν αναγνωρίστηκε η γέφυρα στο URI: $ImageUri"
             }
-            Write-BridgeLog @writeBridgeLogSplat
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             return 'Άγνωστη'
         }
     }

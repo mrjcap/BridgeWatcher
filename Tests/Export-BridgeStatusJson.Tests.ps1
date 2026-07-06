@@ -11,7 +11,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
-
+        $script:Config = New-BridgeConfiguration
     }
 
     Context 'Όταν συμβαίνει σφάλμα κατά την αποθήκευση JSON' {
@@ -36,7 +36,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
+            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
 
 
 
@@ -76,7 +76,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            $result = Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
+            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
 
 
 
@@ -108,7 +108,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             Mock Write-BridgeLog {}
 
-            Export-BridgeStatusJson -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
+            Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
 
             # Επιβεβαιώνουμε ότι κάλεσε το Write-BridgeLog μία φορά
 
@@ -134,7 +134,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            $result = Export-BridgeStatusJson -Data @() -Path 'out.json'
+            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @() -Path 'out.json'
 
             $result | Should -Not -BeNullOrEmpty
 
@@ -148,7 +148,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         It 'Πετάει validation σφάλμα όταν το Path είναι κενό' {
 
-            { Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path '' } | Should -Throw
+            { Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path '' } | Should -Throw
 
         }
 
@@ -162,7 +162,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            $result = Export-BridgeStatusJson -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path 'fake.json' -Verbose
+            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path 'fake.json' -Verbose
 
 
 

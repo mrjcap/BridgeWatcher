@@ -25,13 +25,10 @@
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Timestamp,
-        [Parameter()]
-        [PSCustomObject]$Configuration
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
     # Χρήση διαμόρφωσης ή εναλλακτικής λύσης
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
+
     $baseUrl = $Configuration.Urls.BaseImage
     $patterns = @{
         'poseidonia' = @{
@@ -54,10 +51,11 @@
             Message = "➤ Επεξεργασία: $location"
             Level   = 'Debug'
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         $getBridgeImagesSplat = @{
-            HtmlContent = $Html
-            Location    = $location
+            HtmlContent   = $Html
+            Location      = $location
+            Configuration = $Configuration
         }
         $bridgeImages = Get-BridgeImage @getBridgeImagesSplat
         if (-not $bridgeImages -or $bridgeImages.Count -eq 0) {
@@ -66,7 +64,7 @@
                 Message = "❌ Δεν εντοπίστηκαν εικόνες για $location"
                 Level   = 'Warning'
             }
-            Write-BridgeLog @writeBridgeLogSplat
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             $errorRecord = [System.Management.Automation.ErrorRecord]::new(
                 ([System.Exception]::new("Δεν βρέθηκαν εικόνες για το $location.")),
                 'BridgeImagesNotFound',
@@ -80,14 +78,14 @@
             Message = '✔ Εικόνες:'
             Level   = 'Debug'
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         $imageList = ($bridgeImages | ForEach-Object { "  • $($_.src)" }) -join "`n"
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
             Message = $imageList
             Level   = 'Debug'
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         foreach ($statusEntry in $patterns[$location].GetEnumerator()) {
             $status = $statusEntry.Key
             $pattern = $statusEntry.Value
@@ -100,7 +98,7 @@
                         Stage   = 'Ανάλυση'
                         Message = "Παραλείπεται $location ($status): Δεν βρέθηκε info εικόνα"
                     }
-                    Write-BridgeLog @writeBridgeLogSplat
+                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                     $image = $null
                 }
             }
@@ -110,7 +108,7 @@
                     Message = "✅ Εντοπίστηκε: Γέφυρα: $location Κατάσταση: $status"
                     Level   = 'Debug'
                 }
-                Write-BridgeLog @writeBridgeLogSplat
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 $newBridgeStatusObjectSplat = @{
                     Location  = $location
                     Status    = $status

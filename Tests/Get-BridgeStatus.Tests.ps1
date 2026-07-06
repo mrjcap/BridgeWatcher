@@ -2,14 +2,17 @@
 
 Describe 'Test Get-BridgeStatus function' {
     BeforeAll {
+
         . "$PSScriptRoot/TestHelper.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusFromHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
+        $script:Config = New-BridgeConfiguration
 
-        Mock Export-BridgeStatusJson {}
+        Mock Export-BridgeStatusJson {
+    }
         Mock Write-Warning {}
     }
 
@@ -31,7 +34,7 @@ Describe 'Test Get-BridgeStatus function' {
             }
             Mock Write-Warning { }
 
-            $result = Get-BridgeStatus -OutputFile $OutputFile
+            $result = Get-BridgeStatus -OutputFile $OutputFile -Configuration $script:Config
 
             $result | Should -Not -BeNullOrEmpty
             $result.Count | Should -Be 1
@@ -47,12 +50,12 @@ Describe 'Test Get-BridgeStatus function' {
     Context 'Αποτυχία ανάκτησης HTML' {
         It 'Πρέπει να ρίχνει terminating error όταν το Invoke-WebRequest αποτυγχάνει' {
             Mock Invoke-WebRequest { throw 'Σφάλμα δικτύου' }
-            { Get-BridgeStatus } | Should -Throw -ExpectedMessage "*Σφάλμα δικτύου*"
+            { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*Σφάλμα δικτύου*"
         }
         It 'Πρέπει να ρίχνει terminating error όταν το response είναι κενό' {
             Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $null } }
             # Get-BridgeStatusFromHtml parameter validation throws error
-            { Get-BridgeStatus } | Should -Throw -ExpectedMessage "*The argument is null or empty*"
+            { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*The argument is null or empty*"
         }
     }
 
@@ -61,7 +64,7 @@ Describe 'Test Get-BridgeStatus function' {
             Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html></html>' } }
             Mock Get-BridgeStatusFromHtml { return @() }
 
-            { Get-BridgeStatus } | Should -Throw -ExpectedMessage "*Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο*"
+            { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο*"
         }
     }
 
@@ -75,13 +78,14 @@ Describe 'Test Get-BridgeStatus function' {
                 return New-BridgeResult -Success $false -ErrorMessage "Error during saving" -ErrorCode 'JSON_EXPORT_FAILURE'
             }
 
-            { Get-BridgeStatus -OutputFile 'C:\path\to\output.json' } | Should -Throw -ExpectedMessage "*Error during saving*"
+            { Get-BridgeStatus -Configuration $script:Config -OutputFile 'C:\path\to\output.json' } | Should -Throw -ExpectedMessage "*Error during saving*"
         }
     }
 }
 
 Describe 'Get-BridgeStatus Integration' {
     BeforeAll {
+
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
@@ -117,7 +121,7 @@ Describe 'Get-BridgeStatus Integration' {
         Mock -CommandName Invoke-WebRequest -MockWith {
             return [pscustomobject]@{ Content = $mockHtml }
         }
-        $result = Get-BridgeStatus
+        $result = Get-BridgeStatus -Configuration $script:Config
         $result.Count | Should -Be 2
 
         # Depending on naming in the current object
@@ -134,12 +138,13 @@ Describe 'Get-BridgeStatus Integration' {
     </div>
 '@
         Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $html } }
-        { Get-BridgeStatus } | Should -Throw "*Δεν βρέθηκε block*"
+        { Get-BridgeStatus -Configuration $script:Config } | Should -Throw "*Δεν βρέθηκε block*"
     }
 }
 
 Describe 'Get-BridgeStatus Configuration Fallbacks' {
     BeforeAll {
+
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
@@ -147,14 +152,7 @@ Describe 'Get-BridgeStatus Configuration Fallbacks' {
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
     }
 
-    It 'Ρίχνει terminating error όταν η New-BridgeConfiguration αποτυγχάνει' {
-        Mock New-BridgeConfiguration { throw "Configuration error" }
-        Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html>test</html>' } }
-        Mock Get-BridgeStatusFromHtml { return @() }
-        Mock Write-BridgeLog { }
 
-        { Get-BridgeStatus -OutputFile 'test.json' } | Should -Throw "Η αρχικοποίηση της διαμόρφωσης απέτυχε: Configuration error"
-    }
 
     It 'Χρησιμοποιεί σωστό configuration όταν περνιέται ρητά' {
         Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html>test</html>' } }

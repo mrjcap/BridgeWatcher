@@ -5,8 +5,11 @@
 Describe 'Invoke-BridgeOCRRequest' {
 
     BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        $script:Config = New-BridgeConfiguration
 
-        Mock -CommandName Start-Sleep -MockWith { }
+        Mock -CommandName Start-Sleep -MockWith {
+    }
 
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
@@ -38,7 +41,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         }
 
-        $response = Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{}'
+        $response = Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'test-key' -RequestBody '{}'
 
         $response.responses[0].textAnnotations[0].description | Should -Be 'fake text'
 
@@ -76,7 +79,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         }
 
-        $res = ConvertFrom-BridgeOCRResult -ApiResponse $resp -ImageUri 'https://example.com/image-bridge-open-with-schedule-posidonia.php'
+        $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $resp -ImageUri 'https://example.com/image-bridge-open-with-schedule-posidonia.php'
 
         $res.'Γέφυρα' | Should -Be 'Ποσειδωνία'
 
@@ -110,7 +113,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         }
 
-        $res = ConvertFrom-BridgeOCRResult -ApiResponse $resp -ImageUri 'https://example.com/image-bridge-open-with-schedule-isthmia.php'
+        $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $resp -ImageUri 'https://example.com/image-bridge-open-with-schedule-isthmia.php'
 
         $res.'Κλειστή για' | Should -Match 'ημέρες'
 
@@ -126,7 +129,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         Mock Invoke-RestMethod { throw 'Simulated API failure' }
 
-        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw 'Η κλήση του Google Vision API απέτυχε: Simulated API failure'
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw 'Η κλήση του Google Vision API απέτυχε: Simulated API failure'
 
     }
 
@@ -146,7 +149,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         }
 
-        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Unauthorized"
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Unauthorized"
 
         Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
 
@@ -170,7 +173,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         Mock Start-Sleep {}
 
-        { Invoke-BridgeOCRRequest -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Internal Error"
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Internal Error"
 
         Assert-MockCalled Invoke-RestMethod -Times 3 -Exactly
 
@@ -437,4 +440,5 @@ Describe 'Invoke-BridgeOCRRequest' {
     }
 
 }
+
 

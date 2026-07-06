@@ -26,6 +26,7 @@
     [CmdletBinding()]
     [OutputType([System.Collections.ArrayList])]
     param (
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$HtmlContent,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][ValidateSet('poseidonia', 'isthmia')] [string]$Location
     )
@@ -42,7 +43,7 @@
             Stage   = 'Ανάλυση'
             Message = "❌ Δεν βρέθηκε block για $Location"
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
         $errorRecord = [System.Management.Automation.ErrorRecord]::new(
             ([System.Exception]::new("Δεν βρέθηκε block για τη θέση $Location.")),

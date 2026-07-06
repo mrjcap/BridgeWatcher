@@ -60,9 +60,9 @@
         [ValidateNotNullOrEmpty()][string]$UrlTitle,
         [ValidateRange(0, 2)][int]$Priority,
         [ValidateSet('pushover', 'bike', 'bugle', 'cashregister', 'classical', 'cosmic', 'falling', 'gamelan', 'incoming', 'intermission', 'magic', 'mechanical', 'pianobar', 'siren', 'spacealarm', 'tugboat', 'alien', 'climb', 'persistent', 'echo', 'updown', 'none')]
-        [string]$Sound
+        [string]$Sound,
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
-
     try {
         $payload = @{
             token   = $PoApiKey
@@ -77,8 +77,9 @@
         if ($PSBoundParameters.ContainsKey('Sound') -and $Sound) { $payload.sound = $Sound }
 
         $sendPushoverRequestSplat = @{
-            Payload     = $payload
-            ErrorAction = 'Stop'
+            Payload       = $payload
+            ErrorAction   = 'Stop'
+            Configuration = $Configuration
         }
         [void](Send-BridgePushoverRequest @sendPushoverRequestSplat)
     } catch {
@@ -87,7 +88,7 @@
             Message = "❌ Αποτυχία αποστολής Pushover: $($_.Exception.Message)"
             Level   = 'Warning'
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
         $PSCmdlet.ThrowTerminatingError(
              [System.Management.Automation.ErrorRecord]::new(

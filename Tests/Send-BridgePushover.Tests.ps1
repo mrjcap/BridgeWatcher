@@ -2,10 +2,12 @@
 
 Describe 'Send-Pushover' {
     BeforeAll {
+
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
     It 'Καλεί helper functions και στέλνει μήνυμα' {
@@ -18,7 +20,7 @@ Describe 'Send-Pushover' {
             PoApiKey  = 'T'
             Message   = 'hello'
         }
-        Send-BridgePushover @sendPushoverSplat
+        Send-BridgePushover @sendPushoverSplat -Configuration $script:Config
         Assert-MockCalled Send-BridgePushoverRequest -Times 1 -Exactly -ParameterFilter {
             $Payload.token -eq 'T' -and $Payload.user -eq 'U' -and $Payload.message -eq 'hello'
         }
@@ -34,7 +36,7 @@ Describe 'Send-Pushover' {
             Message   = 'hello'
         }
 
-        { Send-BridgePushover @sendPushoverSplat } | Should -Throw '*Αποτυχία αποστολής Pushover*'
+        { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Throw '*Αποτυχία αποστολής Pushover*'
 
         # Επιβεβαίωση ότι καλέστηκε το error logging
         Assert-MockCalled -CommandName Write-BridgeLog -ParameterFilter {
@@ -53,7 +55,7 @@ Describe 'Send-Pushover' {
             Url       = 'https://example.com'
         }
 
-        { Send-BridgePushover @sendPushoverSplat } | Should -Not -Throw
+        { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Not -Throw
     }
 
     It 'Αποδέχεται έγκυρο URL με http' {
@@ -67,7 +69,7 @@ Describe 'Send-Pushover' {
             Url       = 'http://example.com'
         }
 
-        { Send-BridgePushover @sendPushoverSplat } | Should -Not -Throw
+        { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Not -Throw
     }
 
     It 'Απορρίπτει άκυρο URL' {
@@ -78,7 +80,7 @@ Describe 'Send-Pushover' {
             Url       = 'invalid-url'
         }
 
-        { Send-BridgePushover @sendPushoverSplat } | Should -Throw
+        { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Throw
     }
 
     It 'Περνάει όλες τις προαιρετικές παραμέτρους στο payload' {
@@ -99,7 +101,7 @@ Describe 'Send-Pushover' {
             Sound     = 'siren'
         }
 
-        Send-BridgePushover @sendPushoverSplat
+        Send-BridgePushover @sendPushoverSplat -Configuration $script:Config
 
         Assert-MockCalled Send-BridgePushoverRequest -Times 1 -Exactly -ParameterFilter {
             $Payload.device -eq 'myphone' -and

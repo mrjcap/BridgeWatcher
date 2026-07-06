@@ -33,12 +33,8 @@
     param (
         [Parameter(Mandatory)][int]$MinutesUntilOpen,
         [Parameter()][ValidateRange(1, 120)][int]$MaxWaitTimeMinutes,
-        [Parameter()][PSCustomObject]$Configuration
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
-
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
 
     # Λήψη μέγιστου χρόνου αναμονής από την παράμετρο, τη διαμόρφωση, ή χρήση εναλλακτικής λύσης
     if (-not $MaxWaitTimeMinutes) {

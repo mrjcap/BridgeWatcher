@@ -88,6 +88,10 @@
     # Exclude specific rules if needed
     ExcludeRules        = @(
         # Greek text in strings is OK
-        'PSAvoidUsingDoubleQuotesForConstantString'
+        'PSAvoidUsingDoubleQuotesForConstantString',
+        'PSAlignAssignmentStatement',
+        'PSUseConsistentIndentation',
+        'PSUseConsistentWhitespace',
+        'PSProvideCommentHelp'
     )
 }

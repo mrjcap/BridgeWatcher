@@ -16,7 +16,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
-
+        $script:Config = New-BridgeConfiguration
     }
 
 
@@ -42,14 +42,13 @@ Describe 'Invoke-BridgeClosedNotification' {
                 )
 
                 ApiKey       = 'dummy'
-
                 PoUserKey    = 'dummy'
-
                 PoApiKey     = 'dummy'
+                Configuration = $script:Config
 
             }
 
-            Invoke-BridgeClosedNotification @params
+            Invoke-BridgeClosedNotification @params -Configuration $script:Config
 
             Assert-MockCalled -CommandName Invoke-BridgeOCRGoogleCloud -Exactly 1
 
@@ -77,7 +76,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Mock Invoke-BridgeOCRGoogleCloud { throw 'Δεν πρέπει να κληθεί OCR!' }
 
-            Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug
+            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug
 
             Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
 
@@ -101,7 +100,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Mock -CommandName Write-Debug
 
-            Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose
+            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose
 
             Assert-MockCalled -CommandName Write-Debug -Exactly 1 -Scope It
 
@@ -114,7 +113,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             $entry = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
 
-            { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
+            { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
 
             Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
         }
@@ -126,7 +125,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             $entry = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
 
-            { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
+            { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
 
             Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
         }
@@ -152,7 +151,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             # Act
 
-            { Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug } | Should -Not -Throw
+            { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug } | Should -Not -Throw
 
         }
 
@@ -180,7 +179,7 @@ Describe 'Invoke-BridgeClosedNotification' {
             Mock Send-BridgePushover { throw 'Δεν έπρεπε να κληθεί Pushover!' }
             Mock Write-BridgeLog { }
 
-            Invoke-BridgeClosedNotification -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -NotificationProvider $provider
+            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -NotificationProvider $provider
 
             $script:providerCalled | Should -BeTrue
             $script:providerTitle | Should -BeLike '*κλειστή για συντήρηση*'

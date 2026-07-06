@@ -42,9 +42,9 @@
 
     .EXAMPLE
     Get-BridgeStatusMonitor -OutputFile 'C:\Logs\bridge.json' -Action {
-        param($splat)
+        param(
         Write-Host "Custom monitoring action running for $($splat.OutputFile)"
-        Update-BridgeStatus @splat
+        Update-BridgeStatus @splat -Configuration $Configuration
     }
 
     .NOTES
@@ -59,34 +59,20 @@
     [CmdletBinding()]
     [OutputType([void])]
     param (
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
         [Parameter()][ValidateRange(0, [int]::MaxValue)][int]$MaxIterations,
         [Parameter()][ValidateRange(1, 3600)][int]$IntervalSeconds,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$OutputFile,
-        [Parameter()][string]$ApiKey,
-        [Parameter()][string]$PoUserKey,
-        [Parameter()][string]$PoApiKey,
+        [Parameter()][ValidateNotNullOrEmpty()][string]$ApiKey,
+        [Parameter()][ValidateNotNullOrEmpty()][string]$PoUserKey,
+        [Parameter()][ValidateNotNullOrEmpty()][string]$PoApiKey,
 
-        [Parameter()]
-        [PSCustomObject]$Configuration,
 
         [Parameter()]
         [scriptblock]$Action
     )
 
     begin {
-        # Ensure configuration is available
-        if (-not $Configuration) {
-            try {
-                $Configuration = New-BridgeConfiguration
-            } catch {
-                $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                    [System.Exception]::new("Η αρχικοποίηση της διαμόρφωσης απέτυχε: $($_.Exception.Message)", $_.Exception),
-                    'CONFIG_ERROR',
-                    [System.Management.Automation.ErrorCategory]::InvalidOperation,
-                    $null
-                ))
-            }
-        }
 
         # Set defaults from configuration if parameters not provided
         if (-not $PSBoundParameters.ContainsKey('MaxIterations')) {
@@ -112,9 +98,12 @@
             Message = "$($Configuration.StatusMessages.MonitoringStart): Διάστημα = $IntervalSeconds δευτ., Μέγιστες επαναλήψεις = $MaxIterations"
             Level   = $Configuration.LoggingConfig.VerboseLevel
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
     }
     process {
+        $consecutiveFailures = 0
+        $maxConsecutiveFailures = $Configuration.Defaults.MaxConsecutiveFailures
+
         while ($infiniteLoop -or $iteration -lt $MaxIterations) {
             try {
                 $iteration++
@@ -127,7 +116,9 @@
                 }
 
                 & $Action $updateBridgeStatusSplat
+                $consecutiveFailures = 0
             } catch {
+                $consecutiveFailures++
                 $errorMessage = $Configuration.ErrorMessages.MonitoringError
 
                 $writeBridgeLogSplat = @{
@@ -135,7 +126,16 @@
                     Message = "${errorMessage}: $($_) $iteration"
                     Level   = $Configuration.LoggingConfig.WarningLevel
                 }
-                Write-BridgeLog @writeBridgeLogSplat
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+
+                if ($consecutiveFailures -ge $maxConsecutiveFailures) {
+                    $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+                        [System.Exception]::new("Monitoring failed $consecutiveFailures consecutive times. Halting.", $_.Exception),
+                        'MONITOR_LOOP_FAILED',
+                        [System.Management.Automation.ErrorCategory]::OperationStopped,
+                        $null
+                    ))
+                }
             } finally {
                 if ($infiniteLoop -or $iteration -lt $MaxIterations) {
                     $startSleepSplat = @{
@@ -151,6 +151,6 @@
             Message = "$($Configuration.StatusMessages.MonitoringComplete) μετά από $iteration επανάληψη(εις)."
             Level   = $Configuration.LoggingConfig.VerboseLevel
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
     }
 }

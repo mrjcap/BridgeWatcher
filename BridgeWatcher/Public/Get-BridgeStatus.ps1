@@ -31,26 +31,13 @@
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$OutputFile,
-        [Parameter()]
+        [Parameter(Mandatory)]
+        [ValidateNotNull()]
         [PSCustomObject]$Configuration
     )
-    begin {
-        # Stage 0: Configuration Setup
-        if (-not $Configuration) {
-            try {
-                $Configuration = New-BridgeConfiguration
-            } catch {
-                $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                    [System.Exception]::new("Η αρχικοποίηση της διαμόρφωσης απέτυχε: $($_.Exception.Message)", $_.Exception),
-                    'CONFIG_ERROR',
-                    [System.Management.Automation.ErrorCategory]::InvalidOperation,
-                    $null
-                ))
-            }
-        }
-    }    process { # Stage 1: Data Acquisition - Get HTML content
+    process { # Stage 1: Data Acquisition - Get HTML content
         $Uri = $Configuration.Urls.Source
-        Write-BridgeLog -Stage $Configuration.LoggingConfig.InfoStage -Message "🌐 Λήψη περιεχομένου από: $Uri"
+        Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.InfoStage -Message "🌐 Λήψη περιεχομένου από: $Uri"
         $maxRetries = 3
         $response = $null
         for ($i = 1; $i -le $maxRetries; $i++) {
@@ -59,7 +46,7 @@
                 break
             } catch {
                 if ($i -eq $maxRetries) {
-                    Write-BridgeLog -Stage $Configuration.LoggingConfig.ErrorStage -Message "❌ Σφάλμα κατά την ανάκτηση: $($_.Exception.Message)" -Level $Configuration.LoggingConfig.WarningLevel
+                    Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.ErrorStage -Message "❌ Σφάλμα κατά την ανάκτηση: $($_.Exception.Message)" -Level $Configuration.LoggingConfig.WarningLevel
                     $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
                         [System.Exception]::new($_.Exception.Message, $_.Exception),
                         'HTTP_ERROR',
@@ -67,21 +54,23 @@
                         $null
                     ))
                 }
-                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+                $baseSleep = [Math]::Pow(2, $i)
+                $jitter = Get-Random -Minimum 0 -Maximum 3
+                Start-Sleep -Seconds ($baseSleep + $jitter)
             }
         }
         $htmlData = $response.Content
         # Stage 2: Data Processing - Convert HTML to bridge status
-        Write-BridgeLog -Stage $Configuration.LoggingConfig.InfoStage -Message '🔍 Ανάλυση HTML για εύρεση καταστάσεων γέφυρας'
+        Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.InfoStage -Message '🔍 Ανάλυση HTML για εύρεση καταστάσεων γέφυρας'
         try {
-            $bridgeStatuses = Get-BridgeStatusFromHtml -Html $htmlData -Timestamp (Get-Date -Format o) -Configuration $Configuration
+            $bridgeStatuses = Get-BridgeStatusFromHtml -Configuration $Configuration -Html $htmlData -Timestamp (Get-Date -Format o)
             if (-not $bridgeStatuses -or $bridgeStatuses.Count -eq 0) {
-                Write-BridgeLog -Stage $Configuration.LoggingConfig.ErrorStage -Message '⛔ Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο' -Level $Configuration.LoggingConfig.WarningLevel
+                Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.ErrorStage -Message '⛔ Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο' -Level $Configuration.LoggingConfig.WarningLevel
                 throw [System.Exception]::new('Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο')
             }
-            Write-BridgeLog -Stage $Configuration.LoggingConfig.InfoStage -Message "✅ Βρέθηκαν $($bridgeStatuses.Count) γέφυρες"
+            Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.InfoStage -Message "✅ Βρέθηκαν $($bridgeStatuses.Count) γέφυρες"
         } catch {
-            Write-BridgeLog -Stage $Configuration.LoggingConfig.ErrorStage -Message "❌ Σφάλμα κατά την ανάλυση HTML: $($_.Exception.Message)" -Level $Configuration.LoggingConfig.WarningLevel
+            Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.ErrorStage -Message "❌ Σφάλμα κατά την ανάλυση HTML: $($_.Exception.Message)" -Level $Configuration.LoggingConfig.WarningLevel
             $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
                 [System.Exception]::new($_.Exception.Message, $_.Exception),
                 'PARSING_ERROR',
@@ -91,7 +80,7 @@
         }
         # Stage 3: Data Persistence (optional)
         if ($OutputFile) {
-            $exportResult = Export-BridgeStatusJson -Data $bridgeStatuses -Path $OutputFile
+            $exportResult = Export-BridgeStatusJson -Configuration $Configuration -Data $bridgeStatuses -Path $OutputFile
             if (-not $exportResult.Success) {
                 $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
                         [System.Exception]::new($exportResult.ErrorMessage),

@@ -34,7 +34,9 @@ if (-not (Test-Path $OutDir)) {
 }
 # Wrap το Get-BridgeStatusMonitor
 try {
+    $Configuration = New-BridgeConfiguration
     $startBridgeStatusMonitorSplat = @{
+        Configuration   = $Configuration
         IntervalSeconds = 300
         MaxIterations   = 0
         OutputFile      = "$OutDir/bridge_status.json"

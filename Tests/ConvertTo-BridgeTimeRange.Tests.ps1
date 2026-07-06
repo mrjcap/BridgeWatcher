@@ -5,12 +5,12 @@
 Describe 'ConvertTo-BridgeTimeRange' {
 
     BeforeAll {
-
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeTimeRange.ps1"
+        $script:Config = New-BridgeConfiguration
 
     }
 

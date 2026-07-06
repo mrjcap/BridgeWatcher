@@ -25,6 +25,7 @@
     [CmdletBinding()]
     [OutputType([pscustomobject[]])]
     param (
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][ValidateScript({
                 if ([Uri]::IsWellFormedUriString($_, [UriKind]::Absolute)) {
@@ -54,11 +55,13 @@
         $invokeOCRRequestSplat = @{
             ApiKey      = $ApiKey
             RequestBody = $requestBody
+            Configuration = $Configuration
         }
         $apiResponse = Invoke-BridgeOCRRequest @invokeOCRRequestSplat
         $convertFromOCRResultSplat = @{
             ApiResponse = $apiResponse
             ImageUri    = $ImageUri
+            Configuration = $Configuration
         }
         $result = ConvertFrom-BridgeOCRResult @convertFromOCRResultSplat
         return $result
@@ -68,7 +71,7 @@
             Message = "❌ Η αίτηση OCR απέτυχε: $_"
             Level   = 'Warning'
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         throw
     }
 }

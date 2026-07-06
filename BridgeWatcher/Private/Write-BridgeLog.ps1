@@ -36,11 +36,9 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Message,
         [Parameter()][ValidateSet('Verbose', 'Debug', 'Warning')]
         [string]$Level = 'Verbose',
-        [Parameter()][PSCustomObject]$Configuration
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
+
     $prefix = "[Bridge:$Stage]"
     $output = "$prefix $Message"
     # Console logging

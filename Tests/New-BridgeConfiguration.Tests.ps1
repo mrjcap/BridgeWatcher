@@ -3,6 +3,7 @@
 Describe 'New-BridgeConfiguration' {
     BeforeAll {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
     Context 'Default Instantiation' {

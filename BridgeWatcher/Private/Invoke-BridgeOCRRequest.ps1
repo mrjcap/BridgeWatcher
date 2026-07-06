@@ -23,11 +23,9 @@
     param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$RequestBody,
-        [Parameter()][PSCustomObject]$Configuration
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
+
     # Λήψη διεύθυνσης URL για το OCR API από τη διαμόρφωση
     $url = "$($Configuration.Urls.OCRApi)?key=$ApiKey"
     # Λήψη μηνυμάτων από τη διαμόρφωση ή χρήση εναλλακτικής λύσης
@@ -49,7 +47,7 @@
             Stage   = $analysisStage
             Message = $startMessage
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         $maxRetries = 3
         for ($i = 1; $i -le $maxRetries; $i++) {
             try {
@@ -60,10 +58,14 @@
                     throw
                 }
                 if ($i -eq $maxRetries) { throw }
-                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+                $baseSleep = [Math]::Pow(2, $i)
+                $jitter = Get-Random -Minimum 0 -Maximum 3
+                Start-Sleep -Seconds ($baseSleep + $jitter)
             } catch {
                 if ($i -eq $maxRetries) { throw }
-                Start-Sleep -Seconds ([Math]::Pow(2, $i))
+                $baseSleep = [Math]::Pow(2, $i)
+                $jitter = Get-Random -Minimum 0 -Maximum 3
+                Start-Sleep -Seconds ($baseSleep + $jitter)
             }
         }
     } catch {
@@ -72,7 +74,7 @@
             Message = "$failedMessagePrefix`: $($_.Exception.Message)"
             Level   = $Configuration.LoggingConfig.WarningLevel
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         $errorRecord = [System.Management.Automation.ErrorRecord]::new(
             ([System.Exception]::new("Η κλήση του Google Vision API απέτυχε: $($_.Exception.Message)", $_.Exception)),
             'GoogleVisionRequestFailure',

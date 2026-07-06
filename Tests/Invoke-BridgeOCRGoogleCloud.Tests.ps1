@@ -2,11 +2,13 @@
 
 Describe 'Invoke-BridgeOCRGoogleCloud' {
     BeforeAll {
+
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOCRGoogleCloud.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOCRRequest.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
     It 'Επιστρέφει object από API με orchestrated call' {
@@ -28,18 +30,18 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
         Mock ConvertFrom-BridgeOCRResult {
             return @{ mock = 'result' }
         }
-        $out = Invoke-BridgeOCRGoogleCloud -ApiKey 'abc' -ImageUri $validUri
+        $out = Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'abc' -ImageUri $validUri
         $out.mock | Should -Be 'result'
         Assert-MockCalled Invoke-BridgeOCRRequest -Times 1
         Assert-MockCalled ConvertFrom-BridgeOCRResult -Times 1
     }
     It 'Ρίχνει σφάλμα αν το URI είναι άκυρο' {
-        { Invoke-BridgeOCRGoogleCloud -ApiKey 'abc' -ImageUri 'notaurl' } | Should -Throw
+        { Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'abc' -ImageUri 'notaurl' } | Should -Throw
     }
     It 'Γράφει Error όταν αποτυγχάνει η κλήση' {
         Mock Invoke-BridgeOCRRequest { 'Simulated OCR failure' }
         $invokeOCRGoogleCloudSplat = @{
-            ApiKey        = 'dummy'
+            ApiKey = 'dummy'; Configuration = $script:Config
             ImageUri      = 'https://image.jpg'
             Verbose       = $true
             ErrorAction   = 'SilentlyContinue'
@@ -49,6 +51,6 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
     }
     It 'Γράφει Write-Error όταν αποτυγχάνει η κλήση' {
         Mock Invoke-BridgeOCRRequest { throw 'Simulated OCR failure' }
-        { Invoke-BridgeOCRGoogleCloud -ApiKey 'dummy' -ImageUri 'https://image.jpg' -Verbose -ErrorAction SilentlyContinue } | Should -Throw 'Simulated OCR failure'
+        { Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'dummy' -ImageUri 'https://image.jpg' -Verbose -ErrorAction SilentlyContinue } | Should -Throw 'Simulated OCR failure'
     }
 }

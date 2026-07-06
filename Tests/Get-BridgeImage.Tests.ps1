@@ -5,6 +5,7 @@ Describe 'Get-BridgeImage' {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeImage.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
     Context 'Ισθμία' {
@@ -24,13 +25,13 @@ Describe 'Get-BridgeImage' {
   </div>
 </div>
 '@
-            $result = Get-BridgeImage -HtmlContent $html -Location 'isthmia'
+            $result = Get-BridgeImage -Configuration $script:Config -HtmlContent $html -Location 'isthmia'
             $result.Count | Should -Be 2
             $result[0].src | Should -Match 'no-schedule'
         }
         It 'Επιστρέφει Exception αν δεν βρεθεί matching block' {
             $html = '<div>Κάτι άλλο</div>'
-            { Get-BridgeImage -HtmlContent $html -Location 'isthmia' } | Should -Throw "Δεν βρέθηκε block για τη θέση isthmia."
+            { Get-BridgeImage -Configuration $script:Config -HtmlContent $html -Location 'isthmia' } | Should -Throw "Δεν βρέθηκε block για τη θέση isthmia."
         }
 
 
@@ -45,7 +46,7 @@ Describe 'Get-BridgeImage' {
 </div>
 </DIV>
 '@
-            $result = Get-BridgeImage -HtmlContent $html -Location 'isthmia'
+            $result = Get-BridgeImage -Configuration $script:Config -HtmlContent $html -Location 'isthmia'
             $result.Count | Should -Be 1
             $result[0].src | Should -Be 'image-bridge-open-no-schedule.php?123456'
         }

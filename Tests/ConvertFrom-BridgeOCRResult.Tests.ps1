@@ -7,7 +7,6 @@ Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
     BeforeAll {
-
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -21,7 +20,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusAdvice.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
-
+        $script:Config = New-BridgeConfiguration
     }
 
     Mock Write-BridgeLog {}
@@ -48,7 +47,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
             }
 
-            { ConvertFrom-BridgeOCRResult -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } |
+            { ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } |
 
                 Should -Throw 'Δεν βρέθηκε κείμενο OCR στην απόκριση.'
 
@@ -86,7 +85,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
             # Εκτέλεση της συνάρτησης
 
-            { ConvertFrom-BridgeOCRResult -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } | Should -Throw 'Δεν βρέθηκε κείμενο OCR στην απόκριση.'
+            { ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } | Should -Throw 'Δεν βρέθηκε κείμενο OCR στην απόκριση.'
 
         }
 
@@ -126,7 +125,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         # Εκτέλεση της συνάρτησης
 
-        ConvertFrom-BridgeOCRResult -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+        ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
 
         # Ελέγχουμε αν τα μηνύματα Write-Verbose και Write-Warning καλούνται
 
@@ -164,7 +163,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         # Εκτέλεση της συνάρτησης
 
-        $result = ConvertFrom-BridgeOCRResult -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+        $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
 
         # Ελέγχουμε αν επιστρέφει το αναμενόμενο κενό array
 
@@ -206,7 +205,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         Mock Get-BridgeStatusAdvice { 'Επέστρεψε μετά τις 00:00' }
 
-        $result = ConvertFrom-BridgeOCRResult -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
+        $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
 
         $result.'Σημείωση 2' | Should -Match 'θα κλείσει στις'
 
@@ -246,7 +245,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         Mock Get-BridgeStatusAdvice { 'Κατέβα για καφέ' }
 
-        $result = ConvertFrom-BridgeOCRResult -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
+        $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
 
         $result.'Σημείωση 2' | Should -Match 'ήδη κλειστή από τις'
 
@@ -298,7 +297,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
 
 
-        $null = ConvertFrom-BridgeOCRResult -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
+        $null = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
 
 
 
@@ -327,7 +326,6 @@ Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος α
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusAdvice.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
-
     }
 
     It 'Πρέπει να καλει το Write-BridgeLog όταν αποτυγχάνει η ανάλυση OCR' {
@@ -352,7 +350,7 @@ Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος α
 
         }
 
-        { ConvertFrom-BridgeOCRResult -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } | Should -Throw
+        { ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } | Should -Throw
 
         Assert-MockCalled Write-BridgeLog -Exactly 2 -Scope It
 

@@ -30,7 +30,7 @@ function global:Test-BridgeResult {
         } else {
             $Result.ErrorMessage
         }
-        Write-BridgeLog -Stage 'Σφάλμα' -Message $errorMessage -Level 'Warning'
+        Write-BridgeLog -Configuration $script:Config -Stage 'Σφάλμα' -Message $errorMessage -Level 'Warning'
         return $false
     }
     return $true

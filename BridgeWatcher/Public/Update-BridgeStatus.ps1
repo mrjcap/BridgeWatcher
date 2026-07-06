@@ -39,14 +39,11 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ApiKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
-        [Parameter()][PSCustomObject]$Configuration
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
     begin {
         # Initialize configuration. This is safe to run during -WhatIf as it only creates a memory object
         # and does not modify any system state.
-        if (-not $Configuration) {
-            $Configuration = New-BridgeConfiguration
-        }
     }
     process {
         $writeBridgeLogSplat = @{
@@ -54,7 +51,7 @@
             Message = 'Starting comparison...'
             Level   = $Configuration.LoggingConfig.VerboseLevel
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         if (-not (Test-Path $OutputFile)) {
             # Το αρχείο δεν υπάρχει – πρώτη εκτέλεση
             # Χρήση κενού array ώστε η πρώτη κατάσταση να ενεργοποιεί ειδοποιήσεις
@@ -62,7 +59,7 @@
                 OutputFile    = $OutputFile
                 Configuration = $Configuration
             }
-            $currentState = Get-BridgeStatus @getDiorigaStatusSplat
+            $currentState = Get-BridgeStatus @getDiorigaStatusSplat -Configuration $Configuration
             $previousState = @()
         } else {
             # Το αρχείο υπάρχει, μπορείς να το διαβάσεις με ασφάλεια
@@ -70,7 +67,7 @@
                 InputFile     = $OutputFile
                 Configuration = $Configuration
             }
-            $previousState = Get-BridgePreviousStatus @getDiorigaPreviousStatusSplat
+            $previousState = Get-BridgePreviousStatus @getDiorigaPreviousStatusSplat -Configuration $Configuration
             $currentState = Get-BridgeStatus -Configuration $Configuration
         }
         if ($PSCmdlet.ShouldProcess("BridgeWatcher", "Update status and send notifications")) {
@@ -82,7 +79,7 @@
                 PoApiKey      = $PoApiKey
                 Configuration = $Configuration
             }
-            Invoke-BridgeStatusComparison @invokeSplat
+            Invoke-BridgeStatusComparison @invokeSplat -Configuration $Configuration
             $exportBridgeStatusJsonSplat = @{
                 Data          = $currentState
                 Path          = $OutputFile
@@ -95,6 +92,6 @@
             Message = 'Finished comparison and saved snapshot.'
             Level   = $Configuration.LoggingConfig.VerboseLevel
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
     }
 }

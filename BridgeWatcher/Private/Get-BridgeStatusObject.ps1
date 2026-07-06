@@ -44,13 +44,9 @@
                     throw "The parameter '$_' is not a valid absolute URI."
                 }
             })][string]$BaseUrl,
-        [Parameter()]
-        [PSCustomObject]$Configuration
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
 
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
 
     # Use configuration or fallback for BaseUrl
     if (-not $BaseUrl) {
@@ -63,11 +59,16 @@
         try {
             $response = Invoke-WebRequest -Uri $ImageUrl -UseBasicParsing -ErrorAction Stop
             if ($response -and $response.Content) {
-                $hashStream = [System.IO.MemoryStream]::new($response.Content)
-                $md5 = [System.Security.Cryptography.MD5]::Create()
-                $hashBytes = $md5.ComputeHash($hashStream)
-                $hashStream.Close()
-                $ImageHash = [System.BitConverter]::ToString($hashBytes) -replace '-'
+                try {
+                    $bytes = if ($response.Content -is [byte[]]) { $response.Content } else { [System.Text.Encoding]::UTF8.GetBytes($response.Content) }
+                    $hashStream = [System.IO.MemoryStream]::new($bytes)
+                    $md5 = [System.Security.Cryptography.MD5]::Create()
+                    $hashBytes = $md5.ComputeHash($hashStream)
+                    $ImageHash = [System.BitConverter]::ToString($hashBytes) -replace '-'
+                } finally {
+                    if ($null -ne $md5) { $md5.Dispose() }
+                    if ($null -ne $hashStream) { $hashStream.Dispose() }
+                }
             }
         } catch {
             $writeBridgeLogSplat = @{
@@ -75,7 +76,7 @@
                 Message = "❌ Αποτυχία λήψης/hashing εικόνας για $ImageUrl`: $($_.Exception.Message)"
                 Level   = 'Warning'
             }
-            Write-BridgeLog @writeBridgeLogSplat
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         }
     }
 

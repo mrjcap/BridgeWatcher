@@ -30,7 +30,7 @@
     .NOTES
     Χρησιμοποιεί την New-BridgeResult για τυποποιημένη επιστροφή αποτελεσμάτων.
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([PSCustomObject])]
     param (
         [Parameter(Mandatory)]
@@ -45,13 +45,8 @@
         [ValidateRange(1, 20)]
         [int]$JsonDepth,
 
-        [Parameter()]
-        [PSCustomObject]$Configuration
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
-
-    if (-not $Configuration) {
-        $Configuration = New-BridgeConfiguration
-    }
 
     # Λήψη βάθους JSON από τη διαμόρφωση ή την παράμετρο ή χρήση εναλλακτικής λύσης
     if (-not $JsonDepth) {
@@ -89,7 +84,7 @@
                     Message = $errorMessage
                     Level   = $warningLevel
                 }
-                Write-BridgeLog @writeBridgeLogSplat
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
                 return [PSCustomObject]@{
                     Success      = $false
@@ -102,20 +97,22 @@
         }
 
         $json = ConvertTo-Json -InputObject $Data @convertToJsonSplat
-        $fileStream = [System.IO.FileStream]::new($Path, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
-        try {
-            $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
-            $fileStream.Write($bytes, 0, $bytes.Length)
-        } finally {
-            $fileStream.Close()
-            $fileStream.Dispose()
+        if ($PSCmdlet.ShouldProcess($Path, "Create JSON export")) {
+            $fileStream = [System.IO.FileStream]::new($Path, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
+            try {
+                $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+                $fileStream.Write($bytes, 0, $bytes.Length)
+            } finally {
+                $fileStream.Close()
+                $fileStream.Dispose()
+            }
         }
 
         $writeBridgeLogSplat = @{
             Stage   = $analysisStage
             Message = "$successMessage`: $Path"
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
         return [PSCustomObject]@{
             Success      = $true
@@ -132,7 +129,7 @@
             Message = $errorMessage
             Level   = $warningLevel
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
         return [PSCustomObject]@{
             Success      = $false

@@ -5,12 +5,12 @@
 Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDuration' {
 
     BeforeAll {
-
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeClosedDuration.ps1"
+        $script:Config = New-BridgeConfiguration
 
     }
 

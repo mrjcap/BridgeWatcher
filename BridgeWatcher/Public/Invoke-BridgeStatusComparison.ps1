@@ -64,14 +64,11 @@
         [ValidateNotNullOrEmpty()]
         [string]$PoApiKey,
 
-        [Parameter()]
+        [Parameter(Mandatory)]
+        [ValidateNotNull()]
         [PSCustomObject]$Configuration
     )
     try {
-        if (-not $Configuration) {
-            $Configuration = New-BridgeConfiguration
-        }
-
         if (-not $PreviousState -or $PreviousState.Count -eq 0) {
             # Πρώτη εκτέλεση: όλες οι γέφυρες είναι νέες (=>)
             $diff = $CurrentState | ForEach-Object {
@@ -109,7 +106,7 @@
                 Stage   = 'Ανάλυση'
                 Message = '✅ Καμία αλλαγή στις γέφυρες.'
             }
-            Write-BridgeLog @writeBridgeLogSplat
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             return $false
         }
 
@@ -133,14 +130,14 @@
                 Stage   = 'Ανάλυση'
                 Message = "🌉 $($change.gefyraName) ➜ $($change.gefyraStatus) ($($change.SideIndicator))"
             }
-            Write-BridgeLog @writeBridgeLogSplat
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             if ($change.SideIndicator -eq '==') {
                 $writeBridgeLogSplat = @{
                     Level   = 'Verbose'
                     Stage   = 'Ανάλυση'
                     Message = "Καμία ουσιαστική αλλαγή στην $($change.gefyraName)."
                 }
-                Write-BridgeLog @writeBridgeLogSplat
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 continue
             }
             if ($change.SideIndicator -ne '=>') {
@@ -156,7 +153,7 @@
                         Stage   = 'Ανάλυση'
                         Message = "Καμία ουσιαστική αλλαγή στην $($change.gefyraName)."
                     }
-                    Write-BridgeLog @writeBridgeLogSplat
+                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                     continue
                 } else {
                     $currentBridge = @($CurrentState) | Where-Object { $_.gefyraName -eq $change.gefyraName } | Select-Object -First 1
@@ -167,7 +164,7 @@
                             Stage   = 'Ανάλυση'
                             Message = "Αποτυχία λήψης νέου hash. Επαναχρησιμοποίηση προηγούμενου hash για την $($change.gefyraName)."
                         }
-                        Write-BridgeLog @writeBridgeLogSplat
+                        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                         continue
                     }
 
@@ -176,7 +173,7 @@
                         Stage   = 'Ανάλυση'
                         Message = "Εντοπίστηκε ενημέρωση του προγράμματος κλεισίματος για την $($change.gefyraName)."
                     }
-                    Write-BridgeLog @writeBridgeLogSplat
+                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 }
             }
             $key = "$($change.gefyraStatus)|$($change.SideIndicator)"
@@ -211,7 +208,7 @@
                     Message = "❓ Άγνωστο combo: $key"
                     Level   = 'Warning'
                 }
-                Write-BridgeLog @writeBridgeLogSplat
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             }
         }
         return $changesTriggered
@@ -221,7 +218,7 @@
             Stage   = 'Σφάλμα'
             Message = "❌ $($_.Exception.Message)"
         }
-        Write-BridgeLog @writeBridgeLogSplat
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         throw
     }
 }
