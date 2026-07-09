@@ -1,5 +1,4 @@
-﻿function Update-BridgeStatus {
-    <#
+﻿<#
     .SYNOPSIS
     Συγκρίνει προηγούμενη και τρέχουσα κατάσταση γεφυρών.
 
@@ -31,8 +30,9 @@
     .NOTES
     Χρησιμοποιεί OCR αν χρειάζεται, συγκρίνει states και αποστέλλει ειδοποιήσεις.
     #>
+function Update-BridgeStatus {
     [CmdletBinding(SupportsShouldProcess)]
-    [OutputType([void])]
+    [OutputType([object[]])]
 
     param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$OutputFile,
@@ -79,13 +79,14 @@
                 PoApiKey      = $PoApiKey
                 Configuration = $Configuration
             }
-            Invoke-BridgeStatusComparison @invokeSplat -Configuration $Configuration
+            $null = Invoke-BridgeStatusComparison @invokeSplat -Configuration $Configuration
             $exportBridgeStatusJsonSplat = @{
                 Data          = $currentState
                 Path          = $OutputFile
                 Configuration = $Configuration
             }
-            Export-BridgeStatusJson @exportBridgeStatusJsonSplat
+            $null = Export-BridgeStatusJson @exportBridgeStatusJsonSplat
+            return $currentState
         }
         $writeBridgeLogSplat = @{
             Stage   = $Configuration.LoggingConfig.InfoStage
@@ -95,3 +96,5 @@
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
     }
 }
+
+

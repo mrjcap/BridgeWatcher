@@ -42,6 +42,13 @@
     $warningLevel = $Configuration.LoggingConfig.WarningLevel
 
     try {
+        $writeBridgeLogSplat = @{
+            Stage   = $Configuration.LoggingConfig.InfoStage
+            Message = "📲 Αποστολή ειδοποίησης Pushover (Τίτλος: $($Payload.title))..."
+            Level   = $Configuration.LoggingConfig.VerboseLevel
+        }
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+
         $invokeRestMethodSplat = @{
             Method      = 'Post'
             Uri         = $pushoverApiUrl
@@ -52,7 +59,16 @@
         $maxRetries = 3
         for ($i = 1; $i -le $maxRetries; $i++) {
             try {
-                return Invoke-RestMethod @invokeRestMethodSplat
+                $result = Invoke-RestMethod @invokeRestMethodSplat
+
+                $writeBridgeLogSuccess = @{
+                    Stage   = $Configuration.LoggingConfig.InfoStage
+                    Message = "✅ Η ειδοποίηση Pushover στάλθηκε με επιτυχία!"
+                    Level   = $Configuration.LoggingConfig.VerboseLevel
+                }
+                Write-BridgeLog @writeBridgeLogSuccess -Configuration $Configuration
+
+                return $result
             } catch [System.Net.WebException] {
                 $response = $_.Exception.Response
                 try {

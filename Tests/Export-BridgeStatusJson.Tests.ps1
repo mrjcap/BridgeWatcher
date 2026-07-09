@@ -52,7 +52,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             # Επιβεβαιώνουμε ότι κάλεσε το Write-BridgeLog με σφάλμα
 
-            Assert-MockCalled Write-BridgeLog -Exactly 1 -Scope It
+            Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -Scope It
 
         }
 
@@ -92,7 +92,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             # Επιβεβαιώνουμε ότι δεν έγραψε Warning (μόνο Info)
 
-            Assert-MockCalled Write-BridgeLog -Exactly 1 -Scope It
+            Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -Scope It
 
         }
 
@@ -112,7 +112,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             # Επιβεβαιώνουμε ότι κάλεσε το Write-BridgeLog μία φορά
 
-            Assert-MockCalled Write-BridgeLog -Exactly 1 -Scope It
+            Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -Scope It
 
         }
 
@@ -203,7 +203,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            Assert-MockCalled ConvertTo-Json -ParameterFilter { $Depth -eq 8 } -Times 1
+            Should -Invoke -CommandName ConvertTo-Json -ParameterFilter { $Depth -eq 8 } -Times 1
 
         }
 
@@ -231,7 +231,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like 'Custom success message*' } -Times 1
+            Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Message -like 'Custom success message*' } -Times 1
 
         }
 
@@ -265,7 +265,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like 'Custom failed message*' } -Times 1
+            Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Message -like 'Custom failed message*' } -Times 1
 
         }
 
@@ -297,7 +297,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            Assert-MockCalled Write-BridgeLog -ParameterFilter { $Message -like 'Custom directory not exists*' } -Times 1
+            Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Message -like 'Custom directory not exists*' } -Times 1
 
         }
 
@@ -325,7 +325,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            Assert-MockCalled Write-BridgeLog -ParameterFilter { $Stage -eq 'Ανάλυση' } -Times 1
+            Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Stage -eq 'Ανάλυση' } -Times 1
 
         }
 

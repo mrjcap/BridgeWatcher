@@ -12,13 +12,13 @@ Describe 'Get-BridgeStatusObject' {
     It 'Δημιουργεί valid object για Ποσειδωνία' {
         $obj = Get-BridgeStatusObject -Configuration $script:Config -Location 'poseidonia' -Status 'Ανοιχτή' `
             -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'image-bridge-open.php?abc'
-        $obj.gefyraName | Should -Be 'Ποσειδωνία'
+        $obj.GefyraName | Should -Be 'Ποσειδωνία'
         $obj.imageUrl | Should -Be 'https://www.topvision.gr/dioriga/image-bridge-open.php?abc'
     }
     It 'Δημιουργεί valid object για Ισθμία με absolute URL' {
         $obj = Get-BridgeStatusObject -Configuration $script:Config -Location 'isthmia' -Status 'Μόνιμα κλειστή' `
             -Timestamp '2025-04-10T14:00:00Z' -ImageSrc 'https://topvision.gr/direct.png'
-        $obj.gefyraName | Should -Be 'Ισθμία'
+        $obj.GefyraName | Should -Be 'Ισθμία'
         $obj.imageUrl | Should -Be 'https://topvision.gr/direct.png'
     }
 
@@ -70,7 +70,7 @@ Describe 'Get-BridgeStatusObject' {
                 Get-BridgeStatusObject -Location 'isthmia' -Status $config.Statuses.ClosedWithSchedule `
                     -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'schedule.php' -Configuration $config
             } | Should -Throw -ErrorId '*IMAGE_DOWNLOAD_FAILED*'
-            Assert-MockCalled Write-BridgeLog -Times 1 -ParameterFilter { $Stage -eq 'Σφάλμα' -and $Level -eq 'Warning' }
+            Should -Invoke -CommandName Write-BridgeLog -Times 1 -ParameterFilter { $Stage -eq 'Σφάλμα' -and $Level -eq 'Warning' }
         }
     }
 }

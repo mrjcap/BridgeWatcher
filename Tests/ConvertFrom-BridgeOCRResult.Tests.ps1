@@ -129,9 +129,9 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         # Ελέγχουμε αν τα μηνύματα Write-Verbose και Write-Warning καλούνται
 
-        Assert-MockCalled Write-Verbose -Exactly 3 -Scope It
+        Should -Invoke -CommandName Write-Verbose -Times 3 -Exactly -Scope It
 
-        Assert-MockCalled Write-Warning -Exactly 1 -Scope It
+        Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -Scope It
 
     }
 
@@ -207,7 +207,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
 
-        $result.'Σημείωση 2' | Should -Match 'θα κλείσει στις'
+        $result.Note2 | Should -Match 'θα κλείσει στις'
 
     }
 
@@ -247,7 +247,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
 
-        $result.'Σημείωση 2' | Should -Match 'ήδη κλειστή από τις'
+        $result.Note2 | Should -Match 'ήδη κλειστή από τις'
 
     }
 
@@ -352,7 +352,7 @@ Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος α
 
         { ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } | Should -Throw
 
-        Assert-MockCalled Write-BridgeLog -Exactly 2 -Scope It
+        Should -Invoke -CommandName Write-BridgeLog -Times 2 -Exactly -Scope It
 
     }
 

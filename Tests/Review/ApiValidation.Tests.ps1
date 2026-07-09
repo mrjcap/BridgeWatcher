@@ -1,4 +1,4 @@
-$rootPath = "C:\Users\jcap\github\BridgeWatcher\BridgeWatcher"
+﻿$rootPath = "C:\Users\jcap\github\BridgeWatcher\BridgeWatcher"
 $files = Get-ChildItem -Path (Join-Path $rootPath "Public\*.ps1"), (Join-Path $rootPath "Private\*.ps1")
 
 Describe "API Contract Validation Strictness" {

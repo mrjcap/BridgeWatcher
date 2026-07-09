@@ -1,5 +1,4 @@
-﻿function Get-BridgeStatus {
-    <#
+﻿<#
     .SYNOPSIS
     Ανακτά την τρέχουσα κατάσταση γεφυρών από διαδικτυακή σελίδα.
     .DESCRIPTION
@@ -25,6 +24,7 @@
     .NOTES
     Χρησιμοποιεί pipeline approach με New-BridgeResult/Test-BridgeResult για καλύτερο error handling.
     #>
+function Get-BridgeStatus {
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     param(

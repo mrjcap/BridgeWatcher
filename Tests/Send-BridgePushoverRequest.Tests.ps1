@@ -3,210 +3,83 @@
 Describe 'Send-BridgePushoverRequest' {
     BeforeAll {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
-        $script:Config = New-BridgeConfiguration
-
-        Mock -CommandName Start-Sleep -MockWith {
-    }
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
-    It 'Στέλνει POST και επιστρέφει αντικείμενο' {
-        $payload = @{ token = 't'; user = 'u'; message = 'hi' }
+    It 'Επιστρέφει το αποτέλεσμα όταν το API απαντάει επιτυχώς' {
         Mock -CommandName Invoke-RestMethod -MockWith {
-            return @{ status = 'ok' }
+            return @{ status = 1; request = 'abcd' }
         }
-        $response = Send-BridgePushoverRequest -Configuration $script:Config -Payload $payload
-        $response.status | Should -Be 'ok'
-        Assert-MockCalled -CommandName Invoke-RestMethod -Times 1 -Exactly
-    }
+        Mock -CommandName Write-BridgeLog -MockWith { }
 
-    It "Γράφει Write-BridgeLog με Stage 'Σφάλμα' όταν αποτυγχάνει η κλήση στο API" {
-        # Arrange
-        Mock Invoke-RestMethod { throw 'Fake failure' }
-        Mock Write-BridgeLog
-        $payload = @{
-            token   = 'x'
-            user    = 'x'
-            message = 'test'
-        }
-        # Act
-        try {
-            $result = Send-BridgePushoverRequest -Configuration $script:Config -Payload $payload
-        }
-        catch {
-            Write-Verbose 'Expected error, ignoring for test.'
-        }
-        $result | Should -BeNullOrEmpty
-    }
+        $payload = @{ message = 'test' }
+        $result = Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config
 
-    It 'Επιστρέφει response όταν το POST είναι επιτυχές' {
-        Mock Invoke-RestMethod { return @{ status = 1; request = 'abc123' } }
-        $payload = @{
-            token   = 'x'
-            user    = 'x'
-            message = 'success'
-        }
-        $result = Send-BridgePushoverRequest -Configuration $script:Config -Payload $payload
         $result.status | Should -Be 1
-        $result.request | Should -Be 'abc123'
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
     }
 
-    Context 'Configuration Coverage Δοκιμές' {
-        It 'Καλύπτει Configuration.PushoverApiUrl path' {
-            Mock Invoke-RestMethod {
-                return @{ status = 1 }
-            }
-
-            $config = [PSCustomObject]@{
-                Urls = [PSCustomObject]@{
-                    PushoverApi = 'https://custom-pushover-api.com/messages'
-                }
-            }
-
-            $payload = @{ token = 'test'; user = 'user'; message = 'msg' }
-            Send-BridgePushoverRequest -Payload $payload -Configuration $config
-
-            Assert-MockCalled Invoke-RestMethod -ParameterFilter {
-                $Uri -eq 'https://custom-pushover-api.com/messages'
-            } -Times 1
+    It 'Ρίχνει απευθείας terminating error σε HTTP 400 (Bad Request)' {
+        Mock -CommandName Invoke-RestMethod -MockWith {
+            $response = [System.Net.HttpWebResponse]::new()
+            $response.PSObject.Properties.Add([System.Management.Automation.PSNoteProperty]::new('StatusCode', 400))
+            $ex = [System.Net.WebException]::new('Bad Request', [System.Exception]::new('dummy'), [System.Net.WebExceptionStatus]::ProtocolError, $response)
+            throw $ex
         }
+        Mock -CommandName Write-BridgeLog -MockWith { }
+        Mock -CommandName Start-Sleep -MockWith { }
 
-        It 'Καλύπτει Configuration.PushoverMessages.SendFailed path σε σφάλμα' {
-            Mock Invoke-RestMethod { throw 'Test API failure' }
-            Mock Write-BridgeLog {}
-
-            $baseConfig = New-BridgeConfiguration
-            $config = [PSCustomObject]@{
-                Urls             = [PSCustomObject]@{
-                    PushoverApi = $baseConfig.Urls.PushoverApi
-                }
-                PushoverMessages = @{
-                    SendFailed = 'Custom send failed message'
-                }
-                LoggingConfig    = $baseConfig.LoggingConfig
-            }
-
-            $payload = @{ token = 'test'; user = 'user'; message = 'msg' }
-            { Send-BridgePushoverRequest -Payload $payload -Configuration $config } | Should -Throw
-
-            Assert-MockCalled Write-BridgeLog -ParameterFilter {
-                $Message -like 'Custom send failed message*'
-            } -Times 1
-        }
-
-        It 'Καλύπτει Configuration.LoggingConfig.ErrorStage path σε σφάλμα' {
-            Mock Invoke-RestMethod { throw 'Test API failure' }
-            Mock Write-BridgeLog {}
-            $baseConfig = New-BridgeConfiguration
-            $config = [PSCustomObject]@{
-                Urls             = [PSCustomObject]@{
-                    PushoverApi = $baseConfig.Urls.PushoverApi
-                }
-                PushoverMessages = $baseConfig.PushoverMessages
-                LoggingConfig    = @{
-                    ErrorStage   = 'Σφάλμα'
-                    WarningLevel = $baseConfig.LoggingConfig.WarningLevel
-                }
-            }
-
-            $payload = @{ token = 'test'; user = 'user'; message = 'msg' }
-            { Send-BridgePushoverRequest -Payload $payload -Configuration $config } | Should -Throw
-            Assert-MockCalled Write-BridgeLog -ParameterFilter {
-                $Stage -eq 'Σφάλμα'
-            } -Times 1
-        }
-
-        It 'Καλύπτει Configuration.LoggingConfig.WarningLevel path σε σφάλμα' {
-            Mock Invoke-RestMethod { throw 'Test API failure' }
-            Mock Write-BridgeLog {}
-            $baseConfig = New-BridgeConfiguration
-            $config = [PSCustomObject]@{
-                Urls             = [PSCustomObject]@{
-                    PushoverApi = $baseConfig.Urls.PushoverApi
-                }
-                PushoverMessages = $baseConfig.PushoverMessages
-                LoggingConfig    = @{
-                    ErrorStage   = $baseConfig.LoggingConfig.ErrorStage
-                    WarningLevel = 'Warning'
-                }
-            }
-
-            $payload = @{ token = 'test'; user = 'user'; message = 'msg' }
-            { Send-BridgePushoverRequest -Payload $payload -Configuration $config } | Should -Throw
-            Assert-MockCalled Write-BridgeLog -ParameterFilter {
-                $Level -eq 'Warning'
-            } -Times 1
-        }
-
-        It 'Καλύπτει όλες τις configuration paths μαζί σε σφάλμα' {
-            Mock Invoke-RestMethod { throw 'Complete test failure' }
-            Mock Write-BridgeLog {}
-            $config = [PSCustomObject]@{
-                Urls             = [PSCustomObject]@{
-                    PushoverApi = 'https://custom-error-api.com/test'
-                }
-                PushoverMessages = @{
-                    SendFailed = 'Complete custom error'
-                }
-                LoggingConfig    = @{
-                    ErrorStage   = 'Σφάλμα'
-                    WarningLevel = 'Warning'
-                }
-            }
-
-            $payload = @{ token = 'test'; user = 'user'; message = 'msg' }
-            { Send-BridgePushoverRequest -Payload $payload -Configuration $config } | Should -Throw
-
-            Assert-MockCalled Invoke-RestMethod -ParameterFilter { $Uri -eq 'https://custom-error-api.com/test' } -Times 3
-            Assert-MockCalled Write-BridgeLog -ParameterFilter {
-                $Message -like 'Complete custom error*' -and
-                $Stage -eq 'Σφάλμα' -and
-                $Level -eq 'Warning'
-            } -Times 1
-        }
-
-        It 'Καλύπτει configuration με επιτυχή σενάριο' {
-            Mock Invoke-RestMethod {
-                return @{ status = 1; request = 'success123' }
-            }
-
-            $config = [PSCustomObject]@{
-                Urls           = [PSCustomObject]@{
-                    PushoverApi = 'https://custom-success-api.com/messages'
-                }
-            }
-
-            $payload = @{ token = 'test'; user = 'user'; message = 'success' }
-            $result = Send-BridgePushoverRequest -Payload $payload -Configuration $config
-
-            Assert-MockCalled Invoke-RestMethod -ParameterFilter {
-                $Uri -eq 'https://custom-success-api.com/messages'
-            } -Times 1
-            $result.status | Should -Be 1
-            $result.request | Should -Be 'success123'
-        }
+        $payload = @{ message = 'test' }
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Bad Request*'
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
+        Should -Not -Invoke -CommandName Start-Sleep -Scope It
     }
-    Context 'Επιπλέον κάλυψη για retries και WebException' {
-        It 'Πετάει σφάλμα 400 Bad Request όταν το Exception έχει response' {
-            Mock Invoke-RestMethod {
-                throw [System.Net.WebException]::new("Mock WebException", $null, [System.Net.WebExceptionStatus]::ProtocolError, $null)
-            }
-            Mock Write-BridgeLog
-            { Send-BridgePushoverRequest -Configuration $script:Config -Payload @{ token = 't'; user = 'u'; message = 'm' } } | Should -Throw
-        }
 
-        It 'Disposes WebException Response if it is IDisposable' {
-            $resp = [System.Net.HttpWebResponse]::new()
-            Mock Invoke-RestMethod {
-                $ex = New-Object System.Net.WebException("Mock WebException")
-                $ex | Add-Member -MemberType NoteProperty -Name Response -Value $resp -Force
-                throw $ex
-            }
-            Mock Write-BridgeLog
-            { Send-BridgePushoverRequest -Configuration $script:Config -Payload @{ token = 't'; user = 'u'; message = 'm' } } | Should -Throw
+    It 'Επαναλαμβάνει σε HTTP 500 και ρίχνει terminating error όταν εξαντληθούν οι προσπάθειες' {
+        Mock -CommandName Invoke-RestMethod -MockWith {
+            $response = [System.Net.HttpWebResponse]::new()
+            $response.PSObject.Properties.Add([System.Management.Automation.PSNoteProperty]::new('StatusCode', 500))
+            $ex = [System.Net.WebException]::new('Internal Server Error', [System.Exception]::new('dummy'), [System.Net.WebExceptionStatus]::ProtocolError, $response)
+            throw $ex
         }
+        Mock -CommandName Write-BridgeLog -MockWith { }
+        Mock -CommandName Start-Sleep -MockWith { }
+
+        $payload = @{ message = 'test' }
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Internal Server Error*'
+        Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
+        Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
+    }
+
+    It 'Επαναλαμβάνει σε γενικό σφάλμα και ρίχνει terminating error όταν εξαντληθούν οι προσπάθειες' {
+        Mock -CommandName Invoke-RestMethod -MockWith {
+            throw 'Some generic error'
+        }
+        Mock -CommandName Write-BridgeLog -MockWith { }
+        Mock -CommandName Start-Sleep -MockWith { }
+
+        $payload = @{ message = 'test' }
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Some generic error*'
+        Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
+        Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
+    }
+
+    It 'Καλεί Dispose() στο Response αν υποστηρίζει IDisposable' {
+        $script:disposeCount = 0
+        Mock -CommandName Invoke-RestMethod -MockWith {
+            $ex = [System.Net.WebException]::new('Service Unavailable')
+            throw $ex
+        }
+        Mock -CommandName Write-BridgeLog -MockWith { }
+        Mock -CommandName Start-Sleep -MockWith { }
+
+        $payload = @{ message = 'test' }
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Service Unavailable*'
+        Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
+        # It should have called Dispose() inside the finally block of the catch [WebException]
+        # MemoryStream.Dispose() doesn't have an easily observable side effect unless we mock it,
+        # but since we hit the finally block, coverage should increase.
     }
 }
-

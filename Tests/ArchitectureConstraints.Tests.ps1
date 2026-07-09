@@ -1,6 +1,5 @@
-﻿BeforeAll {
-    $script:Files = Get-ChildItem -Path "$PSScriptRoot\..\BridgeWatcher\*" -Recurse -Include *.ps1, *.psm1, *.psd1
-}
+﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\BridgeWatcher")
+$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Filter *.ps* | Where-Object Extension -in '.ps1', '.psm1', '.psd1'
 
 Describe "Architectural Constraints (OOP)" {
     It "Should not contain OOP keywords (class, enum, interface) in <Name>" -ForEach $script:Files {

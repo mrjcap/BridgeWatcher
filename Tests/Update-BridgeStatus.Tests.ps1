@@ -44,7 +44,7 @@ Describe 'Update-BridgeStatus' {
         $jsonFile = "TestDrive:\bridge_status_test_exists.json"
 
         # We ensure Test-Path returns true to simulate file existence
-        Mock Test-Path { return $true } -ParameterFilter { $Path -eq $jsonFile }
+        Mock Test-Path { return $true }
 
         Mock Get-BridgePreviousStatus {
             return @(
@@ -72,8 +72,25 @@ Describe 'Update-BridgeStatus' {
         { Update-BridgeStatus @updateBridgeStatusSplat } | Should -Not -Throw
 
         # Ελέγχουμε αν η συνάρτηση Get-BridgeStatus καλείται
-        Assert-MockCalled Get-BridgeStatus -Exactly 1 -Scope It
+        Should -Invoke -CommandName Get-BridgeStatus -Times 1 -Exactly -Scope It
         # Ελέγχουμε αν η συνάρτηση Invoke-BridgeStatusComparison κλήθηκε
-        Assert-MockCalled Invoke-BridgeStatusComparison -Exactly 1 -Scope It
+        Should -Invoke -CommandName Invoke-BridgeStatusComparison -Times 1 -Exactly -Scope It
+    }
+
+    It 'Εκτελείται σωστά με -WhatIf και δεν καλεί Invoke/Export' {
+        $jsonFile = "TestDrive:\bridge_status_whatif.json"
+
+        Mock Test-Path { return $true }
+        Mock Get-BridgePreviousStatus { return @() }
+        Mock Get-BridgeStatus { return @() }
+        Mock Invoke-BridgeStatusComparison {}
+        Mock Export-BridgeStatusJson {}
+        Mock Write-BridgeLog {}
+
+        Update-BridgeStatus -Configuration $script:Config -OutputFile $jsonFile -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k' -WhatIf
+
+        Should -Not -Invoke -CommandName Invoke-BridgeStatusComparison -Scope It
+        Should -Not -Invoke -CommandName Export-BridgeStatusJson -Scope It
+        Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Message -eq 'Finished comparison and saved snapshot.' } -Times 1 -Scope It
     }
 }

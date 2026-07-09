@@ -41,9 +41,9 @@ Describe 'Test Get-BridgeStatus function' {
             $result[0].Location | Should -Be 'Isthmia'
             $result[0].Status | Should -Be 'Ανοιχτή'
 
-            Assert-MockCalled Invoke-WebRequest -Exactly 1 -Scope It
-            Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 1 -Scope It
-            Assert-MockCalled Export-BridgeStatusJson -Exactly 1 -Scope It
+            Should -Invoke -CommandName Invoke-WebRequest -Times 1 -Exactly -Scope It
+            Should -Invoke -CommandName Get-BridgeStatusFromHtml -Times 1 -Exactly -Scope It
+            Should -Invoke -CommandName Export-BridgeStatusJson -Times 1 -Exactly -Scope It
         }
     }
 
@@ -125,9 +125,9 @@ Describe 'Get-BridgeStatus Integration' {
         $result.Count | Should -Be 2
 
         # Depending on naming in the current object
-        if ($result[0].gefyraName -eq 'Ποσειδωνία') {
-            $result[0].gefyraName | Should -Be 'Ποσειδωνία'
-            $result[0].gefyraStatus | Should -Be 'Κλειστή με πρόγραμμα'
+        if ($result[0].GefyraName -eq 'Ποσειδωνία') {
+            $result[0].GefyraName | Should -Be 'Ποσειδωνία'
+            $result[0].GefyraStatus | Should -Be 'Κλειστή με πρόγραμμα'
         }
     }
 
@@ -166,7 +166,7 @@ Describe 'Get-BridgeStatus Configuration Fallbacks' {
 
         $config = New-BridgeConfiguration
         { Get-BridgeStatus -Configuration $config -OutputFile 'test.json' } | Should -Not -Throw
-        Assert-MockCalled Invoke-WebRequest -Exactly 1
-        Assert-MockCalled Get-BridgeStatusFromHtml -Exactly 1
+        Should -Invoke -CommandName Invoke-WebRequest -Times 1 -Exactly
+        Should -Invoke -CommandName Get-BridgeStatusFromHtml -Times 1 -Exactly
     }
 }

@@ -29,6 +29,13 @@ Describe 'New-BridgeConfiguration' {
             $config.Defaults.LogDirectory | Should -Be 'TestDrive:\logs'
         }
 
+        It 'Χρησιμοποιεί το PSScriptRoot όταν δεν υπάρχει TestDrive' {
+            Mock -CommandName Test-Path -MockWith { return $false } -ParameterFilter { $Path -eq 'TestDrive:\' }
+            $config = New-BridgeConfiguration
+            # Εφόσον το PSScriptRoot υπάρχει (στο script μας), το Path θα καταλήγει σε logs
+            $config.Defaults.LogDirectory | Should -Match 'logs$'
+        }
+
         It 'Contains a unified Statuses dictionary with Greek translations' {
             $config = New-BridgeConfiguration
             $config.Statuses | Should -Not -BeNullOrEmpty

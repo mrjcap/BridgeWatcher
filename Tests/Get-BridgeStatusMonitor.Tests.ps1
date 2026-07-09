@@ -23,8 +23,8 @@ Describe 'Get-BridgeStatusMonitor' {
             }
 
             Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1 -Configuration $script:Config
-            Assert-MockCalled Update-BridgeStatus -Exactly 2
-            Assert-MockCalled Start-Sleep -Exactly 1
+            Should -Invoke -CommandName Update-BridgeStatus -Times 2 -Exactly
+            Should -Invoke -CommandName Start-Sleep -Times 1 -Exactly
         }
     }
 
@@ -41,8 +41,8 @@ Describe 'Get-BridgeStatusMonitor' {
             }
 
             Get-BridgeStatusMonitor @monitorParams -MaxIterations 1 -IntervalSeconds 10 -Configuration $script:Config
-            Assert-MockCalled Update-BridgeStatus -Exactly 1
-            Assert-MockCalled Start-Sleep -Times 0 -Exactly
+            Should -Invoke -CommandName Update-BridgeStatus -Times 1 -Exactly
+            Should -Invoke -CommandName Start-Sleep -Times 0 -Exactly
         }
     }
 
@@ -75,7 +75,7 @@ Describe 'Get-BridgeStatusMonitor' {
             }
 
             Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 123 -Configuration $script:Config
-            Assert-MockCalled Start-Sleep -ParameterFilter { $Seconds -eq 123 } -Exactly 1
+            Should -Invoke -CommandName Start-Sleep -ParameterFilter { $Seconds -eq 123 } -Times 1 -Exactly
         }
     }
 
@@ -99,7 +99,7 @@ Describe 'Get-BridgeStatusMonitor' {
 
             Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1 -Configuration $script:Config
             $tracker.Called | Should -Be $true
-            Assert-MockCalled Update-BridgeStatus -Times 0 -Exactly
+            Should -Invoke -CommandName Update-BridgeStatus -Times 0 -Exactly
         }
     }
 
@@ -128,7 +128,7 @@ Describe 'Get-BridgeStatusMonitor' {
 
             { Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat -Configuration $script:Config } | Should -Not -Throw
             # 1 για το μήνυμα εκκίνησης, 2 για το μήνυμα σφάλματος, 1 για το μήνυμα ολοκλήρωσης
-            Assert-MockCalled Write-BridgeLog -Exactly 4
+            Should -Invoke -CommandName Write-BridgeLog -Times 4 -Exactly
         }
     }
     Context 'Προεπιλεγμένες Παράμετροι' {
@@ -142,7 +142,7 @@ Describe 'Get-BridgeStatusMonitor' {
 
             # Δεν περνάμε -MaxIterations και -IntervalSeconds, αλλά δίνουμε dummy παραμέτρους για το Update-BridgeStatus
             Get-BridgeStatusMonitor -Configuration $mockConfig -OutputFile 'test.json' -ApiKey 'dummy' -PoUserKey 'dummy' -PoApiKey 'dummy'
-            Assert-MockCalled Update-BridgeStatus -Exactly 1
+            Should -Invoke -CommandName Update-BridgeStatus -Times 1 -Exactly
         }
     }
 
@@ -165,7 +165,7 @@ Describe 'Get-BridgeStatusMonitor' {
             }
 
             { Get-BridgeStatusMonitor @monitorParams -MaxIterations 10 -IntervalSeconds 1 -Configuration $script:Config } | Should -Throw "Monitoring failed 5 consecutive times. Halting."
-            Assert-MockCalled Update-BridgeStatus -Exactly 5
+            Should -Invoke -CommandName Update-BridgeStatus -Times 5 -Exactly
         }
     }
 }

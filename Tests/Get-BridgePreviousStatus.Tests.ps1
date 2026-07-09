@@ -11,22 +11,22 @@ Describe 'Get-BridgePreviousStatus' {
     It 'Επιστρέφει αντικείμενα από έγκυρο JSON αρχείο' {
         $mockData = @(
             @{
-                Bridge = 'Ποσειδωνία'
-                Status = 'Κλειστή με πρόγραμμα'
-                Source = 'https://example.com/image.png'
+                GefyraName   = 'Ποσειδωνία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                ImageUrl     = 'https://example.com/image.png'
             },
             @{
-                Bridge = 'Ισθμία'
-                Status = 'Ανοιχτή'
-                Source = 'https://example.com/image2.png'
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Ανοιχτή'
+                ImageUrl     = 'https://example.com/image2.png'
             }
         )
         $jsonPath = "TestDrive:\mock_previous_status.json"
         $mockData | ConvertTo-Json -Depth 3 | Set-Content -Path $jsonPath -Encoding UTF8
         $result = Get-BridgePreviousStatus -Configuration $script:Config -InputFile $jsonPath
         $result.Count | Should -Be 2
-        $result[0].Bridge | Should -Be 'Ποσειδωνία'
-        $result[1].Status | Should -Be 'Ανοιχτή'
+        $result[0].GefyraName | Should -Be 'Ποσειδωνία'
+        $result[1].GefyraStatus | Should -Be 'Ανοιχτή'
     }
     It 'Επιστρέφει κενό array αν το αρχείο δεν υπάρχει' {
         $path = "TestDrive:\nonexistent.json"
@@ -41,8 +41,8 @@ Describe 'Get-BridgePreviousStatus' {
     It 'Backfills ImageHash as $null when property is missing from old state files' {
         $legacyData = @(
             @{
-                gefyraName   = 'Ποσειδωνία'
-                gefyraStatus = 'Ανοιχτή'
+                GefyraName   = 'Ποσειδωνία'
+                GefyraStatus = 'Ανοιχτή'
                 ImageUrl     = 'https://example.com/img.png'
             }
         )
@@ -51,5 +51,15 @@ Describe 'Get-BridgePreviousStatus' {
         $result = Get-BridgePreviousStatus -Configuration $script:Config -InputFile $jsonPath
         $result.ImageHash | Should -BeNullOrEmpty
         $result.PSObject.Properties.Name | Should -Contain 'ImageHash'
+    }
+    It 'Επιστρέφει κενό array αν το JSON είναι έγκυρο αλλά δεν περιέχει εγγραφές με GefyraName' {
+        $mockData = @(
+            @{ foo = 'bar' },
+            @{ something = 'else' }
+        )
+        $jsonPath = "TestDrive:\valid_but_no_gefyraname.json"
+        $mockData | ConvertTo-Json -Depth 3 | Set-Content -Path $jsonPath -Encoding UTF8
+        $result = Get-BridgePreviousStatus -Configuration $script:Config -InputFile $jsonPath
+        $result | Should -Be @()
     }
 }

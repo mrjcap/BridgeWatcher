@@ -37,7 +37,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
                 CurrentState = @(
 
-                    @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; imageUrl = 'https://example.com/img.jpg'; timestamp = (Get-Date) }
+                    @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; imageUrl = 'https://example.com/img.jpg'; timestamp = (Get-Date) }
 
                 )
 
@@ -50,9 +50,9 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Invoke-BridgeClosedNotification @params -Configuration $script:Config
 
-            Assert-MockCalled -CommandName Invoke-BridgeOCRGoogleCloud -Exactly 1
+            Should -Invoke -CommandName Invoke-BridgeOCRGoogleCloud -Times 1 -Exactly
 
-            Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
+            Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly
 
         }
 
@@ -60,9 +60,9 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             $entry = [pscustomobject]@{
 
-                gefyraName   = 'Ισθμία'
+                GefyraName   = 'Ισθμία'
 
-                gefyraStatus = 'Κλειστή για συντήρηση'
+                GefyraStatus = 'Κλειστή για συντήρηση'
 
                 timestamp    = (Get-Date)
 
@@ -78,11 +78,11 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug
 
-            Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
+            Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly
 
-            Assert-MockCalled -CommandName Write-BridgeLog -Exactly 1 -ParameterFilter { $Message -like '*κλειστή για συντήρηση*' }
+            Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -ParameterFilter { $Message -like '*κλειστή για συντήρηση*' }
 
-            Assert-MockCalled -CommandName Invoke-BridgeOCRGoogleCloud -Exactly 0
+            Should -Invoke -CommandName Invoke-BridgeOCRGoogleCloud -Times 0 -Exactly
 
         }
 
@@ -90,9 +90,9 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             $entry = [pscustomobject]@{
 
-                gefyraName   = 'Ισθμία'
+                GefyraName   = 'Ισθμία'
 
-                gefyraStatus = 'Μόνιμα κλειστή'
+                GefyraStatus = 'Μόνιμα κλειστή'
 
             }
 
@@ -102,7 +102,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose
 
-            Assert-MockCalled -CommandName Write-Debug -Exactly 1 -Scope It
+            Should -Invoke -CommandName Write-Debug -Times 1 -Exactly -Scope It
 
         }
 
@@ -111,11 +111,11 @@ Describe 'Invoke-BridgeClosedNotification' {
             Mock Invoke-BridgeOCRGoogleCloud { throw 'Fake OCR failure' }
             Mock Send-BridgePushover -MockWith { }
 
-            $entry = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
+            $entry = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
 
             { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
 
-            Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
+            Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly
         }
 
         It 'Στέλνει fallback ειδοποίηση όταν το OCR επιστρέφει $null' {
@@ -123,11 +123,11 @@ Describe 'Invoke-BridgeClosedNotification' {
             Mock Invoke-BridgeOCRGoogleCloud { $null }
             Mock Send-BridgePushover -MockWith { }
 
-            $entry = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
+            $entry = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
 
             { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
 
-            Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
+            Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly
         }
 
 
@@ -137,9 +137,9 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             $entry = [pscustomobject]@{
 
-                gefyraName   = 'Ισθμία'
+                GefyraName   = 'Ισθμία'
 
-                gefyraStatus = 'Μπερδεμένη'
+                GefyraStatus = 'Μπερδεμένη'
 
                 timestamp    = (Get-Date)
 
@@ -170,8 +170,8 @@ Describe 'Invoke-BridgeClosedNotification' {
             }
 
             $entry = [pscustomobject]@{
-                gefyraName   = 'Ισθμία'
-                gefyraStatus = 'Κλειστή για συντήρηση'
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Κλειστή για συντήρηση'
                 timestamp    = (Get-Date)
                 imageUrl     = 'https://example.com/image.jpg'
             }

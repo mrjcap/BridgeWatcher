@@ -35,12 +35,15 @@
 
     param(
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$BaseUrl,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$OCRApiUrl,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$PushoverApiUrl,
 
         [Parameter()]
@@ -56,15 +59,16 @@
         [int]$MaxConsecutiveFailures = 60,
 
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [string]$LogDirectory = $(
-            if (Test-Path 'TestDrive:\') {
-                'TestDrive:\logs'
-            } else {
-                (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'logs')
-            }
-        )
+        [string]$LogDirectory = ''
     )
+
+    if ([string]::IsNullOrWhiteSpace($LogDirectory)) {
+        if (Test-Path 'TestDrive:\') {
+            $LogDirectory = 'TestDrive:\logs'
+        } else {
+            $LogDirectory = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'logs'
+        }
+    }
 
     if (-not $BaseUrl) { $BaseUrl = 'https://www.topvision.gr/dioriga' }
     if (-not $OCRApiUrl) { $OCRApiUrl = 'https://vision.googleapis.com/v1/images:annotate' }

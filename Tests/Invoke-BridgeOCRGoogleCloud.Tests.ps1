@@ -32,8 +32,8 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
         }
         $out = Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'abc' -ImageUri $validUri
         $out.mock | Should -Be 'result'
-        Assert-MockCalled Invoke-BridgeOCRRequest -Times 1
-        Assert-MockCalled ConvertFrom-BridgeOCRResult -Times 1
+        Should -Invoke -CommandName Invoke-BridgeOCRRequest -Times 1
+        Should -Invoke -CommandName ConvertFrom-BridgeOCRResult -Times 1
     }
     It 'Ρίχνει σφάλμα αν το URI είναι άκυρο' {
         { Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'abc' -ImageUri 'notaurl' } | Should -Throw

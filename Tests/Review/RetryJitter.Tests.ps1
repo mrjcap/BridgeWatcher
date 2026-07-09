@@ -1,4 +1,4 @@
-Import-Module "$PSScriptRoot/../../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module "$PSScriptRoot/../../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 Describe 'Retry Jitter Requirement Review' {
     BeforeAll {
@@ -7,6 +7,10 @@ Describe 'Retry Jitter Requirement Review' {
 
         # AST analysis helper function to find retry jitter violations
         function Get-RetryJitterViolation {
+            <#
+            .SYNOPSIS
+                Finds retry jitter violations in AST.
+            #>
             param([string]$Content)
 
             $violations = [System.Collections.Generic.List[string]]::new()
@@ -52,8 +56,8 @@ Describe 'Retry Jitter Requirement Review' {
 
                 $hasBackoffCalc = $loop.FindAll({
                     param($node)
-                    ($node -is [System.Management.Automation.Language.MemberExpressionAst] -and 
-                     $node.Expression.Extent.Text -eq '[Math]' -and 
+                    ($node -is [System.Management.Automation.Language.MemberExpressionAst] -and
+                     $node.Expression.Extent.Text -eq '[Math]' -and
                      $node.Member.Extent.Text -eq 'Pow') -or
                     ($node -is [System.Management.Automation.Language.BinaryExpressionAst] -and
                      $node.Operator -in @('Multiply', 'Plus') -and

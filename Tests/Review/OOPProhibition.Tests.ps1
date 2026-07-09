@@ -15,7 +15,7 @@ Describe "Object-Oriented Over-Engineering Prohibition Review" {
         It "Should not define PowerShell classes or enums in <Name>" -ForEach $script:Files {
             $file = $_
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
-            
+
             $oopNodes = $ast.FindAll({
                 param($node)
                 $node -is [System.Management.Automation.Language.TypeDefinitionAst]
@@ -35,7 +35,7 @@ Describe "Object-Oriented Over-Engineering Prohibition Review" {
 
             $addTypes = $ast.FindAll({
                 param($node)
-                $node -is [System.Management.Automation.Language.CommandAst] -and 
+                $node -is [System.Management.Automation.Language.CommandAst] -and
                 $node.GetCommandName() -eq 'Add-Type'
             }, $true)
 
@@ -50,7 +50,7 @@ Describe "Object-Oriented Over-Engineering Prohibition Review" {
                             $hasTypeDefinition = $true
                             break
                         }
-                    } elseif ($element -is [System.Management.Automation.Language.StringConstantExpressionAst] -or 
+                    } elseif ($element -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
                               $element -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
                         # Positional parameter: check if it looks like C# class/struct/enum/interface
                         $val = $element.Value

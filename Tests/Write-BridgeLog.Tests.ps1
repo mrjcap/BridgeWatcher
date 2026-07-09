@@ -18,17 +18,17 @@ Describe 'Write-BridgeLog' {
     }
     It 'Γράφει log με Verbose level και δημιουργεί τον φάκελο' {
         Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'δοκιμή' -Level 'Verbose'
-        Assert-MockCalled Write-Verbose -Exactly 1
-        Assert-MockCalled Add-Content -Exactly 1
-        Assert-MockCalled New-Item -Exactly 1
+        Should -Invoke -CommandName Write-Verbose -Times 1 -Exactly
+        Should -Invoke -CommandName Add-Content -Times 1 -Exactly
+        Should -Invoke -CommandName New-Item -Times 1 -Exactly
     }
     It 'Γράφει log με Debug level' {
         Write-BridgeLog -Configuration $script:Config -Stage 'Απόφαση' -Message 'λογική' -Level 'Debug'
-        Assert-MockCalled Write-Debug -Exactly 1
+        Should -Invoke -CommandName Write-Debug -Times 1 -Exactly
     }
     It 'Γράφει log με Warning level' {
         Write-BridgeLog -Configuration $script:Config -Stage 'Σφάλμα' -Message 'κάτι πήγε στραβά' -Level 'Warning'
-        Assert-MockCalled Write-Warning -Exactly 1
+        Should -Invoke -CommandName Write-Warning -Times 1 -Exactly
     }
 
     Context 'Parameter Validation' {
@@ -68,7 +68,7 @@ Describe 'Write-BridgeLog' {
             { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'Test message' } | Should -Throw
 
             # Επιβεβαίωση ότι καλέστηκε το Write-Warning με το σωστό μήνυμα
-            Should -Invoke Write-Warning -Exactly 1 -ParameterFilter {
+            Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter {
                 $Message -like '*Failed to write to log file*Access denied*'
             }
         }
@@ -91,6 +91,7 @@ Describe 'Write-BridgeLog' {
             $mockNewStream = New-Object PSObject
             $mockNewStream | Add-Member -MemberType NoteProperty -Name AutoFlush -Value $true
             $mockNewStream | Add-Member -MemberType ScriptMethod -Name WriteLine -Value { param($val) $null = $val }
+            Mock New-Object { $null } -ParameterFilter { $TypeName -eq 'System.IO.FileStream' }
             Mock New-Object { $mockNewStream } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
             try {
                 { Write-BridgeLog -Stage 'Ανάλυση' -Message "Test" -Configuration $config -Verbose } | Should -Not -Throw
@@ -124,6 +125,7 @@ Describe 'Write-BridgeLog' {
             $mockWriter | Add-Member -MemberType ScriptMethod -Name Flush -Value { }
             $mockWriter | Add-Member -MemberType ScriptMethod -Name Close -Value { }
             $mockWriter | Add-Member -MemberType NoteProperty -Name AutoFlush -Value $true
+            Mock New-Object { $null } -ParameterFilter { $TypeName -eq 'System.IO.FileStream' }
             Mock New-Object { $mockWriter } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
 
             $config = New-BridgeConfiguration
@@ -168,13 +170,14 @@ Describe 'Write-BridgeLog' {
                 param()
                 return @()
             }
+            Mock New-Object { throw [System.IO.IOException]::new("FileStream creation failed") } -ParameterFilter { $TypeName -eq 'System.IO.FileStream' }
             Mock New-Object { throw [System.IO.IOException]::new("StreamWriter creation failed") } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
             Mock Write-Warning {}
             $config = New-BridgeConfiguration
             $config.Defaults.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogsFailed"
             try {
                 { Write-BridgeLog -Stage 'Ανάλυση' -Message "Test Fail" -Configuration $config } | Should -Throw
-                Assert-MockCalled Write-Warning -Exactly 1
+                Should -Invoke -CommandName Write-Warning -Times 1 -Exactly
             }
             finally {
                 Remove-Item -Path function:Get-PSCallStack -ErrorAction SilentlyContinue
@@ -182,6 +185,7 @@ Describe 'Write-BridgeLog' {
         }
     }
 }
+
 
 
 

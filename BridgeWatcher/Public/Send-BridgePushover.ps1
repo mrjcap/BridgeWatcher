@@ -1,5 +1,4 @@
-﻿function Send-BridgePushover {
-    <#
+﻿<#
     .SYNOPSIS
     Αποστέλλει ειδοποίηση μέσω Pushover για κατάσταση γέφυρας.
 
@@ -46,6 +45,7 @@
     .NOTES
     Χρησιμοποιεί εσωτερικές helper συναρτήσεις για payload και αποστολή.
     #>
+function Send-BridgePushover {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey',
         Justification = 'Το κλειδί API διαβάζεται από τα Docker secrets κατά το runtime, όχι από είσοδο χρήστη. Η μετατροπή σε SecureString δεν προσφέρει κανένα όφελος σε αυτό το μη διαδραστικό pipeline.')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey',

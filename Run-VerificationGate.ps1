@@ -1,4 +1,5 @@
-﻿$lint1 = Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+﻿Import-Module 'C:\Users\jcap\Documents\PowerShell\Modules\Pester\5.8.0\Pester.psd1' -Force
+$lint1 = Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
 $lint2 = Invoke-ScriptAnalyzer -Path ./Tests -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
 $lint = @()
 if ($lint1) { $lint += $lint1 }
@@ -8,7 +9,6 @@ if ($lint) {
     throw "GATE FAILED: Linter warnings found."
 }
 Write-Output "Linter passed!"
-Import-Module 'C:\Users\jcap\Documents\PowerShell\Modules\Pester\5.8.0\Pester.psd1' -Force
 Import-Module './BridgeWatcher/BridgeWatcher.psd1' -Force
 $config = New-PesterConfiguration -Hashtable (Import-PowerShellDataFile './Tests/PesterConfiguration.psd1')
 $r = Invoke-Pester -Configuration $config

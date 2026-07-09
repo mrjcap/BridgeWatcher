@@ -59,7 +59,7 @@
     }
 
     foreach ($entry in $CurrentState) {
-        if ($entry.gefyraStatus -eq $Configuration.Statuses.Open) {
+        if ($entry.GefyraStatus -eq $Configuration.Statuses.Open) {
             try {
                 # Συνδυασμός log messages για αποφυγή spam
                 $logDetails = @(
@@ -74,17 +74,17 @@
                     Message = $logDetails
                 }
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                & $SendNotification -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα της $($entry.gefyraName)ς άνοιξε" -Type 'Opened' -Configuration $Configuration
+                & $SendNotification -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα της $($entry.GefyraName)ς άνοιξε" -Type 'Opened' -Configuration $Configuration
             } catch {
                 $err = $_
                 $writeBridgeLogSplat = @{
                     Stage   = 'Σφάλμα'
-                    Message = "❌ Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.gefyraName): $($err.Exception.Message)"
+                    Message = "❌ Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.GefyraName): $($err.Exception.Message)"
                     Level   = 'Warning'
                 }
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                    [System.Exception]::new("Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.gefyraName)", $err.Exception),
+                    [System.Exception]::new("Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.GefyraName)", $err.Exception),
                     'NotificationFailed',
                     [System.Management.Automation.ErrorCategory]::InvalidOperation,
                     $entry

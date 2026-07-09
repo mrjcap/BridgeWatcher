@@ -52,7 +52,7 @@ Describe 'run.ps1 Script Execution' {
         # Execute run.ps1
         . "$PSScriptRoot/../run.ps1"
 
-        Assert-MockCalled Get-BridgeStatusMonitor -Exactly 1
+        Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
         $script:calledParams.ApiKey | Should -Be 'env-api-key'
         $script:calledParams.PoApiKey | Should -Be 'env-po-api-key'
         $script:calledParams.PoUserKey | Should -Be 'env-po-user-key'
@@ -85,7 +85,7 @@ Describe 'run.ps1 Script Execution' {
 
         . "$PSScriptRoot/../run.ps1"
 
-        Assert-MockCalled Get-BridgeStatusMonitor -Exactly 1
+        Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
         $script:calledParams.ApiKey | Should -Be 'env-api-key'
         $script:calledParams.PoApiKey | Should -Be 'env-po-api-key'
         $script:calledParams.PoUserKey | Should -Be 'env-po-user-key'
@@ -143,7 +143,7 @@ Describe 'run.ps1 Script Execution' {
 
         . "$PSScriptRoot/../run.ps1"
 
-        Assert-MockCalled Get-BridgeStatusMonitor -Exactly 1
+        Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
         $script:calledParams.ApiKey | Should -Be 'file-api-key'
         $script:calledParams.PoApiKey | Should -Be 'file-po-api-key'
         $script:calledParams.PoUserKey | Should -Be 'file-po-user-key'

@@ -130,13 +130,13 @@
         "Η γέφυρα είναι ήδη κλειστή από τις $($from.ToString('HH:mm'))."
     }
     return [PSCustomObject]@{
-        'Γέφυρα'      = $bridgeName
-        'Από'         = $from.ToString('dd/MM/yyyy HH:mm')
-        'Έως'         = $to.ToString('dd/MM/yyyy HH:mm')
-        'Κλειστή για' = $closedForText
-        'Ανοίγει σε'  = "$minutesLeft λεπτά"
-        'Σημείωση 1'  = $advice
-        'Σημείωση 2'  = $advice2
+        'Bridge'      = $bridgeName
+        'From'        = $from.ToString('dd/MM/yyyy HH:mm')
+        'To'          = $to.ToString('dd/MM/yyyy HH:mm')
+        'ClosedFor'   = $closedForText
+        'OpensIn'     = "$minutesLeft λεπτά"
+        'Note1'       = $advice
+        'Note2'       = $advice2
     }
 }
 

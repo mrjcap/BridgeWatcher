@@ -32,9 +32,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             [PSCustomObject]@{
 
-                gefyraName   = 'Ποσειδωνία'
+                GefyraName   = 'Ποσειδωνία'
 
-                gefyraStatus = 'Ανοιχτή'
+                GefyraStatus = 'Ανοιχτή'
 
                 timestamp    = '2025-04-14T10:00:00'
 
@@ -60,9 +60,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Exactly 0
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0 -Exactly
 
-        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Exactly 0
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0 -Exactly
 
     }
 
@@ -74,9 +74,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $timestamp = Get-Date
 
-        $previous = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+        $previous = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-        $current = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Μόνιμα κλειστή'; timestamp = $timestamp; imageUrl = 'img1.jpg' }
+        $current = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Μόνιμα κλειστή'; timestamp = $timestamp; imageUrl = 'img1.jpg' }
 
         $params = @{
 
@@ -94,7 +94,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1 -Exactly
 
     }
 
@@ -106,9 +106,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $timestamp = Get-Date
 
-        $previous = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+        $previous = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-        $current = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = $timestamp; imageUrl = 'img2.jpg' }
+        $current = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = $timestamp; imageUrl = 'img2.jpg' }
 
         $params = @{
 
@@ -126,7 +126,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1 -Exactly
 
     }
 
@@ -142,9 +142,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $timestamp = Get-Date
 
-        $previous = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα' }
+        $previous = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
 
-        $current = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; timestamp = $timestamp; imageUrl = 'img3.jpg' }
+        $current = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = $timestamp; imageUrl = 'img3.jpg' }
 
         $params = @{
 
@@ -162,7 +162,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Assert-MockCalled -CommandName Send-BridgePushover -Times 1
+        Should -Invoke -CommandName Send-BridgePushover -Times 1
 
     }
 
@@ -180,7 +180,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $same = @(
 
-            @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; timestamp = $timestamp; imageUrl = 'img4.jpg' }
+            @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = $timestamp; imageUrl = 'img4.jpg' }
 
         )
 
@@ -200,15 +200,15 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0
 
-        Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Times 0
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0
 
-        Assert-MockCalled -CommandName Send-BridgePushover -Times 0
+        Should -Invoke -CommandName Send-BridgePushover -Times 0
 
     }
 
-    It 'Δεν στέλνει ειδοποίηση όταν gefyraName δεν ταιριάζει' {
+    It 'Δεν στέλνει ειδοποίηση όταν GefyraName δεν ταιριάζει' {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -218,9 +218,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $params = @{
 
-            PreviousState = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή' }
+            PreviousState = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' }
 
-            CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
+            CurrentState  = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
 
             ApiKey = 'dummy'
 
@@ -244,9 +244,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $params = @{
 
-            PreviousState = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            PreviousState = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-            CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'ανικτή'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
+            CurrentState  = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'ανικτή'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
 
             ApiKey = 'dummy'
 
@@ -268,7 +268,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Mock -CommandName Send-BridgePushover -MockWith { }
 
-        $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; imageUrl = 'x.jpg' }
+        $base = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; imageUrl = 'x.jpg' }
 
         $params = @{
 
@@ -288,7 +288,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Assert-MockCalled -CommandName Send-BridgePushover -Times 0
+        Should -Invoke -CommandName Send-BridgePushover -Times 0
 
     }
 
@@ -296,7 +296,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $params = @{
 
-            PreviousState = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            PreviousState = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
             CurrentState  = $null
 
@@ -318,7 +318,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             PreviousState = $null
 
-            CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            CurrentState  = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
             ApiKey = 'dummy'
 
@@ -340,9 +340,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $params = @{
 
-            PreviousState = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            PreviousState = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-            CurrentState  = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = $null }
+            CurrentState  = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = $null }
 
             ApiKey = 'dummy'
 
@@ -354,7 +354,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 1
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1
 
         # imageUrl δεν είναι κρίσιμο για την απόφαση αποστολής
 
@@ -370,17 +370,17 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $previousState = @(
 
-            @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-            @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή' }
+            @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' }
 
         )
 
         $currentState = @(
 
-            @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
+            @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
 
-            @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Μόνιμα κλειστή'; timestamp = (Get-Date); imageUrl = 'img2.jpg' }
+            @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Μόνιμα κλειστή'; timestamp = (Get-Date); imageUrl = 'img2.jpg' }
 
         )
 
@@ -402,7 +402,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         # ✅ Αναμένουμε 2 κλήσεις (μία για κάθε αλλαγή)
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 2
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 2
 
     }
 
@@ -412,7 +412,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
-        $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
+        $base = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
 
         $copy = $base.Clone()
 
@@ -434,9 +434,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0
 
-        Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Times 0
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0
 
     }
 
@@ -446,7 +446,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
-        $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
+        $base = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
 
         $copy = $base.Clone()
 
@@ -468,9 +468,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 1
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1
 
-        Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Times 0
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0
 
     }
 
@@ -482,17 +482,17 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $previousState = @(
 
-            @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-            @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Κλειστή με πρόγραμμα' }
+            @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
 
         )
 
         $currentState = @(
 
-            @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
+            @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
 
-            @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img2.jpg' }
+            @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img2.jpg' }
 
         )
 
@@ -514,15 +514,15 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         # ✅ Περιμένουμε μία κλήση σε κάθε notification
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 1
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1
 
-        Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Times 1
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 1
 
     }
 
     It 'Γράφει warning όταν λείπει κατάσταση' {
 
-        { Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ gefyraName = 'X'; gefyraStatus = 'Ανοιχτή' } -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Configuration $script:Config } | Should -Throw
+        { Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ GefyraName = 'X'; GefyraStatus = 'Ανοιχτή' } -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Configuration $script:Config } | Should -Throw
 
     }
 
@@ -530,7 +530,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Mock Send-BridgePushover {}
 
-        $same = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; timestamp = Get-Date; imageUrl = 'x.jpg' }
+        $same = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = Get-Date; imageUrl = 'x.jpg' }
 
         { Invoke-BridgeStatusComparison -PreviousState $same -CurrentState $same -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Configuration $script:Config -Verbose } | Should -Not -Throw
 
@@ -540,7 +540,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $paramsMissingCurrent = @{
 
-            PreviousState = @(@{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' })
+            PreviousState = @(@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' })
 
             CurrentState  = @()
 
@@ -554,7 +554,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             PreviousState = @()
 
-            CurrentState  = @(@{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' })
+            CurrentState  = @(@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' })
 
             ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'; Configuration = $script:Config
 
@@ -568,9 +568,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $state = @{
 
-            gefyraName   = 'Ισθμία'
+            GefyraName   = 'Ισθμία'
 
-            gefyraStatus = 'Ανοιχτή'
+            GefyraStatus = 'Ανοιχτή'
 
             timestamp    = '2025-04-16T21:00:00'
 
@@ -598,9 +598,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $state = @{
 
-            gefyraName   = 'Ισθμία'
+            GefyraName   = 'Ισθμία'
 
-            gefyraStatus = 'Ανοιχτή'
+            GefyraStatus = 'Ανοιχτή'
 
             timestamp    = '2025-04-16T21:00:00'
 
@@ -638,9 +638,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $state = @{
 
-            gefyraName   = 'Ισθμία'
+            GefyraName   = 'Ισθμία'
 
-            gefyraStatus = 'Ανοιχτή'
+            GefyraStatus = 'Ανοιχτή'
 
         }
 
@@ -679,12 +679,12 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         # Redefine Invoke-BridgeClosedNotification to write to notify.txt for this test
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith {
             param($CurrentState)
-            "NOTIFY:Closed:$($CurrentState[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
+            "NOTIFY:Closed:$($CurrentState[0].GefyraName)" | Out-File -Append "$TestDrive\notify.txt"
         }
 
-        $prev = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+        $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-        $curr = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Μόνιμα κλειστή' }
+        $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Μόνιμα κλειστή' }
 
         Invoke-BridgeStatusComparison @defaultParams -PreviousState $prev -CurrentState $curr
 
@@ -698,9 +698,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
-        $prev = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+        $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-        $curr = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή για συντήρηση'; timestamp = (Get-Date); imageUrl = 'img_maintenance.jpg' }
+        $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή για συντήρηση'; timestamp = (Get-Date); imageUrl = 'img_maintenance.jpg' }
 
         $params = @{
 
@@ -718,9 +718,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 1
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1 -Exactly
 
-        Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Exactly 0
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0 -Exactly
 
     }
 
@@ -732,9 +732,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
-        $prev = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Κλειστή για συντήρηση' }
+        $prev = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή για συντήρηση' }
 
-        $curr = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img_open.jpg' }
+        $curr = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img_open.jpg' }
 
         $params = @{
 
@@ -752,9 +752,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Invoke-BridgeStatusComparison @params
 
-        Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Exactly 0
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0 -Exactly
 
-        Assert-MockCalled -CommandName Invoke-BridgeOpenedNotification -Exactly 1
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 1 -Exactly
 
     }
 
@@ -800,11 +800,11 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith {
             param($CurrentState)
-            "NOTIFY:Closed:$($CurrentState[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
+            "NOTIFY:Closed:$($CurrentState[0].GefyraName)" | Out-File -Append "$TestDrive\notify.txt"
         }
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith {
             param($CurrentState)
-            "NOTIFY:Opened:$($CurrentState[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
+            "NOTIFY:Opened:$($CurrentState[0].GefyraName)" | Out-File -Append "$TestDrive\notify.txt"
         }
 
         $script:defaultParams = @{
@@ -827,7 +827,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         It 'πυροδοτεί το block "Καμία ουσιαστική αλλαγή"' {
 
-            $obj = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            $obj = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
             Invoke-BridgeStatusComparison @defaultParams -PreviousState @($obj) -CurrentState @($obj)
 
@@ -839,7 +839,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         It 'πυροδοτεί το block "Καμία αλλαγή" όταν δεν υπάρχουν καθόλου αλλαγές' {
 
-            $emptyObj = @{ gefyraName = 'Foo'; gefyraStatus = 'Ανοιχτή' }
+            $emptyObj = @{ GefyraName = 'Foo'; GefyraStatus = 'Ανοιχτή' }
 
             Invoke-BridgeStatusComparison @defaultParams -PreviousState @($emptyObj) -CurrentState @($emptyObj)
 
@@ -853,9 +853,9 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         It 'πρέπει να στείλει ειδοποίηση τύπου Closed' {
 
-            $prev = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-            $curr = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα' }
+            $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
 
             Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
 
@@ -865,9 +865,9 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         It 'πρέπει να στείλει ειδοποίηση τύπου Opened' {
 
-            $prev = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Κλειστή με πρόγραμμα' }
+            $prev = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
 
-            $curr = @{ gefyraName = 'Ποσειδωνία'; gefyraStatus = 'Ανοιχτή' }
+            $curr = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' }
 
             Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
 
@@ -881,9 +881,9 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         It 'πυροδοτεί "Μόνιμα κλειστή|<="' {
 
-            $prev = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Μόνιμα κλειστή' }
+            $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Μόνιμα κλειστή' }
 
-            $curr = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή' }
+            $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
             Invoke-BridgeStatusComparison @defaultParams -PreviousState @($curr) -CurrentState @($prev)
 
@@ -897,9 +897,9 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         It 'γράφει λογικά "Άγνωστο combo"' {
 
-            $prev = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Foo' }
+            $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Foo' }
 
-            $curr = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Bar' }
+            $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Bar' }
 
             Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
 
@@ -915,7 +915,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             Mock -CommandName Compare-Object -MockWith { throw 'mock fail' }
 
-            { Invoke-BridgeStatusComparison @defaultParams -PreviousState @(@{ gefyraName = 'X'; gefyraStatus = 'Y' }) -CurrentState @(@{ gefyraName = 'X'; gefyraStatus = 'Y' }) } | Should -Throw
+            { Invoke-BridgeStatusComparison @defaultParams -PreviousState @(@{ GefyraName = 'X'; GefyraStatus = 'Y' }) -CurrentState @(@{ GefyraName = 'X'; GefyraStatus = 'Y' }) } | Should -Throw
 
             (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match '❌ mock fail'
 
@@ -928,7 +928,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
-            $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
+            $base = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
             $copy = $base.Clone()
             $copy.ImageHash = 'hashB'
 
@@ -939,14 +939,14 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             Invoke-BridgeStatusComparison @params
 
-            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 1
+            Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1
         }
 
         It 'Δεν στέλνει ειδοποίηση όταν το ImageHash είναι ίδιο στην Κλειστή με πρόγραμμα' {
             Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
-            $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
+            $base = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
             $copy = $base.Clone()
             $copy.imageUrl = 'img1_different_query.jpg' # URL changed (query) but hash did not
 
@@ -957,14 +957,14 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             Invoke-BridgeStatusComparison @params
 
-            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
+            Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0
         }
 
         It 'Επαναχρησιμοποιεί το προηγούμενο ImageHash αν το νέο είναι κενό/σφάλμα' {
             Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
-            $base = @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
+            $base = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
 
             # Current state failed to download/hash image, so ImageHash is null
             $copy = $base.Clone()
@@ -978,11 +978,48 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             Invoke-BridgeStatusComparison @params
 
-            Assert-MockCalled -CommandName Invoke-BridgeClosedNotification -Times 0
+            Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0
             $copy.ImageHash | Should -Be 'hashA' # check that previous hash was copied back
         }
     }
 
+    It 'Backfills OCR properties when SideIndicator is ==' {
+        Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+        Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
+        Mock Send-BridgePushover {}
+
+        $prev = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; From = '10:00'; To = '12:00'; ClosedFor = '2h'; OpensIn = '1h'; Note1 = 'n1'; Note2 = 'n2' }
+        $curr = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
+        $params = @{
+            PreviousState = @($prev)
+            CurrentState  = @($curr)
+            ApiKey = 'dummy'
+            PoUserKey = 'dummy'
+            PoApiKey = 'dummy'
+            Configuration = $script:Config
+        }
+        Invoke-BridgeStatusComparison @params
+        $curr.From | Should -Be '10:00'
+    }
+
+    It 'Backfills OCR properties when SideIndicator is => and ClosedWithSchedule' {
+        Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+        Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
+        Mock Send-BridgePushover {}
+
+        $prev = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; From = '10:00'; To = '12:00'; ClosedFor = '2h'; OpensIn = '1h'; Note1 = 'n1'; Note2 = 'n2'; ImageUrl = 'x.jpg' }
+        $curr = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageUrl = 'y.jpg' }
+        $params = @{
+            PreviousState = @($prev)
+            CurrentState  = @($curr)
+            ApiKey = 'dummy'
+            PoUserKey = 'dummy'
+            PoApiKey = 'dummy'
+            Configuration = $script:Config
+        }
+        Invoke-BridgeStatusComparison @params
+        $curr.From | Should -Be '10:00'
+    }
 }
 
 

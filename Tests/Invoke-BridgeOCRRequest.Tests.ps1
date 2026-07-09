@@ -45,7 +45,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $response.responses[0].textAnnotations[0].description | Should -Be 'fake text'
 
-        Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
 
     }
 
@@ -81,7 +81,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $resp -ImageUri 'https://example.com/image-bridge-open-with-schedule-posidonia.php'
 
-        $res.'Γέφυρα' | Should -Be 'Ποσειδωνία'
+        $res.Bridge | Should -Be 'Ποσειδωνία'
 
     }
 
@@ -115,11 +115,11 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $resp -ImageUri 'https://example.com/image-bridge-open-with-schedule-isthmia.php'
 
-        $res.'Κλειστή για' | Should -Match 'ημέρες'
+        $res.ClosedFor | Should -Match 'ημέρες'
 
-        $res.'Κλειστή για' | Should -Match 'ώρες'
+        $res.ClosedFor | Should -Match 'ώρες'
 
-        $res.'Κλειστή για' | Should -Match 'λεπτά'
+        $res.ClosedFor | Should -Match 'λεπτά'
 
     }
 
@@ -151,7 +151,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Unauthorized"
 
-        Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
 
     }
 
@@ -175,9 +175,9 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Internal Error"
 
-        Assert-MockCalled Invoke-RestMethod -Times 3 -Exactly
+        Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly
 
-        Assert-MockCalled Start-Sleep -Times 2 -Exactly
+        Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly
 
     }
 
@@ -238,7 +238,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $result.responses[0].textAnnotations[0].description | Should -Be 'test'
 
-        Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
 
     }
 
@@ -286,7 +286,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
 
 
-        Assert-MockCalled Write-BridgeLog -ParameterFilter {
+        Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
 
             $Message -eq 'Custom start OCR message'
 
@@ -326,7 +326,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         { Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{}' -Configuration $config } | Should -Throw
 
-        Assert-MockCalled Write-BridgeLog -ParameterFilter {
+        Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
 
             $Message -like 'Custom OCR failed message*' -and
 
@@ -384,7 +384,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
 
 
-        Assert-MockCalled Write-BridgeLog -ParameterFilter {
+        Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
 
             $Stage -eq 'Ανάλυση'
 
@@ -440,9 +440,9 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $result.responses[0].textAnnotations[0].description | Should -Be 'success'
 
-        Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
 
-        Assert-MockCalled Write-BridgeLog -ParameterFilter {
+        Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
 
             $Message -eq 'Custom start message' -and $Stage -eq 'Ανάλυση'
 

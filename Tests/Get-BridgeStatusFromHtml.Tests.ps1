@@ -70,7 +70,7 @@ Describe 'Get-BridgeStatusFromHtml' {
             $result.Count | Should -Be 0
 
             # Verify the skip log message was written
-            Assert-MockCalled Write-BridgeLog -ParameterFilter {
+            Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
                 $Message -like '*Παραλείπεται*' -and $Message -like '*info*'
             } -Times 1 -Scope It
         }

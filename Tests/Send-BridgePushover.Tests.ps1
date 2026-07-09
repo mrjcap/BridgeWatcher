@@ -21,7 +21,7 @@ Describe 'Send-Pushover' {
             Message   = 'hello'
         }
         Send-BridgePushover @sendPushoverSplat -Configuration $script:Config
-        Assert-MockCalled Send-BridgePushoverRequest -Times 1 -Exactly -ParameterFilter {
+        Should -Invoke -CommandName Send-BridgePushoverRequest -Times 1 -Exactly -ParameterFilter {
             $Payload.token -eq 'T' -and $Payload.user -eq 'U' -and $Payload.message -eq 'hello'
         }
     }
@@ -39,9 +39,9 @@ Describe 'Send-Pushover' {
         { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Throw '*Αποτυχία αποστολής Pushover*'
 
         # Επιβεβαίωση ότι καλέστηκε το error logging
-        Assert-MockCalled -CommandName Write-BridgeLog -ParameterFilter {
+        Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
             $Stage -eq 'Σφάλμα' -and $Message -like '*Αποτυχία αποστολής Pushover*'
-        } -Exactly 1 -Scope It
+        } -Times 1 -Exactly -Scope It
     }
 
     It 'Αποδέχεται έγκυρο URL με https' {
@@ -103,7 +103,7 @@ Describe 'Send-Pushover' {
 
         Send-BridgePushover @sendPushoverSplat -Configuration $script:Config
 
-        Assert-MockCalled Send-BridgePushoverRequest -Times 1 -Exactly -ParameterFilter {
+        Should -Invoke -CommandName Send-BridgePushoverRequest -Times 1 -Exactly -ParameterFilter {
             $Payload.device -eq 'myphone' -and
             $Payload.title -eq 'Test Title' -and
             $Payload.url -eq 'https://example.com' -and

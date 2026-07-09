@@ -94,11 +94,22 @@
                 $script:LogStream.Flush()
             } else {
                 if ($script:LogStream) {
-                    try { $script:LogStream.Close() } catch { Write-Warning "Failed to close previous log stream: $($_.Exception.Message)" }
+                    $closeFailed = $false
+                    try {
+                        $script:LogStream.Close()
+                    }
+                    catch {
+                        Write-Warning "Failed to close previous log stream: $($_.Exception.Message)"
+                        $closeFailed = $true
+                    }
+                    if ($closeFailed) {
+                        Write-Verbose "Logging cleanup was incomplete, but continuing to initialize new stream."
+                    }
                     $script:LogStream = $null
                 }
-                $utf8WithBOM = New-Object System.Text.UTF8Encoding $true
-                $script:LogStream = New-Object System.IO.StreamWriter($logPath, $true, $utf8WithBOM)
+                $utf8WithBOM = [System.Text.UTF8Encoding]::new($true)
+                $fs = New-Object System.IO.FileStream($logPath, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
+                $script:LogStream = New-Object System.IO.StreamWriter($fs, $utf8WithBOM)
                 $script:LogStream.AutoFlush = $true
                 $script:LogStreamPath = $logPath
 
@@ -111,4 +122,6 @@
         }
     }
 }
+
+
 

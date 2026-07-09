@@ -1,4 +1,4 @@
-$files = @(
+﻿$files = @(
     'Tests\Invoke-BridgeStatusComparison.Tests.ps1',
     'BridgeWatcher\Private\ConvertFrom-BridgeOCRResult.ps1',
     'BridgeWatcher\Private\Invoke-BridgeClosedNotification.ps1',
@@ -11,7 +11,8 @@ $files = @(
     'BridgeWatcher\Private\New-BridgeConfiguration.ps1',
     'Tests\New-BridgeConfiguration.Tests.ps1',
     'Tests\Review\PesterScope.Tests.ps1',
-    'Tests\Review\SilentFailure.Tests.ps1'
+    'Tests\Review\SilentFailure.Tests.ps1',
+    'Tests\Review\LoopFailureContract.Tests.ps1'
 )
 $utf8BOM = New-Object System.Text.UTF8Encoding $true
 foreach ($f in $files) {

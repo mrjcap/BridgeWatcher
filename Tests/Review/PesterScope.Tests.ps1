@@ -16,11 +16,11 @@ Describe "Pester 5 Scope Rule Compliance" {
     It "Should use `$script:` scope for variables initialized inside BeforeAll blocks in <Name>" -ForEach $TestFiles {
         $file = $_
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
-        
+
         # Find all BeforeAll commands
         $beforeAlls = $ast.FindAll({
             param($node)
-            $node -is [System.Management.Automation.Language.CommandAst] -and 
+            $node -is [System.Management.Automation.Language.CommandAst] -and
             $node.GetCommandName() -eq 'BeforeAll'
         }, $true)
 
@@ -55,7 +55,7 @@ Describe "Pester 5 Scope Rule Compliance" {
                 $parent = $assign.Parent
                 $isNestedScope = $false
                 while ($parent -and $parent -ne $sb) {
-                    if ($parent -is [System.Management.Automation.Language.ScriptBlockExpressionAst] -or 
+                    if ($parent -is [System.Management.Automation.Language.ScriptBlockExpressionAst] -or
                         $parent -is [System.Management.Automation.Language.FunctionDefinitionAst]) {
                         $isNestedScope = $true
                         break
@@ -71,7 +71,7 @@ Describe "Pester 5 Scope Rule Compliance" {
                     $varName = $varPath.UserPath
 
                     # Check if it doesn't use script: or global:
-                    if ($varPath.DriveName -notin 'script', 'global' -and $varName -notin $AutomaticVariables) {
+                    if (-not ($varPath.IsScript -or $varPath.IsGlobal) -and $varName -notin $AutomaticVariables) {
                         $violations.Add([PSCustomObject]@{
                             Variable = $varName
                             Line     = $assign.Extent.StartLineNumber
@@ -88,4 +88,5 @@ Describe "Pester 5 Scope Rule Compliance" {
         }
 
         $violationMessage | Should -BeNullOrEmpty
-    }
+    }}
+

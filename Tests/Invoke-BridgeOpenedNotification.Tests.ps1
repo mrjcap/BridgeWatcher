@@ -37,7 +37,7 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
                 CurrentState         = @(
 
-                    @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
+                    @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
 
                 )
 
@@ -67,7 +67,7 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
                 CurrentState = @(
 
-                    @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
+                    @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
 
                 )
 
@@ -79,9 +79,9 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
             Invoke-BridgeOpenedNotification @params -Configuration $script:Config
 
-            Assert-MockCalled -CommandName Send-BridgePushover -Exactly 1
+            Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly
 
-            Assert-MockCalled -CommandName Write-BridgeLog -Exactly 1
+            Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly
 
         }
 
@@ -97,7 +97,7 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
                 CurrentState = @(
 
-                    @{ gefyraName = 'Ισθμία'; gefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
+                    @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; imageUrl = 'img.jpg'; timestamp = (Get-Date) }
 
                 )
 
@@ -111,13 +111,13 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
             { Invoke-BridgeOpenedNotification @params -Configuration $script:Config } | Should -Throw '*Αποτυχία αποστολής ειδοποίησης ανοίγματος*'
 
-            Assert-MockCalled -CommandName Write-BridgeLog -Exactly 2 -Scope It
+            Should -Invoke -CommandName Write-BridgeLog -Times 2 -Exactly -Scope It
 
-            Assert-MockCalled -CommandName Write-BridgeLog -ParameterFilter {
+            Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
 
                 $Stage -eq 'Σφάλμα' -and $Message -like '*Αποτυχία αποστολής ειδοποίησης ανοίγματος για Ισθμία*'
 
-            } -Exactly 1 -Scope It
+            } -Times 1 -Exactly -Scope It
 
         }
 

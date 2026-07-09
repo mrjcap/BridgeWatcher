@@ -1,11 +1,15 @@
-$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
+﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
 $script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1 | Where-Object {
     $_.FullName -like "*\Public\*" -or $_.FullName -like "*\Private\*"
 }
-$script:Psm1File = Resolve-Path (Join-Path $script:ModulePath "BridgeWatcher.psm1")
+$Psm1Path = Resolve-Path (Join-Path $script:ModulePath "BridgeWatcher.psm1")
 
 # Helper function to find the variable name assigned to an expression
-function Find-AssignmentVariable($node) {
+function global:Find-AssignmentVariable($node) {
+    <#
+    .SYNOPSIS
+        Finds assignment variable for node.
+    #>
     $parent = $node.Parent
     while ($parent) {
         if ($parent -is [System.Management.Automation.Language.AssignmentStatementAst]) {
@@ -17,14 +21,19 @@ function Find-AssignmentVariable($node) {
 }
 
 # Helper function to assert disposal of a resource variable
-function Assert-VariableIsDisposed($varName, $node, $file) {
+function global:Assert-VariableIsDisposed($varName, $node, $file) {
+    <#
+    .SYNOPSIS
+        Asserts a variable is disposed.
+    #>
     if (-not $varName) {
         throw "Resource at line $($node.Extent.StartLineNumber) is not assigned to a variable (leak risk)."
     }
 
     # Check if variable is module-scoped
     if ($varName -like 'script:*' -or $varName -like 'global:*') {
-        $psm1Ast = [System.Management.Automation.Language.Parser]::ParseFile($script:Psm1File, [ref]$null, [ref]$null)
+        $psm1Path = Join-Path (Split-Path (Split-Path $file.FullName)) "BridgeWatcher.psm1"
+        $psm1Ast = [System.Management.Automation.Language.Parser]::ParseFile($psm1Path, [ref]$null, [ref]$null)
         $onRemove = $psm1Ast.FindAll({
             param($n)
             $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and
@@ -41,7 +50,7 @@ function Assert-VariableIsDisposed($varName, $node, $file) {
             $disposes = $or.Right.FindAll({
                 param($n)
                 $n -is [System.Management.Automation.Language.MemberExpressionAst] -and
-                $n.Member.Name -in @('Dispose', 'Close') -and
+                $n.Member.Value -in @('Dispose', 'Close') -and
                 ($n.Expression.ToString() -match "\b(script:|global:)?$bareName\b")
             }, $true)
             if ($disposes) {
@@ -77,7 +86,7 @@ function Assert-VariableIsDisposed($varName, $node, $file) {
         $cleanFound = $tryAst.FinallyBlock.FindAll({
             param($n)
             $n -is [System.Management.Automation.Language.MemberExpressionAst] -and
-            $n.Member.Name -in @('Dispose', 'Close') -and
+            $n.Member.Value -in @('Dispose', 'Close') -and
             ($n.Expression.ToString() -match "\b$bareName\b")
         }, $true)
 
@@ -114,7 +123,7 @@ Describe "Disposable Resource Cleanup Review" {
                 }
                 if ($null -eq $typeName -and $node.CommandElements.Count -gt 1) {
                     $firstArg = $node.CommandElements[1]
-                    if ($firstArg -is-not [System.Management.Automation.Language.CommandParameterAst]) {
+                    if ($firstArg -isnot [System.Management.Automation.Language.CommandParameterAst]) {
                         if ($null -ne $firstArg.Value) {
                             $typeName = $firstArg.Value
                         } else {

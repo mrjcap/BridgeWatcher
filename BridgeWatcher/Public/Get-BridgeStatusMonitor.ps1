@@ -1,5 +1,4 @@
-﻿function Get-BridgeStatusMonitor {
-    <#
+﻿<#
     .SYNOPSIS
     Ξεκινά συνεχή παρακολούθηση της κατάστασης γεφυρών.
 
@@ -50,6 +49,7 @@
     .NOTES
     Το monitoring συνεχίζει μέχρι να ολοκληρωθούν οι επαναλήψεις ή να τερματιστεί χειροκίνητα.
     #>
+function Get-BridgeStatusMonitor {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'ApiKey',
         Justification = 'Το κλειδί API διαβάζεται από τα Docker secrets κατά το runtime, όχι από είσοδο χρήστη. Η μετατροπή σε SecureString δεν προσφέρει κανένα όφελος σε αυτό το μη διαδραστικό pipeline.')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey',
@@ -57,7 +57,7 @@
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey',
         Justification = 'Το κλειδί API διαβάζεται από τα Docker secrets κατά το runtime, όχι από είσοδο χρήστη. Η μετατροπή σε SecureString δεν προσφέρει κανένα όφελος σε αυτό το μη διαδραστικό pipeline.')]
     [CmdletBinding()]
-    [OutputType([void])]
+    [OutputType([object[]])]
     param (
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
         [Parameter()][ValidateRange(0, [int]::MaxValue)][int]$MaxIterations,
