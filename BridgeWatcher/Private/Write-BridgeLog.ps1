@@ -39,6 +39,7 @@
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
 
+    $Message = $Message -replace "`r`n", " " -replace "`n", " " -replace "`r", " "
     $prefix = "[Bridge:$Stage]"
     $output = "$prefix $Message"
     # Console logging
@@ -71,16 +72,20 @@
 
     if ($isPester -or $logDir -like 'TestDrive:\*') {
         try {
+            $isLegacy = $null -ne $env:IsLegacyPowerShell
+            $isLegacyPowerShell = if ($isLegacy) { $env:IsLegacyPowerShell -eq 'true' } else { $PSVersionTable.PSVersion.Major -lt 6 }
+            $encodingVal = if ($isLegacyPowerShell) { 'utf8' } else { 'utf8BOM' }
             $addContentSplat = @{
                 Path        = $logPath
                 Value       = $logLine
-                Encoding    = 'utf8BOM'
+                Encoding    = $encodingVal
                 ErrorAction = 'Stop'
             }
             Add-Content @addContentSplat
         }
         catch {
             Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     } else {
         try {
@@ -89,7 +94,7 @@
                 $script:LogStream.Flush()
             } else {
                 if ($script:LogStream) {
-                    try { $script:LogStream.Close() } catch { Write-Verbose $_.Exception.Message }
+                    try { $script:LogStream.Close() } catch { Write-Warning "Failed to close previous log stream: $($_.Exception.Message)" }
                     $script:LogStream = $null
                 }
                 $utf8WithBOM = New-Object System.Text.UTF8Encoding $true
@@ -102,6 +107,7 @@
         }
         catch {
             Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 }

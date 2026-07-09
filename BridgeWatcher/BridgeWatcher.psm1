@@ -34,3 +34,12 @@ Set-StrictMode -Version Latest
 Export-ModuleMember -Function Get-BridgeStatus, Get-BridgePreviousStatus, Update-BridgeStatus, Invoke-BridgeStatusComparison, Send-BridgePushover, Get-BridgeStatusMonitor, New-BridgeConfiguration
 $script:LogStream = $null
 $script:LogStreamPath = $null
+
+if ($MyInvocation.MyCommand.Module) {
+    $MyInvocation.MyCommand.Module.OnRemove = {
+        if ($script:LogStream) {
+            $script:LogStream.Dispose()
+            $script:LogStream = $null
+        }
+    }
+}

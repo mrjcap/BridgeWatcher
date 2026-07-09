@@ -34,6 +34,9 @@
     .PARAMETER Sound
     Ο ήχος ειδοποίησης (προαιρετικό).
 
+    .PARAMETER Configuration
+    Αντικείμενο ρυθμίσεων που δημιουργείται από New-BridgeConfiguration.
+
     .OUTPUTS
     None.
 

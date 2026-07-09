@@ -41,6 +41,7 @@
             Body        = $RequestBody
             ContentType = 'application/json'
             Headers     = @{ 'X-Goog-Api-Key' = $ApiKey }
+            TimeoutSec  = 30
             ErrorAction = 'Stop'
         }
         $writeBridgeLogSplat = @{
@@ -54,13 +55,17 @@
                 return Invoke-RestMethod @invokeRestMethodSplat
             } catch [System.Net.WebException] {
                 $response = $_.Exception.Response
-                if ($response -and $response.StatusCode -in @(400, 401, 403)) {
-                    throw
+                try {
+                    if ($response -and $response.StatusCode -in @(400, 401, 403)) {
+                        throw
+                    }
+                    if ($i -eq $maxRetries) { throw }
+                    $baseSleep = [Math]::Pow(2, $i)
+                    $jitter = Get-Random -Minimum 0 -Maximum 3
+                    Start-Sleep -Seconds ($baseSleep + $jitter)
+                } finally {
+                    if ($response -is [System.IDisposable]) { $response.Dispose() }
                 }
-                if ($i -eq $maxRetries) { throw }
-                $baseSleep = [Math]::Pow(2, $i)
-                $jitter = Get-Random -Minimum 0 -Maximum 3
-                Start-Sleep -Seconds ($baseSleep + $jitter)
             } catch {
                 if ($i -eq $maxRetries) { throw }
                 $baseSleep = [Math]::Pow(2, $i)
@@ -79,7 +84,7 @@
             ([System.Exception]::new("Η κλήση του Google Vision API απέτυχε: $($_.Exception.Message)", $_.Exception)),
             'GoogleVisionRequestFailure',
             [System.Management.Automation.ErrorCategory]::ConnectionError,
-            $url
+            $Configuration.Urls.OCRApi
         )
         $PSCmdlet.ThrowTerminatingError($errorRecord)
     }

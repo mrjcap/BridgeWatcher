@@ -56,6 +56,7 @@
 
     $ImageHash = $null
     if ($Status -eq $Configuration.Statuses.ClosedWithSchedule) {
+        $response = $null
         try {
             $response = Invoke-WebRequest -Uri $ImageUrl -UseBasicParsing -ErrorAction Stop
             if ($response -and $response.Content) {
@@ -77,6 +78,16 @@
                 Level   = 'Warning'
             }
             Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+            $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+                [System.Exception]::new("Image download/hashing failed: $($_.Exception.Message)", $_.Exception),
+                'IMAGE_DOWNLOAD_FAILED',
+                [System.Management.Automation.ErrorCategory]::InvalidResult,
+                $ImageUrl
+            ))
+        } finally {
+            if ($null -ne $response -and $response -is [System.IDisposable]) {
+                $response.Dispose()
+            }
         }
     }
 

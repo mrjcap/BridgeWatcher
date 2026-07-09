@@ -191,8 +191,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
             Mock Move-Item {}
 
             Mock ConvertTo-Json { '{"test": "data"}' }
-
-
+            Mock Write-BridgeLog {}
 
             $config = New-BridgeConfiguration
 

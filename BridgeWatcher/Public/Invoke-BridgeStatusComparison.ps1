@@ -46,11 +46,11 @@
         [Parameter()]
         [AllowNull()]
         [AllowEmptyCollection()]
-        [object[]]$PreviousState = @(),
+        [object]$PreviousState = @(),
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [object[]]$CurrentState,
+        [object]$CurrentState,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -69,9 +69,12 @@
         [PSCustomObject]$Configuration
     )
     try {
-        if (-not $PreviousState -or $PreviousState.Count -eq 0) {
+        $previousStateArray = [array]$PreviousState
+        $currentStateArray = [array]$CurrentState
+
+        if (-not $previousStateArray -or $previousStateArray.Count -eq 0) {
             # Πρώτη εκτέλεση: όλες οι γέφυρες είναι νέες (=>)
-            $diff = $CurrentState | ForEach-Object {
+            $diff = $currentStateArray | ForEach-Object {
                 [PSCustomObject]@{
                     gefyraName    = $_.gefyraName
                     gefyraStatus  = $_.gefyraStatus
@@ -82,8 +85,8 @@
             }
         } else {
             # Use ImageHash if it is present on any ClosedWithSchedule states, otherwise fall back to ImageUrl
-            $hasPreviousHash = $PreviousState | Where-Object { $_.gefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
-            $hasCurrentHash = $CurrentState | Where-Object { $_.gefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
+            $hasPreviousHash = $previousStateArray | Where-Object { $_.gefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
+            $hasCurrentHash = $currentStateArray | Where-Object { $_.gefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
 
             $compareProperty = @('gefyraName', 'gefyraStatus')
             if ($hasPreviousHash -and $hasCurrentHash) {
@@ -93,8 +96,8 @@
             }
 
             $compareSplat = @{
-                ReferenceObject  = $PreviousState
-                DifferenceObject = $CurrentState
+                ReferenceObject  = $previousStateArray
+                DifferenceObject = $currentStateArray
                 Property         = $compareProperty
                 IncludeEqual     = $true
             }
@@ -144,7 +147,7 @@
                 # Skip any '<=' side indicators to prevent double notifications
                 continue
             }
-            $prevBridge = @($PreviousState) | Where-Object { $_.gefyraName -eq $change.gefyraName } | Select-Object -First 1
+            $prevBridge = $previousStateArray | Where-Object { $_.gefyraName -eq $change.gefyraName } | Select-Object -First 1
             if ($prevBridge -and $prevBridge.gefyraStatus -eq $change.gefyraStatus) {
                 # The status did not change. If it is NOT ClosedWithSchedule, skip it!
                 if ($change.gefyraStatus -ne $Configuration.Statuses.ClosedWithSchedule) {
@@ -156,7 +159,7 @@
                     Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                     continue
                 } else {
-                    $currentBridge = @($CurrentState) | Where-Object { $_.gefyraName -eq $change.gefyraName } | Select-Object -First 1
+                    $currentBridge = $currentStateArray | Where-Object { $_.gefyraName -eq $change.gefyraName } | Select-Object -First 1
                     if ($currentBridge -and [string]::IsNullOrEmpty($currentBridge.ImageHash) -and -not [string]::IsNullOrEmpty($prevBridge.ImageHash)) {
                         $currentBridge.ImageHash = $prevBridge.ImageHash
                         $writeBridgeLogSplat = @{
@@ -182,8 +185,8 @@
                 # Χρήση helper function για επίλυση bridge state
                 $resolveBridgeStateForChangeSplat = @{
                     Change        = $change
-                    PreviousState = $PreviousState
-                    CurrentState  = $CurrentState
+                    PreviousState = $previousStateArray
+                    CurrentState  = $currentStateArray
                 }
                 $changedBridgeState = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
                 if ($changedBridgeState.Count -gt 0) {

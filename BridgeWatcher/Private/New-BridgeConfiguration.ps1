@@ -14,6 +14,9 @@
     .PARAMETER OCRApiUrl
     Το URL για τη Google Cloud Vision API.
 
+    .PARAMETER PushoverApiUrl
+    Το URL για την αποστολή Pushover notifications.
+
     .PARAMETER DefaultIntervalSeconds
     Το προεπιλεγμένο διάστημα σε δευτερόλεπτα για τη παρακολούθηση.
 
@@ -36,6 +39,9 @@
 
         [Parameter()]
         [string]$OCRApiUrl,
+
+        [Parameter()]
+        [string]$PushoverApiUrl,
 
         [Parameter()]
         [ValidateRange(1, 3600)]
@@ -145,7 +151,7 @@
             Source      = $BaseUrl.TrimEnd('/') + '/'
             BaseImage   = $BaseUrl.TrimEnd('/')
             OCRApi      = $OCRApiUrl
-            PushoverApi = 'https://api.pushover.net/1/messages.json'
+            PushoverApi = if ($PushoverApiUrl) { $PushoverApiUrl } else { 'https://api.pushover.net/1/messages.json' }
         }
 
         # Defaults
@@ -156,6 +162,7 @@
             JsonDepth              = 5
             MaxWaitTimeMinutes     = 12
             LogDirectory           = $LogDirectory
+            TimezoneIds            = @('GTB Standard Time', 'Europe/Athens')
         }
 
         # Mappings

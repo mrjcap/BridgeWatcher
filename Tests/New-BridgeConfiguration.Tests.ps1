@@ -57,5 +57,15 @@ Describe 'New-BridgeConfiguration' {
             { New-BridgeConfiguration -DefaultMaxIterations -1 } | Should -Throw
             { New-BridgeConfiguration -DefaultMaxIterations 1001 } | Should -Throw
         }
+
+        It 'Allows overriding PushoverApiUrl' {
+            $config = New-BridgeConfiguration -PushoverApiUrl 'https://custom.pushover.example/messages'
+            $config.Urls.PushoverApi | Should -Be 'https://custom.pushover.example/messages'
+        }
+
+        It 'Uses default PushoverApiUrl when not specified' {
+            $config = New-BridgeConfiguration
+            $config.Urls.PushoverApi | Should -Be 'https://api.pushover.net/1/messages.json'
+        }
     }
 }

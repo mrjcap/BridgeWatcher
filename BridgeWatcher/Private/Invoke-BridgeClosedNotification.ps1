@@ -138,15 +138,18 @@
                         & $SendNotification -Title $title -Message $message -Type 'Closed' -Configuration $Configuration
                     }
                 } catch {
+                    $ocrFailed = $true
                     $writeBridgeLogSplat = @{
                         Stage   = 'Σφάλμα'
                         Message = "❌ Απέτυχε η OCR για $($entry.imageUrl): $($_.Exception.Message)"
                         Level   = 'Warning'
                     }
                     Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+                    Write-Warning "OCR failed for $($entry.imageUrl): $($_.Exception.Message)"
                     $title   = "🚧 Η γέφυρα της $($entry.gefyraName)ς έκλεισε με πρόγραμμα"
                     $message = "Απέτυχε η υπηρεσία OCR. Δείτε την εικόνα εδώ: $($entry.imageUrl)"
                     & $SendNotification -Title $title -Message $message -Type 'Closed' -Configuration $Configuration
+                    $null = $ocrFailed
                 }
             }
             default {

@@ -90,7 +90,32 @@
     $from = $timeRange.From
     $to = $timeRange.To
     $duration = $timeRange.ClosedFor
-    $minutesLeft = [int]($to - (Get-Date)).TotalMinutes
+
+    $athensZone = $null
+    $timezoneIds = $Configuration.Defaults.TimezoneIds
+    if ($null -eq $timezoneIds -or $timezoneIds.Count -eq 0) {
+        $timezoneIds = @('GTB Standard Time', 'Europe/Athens')
+    }
+    $failedTimezoneCount = 0
+    foreach ($tzId in $timezoneIds) {
+        try {
+            $athensZone = [System.TimeZoneInfo]::FindSystemTimeZoneById($tzId)
+            break
+        } catch {
+            $failedTimezoneCount += 1
+            Write-Verbose "Timezone ID $tzId not supported on this platform: $($_.Exception.Message)"
+        }
+    }
+    if ($null -eq $athensZone) {
+        Write-Warning "All $failedTimezoneCount timezone IDs failed ($($timezoneIds -join ', ')). Falling back to local time."
+    }
+    $athensNow = if ($null -ne $athensZone) {
+        [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $athensZone)
+    } else {
+        Get-Date
+    }
+
+    $minutesLeft = [int]($to - $athensNow).TotalMinutes
     $formatBridgeClosedDurationSplat = @{
         Duration = $duration
     }
@@ -99,7 +124,7 @@
     }
     $closedForText = ConvertTo-BridgeClosedDuration @formatBridgeClosedDurationSplat
     $advice = Get-BridgeStatusAdvice @getBridgeStatusAdviceSplat -Configuration $Configuration
-    $advice2 = if ($from -gt (Get-Date)) {
+    $advice2 = if ($from -gt $athensNow) {
         "Η γέφυρα θα κλείσει στις $($from.ToString('HH:mm')) για $closedForText."
     } else {
         "Η γέφυρα είναι ήδη κλειστή από τις $($from.ToString('HH:mm'))."

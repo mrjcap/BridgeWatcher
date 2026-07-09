@@ -65,7 +65,7 @@ Describe 'Write-BridgeLog' {
             Mock Write-Warning {}
 
             # Εκτέλεση - δεν πρέπει να ρίξει exception αλλά να καλέσει Write-Warning
-            { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'Test message' } | Should -Not -Throw
+            { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'Test message' } | Should -Throw
 
             # Επιβεβαίωση ότι καλέστηκε το Write-Warning με το σωστό μήνυμα
             Should -Invoke Write-Warning -Exactly 1 -ParameterFilter {
@@ -88,7 +88,10 @@ Describe 'Write-BridgeLog' {
             $script:LogStreamPath = "oldpath.log"
             $config = New-BridgeConfiguration
             $config.Defaults.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogs"
-            Mock New-Object { $null } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
+            $mockNewStream = New-Object PSObject
+            $mockNewStream | Add-Member -MemberType NoteProperty -Name AutoFlush -Value $true
+            $mockNewStream | Add-Member -MemberType ScriptMethod -Name WriteLine -Value { param($val) $null = $val }
+            Mock New-Object { $mockNewStream } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
             try {
                 { Write-BridgeLog -Stage 'Ανάλυση' -Message "Test" -Configuration $config -Verbose } | Should -Not -Throw
             }
@@ -145,6 +148,36 @@ Describe 'Write-BridgeLog' {
                     try { $script:LogStream.Close() } catch { $null = $_ }
                     $script:LogStream = $null
                 }
+            }
+        }
+
+        It 'Θέτει το legacy encoding utf8' {
+            $env:IsLegacyPowerShell = 'true'
+            try {
+                { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'Legacy encoding test' } | Should -Not -Throw
+            }
+            finally {
+                Remove-Item -Path env:IsLegacyPowerShell -ErrorAction SilentlyContinue
+            }
+        }
+
+        It 'Ρίχνει σφάλμα όταν αποτυγχάνει η δημιουργία StreamWriter' {
+            function Get-PSCallStack {
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSProvideCommentHelp', '')]
+                param()
+                return @()
+            }
+            Mock New-Object { throw [System.IO.IOException]::new("StreamWriter creation failed") } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
+            Mock Write-Warning {}
+            $config = New-BridgeConfiguration
+            $config.Defaults.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogsFailed"
+            try {
+                { Write-BridgeLog -Stage 'Ανάλυση' -Message "Test Fail" -Configuration $config } | Should -Throw
+                Assert-MockCalled Write-Warning -Exactly 1
+            }
+            finally {
+                Remove-Item -Path function:Get-PSCallStack -ErrorAction SilentlyContinue
             }
         }
     }

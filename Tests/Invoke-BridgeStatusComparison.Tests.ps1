@@ -807,7 +807,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             "NOTIFY:Opened:$($CurrentState[0].gefyraName)" | Out-File -Append "$TestDrive\notify.txt"
         }
 
-        $defaultParams = @{
+        $script:defaultParams = @{
 
             ApiKey    = 'fake-key'
 
@@ -817,7 +817,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         }
 
-        $defaultParams
+        $script:defaultParams
 
     }
 
@@ -932,7 +932,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             $copy = $base.Clone()
             $copy.ImageHash = 'hashB'
 
-            $params = $defaultParams + @{
+            $params = $script:defaultParams + @{
                 PreviousState = @($base)
                 CurrentState  = @($copy)
             }
@@ -950,7 +950,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             $copy = $base.Clone()
             $copy.imageUrl = 'img1_different_query.jpg' # URL changed (query) but hash did not
 
-            $params = $defaultParams + @{
+            $params = $script:defaultParams + @{
                 PreviousState = @($base)
                 CurrentState  = @($copy)
             }
@@ -971,7 +971,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             $copy.ImageHash = $null
             $copy.imageUrl = 'img1_failed.jpg'
 
-            $params = $defaultParams + @{
+            $params = $script:defaultParams + @{
                 PreviousState = @($base)
                 CurrentState  = @($copy)
             }

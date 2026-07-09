@@ -181,6 +181,17 @@ Describe 'Invoke-BridgeOCRRequest' {
 
     }
 
+    It 'Disposes WebException Response if it is IDisposable' {
+        $resp = [System.Net.HttpWebResponse]::new()
+        Mock Invoke-RestMethod {
+            $ex = New-Object System.Net.WebException("Mock WebException")
+            $ex | Add-Member -MemberType NoteProperty -Name Response -Value $resp -Force
+            throw $ex
+        }
+        Mock Start-Sleep {}
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Mock WebException"
+    }
+
 
 
     It 'Καλύπτει Configuration.OCRApiUrl path' {

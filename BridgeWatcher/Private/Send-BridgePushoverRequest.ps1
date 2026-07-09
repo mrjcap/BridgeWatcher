@@ -46,6 +46,7 @@
             Method      = 'Post'
             Uri         = $pushoverApiUrl
             Body        = $Payload
+            TimeoutSec  = 30
             ErrorAction = 'Stop'
         }
         $maxRetries = 3
@@ -54,13 +55,17 @@
                 return Invoke-RestMethod @invokeRestMethodSplat
             } catch [System.Net.WebException] {
                 $response = $_.Exception.Response
-                if ($response -and $response.StatusCode -in @(400, 401, 403)) {
-                    throw
+                try {
+                    if ($response -and $response.StatusCode -in @(400, 401, 403)) {
+                        throw
+                    }
+                    if ($i -eq $maxRetries) { throw }
+                    $baseSleep = [Math]::Pow(2, $i)
+                    $jitter = Get-Random -Minimum 0 -Maximum 3
+                    Start-Sleep -Seconds ($baseSleep + $jitter)
+                } finally {
+                    if ($response -is [System.IDisposable]) { $response.Dispose() }
                 }
-                if ($i -eq $maxRetries) { throw }
-                $baseSleep = [Math]::Pow(2, $i)
-                $jitter = Get-Random -Minimum 0 -Maximum 3
-                Start-Sleep -Seconds ($baseSleep + $jitter)
             } catch {
                 if ($i -eq $maxRetries) { throw }
                 $baseSleep = [Math]::Pow(2, $i)

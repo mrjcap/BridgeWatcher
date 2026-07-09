@@ -196,6 +196,17 @@ Describe 'Send-BridgePushoverRequest' {
             Mock Write-BridgeLog
             { Send-BridgePushoverRequest -Configuration $script:Config -Payload @{ token = 't'; user = 'u'; message = 'm' } } | Should -Throw
         }
+
+        It 'Disposes WebException Response if it is IDisposable' {
+            $resp = [System.Net.HttpWebResponse]::new()
+            Mock Invoke-RestMethod {
+                $ex = New-Object System.Net.WebException("Mock WebException")
+                $ex | Add-Member -MemberType NoteProperty -Name Response -Value $resp -Force
+                throw $ex
+            }
+            Mock Write-BridgeLog
+            { Send-BridgePushoverRequest -Configuration $script:Config -Payload @{ token = 't'; user = 'u'; message = 'm' } } | Should -Throw
+        }
     }
 }
 

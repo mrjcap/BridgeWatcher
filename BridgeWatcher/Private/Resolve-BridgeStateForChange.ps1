@@ -34,20 +34,23 @@
         [Parameter()]
         [AllowNull()]
         [AllowEmptyCollection()]
-        [object[]]$PreviousState = @(),
-        [Parameter(Mandatory)][object[]]$CurrentState
+        [object]$PreviousState = @(),
+        [Parameter(Mandatory)][object]$CurrentState
     )
+
+    $previousStateArray = [array]$PreviousState
+    $currentStateArray = [array]$CurrentState
 
     if ($Change.SideIndicator -eq '=>') {
         # Νέα κατάσταση - ψάχνε στο CurrentState
-        $foundState = @($CurrentState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
+        $foundState = @($currentStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName })
     } else {
         # Παλιά κατάσταση (<=) - ψάχνε στο CurrentState πρώτα
-        $foundState = @($CurrentState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
+        $foundState = @($currentStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName })
         if ($foundState.Count -eq 0) {
             # Fallback: χρήση PreviousState αν δεν υπάρχει στο Current
-            $foundState = @($PreviousState | Where-Object { $_.GefyraName -eq $Change.GefyraName })
+            $foundState = @($previousStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName })
         }
     }
-    return $foundState
+    return , $foundState
 }

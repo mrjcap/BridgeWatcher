@@ -1,7 +1,12 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
+
+Import-Module 'C:\Users\jcap\Documents\PowerShell\Modules\Pester\5.8.0\Pester.psd1' -Force
 
 Write-Host "Running PSScriptAnalyzer..."
-$lint = Invoke-ScriptAnalyzer -Path ./BridgeWatcher,./Tests -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+$lint = @(
+    Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+    Invoke-ScriptAnalyzer -Path ./Tests -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+) | Where-Object { $_ }
 if ($lint) {
     $lint | Format-Table
     throw "GATE FAILED: Linter warnings found."

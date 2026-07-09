@@ -146,6 +146,16 @@
             }
         }
 
+        if ($iteration -gt 0 -and $consecutiveFailures -eq $iteration) {
+            $errorRecord = [System.Management.Automation.ErrorRecord]::new(
+                [System.Exception]::new("All monitoring iterations failed ($consecutiveFailures failed of $iteration ran)."),
+                'MONITOR_LOOP_ALL_FAILED',
+                [System.Management.Automation.ErrorCategory]::OperationStopped,
+                $null
+            )
+            $PSCmdlet.ThrowTerminatingError($errorRecord)
+        }
+
         $writeBridgeLogSplat = @{
             Stage   = $Configuration.LoggingConfig.InfoStage
             Message = "$($Configuration.StatusMessages.MonitoringComplete) μετά από $iteration επανάληψη(εις)."

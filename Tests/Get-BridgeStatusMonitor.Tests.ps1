@@ -104,10 +104,18 @@ Describe 'Get-BridgeStatusMonitor' {
     }
 
     Context 'Exception Handling' {
-        It 'Πρέπει να καταγράφεται το σφάλμα όταν προκύπτει εξαίρεση' {
+        It 'Συνεχίζει την εκτέλεση όταν αποτυγχάνει η Update-BridgeStatus αλλά τουλάχιστον μία πετυχαίνει' {
             Mock Write-BridgeLog {}
             Mock Start-Sleep
-            Mock Update-BridgeStatus { throw 'Test Exception' }
+            $script:callCount = 0
+            Mock Update-BridgeStatus {
+                $script:callCount++
+                if ($script:callCount -eq 2) {
+                    return @{ dummy = $true }
+                } else {
+                    throw 'Test Exception'
+                }
+            }
 
             $startBridgeStatusMonitorSplat = @{
                 MaxIterations   = 3
@@ -118,9 +126,9 @@ Describe 'Get-BridgeStatusMonitor' {
                 PoApiKey        = 'token123'
             }
 
-            Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat -Configuration $script:Config
-            # 1 για το μήνυμα εκκίνησης, 3 για το μήνυμα σφάλματος σε κάθε επανάληψη, 1 για το μήνυμα ολοκλήρωσης
-            Assert-MockCalled Write-BridgeLog -Exactly 5
+            { Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat -Configuration $script:Config } | Should -Not -Throw
+            # 1 για το μήνυμα εκκίνησης, 2 για το μήνυμα σφάλματος, 1 για το μήνυμα ολοκλήρωσης
+            Assert-MockCalled Write-BridgeLog -Exactly 4
         }
     }
     Context 'Προεπιλεγμένες Παράμετροι' {
@@ -145,6 +153,8 @@ Describe 'Get-BridgeStatusMonitor' {
             Mock -CommandName Update-BridgeStatus -MockWith { throw "Simulated API Failure" }
             Mock -CommandName Start-Sleep
             Mock -CommandName Write-BridgeLog
+
+            $script:Config.Defaults.MaxConsecutiveFailures = 5
 
             $monitorParams = @{
                 OutputFile = 'test.json'

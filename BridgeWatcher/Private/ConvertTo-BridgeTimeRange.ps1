@@ -26,6 +26,7 @@
     [OutputType([PSCustomObject])]
     param (
         [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string[]]$Lines
     )
     try {
