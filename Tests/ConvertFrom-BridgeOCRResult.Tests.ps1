@@ -27,112 +27,59 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
     Context 'Όταν η ανάλυση OCR κειμένου αποτυγχάνει' {
 
-        It 'Πρέπει να ρίχνει σφάλμα "Δεν κατέστη δυνατή η ανάλυση του κειμένου."' {
-
+        It 'Πρέπει να επιστρέφει $null όταν δεν βρίσκονται textAnnotations' {
             $mockApiResponse = @{
-
                 responses = @(
-
                     @{
-
-                        textAnnotations = @(
-
-                            @{ description = $null }
-
-                        )
-
+                        textAnnotations = @()
                     }
-
                 )
-
             }
-
-            { ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } |
-
-                Should -Throw 'Δεν βρέθηκε κείμενο OCR στην απόκριση.'
-
+            $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+            $res | Should -BeNullOrEmpty
         }
 
 
 
-        It 'Πρέπει να ρίχνει σφάλμα για κενό κείμενο OCR' {
 
+
+        It 'Πρέπει να επιστρέφει $null για κενό κείμενο OCR' {
             # Δημιουργία mock δεδομένων για την περίπτωση όπου δεν υπάρχουν annotations
-
             $mockApiResponse = @{
-
                 responses = @(
-
                     @{
-
                         textAnnotations = @(
-
                             @{ description = '' }
-
                         )
-
                     }
-
                 )
-
             }
-
             # Mock για το Write-Verbose και Write-Warning
-
             Mock Write-Verbose {}
-
             Mock Write-Warning {}
-
             # Εκτέλεση της συνάρτησης
-
-            { ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } | Should -Throw 'Δεν βρέθηκε κείμενο OCR στην απόκριση.'
-
+            $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+            $res | Should -BeNullOrEmpty
         }
 
     }
 
-    It 'πρέπει να καλεί τα Write-Verbose και Write-Warning όταν δεν βρίσκεται το εύρος χρόνου' {
-
-        # Δημιουργία mock δεδομένων όπου το ConvertTo-BridgeTimeRange επιστρέφει $null
-
+    It 'πρέπει να καλεί το Write-BridgeLog όταν δεν βρίσκεται το εύρος χρόνου' {
         $mockApiResponse = @{
-
             responses = @(
-
                 @{
-
                     textAnnotations = @(
-
                         @{ description = 'Από 01/01/2025 10:00 Έως 01/01/2025 10:30' }
-
                     )
-
                 }
-
             )
-
         }
-
-        # Mock για το ConvertTo-BridgeTimeRange που επιστρέφει $null
-
         Mock ConvertTo-BridgeTimeRange { return $null }
-
-        # Mock για το Write-Verbose και Write-Warning
-
-        Mock Write-Verbose {}
-
-        Mock Write-Warning {}
-
-        # Εκτέλεση της συνάρτησης
+        Mock Write-BridgeLog {}
 
         ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
 
-        # Ελέγχουμε αν τα μηνύματα Write-Verbose και Write-Warning καλούνται
-
-        Should -Invoke -CommandName Write-Verbose -Times 3 -Exactly -Scope It
-
-        Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -Scope It
-
+        Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Message -like '*Δεν κατέστη δυνατή η ανάλυση χρονικού διαστήματος*' } -Times 1 -Exactly -Scope It
     }
 
     It 'πρέπει να επιστρέφει κενό πίνακα όταν δεν βρίσκεται το εύρος χρόνου' {
@@ -328,32 +275,20 @@ Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος α
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
     }
 
-    It 'Πρέπει να καλει το Write-BridgeLog όταν αποτυγχάνει η ανάλυση OCR' {
-
+    It 'Πρέπει να καλει το Write-BridgeLog και να επιστρέφει $null όταν αποτυγχάνει η ανάλυση OCR' {
         Mock Write-BridgeLog {}
-
         $mockApiResponse = @{
-
             responses = @(
-
                 @{
-
                     textAnnotations = @(
-
                         @{ description = $null }
-
                     )
-
                 }
-
             )
-
         }
-
-        { ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg' } | Should -Throw
-
-        Should -Invoke -CommandName Write-BridgeLog -Times 2 -Exactly -Scope It
-
+        $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+        $res | Should -BeNullOrEmpty
+        Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Stage -eq 'Σφάλμα' } -Times 1 -Exactly -Scope It
     }
 
 }

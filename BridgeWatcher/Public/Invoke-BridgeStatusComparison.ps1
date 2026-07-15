@@ -34,12 +34,6 @@
     Καταγράφει αλλαγές και ενεργοποιεί κατάλληλες ειδοποιήσεις.
     #>
 function Invoke-BridgeStatusComparison {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'ApiKey',
-        Justification = 'Το κλειδί API διαβάζεται από τα Docker secrets κατά το runtime, όχι από είσοδο χρήστη. Η μετατροπή σε SecureString δεν προσφέρει κανένα όφελος σε αυτό το μη διαδραστικό pipeline.')]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey',
-        Justification = 'Το κλειδί API διαβάζεται από τα Docker secrets κατά το runtime, όχι από είσοδο χρήστη. Η μετατροπή σε SecureString δεν προσφέρει κανένα όφελος σε αυτό το μη διαδραστικό pipeline.')]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey',
-        Justification = 'Το κλειδί API διαβάζεται από τα Docker secrets κατά το runtime, όχι από είσοδο χρήστη. Η μετατροπή σε SecureString δεν προσφέρει κανένα όφελος σε αυτό το μη διαδραστικό pipeline.')]
     [CmdletBinding()]
     [OutputType([System.Boolean])]
     param (
@@ -52,17 +46,6 @@ function Invoke-BridgeStatusComparison {
         [ValidateNotNullOrEmpty()]
         [object]$CurrentState,
 
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$ApiKey,
-
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PoUserKey,
-
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PoApiKey,
 
         [Parameter(Mandatory)]
         [ValidateNotNull()]
@@ -71,6 +54,8 @@ function Invoke-BridgeStatusComparison {
     try {
         $previousStateArray = @($PreviousState | Where-Object { $null -ne $_ })
         $currentStateArray = @($CurrentState | Where-Object { $null -ne $_ })
+
+        $diffEvents = @()
 
         if (-not $previousStateArray -or $previousStateArray.Count -eq 0) {
             # Πρώτη εκτέλεση: όλες οι γέφυρες είναι νέες (=>)
@@ -84,7 +69,6 @@ function Invoke-BridgeStatusComparison {
                 }
             }
         } else {
-            # Use ImageHash if it is present on any ClosedWithSchedule states, otherwise fall back to ImageUrl
             $hasPreviousHash = $previousStateArray | Where-Object { $_.GefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
             $hasCurrentHash = $currentStateArray | Where-Object { $_.GefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
 
@@ -103,7 +87,6 @@ function Invoke-BridgeStatusComparison {
             }
             $diff = Compare-Object @compareSplat
         }
-        $changesTriggered = $false
 
         $closedStatuses = @(
             $Configuration.Statuses.ClosedForMaintenance,
@@ -125,72 +108,52 @@ function Invoke-BridgeStatusComparison {
             }
             Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             if ($change.SideIndicator -eq '==') {
-                $currBridge = $currentStateArray | Where-Object { $_.GefyraName -eq $change.GefyraName } | Select-Object -First 1
+                $writeBridgeLogSplat.Message = "Καμία ουσιαστική αλλαγή στην $($change.GefyraName)."
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+                # Backfill OCR properties for persistence
                 $prevBridge = $previousStateArray | Where-Object { $_.GefyraName -eq $change.GefyraName } | Select-Object -First 1
-                if ($prevBridge) {
-                    $ocrProps = @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')
-                    foreach ($prop in $ocrProps) {
-                        if ($prevBridge.psobject.Properties.Match($prop).Count -gt 0 -and $null -ne $prevBridge.$prop) {
-                            $currBridge | Add-Member -MemberType NoteProperty -Name $prop -Value $prevBridge.$prop -Force
+                $currentBridge = $currentStateArray | Where-Object { $_.GefyraName -eq $change.GefyraName } | Select-Object -First 1
+                if ($prevBridge -and $currentBridge) {
+                    foreach ($prop in @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2', 'ImageHash')) {
+                        if ($null -ne $prevBridge.$prop -and [string]::IsNullOrEmpty($currentBridge.$prop)) {
+                            $currentBridge | Add-Member -MemberType NoteProperty -Name $prop -Value $prevBridge.$prop -Force
                         }
                     }
                 }
-                $writeBridgeLogSplat = @{
-                    Level   = 'Verbose'
-                    Stage   = 'Ανάλυση'
-                    Message = "Καμία ουσιαστική αλλαγή στην $($change.GefyraName)."
-                }
-                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 continue
             }
             if ($change.SideIndicator -ne '=>') {
-                # Skip any '<=' side indicators to prevent double notifications
                 continue
             }
+
             $prevBridge = $previousStateArray | Where-Object { $_.GefyraName -eq $change.GefyraName } | Select-Object -First 1
             if ($prevBridge -and $prevBridge.GefyraStatus -eq $change.GefyraStatus) {
-                # The status did not change. If it is NOT ClosedWithSchedule, skip it!
                 if ($change.GefyraStatus -ne $Configuration.Statuses.ClosedWithSchedule) {
-                    $writeBridgeLogSplat = @{
-                        Level   = 'Verbose'
-                        Stage   = 'Ανάλυση'
-                        Message = "Καμία ουσιαστική αλλαγή στην $($change.GefyraName)."
-                    }
+                    $writeBridgeLogSplat.Message = "Καμία ουσιαστική αλλαγή στην $($change.GefyraName)."
                     Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                     continue
                 } else {
                     $currentBridge = $currentStateArray | Where-Object { $_.GefyraName -eq $change.GefyraName } | Select-Object -First 1
-
-                    # Backfill OCR fields when no changes occurred to prevent data loss
-                    $ocrProps = @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')
-                    foreach ($prop in $ocrProps) {
-                        if ($prevBridge.psobject.Properties.Match($prop).Count -gt 0 -and $null -ne $prevBridge.$prop) {
-                            $currentBridge | Add-Member -MemberType NoteProperty -Name $prop -Value $prevBridge.$prop -Force
-                        }
-                    }
                     if ($currentBridge -and [string]::IsNullOrEmpty($currentBridge.ImageHash) -and -not [string]::IsNullOrEmpty($prevBridge.ImageHash)) {
-                        $currentBridge.ImageHash = $prevBridge.ImageHash
-                        $writeBridgeLogSplat = @{
-                            Level   = 'Verbose'
-                            Stage   = 'Ανάλυση'
-                            Message = "Αποτυχία λήψης νέου hash. Επαναχρησιμοποίηση προηγούμενου hash για την $($change.GefyraName)."
-                        }
+                        $writeBridgeLogSplat.Message = "Αποτυχία λήψης νέου hash. Επαναχρησιμοποίηση προηγούμενου hash για την $($change.GefyraName)."
                         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+                        $currentBridge.ImageHash = $prevBridge.ImageHash
+                        # Also backfill OCR properties since hash is same
+                        foreach ($prop in @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')) {
+                            if ($null -ne $prevBridge.$prop -and [string]::IsNullOrEmpty($currentBridge.$prop)) {
+                                $currentBridge | Add-Member -MemberType NoteProperty -Name $prop -Value $prevBridge.$prop -Force
+                            }
+                        }
                         continue
                     }
-
-                    $writeBridgeLogSplat = @{
-                        Level   = 'Verbose'
-                        Stage   = 'Ανάλυση'
-                        Message = "Εντοπίστηκε ενημέρωση του προγράμματος κλεισίματος για την $($change.GefyraName)."
-                    }
+                    $writeBridgeLogSplat.Message = "Εντοπίστηκε ενημέρωση του προγράμματος κλεισίματος για την $($change.GefyraName)."
                     Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 }
             }
+
             $key = "$($change.GefyraStatus)|$($change.SideIndicator)"
             if ($handlerMap.ContainsKey($key)) {
                 $type = $handlerMap[$key]
-                # Χρήση helper function για επίλυση bridge state
                 $resolveBridgeStateForChangeSplat = @{
                     Change        = $change
                     PreviousState = $previousStateArray
@@ -198,21 +161,13 @@ function Invoke-BridgeStatusComparison {
                 }
                 $changedBridgeState = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
                 if ($changedBridgeState.Count -gt 0) {
-                    $changesTriggered = $true
-                    $notificationSplat = @{
-                        CurrentState  = $changedBridgeState
-                        PoUserKey     = $PoUserKey
-                        PoApiKey      = $PoApiKey
-                        Configuration = $Configuration
-                    }
-                    if ($type -eq 'Closed') {
-                        $notificationSplat.ApiKey = $ApiKey
-                        Invoke-BridgeClosedNotification @notificationSplat
-                    } else {
-                        Invoke-BridgeOpenedNotification @notificationSplat
+                    $diffEvents += [PSCustomObject]@{
+                        BridgeName = $change.GefyraName
+                        Status     = $change.GefyraStatus
+                        Type       = $type
+                        StateInfo  = $changedBridgeState
                     }
                 }
-                continue
             } else {
                 $writeBridgeLogSplat = @{
                     Stage   = 'Σφάλμα'
@@ -222,7 +177,7 @@ function Invoke-BridgeStatusComparison {
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             }
         }
-        return $changesTriggered
+        return $diffEvents
     } catch {
         $writeBridgeLogSplat = @{
             Level   = 'Warning'

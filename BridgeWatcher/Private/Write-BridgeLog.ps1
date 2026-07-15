@@ -68,58 +68,21 @@
     $logPath = Join-Path @joinPathSplat
     $logLine = "[$timeStr] [$Stage] $Message"
 
-    $isPester = [bool](Get-PSCallStack | Where-Object { $_.ScriptName -like '*Tests.ps1' -or $_.ScriptName -like '*Pester*' })
-
-    if ($isPester -or $logDir -like 'TestDrive:\*') {
-        try {
-            $isLegacy = $null -ne $env:IsLegacyPowerShell
-            $isLegacyPowerShell = if ($isLegacy) { $env:IsLegacyPowerShell -eq 'true' } else { $PSVersionTable.PSVersion.Major -lt 6 }
-            $encodingVal = if ($isLegacyPowerShell) { 'utf8' } else { 'utf8BOM' }
-            $addContentSplat = @{
-                Path        = $logPath
-                Value       = $logLine
-                Encoding    = $encodingVal
-                ErrorAction = 'Stop'
-            }
-            Add-Content @addContentSplat
+    try {
+        $isLegacy = $null -ne $env:IsLegacyPowerShell
+        $isLegacyPowerShell = if ($isLegacy) { $env:IsLegacyPowerShell -eq 'true' } else { $PSVersionTable.PSVersion.Major -lt 6 }
+        $encodingVal = if ($isLegacyPowerShell) { 'utf8' } else { 'utf8BOM' }
+        $addContentSplat = @{
+            Path        = $logPath
+            Value       = $logLine
+            Encoding    = $encodingVal
+            ErrorAction = 'Stop'
         }
-        catch {
-            Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
-            $PSCmdlet.ThrowTerminatingError($_)
-        }
-    } else {
-        try {
-            if ($script:LogStream -and $script:LogStreamPath -eq $logPath) {
-                $script:LogStream.WriteLine($logLine)
-                $script:LogStream.Flush()
-            } else {
-                if ($script:LogStream) {
-                    $closeFailed = $false
-                    try {
-                        $script:LogStream.Close()
-                    }
-                    catch {
-                        Write-Warning "Failed to close previous log stream: $($_.Exception.Message)"
-                        $closeFailed = $true
-                    }
-                    if ($closeFailed) {
-                        Write-Verbose "Logging cleanup was incomplete, but continuing to initialize new stream."
-                    }
-                    $script:LogStream = $null
-                }
-                $utf8WithBOM = [System.Text.UTF8Encoding]::new($true)
-                $fs = New-Object System.IO.FileStream($logPath, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
-                $script:LogStream = New-Object System.IO.StreamWriter($fs, $utf8WithBOM)
-                $script:LogStream.AutoFlush = $true
-                $script:LogStreamPath = $logPath
-
-                $script:LogStream.WriteLine($logLine)
-            }
-        }
-        catch {
-            Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
-            $PSCmdlet.ThrowTerminatingError($_)
-        }
+        Add-Content @addContentSplat
+    }
+    catch {
+        Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
+        $PSCmdlet.ThrowTerminatingError($_)
     }
 }
 

@@ -12,15 +12,7 @@
     Πίνακας με γραμμές κειμένου από OCR ανάλυση.
 
     .OUTPUTS
-    [PSCustomObject] - Αντικείμενο με ιδιότητες From, To και ClosedFor.
-
-    .EXAMPLE
-    ConvertTo-BridgeTimeRange -Lines @('Από 25/04/2025 14:00', 'Έως 25/04/2025 14:30')
-    # Επιστρέφει: @{From=[datetime]; To=[datetime]; ClosedFor=[timespan]}
-
-    .NOTES
-    Χρησιμοποιεί regex pattern matching για εξαγωγή ημερομηνιών
-    με μορφή dd/MM/yyyy HH:mm από το κείμενο.
+    [PSCustomObject] - Αντικείμενο με ιδιότητες From, To και ClosedFor, ή $null αν αποτύχει.
     #>
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
@@ -30,26 +22,26 @@
         [string[]]$Lines
     )
     try {
-        # Συνενώνουμε όλες τις γραμμές σε ένα ενιαίο string
         $text = $Lines -join ' '
-        # Ορίζουμε regex pattern για ημερομηνία και ώρα
+        # Regex that uses capture groups to ignore extraneous whitespace introduced by OCR
         $pattern = '(?<Date>\d{2}/\d{2}/\d{4})\s+(?<Time>\d{2}:\d{2})'
-        # Εκτελούμε regex match
-        $bmatches = [regex]::Matches($text, $pattern)
-        # Βεβαιωνόμαστε ότι υπάρχουν τουλάχιστον δύο matches
-        if ($bmatches.Count -lt 2) {
-            throw [System.Management.Automation.ErrorRecord]::new(
-                ([System.Exception]::new('Αποτυχία ανάλυσης ημερομηνιών: Δεν βρέθηκαν επαρκείς ημερομηνίες και ώρες για ανάλυση.')),
-                'NotEnoughDateTimes',
-                [System.Management.Automation.ErrorCategory]::InvalidData,
-                $Lines
-            )
-        }
-        # Παίρνουμε τα 2 πρώτα matches
-        $date1 = [datetime]::ParseExact($bmatches[0].Value, 'dd/MM/yyyy HH:mm', $null)
-        $date2 = [datetime]::ParseExact($bmatches[1].Value, 'dd/MM/yyyy HH:mm', $null)
 
-        # Ταξινομούμε χρονολογικά
+        $bmatches = [regex]::Matches($text, $pattern)
+
+        if ($bmatches.Count -lt 2) {
+            Write-Verbose "Δεν βρέθηκαν επαρκείς ημερομηνίες και ώρες για ανάλυση στο κείμενο OCR."
+            return $null
+        }
+
+        $culture = [System.Globalization.CultureInfo]::InvariantCulture
+
+        # Extract exactly the captured groups to avoid parsing errors from OCR spacing
+        $dateStr1 = "$($bmatches[0].Groups['Date'].Value) $($bmatches[0].Groups['Time'].Value)"
+        $dateStr2 = "$($bmatches[1].Groups['Date'].Value) $($bmatches[1].Groups['Time'].Value)"
+
+        $date1 = [datetime]::ParseExact($dateStr1, 'dd/MM/yyyy HH:mm', $culture)
+        $date2 = [datetime]::ParseExact($dateStr2, 'dd/MM/yyyy HH:mm', $culture)
+
         if ($date1 -gt $date2) {
             $from = $date2
             $to = $date1
@@ -58,7 +50,6 @@
             $to = $date2
         }
 
-        # Επιστρέφουμε structured αντικείμενο
         return [PSCustomObject]@{
             From      = $from
             To        = $to
@@ -66,16 +57,7 @@
         }
     }
     catch {
-        if ($_.FullyQualifiedErrorId -eq 'NotEnoughDateTimes' -or ($_.Exception -and $_.Exception.Message -like '*Δεν βρέθηκαν επαρκείς ημερομηνίες*')) {
-            throw $_
-        }
-        $errorRecord = [System.Management.Automation.ErrorRecord]::new(
-            ([System.Exception]::new("Αποτυχία ανάλυσης ημερομηνιών: $($_.Exception.Message)", $_.Exception)),
-            'BridgeTimeParseError',
-            [System.Management.Automation.ErrorCategory]::InvalidData,
-            $Lines
-        )
-        throw $errorRecord
+        Write-Warning "Αποτυχία ανάλυσης ημερομηνιών OCR: $($_.Exception.Message)"
+        return $null
     }
 }
-

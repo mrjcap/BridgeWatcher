@@ -88,97 +88,65 @@ Describe 'Invoke-BridgeOCRRequest' {
 
 
     It 'Υπολογίζει διάρκεια με ημέρες, ώρες και λεπτά' {
-
         $resp = @{
-
             responses = @(
-
                 @{
-
                     textAnnotations = @(
-
                         @{ description = @(
-
-                                'Από', '01/01/2025', '10:00', 'Έως', '03/01/2025', '12:30'
-
+                                'Από', '01/01/2050', '10:00', 'Έως', '03/01/2050', '12:30'
                             )
-
                         }
-
                     )
-
                 }
-
             )
-
         }
-
         $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $resp -ImageUri 'https://example.com/image-bridge-open-with-schedule-isthmia.php'
-
         $res.ClosedFor | Should -Match 'ημέρες'
-
         $res.ClosedFor | Should -Match 'ώρες'
-
         $res.ClosedFor | Should -Match 'λεπτά'
-
     }
-
-
 
     It 'Επιστρέφει exception όταν αποτυγχάνει η κλήση στο API' {
-
         Mock Invoke-RestMethod { throw 'Simulated API failure' }
-
-        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw 'Η κλήση του Google Vision API απέτυχε: Simulated API failure'
-
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw '❌ Αποτυχία OCR: Simulated API failure'
     }
-
-
 
     It 'Σταματάει χωρίς retries όταν η API επιστρέφει 401 Unauthorized' {
-
         Mock Invoke-RestMethod {
-
             $response = [PSCustomObject]@{ StatusCode = 401 }
-
             $ex = New-Object System.Net.WebException("Unauthorized")
-
             $ex | Add-Member -MemberType NoteProperty -Name Response -Value $response -Force
-
             throw $ex
-
         }
-
-        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Unauthorized"
-
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "❌ Αποτυχία OCR: Unauthorized"
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
-
     }
 
-
-
     It 'Κάνει retries και πετάει το σφάλμα αν εξαντληθούν (π.χ. 500 Internal Server Error)' {
-
         Mock Invoke-RestMethod {
-
             $response = [PSCustomObject]@{ StatusCode = 500 }
-
             $ex = New-Object System.Net.WebException("Internal Error")
-
             $ex | Add-Member -MemberType NoteProperty -Name Response -Value $response -Force
-
             throw $ex
-
         }
+        Mock Start-Sleep {}
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "❌ Αποτυχία OCR: Internal Error"
+        Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly
+        Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly
+    }
 
+    It 'Πρέπει να επαναλαμβάνει (retry) το αίτημα σε περίπτωση αποτυχίας' {
+        Mock Invoke-RestMethod { throw 'Connection Timeout' }
         Mock Start-Sleep {}
 
-        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Internal Error"
+        { Invoke-BridgeOCRRequest -ApiKey 'test_key' -RequestBody '{"test":"json"}' -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Αποτυχία OCR*'
 
         Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly
-
         Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly
+    }
 
+    It 'Πρέπει να ρίχνει ArgumentException όταν το RequestBody δεν είναι έγκυρο JSON' {
+        { Invoke-BridgeOCRRequest -ApiKey 'test_key' -RequestBody '{invalid_json}' -Configuration $script:Config } | Should -Throw -ExpectedMessage '*δεν είναι έγκυρο JSON*'
     }
 
     It 'Disposes WebException Response if it is IDisposable' {
@@ -189,7 +157,7 @@ Describe 'Invoke-BridgeOCRRequest' {
             throw $ex
         }
         Mock Start-Sleep {}
-        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "Η κλήση του Google Vision API απέτυχε: Mock WebException"
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "❌ Αποτυχία OCR: Mock WebException"
     }
 
 

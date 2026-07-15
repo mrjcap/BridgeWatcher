@@ -6,6 +6,8 @@ Describe 'Update-BridgeStatus' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/TestHelper.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeClosedNotification.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgePreviousStatus.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Invoke-BridgeStatusComparison.ps1"
@@ -48,19 +50,26 @@ Describe 'Update-BridgeStatus' {
 
         Mock Get-BridgePreviousStatus {
             return @(
-                @{ Bridge = 'Ποσειδωνία'; Status = 'Ανοικτή' }
+                [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοικτή'; From = '00:00'; ImageHash = 'abc' }
             )
         }
         Mock Get-BridgeStatus -MockWith {
             return @(
-                @{ Bridge = 'Ποσειδωνία'; Status = 'Ανοικτή' }
+                [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοικτή' }
             )
         }
-        Mock Invoke-BridgeStatusComparison {}
+        Mock Invoke-BridgeStatusComparison {
+            return @(
+                [PSCustomObject]@{ Type = 'Closed'; StateInfo = @{ GefyraName = 'Ποσειδωνία' } },
+                [PSCustomObject]@{ Type = 'Opened'; StateInfo = @{ GefyraName = 'Ισθμία' } }
+            )
+        }
         Mock Export-BridgeStatusJson {
             New-BridgeResult -Success $true
         }
         Mock Write-Verbose {}
+        Mock Invoke-BridgeClosedNotification {}
+        Mock Invoke-BridgeOpenedNotification {}
 
         $updateBridgeStatusSplat = @{
             OutputFile    = $jsonFile
@@ -75,6 +84,8 @@ Describe 'Update-BridgeStatus' {
         Should -Invoke -CommandName Get-BridgeStatus -Times 1 -Exactly -Scope It
         # Ελέγχουμε αν η συνάρτηση Invoke-BridgeStatusComparison κλήθηκε
         Should -Invoke -CommandName Invoke-BridgeStatusComparison -Times 1 -Exactly -Scope It
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1 -Exactly -Scope It
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 1 -Exactly -Scope It
     }
 
     It 'Εκτελείται σωστά με -WhatIf και δεν καλεί Invoke/Export' {

@@ -207,6 +207,21 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         }
 
+        It 'Καλύπτει απουσία Configuration.DefaultJsonDepth (fallback σε 10)' {
+            Mock Test-Path { $true }
+            Mock New-Item { }
+            Mock Move-Item {}
+            Mock ConvertTo-Json { '{"test": "data"}' }
+            Mock Write-BridgeLog {}
+
+            $config = New-BridgeConfiguration
+            $config.Defaults = [PSCustomObject]@{ }
+
+            Export-BridgeStatusJson -Data @([pscustomobject]@{Test = 'Data' }) -Path 'test.json' -Configuration $config
+
+            Should -Invoke -CommandName ConvertTo-Json -ParameterFilter { $Depth -eq 10 } -Times 1
+        }
+
         It 'Καλύπτει Configuration.ExportMessages.Success path' {
 
             Mock Test-Path { $true }
@@ -270,20 +285,13 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
         }
 
         It 'Καλύπτει Configuration.ExportMessages.DirectoryNotExists' {
-
-            Mock Test-Path { $false }
-
-            Mock Split-Path { 'invalid/path' }
-
-            Mock New-Item { throw 'Custom directory not exists' }
-
-            Mock Write-BridgeLog {}
-
-
-
             $config = New-BridgeConfiguration
-
             $config.ExportMessages.DirectoryNotExists = 'Custom directory not exists'
+
+            Mock Test-Path { $false } -ParameterFilter { $Path -notmatch 'config.json' }
+            Mock Split-Path { 'invalid/path' } -ParameterFilter { $Path -like '*test.json*' }
+            Mock New-Item { throw 'Custom directory not exists' }
+            Mock Write-BridgeLog {}
 
 
 

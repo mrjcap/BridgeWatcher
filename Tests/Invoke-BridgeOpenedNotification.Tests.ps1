@@ -41,9 +41,7 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
                 )
 
-                PoUserKey            = 'dummy'
-
-                PoApiKey = 'dummy'; Configuration = $script:Config
+                Configuration = $script:Config
 
                 NotificationProvider = $mockProvider
 
@@ -89,7 +87,7 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
         It 'Γράφει error log και ρίχνει terminating error όταν αποτυγχάνει η αποστολή Pushover' {
 
-            Mock -CommandName Send-BridgePushover -MockWith { throw 'Pushover API failure' }
+            Mock -CommandName Send-BridgePushover -MockWith { throw [System.Net.WebException]::new('Pushover API failure') }
 
             Mock -CommandName Write-BridgeLog -MockWith { }
 

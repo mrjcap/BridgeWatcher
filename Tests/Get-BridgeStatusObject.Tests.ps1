@@ -53,8 +53,8 @@ Describe 'Get-BridgeStatusObject' {
         It 'Υπολογίζει το ImageHash όταν η κατάσταση είναι Κλειστή με πρόγραμμα' {
             $config = New-BridgeConfiguration
             $contentBytes = [System.Text.Encoding]::UTF8.GetBytes("fake image content")
-            Mock Invoke-WebRequest {
-                return [pscustomobject]@{ Content = $contentBytes }
+            Mock Get-BridgeImageBuffer {
+                return $contentBytes
             }
             $obj = Get-BridgeStatusObject -Location 'isthmia' -Status $config.Statuses.ClosedWithSchedule `
                 -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'schedule.php' -Configuration $config
@@ -64,7 +64,7 @@ Describe 'Get-BridgeStatusObject' {
 
         It 'Πετάει σφάλμα και καταγράφει προειδοποίηση όταν η λήψη αποτυγχάνει' {
             $config = New-BridgeConfiguration
-            Mock Invoke-WebRequest { throw "Connection timeout" }
+            Mock Get-BridgeImageBuffer { throw "Connection timeout" }
             Mock Write-BridgeLog { }
             {
                 Get-BridgeStatusObject -Location 'isthmia' -Status $config.Statuses.ClosedWithSchedule `

@@ -53,8 +53,6 @@ function Update-BridgeStatus {
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         if (-not (Test-Path $OutputFile)) {
-            # Το αρχείο δεν υπάρχει – πρώτη εκτέλεση
-            # Χρήση κενού array ώστε η πρώτη κατάσταση να ενεργοποιεί ειδοποιήσεις
             $getDiorigaStatusSplat = @{
                 OutputFile    = $OutputFile
                 Configuration = $Configuration
@@ -62,7 +60,6 @@ function Update-BridgeStatus {
             $currentState = Get-BridgeStatus @getDiorigaStatusSplat -Configuration $Configuration
             $previousState = @()
         } else {
-            # Το αρχείο υπάρχει, μπορείς να το διαβάσεις με ασφάλεια
             $getDiorigaPreviousStatusSplat = @{
                 InputFile     = $OutputFile
                 Configuration = $Configuration
@@ -70,16 +67,50 @@ function Update-BridgeStatus {
             $previousState = Get-BridgePreviousStatus @getDiorigaPreviousStatusSplat -Configuration $Configuration
             $currentState = Get-BridgeStatus -Configuration $Configuration
         }
+
+        # Reduce / Backfill State
+        if ($previousState.Count -gt 0) {
+            foreach ($curr in $currentState) {
+                $prev = $previousState | Where-Object { $_.GefyraName -eq $curr.GefyraName } | Select-Object -First 1
+                if ($prev) {
+                    $ocrProps = @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')
+                    foreach ($prop in $ocrProps) {
+                        if ($prev.psobject.Properties.Match($prop).Count -gt 0 -and $null -ne $prev.$prop) {
+                            $curr | Add-Member -MemberType NoteProperty -Name $prop -Value $prev.$prop -Force
+                        }
+                    }
+                    if ([string]::IsNullOrEmpty($curr.ImageHash) -and -not [string]::IsNullOrEmpty($prev.ImageHash)) {
+                        $curr | Add-Member -MemberType NoteProperty -Name 'ImageHash' -Value $prev.ImageHash -Force
+                    }
+                }
+            }
+        }
+
         if ($PSCmdlet.ShouldProcess("BridgeWatcher", "Update status and send notifications")) {
             $invokeSplat = @{
                 PreviousState = $previousState
                 CurrentState  = $currentState
-                ApiKey        = $ApiKey
-                PoUserKey     = $PoUserKey
-                PoApiKey      = $PoApiKey
                 Configuration = $Configuration
             }
-            $null = Invoke-BridgeStatusComparison @invokeSplat -Configuration $Configuration
+            $diffEvents = Invoke-BridgeStatusComparison @invokeSplat -Configuration $Configuration
+            # Dispatch notifications based on diff events
+            if ($null -ne $diffEvents -and $diffEvents.Count -gt 0) {
+                foreach ($diffEvent in $diffEvents) {
+                    $notificationSplat = @{
+                        CurrentState  = $diffEvent.StateInfo
+                        PoUserKey     = $PoUserKey
+                        PoApiKey      = $PoApiKey
+                        Configuration = $Configuration
+                    }
+                    if ($diffEvent.Type -eq 'Closed') {
+                        $notificationSplat.ApiKey = $ApiKey
+                        Invoke-BridgeClosedNotification @notificationSplat
+                    } else {
+                        Invoke-BridgeOpenedNotification @notificationSplat
+                    }
+                }
+            }
+
             $exportBridgeStatusJsonSplat = @{
                 Data          = $currentState
                 Path          = $OutputFile
@@ -88,11 +119,7 @@ function Update-BridgeStatus {
             $null = Export-BridgeStatusJson @exportBridgeStatusJsonSplat
             return $currentState
         }
-        $writeBridgeLogSplat = @{
-            Stage   = $Configuration.LoggingConfig.InfoStage
-            Message = 'Finished comparison and saved snapshot.'
-            Level   = $Configuration.LoggingConfig.VerboseLevel
-        }
+        $writeBridgeLogSplat.Message = 'Finished comparison and saved snapshot.'
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
     }
 }

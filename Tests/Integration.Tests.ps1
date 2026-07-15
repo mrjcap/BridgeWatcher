@@ -11,7 +11,7 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
     BeforeAll {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
-        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeHtml.ps1"
+
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusFromHtml.ps1"
 
@@ -22,8 +22,6 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusObject.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeHtml.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOCRRequest.ps1"
 
@@ -40,27 +38,16 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
 
 
 
-        $getBridgeHtmlSplat = @{
+        $response = Invoke-WebRequest -Uri $config.Urls.Source -UseBasicParsing -ErrorAction 'Stop'
+        $htmlResultData = $response.Content
 
-            Uri           = $config.Urls.Source
-
-            Configuration = $config
-
-        }
-
-        $htmlResult = Get-BridgeHtml @getBridgeHtmlSplat
-
-
-
-        $htmlResult.Success | Should -Be $true
-
-        $htmlResult.Data | Should -Not -BeNullOrEmpty
+        $htmlResultData | Should -Not -BeNullOrEmpty
 
 
 
         $getBridgeStatusFromHtmlSplat = @{
 
-            Html          = $htmlResult.Data
+            Html          = $htmlResultData
 
             Timestamp     = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
 

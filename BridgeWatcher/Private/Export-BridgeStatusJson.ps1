@@ -5,8 +5,7 @@
 
     .DESCRIPTION
     Η Export-BridgeStatusJson αποθηκεύει δεδομένα κατάστασης γέφυρας σε μορφή JSON
-    σε καθορισμένη διαδρομή. Επιστρέφει αντικείμενο BridgeResult για καλύτερη
-    διαχείριση σφαλμάτων και ενσωμάτωση στο pipeline.
+    σε καθορισμένη διαδρομή.
 
     .PARAMETER Data
     Το αντικείμενο ή η λίστα αντικειμένων που θα εξαχθεί.
@@ -15,128 +14,119 @@
     Η πλήρης διαδρομή του αρχείου εξόδου.
 
     .PARAMETER JsonDepth
-    Το βάθος σειριοποίησης (serialization) του JSON (προεπιλογή: 10).
+    Το βάθος σειριοποίησης (serialization) του JSON.
 
     .PARAMETER Configuration
     Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
 
     .OUTPUTS
-    [PSCustomObject] - Αντικείμενο BridgeResult με Success, Data, ErrorMessage, ErrorCode, Timestamp.
-
-    .EXAMPLE
-        Write-Host "Εξαγωγή επιτυχής"
-    }
-
-    .NOTES
-    Χρησιμοποιεί την New-BridgeResult για τυποποιημένη επιστροφή αποτελεσμάτων.
+    [PSCustomObject] - Αντικείμενο αποτελέσματος.
     #>
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([PSCustomObject])]
     param (
-        [Parameter(Mandatory)]
-        [AllowEmptyCollection()]
-        [object[]]$Data,
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [object]$Data,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Path,
 
         [Parameter()]
-        [ValidateRange(1, 20)]
         [int]$JsonDepth,
 
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
 
-    # Λήψη βάθους JSON από τη διαμόρφωση ή την παράμετρο ή χρήση εναλλακτικής λύσης
-    if (-not $JsonDepth) {
-        $JsonDepth = $Configuration.Defaults.JsonDepth
-    }
+    begin {
+        $items = [System.Collections.Generic.List[object]]::new()
 
-    # Λήψη μηνυμάτων από τη διαμόρφωση ή χρήση εναλλακτικής λύσης
-    $successMessage = $Configuration.ExportMessages.Success
-
-    $failedMessage = $Configuration.ExportMessages.Failed
-
-    $directoryNotExistsMessage = $Configuration.ExportMessages.DirectoryNotExists
-
-    # Λήψη σταδίου καταγραφής (logging stage) από τη διαμόρφωση ή χρήση εναλλακτικής λύσης
-    $analysisStage = $Configuration.LoggingConfig.InfoStage
-
-    $errorStage = $Configuration.LoggingConfig.ErrorStage
-
-    $warningLevel = $Configuration.LoggingConfig.WarningLevel
-
-    try {
-        $convertToJsonSplat = @{
-            Depth    = $JsonDepth
-            Compress = $true
+        if (-not $JsonDepth) {
+            $JsonDepth = $Configuration.Defaults.JsonDepth
+            if (-not $JsonDepth) { $JsonDepth = 10 }
         }
 
-        $parentDir = Split-Path -Parent $Path
-        if (-not [string]::IsNullOrWhiteSpace($parentDir)) {
-            try {
-                $null = New-Item -ItemType Directory -Force -Path $parentDir -ErrorAction Stop
-            } catch {
-                $errorMessage = "$directoryNotExistsMessage`: $parentDir"
+        $successMessage = $Configuration.ExportMessages.Success
+        $failedMessage = $Configuration.ExportMessages.Failed
+        $directoryNotExistsMessage = $Configuration.ExportMessages.DirectoryNotExists
+        $analysisStage = $Configuration.LoggingConfig.InfoStage
+        $errorStage = $Configuration.LoggingConfig.ErrorStage
+    }
+
+    process {
+        if ($null -ne $Data) {
+            if ($Data -is [System.Collections.IEnumerable] -and -not ($Data -is [string]) -and ($Data.Count -eq 0)) {
+                # Skip empty arrays passed directly to parameter
+            } else {
+                $items.Add($Data)
+            }
+        }
+    }
+
+    end {
+        try {
+            $dataToExport = if ($items.Count -eq 1) { $items[0] } else { $items.ToArray() }
+
+            if ($PSCmdlet.ShouldProcess($Path, "Create JSON export")) {
+                $parentDir = Split-Path -Parent $Path
+                if (-not [string]::IsNullOrWhiteSpace($parentDir)) {
+                try {
+                    $null = New-Item -ItemType Directory -Force -Path $parentDir -ErrorAction Stop
+                } catch {
+                    $errorMessage = "$directoryNotExistsMessage ($parentDir): $($_.Exception.Message)"
+                    $writeBridgeLogSplat = @{
+                        Stage   = $errorStage
+                        Message = $errorMessage
+                        Level   = 'Warning'
+                    }
+                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+
+                    return [PSCustomObject]@{
+                        Success      = $false
+                        Data         = $null
+                        ErrorMessage = $errorMessage
+                        ErrorCode    = 'DIRECTORY_NOT_EXISTS'
+                        Timestamp    = (Get-Date -Format o)
+                    }
+                }
+                }
+
+                $json = ConvertTo-Json -InputObject $dataToExport -Depth $JsonDepth -Compress
+                $tmpPath = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
+                Set-Content -Path $tmpPath -Value $json -Encoding UTF8 -Force
+                Move-Item -Path $tmpPath -Destination $Path -Force -ErrorAction Stop
+
                 $writeBridgeLogSplat = @{
-                    Stage   = $errorStage
-                    Message = $errorMessage
-                    Level   = $warningLevel
+                    Stage   = $analysisStage
+                    Message = "$successMessage`: $Path"
                 }
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+            }
 
-                return [PSCustomObject]@{
-                    Success      = $false
-                    Data         = $null
-                    ErrorMessage = $errorMessage
-                    ErrorCode    = 'DIRECTORY_NOT_EXISTS'
-                    Timestamp    = (Get-Date -Format o)
-                }
+            return [PSCustomObject]@{
+                Success      = $true
+                Data         = @{ ExportedPath = $Path; RecordCount = $items.Count }
+                ErrorMessage = ''
+                ErrorCode    = ''
+                Timestamp    = (Get-Date -Format o)
             }
         }
-
-        $json = ConvertTo-Json -InputObject $Data @convertToJsonSplat
-        if ($PSCmdlet.ShouldProcess($Path, "Create JSON export")) {
-            $fileStream = [System.IO.FileStream]::new($Path, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
-            try {
-                $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
-                $fileStream.Write($bytes, 0, $bytes.Length)
-            } finally {
-                $fileStream.Close()
-                $fileStream.Dispose()
+        catch {
+            $errorMessage = "$failedMessage`: $($_.Exception.Message)"
+            $writeBridgeLogSplat = @{
+                Stage   = $errorStage
+                Message = $errorMessage
+                Level   = 'Warning'
             }
-        }
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
-        $writeBridgeLogSplat = @{
-            Stage   = $analysisStage
-            Message = "$successMessage`: $Path"
-        }
-        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-
-        return [PSCustomObject]@{
-            Success      = $true
-            Data         = @{ ExportedPath = $Path; RecordCount = $Data.Count }
-            ErrorMessage = ''
-            ErrorCode    = ''
-            Timestamp    = (Get-Date -Format o)
-        }
-    }
-    catch {
-        $errorMessage = "$failedMessage`: $($_.Exception.Message)"
-        $writeBridgeLogSplat = @{
-            Stage   = $errorStage
-            Message = $errorMessage
-            Level   = $warningLevel
-        }
-        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-
-        return [PSCustomObject]@{
-            Success      = $false
-            Data         = $null
-            ErrorMessage = $errorMessage
-            ErrorCode    = 'JSON_EXPORT_FAILURE'
-            Timestamp    = (Get-Date -Format o)
+            return [PSCustomObject]@{
+                Success      = $false
+                Data         = $null
+                ErrorMessage = $errorMessage
+                ErrorCode    = 'JSON_EXPORT_FAILURE'
+                Timestamp    = (Get-Date -Format o)
+            }
         }
     }
 }

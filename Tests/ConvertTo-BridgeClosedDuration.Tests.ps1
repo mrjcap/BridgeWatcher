@@ -142,14 +142,14 @@ Describe 'ConvertTo-BridgeClosedDuration' {
 
     Context 'Όταν παρέχεται αρνητικό TimeSpan' {
 
-        It 'Πρέπει να ρίξει σφάλμα όταν η διάρκεια είναι αρνητική' {
+        It "Πρέπει να επιστρέφει 'λιγότερο από 1 λεπτό' όταν η διάρκεια είναι μικρότερη από 1 λεπτό" {
+            $result = ConvertTo-BridgeClosedDuration -Duration ([timespan]::FromSeconds(30))
+            $result | Should -Be 'λιγότερο από 1 λεπτό'
+        }
 
-            {
-
-                ConvertTo-BridgeClosedDuration -Duration ([timespan]::FromMinutes(-5))
-
-            } | Should -Throw -ErrorId 'NegativeDurationNotAllowed,ConvertTo-BridgeClosedDuration'
-
+        It 'Πρέπει να επιστρέψει "άγνωστη διάρκεια" όταν η διάρκεια είναι αρνητική' {
+            $res = ConvertTo-BridgeClosedDuration -Duration ([timespan]::FromMinutes(-5))
+            $res | Should -Be 'άγνωστη διάρκεια'
         }
 
     }

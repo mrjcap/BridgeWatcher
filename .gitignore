@@ -1,4 +1,4 @@
-﻿# Test Results
+# Test Results
 coverage.xml
 testResults.xml
 
@@ -31,3 +31,11 @@ Desktop.ini
 prompts/
 output/
 .agents/
+
+# AI Session & Scratch Artifacts
+HANDOFF.md
+LESSONS_LEARNT.md
+config.json
+graphify-out/
+refactor.py
+scratch/

@@ -69,12 +69,19 @@
                 Write-BridgeLog @writeBridgeLogSuccess -Configuration $Configuration
 
                 return $result
-            } catch [System.Net.WebException] {
-                $response = $_.Exception.Response
+            } catch {
+                $ex = $_.Exception
+                $response = $null
+                if ($null -ne $ex.Response) {
+                    $response = $ex.Response
+                }
+
                 try {
-                    if ($response -and $response.StatusCode -in @(400, 401, 403)) {
-                        throw
+                    if ($response) {
+                        $statusCode = [int]$response.StatusCode
+                        if ($statusCode -in @(400, 401, 403)) { throw }
                     }
+
                     if ($i -eq $maxRetries) { throw }
                     $baseSleep = [Math]::Pow(2, $i)
                     $jitter = Get-Random -Minimum 0 -Maximum 3
@@ -82,11 +89,6 @@
                 } finally {
                     if ($response -is [System.IDisposable]) { $response.Dispose() }
                 }
-            } catch {
-                if ($i -eq $maxRetries) { throw }
-                $baseSleep = [Math]::Pow(2, $i)
-                $jitter = Get-Random -Minimum 0 -Maximum 3
-                Start-Sleep -Seconds ($baseSleep + $jitter)
             }
         }
     } catch {

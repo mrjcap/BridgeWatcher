@@ -1,4 +1,4 @@
-﻿@{
+@{
     Rules = @{
         PSUseApprovedVerbs = @{
             Enable = $true
@@ -7,7 +7,7 @@
             Enable = $true
         }
         PSUseBOMForUnicodeEncodedFile = @{
-            Enable = $true
+            Enable = $false
         }
         PSAvoidUsingConvertToSecureStringWithPlainText = @{
             Enable = $true

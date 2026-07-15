@@ -26,19 +26,22 @@
     param (
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
         [Parameter(Mandatory)]
-        [ValidateScript({
-                $null -ne $_ -and
-                $null -ne $_.responses -and
-                $_.responses.Count -gt 0 -and
-                $null -ne $_.responses[0] -and
-                $null -ne $_.responses[0].textAnnotations
-            })]
         [PSCustomObject]$ApiResponse,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$ImageUri
     )
+
+    if ($null -eq $ApiResponse -or $null -eq $ApiResponse.responses -or $ApiResponse.responses.Count -eq 0 -or $null -eq $ApiResponse.responses[0].textAnnotations -or $ApiResponse.responses[0].textAnnotations.Count -eq 0) {
+        $writeBridgeLogSplat = @{
+            Stage   = 'Σφάλμα'
+            Message = 'Δεν βρέθηκαν αποτελέσματα (textAnnotations) στην απόκριση OCR.'
+            Level   = 'Warning'
+        }
+        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+        return $null
+    }
 
     $textAnnotations = $ApiResponse.responses[0].textAnnotations
     $ocrText = $textAnnotations[0].description
@@ -56,7 +59,7 @@
             Level   = 'Warning'
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-        throw [System.Management.Automation.ErrorRecord]::new(([System.Exception]::new('Δεν βρέθηκε κείμενο OCR στην απόκριση.')), 'OCRTextNotFound', [System.Management.Automation.ErrorCategory]::InvalidData, $ApiResponse)
+        return $null
     }
 
     # Χρήση του ήδη εξαχθέντος ασφαλούς κειμένου
@@ -72,11 +75,6 @@
         Lines = $Lines
     }
     $timeRange = ConvertTo-BridgeTimeRange @convertToBridgeTimeRangeSplat
-    $writeBridgeLogSplat = @{
-        Stage   = 'Ανάλυση'
-        Message = "OCR ➤ Επιτυχής ανάλυση χρονικού εύρους: Από = $($timeRange.From), Έως = $($timeRange.To), ΚλειστήΓια = $($timeRange.ClosedFor)"
-    }
-    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
     if (-not $timeRange) {
         $writeBridgeLogSplat = @{
             Stage   = 'Σφάλμα'
@@ -86,6 +84,12 @@
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         return
     }
+
+    $writeBridgeLogSplat = @{
+        Stage   = 'Ανάλυση'
+        Message = "OCR ➤ Επιτυχής ανάλυση χρονικού εύρους: Από = $($timeRange.From), Έως = $($timeRange.To), ΚλειστήΓια = $($timeRange.ClosedFor)"
+    }
+    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
     $from = $timeRange.From
     $to = $timeRange.To
@@ -116,6 +120,19 @@
     }
 
     $minutesLeft = [int]($to - $athensNow).TotalMinutes
+
+    if ($minutesLeft -le 0) {
+        return [PSCustomObject]@{
+            'Bridge'      = $bridgeName
+            'From'        = $from.ToString('dd/MM/yyyy HH:mm')
+            'To'          = $to.ToString('dd/MM/yyyy HH:mm')
+            'ClosedFor'   = 'Ολοκληρώθηκε'
+            'OpensIn'     = 'Τώρα'
+            'Note1'       = 'Η γέφυρα έχει ανοίξει ή το χρονικό διάστημα έχει παρέλθει.'
+            'Note2'       = 'Η γέφυρα είναι ανοιχτή.'
+        }
+    }
+
     $formatBridgeClosedDurationSplat = @{
         Duration = $duration
     }

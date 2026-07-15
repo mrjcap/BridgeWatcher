@@ -1,4 +1,27 @@
-﻿function Get-BridgeStatusObject {
+﻿function Get-BridgeImageBuffer {
+    <#
+    .SYNOPSIS
+    Λήψη δεδομένων εικόνας.
+    .DESCRIPTION
+    Κατεβάζει την εικόνα και επιστρέφει τα bytes της.
+    #>
+    [CmdletBinding()]
+    param([string]$Url)
+    $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -ErrorAction Stop -Method Get
+    try {
+        if ($response.Content -is [byte[]]) {
+            return $response.Content
+        } else {
+            return [System.Text.Encoding]::UTF8.GetBytes($response.Content)
+        }
+    } finally {
+        if ($response -is [System.IDisposable]) {
+            $response.Dispose()
+        }
+    }
+}
+
+function Get-BridgeStatusObject {
     <#
     .SYNOPSIS
     Δημιουργεί αντικείμενο κατάστασης γέφυρας.
@@ -56,20 +79,14 @@
 
     $ImageHash = $null
     if ($Status -eq $Configuration.Statuses.ClosedWithSchedule) {
-        $response = $null
         try {
-            $response = Invoke-WebRequest -Uri $ImageUrl -UseBasicParsing -ErrorAction Stop
-            if ($response -and $response.Content) {
-                try {
-                    $bytes = if ($response.Content -is [byte[]]) { $response.Content } else { [System.Text.Encoding]::UTF8.GetBytes($response.Content) }
-                    $hashStream = [System.IO.MemoryStream]::new($bytes)
-                    $md5 = [System.Security.Cryptography.MD5]::Create()
-                    $hashBytes = $md5.ComputeHash($hashStream)
-                    $ImageHash = [System.BitConverter]::ToString($hashBytes) -replace '-'
-                } finally {
-                    if ($null -ne $md5) { $md5.Dispose() }
-                    if ($null -ne $hashStream) { $hashStream.Dispose() }
-                }
+            $bytes = Get-BridgeImageBuffer -Url $ImageUrl
+            $md5 = [System.Security.Cryptography.MD5]::Create()
+            try {
+                $hashBytes = $md5.ComputeHash($bytes)
+                $ImageHash = [System.BitConverter]::ToString($hashBytes) -replace '-'
+            } finally {
+                if ($null -ne $md5) { $md5.Dispose() }
             }
         } catch {
             $writeBridgeLogSplat = @{
@@ -84,16 +101,12 @@
                 [System.Management.Automation.ErrorCategory]::InvalidResult,
                 $ImageUrl
             ))
-        } finally {
-            if ($null -ne $response -and $response -is [System.IDisposable]) {
-                $response.Dispose()
-            }
         }
     }
 
     return [pscustomobject]@{
         PSTypeName   = 'Bridge.Status'
-        GefyraName   = $Configuration.BridgeNames[$Location]
+        GefyraName   = $Configuration.BridgeNames.$Location
         GefyraStatus = $Status
         Timestamp    = $Timestamp
         ImageUrl     = $ImageUrl

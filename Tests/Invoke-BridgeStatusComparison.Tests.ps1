@@ -50,19 +50,15 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $sameState
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0 -Exactly
+        $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
 
-        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0 -Exactly
+        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
     }
 
@@ -84,17 +80,14 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $current
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1 -Exactly
+        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be 1
 
     }
 
@@ -116,17 +109,14 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $current
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1 -Exactly
+        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be 1
 
     }
 
@@ -152,17 +142,12 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $current
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Send-BridgePushover -Times 1
 
     }
 
@@ -190,21 +175,16 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $same
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0
+        $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
 
-        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0
+        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
-        Should -Invoke -CommandName Send-BridgePushover -Times 0
 
     }
 
@@ -222,15 +202,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
+        $result = Invoke-BridgeStatusComparison @params 
 
     }
 
@@ -248,15 +224,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'ανικτή'; timestamp = (Get-Date); imageUrl = 'x.jpg' }
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
+        $result = Invoke-BridgeStatusComparison @params 
 
     }
 
@@ -276,19 +248,14 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $base.Clone()
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
         $params.CurrentState.timestamp = (Get-Date).AddMinutes(5)
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Send-BridgePushover -Times 0
 
     }
 
@@ -300,11 +267,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $null
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
@@ -320,15 +283,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        { Invoke-BridgeStatusComparison @params } | Should -Throw
+        { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
 
     }
 
@@ -344,17 +303,14 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = $null }
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
+        $result = Invoke-BridgeStatusComparison @params 
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1
+        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be 1
 
         # imageUrl δεν είναι κρίσιμο για την απόφαση αποστολής
 
@@ -390,19 +346,16 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $currentState
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
         # ✅ Αναμένουμε 2 κλήσεις (μία για κάθε αλλαγή)
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 2
+        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be 2
 
     }
 
@@ -424,19 +377,15 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $copy
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0
+        $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
 
-        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0
+        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
     }
 
@@ -458,19 +407,16 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $copy
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1
+        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be 1
 
-        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0
+        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
     }
 
@@ -502,27 +448,25 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $currentState
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
         # ✅ Περιμένουμε μία κλήση σε κάθε notification
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1
+        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be 1
 
-        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 1
+        $evt_Opened = $result | Where-Object { $_.Type -eq 'Opened' }
+        $evt_Opened.Count | Should -Be 1
 
     }
 
     It 'Γράφει warning όταν λείπει κατάσταση' {
 
-        { Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ GefyraName = 'X'; GefyraStatus = 'Ανοιχτή' } -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Configuration $script:Config } | Should -Throw
+        $result = Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ GefyraName = 'X'; GefyraStatus = 'Ανοιχτή' } -Configuration $script:Config 
 
     }
 
@@ -532,7 +476,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $same = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = Get-Date; imageUrl = 'x.jpg' }
 
-        { Invoke-BridgeStatusComparison -PreviousState $same -CurrentState $same -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Configuration $script:Config -Verbose } | Should -Not -Throw
+        $result = Invoke-BridgeStatusComparison -PreviousState $same -CurrentState $same -Configuration $script:Config -Verbose 
 
     }
 
@@ -544,7 +488,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @()
 
-            ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
@@ -556,11 +500,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @(@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' })
 
-            ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        { Invoke-BridgeStatusComparison @paramsMissingPrevious } | Should -Throw
+        $result = Invoke-BridgeStatusComparison @paramsMissingPrevious 
 
     }
 
@@ -584,13 +528,13 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = @($state)
 
-            ApiKey = 'X'; PoUserKey = 'Y'; PoApiKey = 'Z'; Configuration = $script:Config
+            Configuration = $script:Config
 
             Verbose       = $true
 
         }
 
-        { Invoke-BridgeStatusComparison @params } | Should -Not -Throw
+        $result = Invoke-BridgeStatusComparison @params 
 
     }
 
@@ -616,17 +560,13 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
                 CurrentState  = @($state)
 
-                ApiKey        = 'X'
-
-                PoUserKey     = 'Y'
-
-                PoApiKey = 'Z'; Configuration = $script:Config
+                Configuration = $script:Config
 
                 Verbose       = $true
 
             }
 
-            Invoke-BridgeStatusComparison @invokeBridgeStatusComparisonSplat
+            $result = Invoke-BridgeStatusComparison @invokeBridgeStatusComparisonSplat
 
         } | Should -Not -Throw
 
@@ -650,11 +590,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
                 CurrentState  = @($state)
 
-                ApiKey        = 'X'
-
-                PoUserKey     = 'Y'
-
-                PoApiKey = 'Z'; Configuration = $script:Config
+                Configuration = $script:Config
 
                 Verbose       = $true
 
@@ -668,11 +604,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $defaultParams = @{
 
-            ApiKey    = 'fake-key'
-
-            PoUserKey = 'user-key'
-
-            PoApiKey = 'app-key'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
@@ -686,9 +618,10 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Μόνιμα κλειστή' }
 
-        Invoke-BridgeStatusComparison @defaultParams -PreviousState $prev -CurrentState $curr
+        $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState $prev -CurrentState $curr
 
-        (Get-Content "$TestDrive\notify.txt") | Should -Contain 'NOTIFY:Closed:Ισθμία'
+        $evt_Closed_Ισθμία = $result | Where-Object { $_.Type -eq 'Closed' -and $_.BridgeName -eq 'Ισθμία' }
+        $evt_Closed_Ισθμία | Should -Not -BeNullOrEmpty
 
     }
 
@@ -708,19 +641,16 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $curr
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1 -Exactly
+        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be 1
 
-        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 0 -Exactly
+        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
     }
 
@@ -742,19 +672,16 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             CurrentState  = $curr
 
-            ApiKey = 'dummy'
-
-            PoUserKey     = 'dummy'
-
-            PoApiKey = 'dummy'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
 
-        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0 -Exactly
+        $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
 
-        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 1 -Exactly
+        $evt_Opened = $result | Where-Object { $_.Type -eq 'Opened' }
+        $evt_Opened.Count | Should -Be 1
 
     }
 
@@ -809,11 +736,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         $script:defaultParams = @{
 
-            ApiKey    = 'fake-key'
-
-            PoUserKey = 'user-key'
-
-            PoApiKey = 'app-key'; Configuration = $script:Config
+            Configuration = $script:Config
 
         }
 
@@ -829,7 +752,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $obj = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-            Invoke-BridgeStatusComparison @defaultParams -PreviousState @($obj) -CurrentState @($obj)
+            $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($obj) -CurrentState @($obj)
 
             (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match 'Καμία ουσιαστική αλλαγή'
 
@@ -841,7 +764,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $emptyObj = @{ GefyraName = 'Foo'; GefyraStatus = 'Ανοιχτή' }
 
-            Invoke-BridgeStatusComparison @defaultParams -PreviousState @($emptyObj) -CurrentState @($emptyObj)
+            $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($emptyObj) -CurrentState @($emptyObj)
 
             (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match 'Καμία ουσιαστική αλλαγή'
 
@@ -857,9 +780,10 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
 
-            Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
+            $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
 
-            (Get-Content "$TestDrive\notify.txt") | Should -Contain 'NOTIFY:Closed:Ισθμία'
+            $evt_Closed_Ισθμία = $result | Where-Object { $_.Type -eq 'Closed' -and $_.BridgeName -eq 'Ισθμία' }
+            $evt_Closed_Ισθμία | Should -Not -BeNullOrEmpty
 
         }
 
@@ -869,9 +793,10 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $curr = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' }
 
-            Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
+            $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
 
-            (Get-Content "$TestDrive\notify.txt") | Should -Contain 'NOTIFY:Opened:Ποσειδωνία'
+            $evt_Opened_Ποσειδωνία = $result | Where-Object { $_.Type -eq 'Opened' -and $_.BridgeName -eq 'Ποσειδωνία' }
+            $evt_Opened_Ποσειδωνία | Should -Not -BeNullOrEmpty
 
         }
 
@@ -885,9 +810,10 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-            Invoke-BridgeStatusComparison @defaultParams -PreviousState @($curr) -CurrentState @($prev)
+            $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($curr) -CurrentState @($prev)
 
-            (Get-Content "$TestDrive\notify.txt") | Should -Contain 'NOTIFY:Closed:Ισθμία'
+            $evt_Closed_Ισθμία = $result | Where-Object { $_.Type -eq 'Closed' -and $_.BridgeName -eq 'Ισθμία' }
+            $evt_Closed_Ισθμία | Should -Not -BeNullOrEmpty
 
         }
 
@@ -901,7 +827,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Bar' }
 
-            Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
+            $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
 
             (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match 'Άγνωστο combo'
 
@@ -937,9 +863,10 @@ Describe 'Invoke-BridgeStatusComparison' {
                 CurrentState  = @($copy)
             }
 
-            Invoke-BridgeStatusComparison @params
+            $result = Invoke-BridgeStatusComparison @params
 
-            Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1
+            $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
+            $evt_Closed.Count | Should -Be 1
         }
 
         It 'Δεν στέλνει ειδοποίηση όταν το ImageHash είναι ίδιο στην Κλειστή με πρόγραμμα' {
@@ -955,9 +882,9 @@ Describe 'Invoke-BridgeStatusComparison' {
                 CurrentState  = @($copy)
             }
 
-            Invoke-BridgeStatusComparison @params
+            $result = Invoke-BridgeStatusComparison @params
 
-            Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0
+            $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
         }
 
         It 'Επαναχρησιμοποιεί το προηγούμενο ImageHash αν το νέο είναι κενό/σφάλμα' {
@@ -976,9 +903,9 @@ Describe 'Invoke-BridgeStatusComparison' {
                 CurrentState  = @($copy)
             }
 
-            Invoke-BridgeStatusComparison @params
+            $result = Invoke-BridgeStatusComparison @params
 
-            Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 0
+            $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
             $copy.ImageHash | Should -Be 'hashA' # check that previous hash was copied back
         }
     }
@@ -993,12 +920,9 @@ Describe 'Invoke-BridgeStatusComparison' {
         $params = @{
             PreviousState = @($prev)
             CurrentState  = @($curr)
-            ApiKey = 'dummy'
-            PoUserKey = 'dummy'
-            PoApiKey = 'dummy'
             Configuration = $script:Config
         }
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
         $curr.From | Should -Be '10:00'
     }
 
@@ -1007,17 +931,14 @@ Describe 'Invoke-BridgeStatusComparison' {
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
         Mock Send-BridgePushover {}
 
-        $prev = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; From = '10:00'; To = '12:00'; ClosedFor = '2h'; OpensIn = '1h'; Note1 = 'n1'; Note2 = 'n2'; ImageUrl = 'x.jpg' }
-        $curr = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageUrl = 'y.jpg' }
+        $prev = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; From = '10:00'; To = '12:00'; ClosedFor = '2h'; OpensIn = '1h'; Note1 = 'n1'; Note2 = 'n2'; ImageUrl = 'x.jpg'; ImageHash = 'hashA' }
+        $curr = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageUrl = 'y.jpg'; ImageHash = $null }
         $params = @{
             PreviousState = @($prev)
             CurrentState  = @($curr)
-            ApiKey = 'dummy'
-            PoUserKey = 'dummy'
-            PoApiKey = 'dummy'
             Configuration = $script:Config
         }
-        Invoke-BridgeStatusComparison @params
+        $result = Invoke-BridgeStatusComparison @params
         $curr.From | Should -Be '10:00'
     }
 }

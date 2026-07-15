@@ -34,7 +34,10 @@ Describe 'Get-BridgeStatusFromHtml' {
 
             $timestamp = '2025-04-18T08:00:00'
 
-            { Get-BridgeStatusFromHtml -Configuration $script:Config -Html $html -Timestamp $timestamp } | Should -Throw -ErrorId '*BridgeImagesNotFound*'
+            $errs = @()
+            Get-BridgeStatusFromHtml -Configuration $script:Config -Html $html -Timestamp $timestamp -ErrorVariable errs
+            $matchFound = [bool]($errs.FullyQualifiedErrorId -match 'BridgeImagesNotFound')
+            $matchFound | Should -Be $true
 
         }
 
@@ -42,7 +45,7 @@ Describe 'Get-BridgeStatusFromHtml' {
 
     Context 'Όταν υπάρχει Open image αλλά δεν υπάρχει info εικόνα' {
 
-        It 'Παραλείπει Open κατάσταση χωρίς info εικόνα' {
+        It 'Δημιουργεί προειδοποίηση για Open κατάσταση χωρίς info εικόνα' {
             $config = New-BridgeConfiguration
 
             # Mock Get-BridgeImage to return images with Open pattern but no info.php
@@ -66,13 +69,13 @@ Describe 'Get-BridgeStatusFromHtml' {
 
             $result = Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp -Configuration $config
 
-            # Should return empty because Open status was skipped (no info image)
-            $result.Count | Should -Be 0
+            # Should return 2 because both poseidonia and isthmia have an open image and we no longer skip them
+            $result.Count | Should -Be 2
 
-            # Verify the skip log message was written
+            # Verify the warning log message was written
             Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
-                $Message -like '*Παραλείπεται*' -and $Message -like '*info*'
-            } -Times 1 -Scope It
+                $Message -like '*Λείπει η εικόνα info.php*'
+            } -Times 2 -Scope It
         }
 
     }

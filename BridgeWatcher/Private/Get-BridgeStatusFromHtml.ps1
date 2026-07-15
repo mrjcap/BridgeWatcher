@@ -30,14 +30,14 @@
     # Χρήση διαμόρφωσης ή εναλλακτικής λύσης
 
     $baseUrl = $Configuration.Urls.BaseImage
-    $patterns = @{
-        'poseidonia' = @{
+    $patterns = [ordered]@{
+        'poseidonia' = [ordered]@{
             ($Configuration.Statuses.ClosedForMaintenance) = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
             ($Configuration.Statuses.ClosedWithSchedule)   = 'image-bridge-open-with-schedule-posidonia\.php(\?\d+)?'
             ($Configuration.Statuses.PermanentlyClosed)    = 'image-bridge-always-close\.php(\?\d+)?'
             ($Configuration.Statuses.Open)                 = 'image-bridge-open-no-schedule\.php\?\d+'
         }
-        'isthmia'    = @{
+        'isthmia'    = [ordered]@{
             ($Configuration.Statuses.ClosedForMaintenance) = 'image-bridge-close-for-maintenance\.php(\?\d+)?'
             ($Configuration.Statuses.ClosedWithSchedule)   = 'image-bridge-open-with-schedule-isthmia\.php(\?\d+)?'
             ($Configuration.Statuses.PermanentlyClosed)    = 'image-bridge-always-close\.php(\?\d+)?'
@@ -71,7 +71,8 @@
                 [System.Management.Automation.ErrorCategory]::ObjectNotFound,
                 $location
             )
-            $PSCmdlet.ThrowTerminatingError($errorRecord)
+            $PSCmdlet.WriteError($errorRecord)
+            continue
         }
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
@@ -96,10 +97,10 @@
                 if (-not $hasInfoImage -or $hasInfoImage.Count -eq 0) {
                     $writeBridgeLogSplat = @{
                         Stage   = 'Ανάλυση'
-                        Message = "Παραλείπεται $location ($status): Δεν βρέθηκε info εικόνα"
+                        Message = "Λείπει η εικόνα info.php για $location ($status). Η γέφυρα θα θεωρηθεί Ανοιχτή, αλλά ενδέχεται να υπάρχει σφάλμα."
+                        Level   = 'Warning'
                     }
                     Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                    $image = $null
                 }
             }
             if ($image) {

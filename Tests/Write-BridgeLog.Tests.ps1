@@ -74,86 +74,8 @@ Describe 'Write-BridgeLog' {
         }
     }
 
-    Context 'Όταν κλείνει το LogStream και προκύπτει σφάλμα' {
-        It 'Κάνει catch το σφάλμα και εκτυπώνει Verbose' {
-            function Get-PSCallStack {
-                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
-                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSProvideCommentHelp', '')]
-                param()
-                return @()
-            }
-            $mockStream = New-Object PSObject
-            $mockStream | Add-Member -MemberType ScriptMethod -Name Close -Value { throw "Close error" }
-            $script:LogStream = $mockStream
-            $script:LogStreamPath = "oldpath.log"
-            $config = New-BridgeConfiguration
-            $config.Defaults.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogs"
-            $mockNewStream = New-Object PSObject
-            $mockNewStream | Add-Member -MemberType NoteProperty -Name AutoFlush -Value $true
-            $mockNewStream | Add-Member -MemberType ScriptMethod -Name WriteLine -Value { param($val) $null = $val }
-            Mock New-Object { $null } -ParameterFilter { $TypeName -eq 'System.IO.FileStream' }
-            Mock New-Object { $mockNewStream } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
-            try {
-                { Write-BridgeLog -Stage 'Ανάλυση' -Message "Test" -Configuration $config -Verbose } | Should -Not -Throw
-            }
-            finally {
-                Remove-Item -Path function:Get-PSCallStack -ErrorAction SilentlyContinue
-            }
-        }
-    }
-
-    Context 'StreamWriter Logging (Else Block)' {
-        BeforeEach {
-            $script:LogStream = $null
-            $script:LogStreamPath = $null
-        }
-        AfterEach {
-            if ($script:LogStream) {
-                try { $script:LogStream.Close() } catch { $null = $_ }
-                $script:LogStream = $null
-            }
-        }
-        It 'Γράφει σε αρχείο χρησιμοποιώντας StreamWriter' {
-            function Get-PSCallStack {
-                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
-                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSProvideCommentHelp', '')]
-                param()
-                return @()
-            }
-            $mockWriter = New-Object PSObject
-            $mockWriter | Add-Member -MemberType ScriptMethod -Name WriteLine -Value { param($line) [void]$line }
-            $mockWriter | Add-Member -MemberType ScriptMethod -Name Flush -Value { }
-            $mockWriter | Add-Member -MemberType ScriptMethod -Name Close -Value { }
-            $mockWriter | Add-Member -MemberType NoteProperty -Name AutoFlush -Value $true
-            Mock New-Object { $null } -ParameterFilter { $TypeName -eq 'System.IO.FileStream' }
-            Mock New-Object { $mockWriter } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
-
-            $config = New-BridgeConfiguration
-            $config.Defaults.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogs"
-
-            try {
-                # First run: creates StreamWriter
-                { Write-BridgeLog -Stage 'Ανάλυση' -Message 'StreamWriter Test' -Configuration $config } | Should -Not -Throw
-                $script:LogStream | Should -Not -BeNullOrEmpty
-                $script:LogStreamPath | Should -BeLike (Join-Path $config.Defaults.LogDirectory "BridgeWatcher-*.log")
-
-                # Second run: uses existing StreamWriter
-                { Write-BridgeLog -Stage 'Ανάλυση' -Message 'StreamWriter Test 2' -Configuration $config } | Should -Not -Throw
-
-                # Third run: changes log path
-                $script:LogStreamPath = Join-Path $config.Defaults.LogDirectory "different.log"
-                { Write-BridgeLog -Stage 'Ανάλυση' -Message 'StreamWriter Test 3' -Configuration $config } | Should -Not -Throw
-            }
-            finally {
-                Remove-Item -Path function:Get-PSCallStack -ErrorAction SilentlyContinue
-                if ($script:LogStream) {
-                    try { $script:LogStream.Close() } catch { $null = $_ }
-                    $script:LogStream = $null
-                }
-            }
-        }
-
-        It 'Θέτει το legacy encoding utf8' {
+    Context 'Legacy Encoding' {
+        It 'Χρησιμοποιεί utf8 σε Legacy PowerShell' {
             $env:IsLegacyPowerShell = 'true'
             try {
                 { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'Legacy encoding test' } | Should -Not -Throw
@@ -162,28 +84,9 @@ Describe 'Write-BridgeLog' {
                 Remove-Item -Path env:IsLegacyPowerShell -ErrorAction SilentlyContinue
             }
         }
-
-        It 'Ρίχνει σφάλμα όταν αποτυγχάνει η δημιουργία StreamWriter' {
-            function Get-PSCallStack {
-                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
-                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSProvideCommentHelp', '')]
-                param()
-                return @()
-            }
-            Mock New-Object { throw [System.IO.IOException]::new("FileStream creation failed") } -ParameterFilter { $TypeName -eq 'System.IO.FileStream' }
-            Mock New-Object { throw [System.IO.IOException]::new("StreamWriter creation failed") } -ParameterFilter { $TypeName -eq 'System.IO.StreamWriter' }
-            Mock Write-Warning {}
-            $config = New-BridgeConfiguration
-            $config.Defaults.LogDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "TempLogsFailed"
-            try {
-                { Write-BridgeLog -Stage 'Ανάλυση' -Message "Test Fail" -Configuration $config } | Should -Throw
-                Should -Invoke -CommandName Write-Warning -Times 1 -Exactly
-            }
-            finally {
-                Remove-Item -Path function:Get-PSCallStack -ErrorAction SilentlyContinue
-            }
-        }
     }
+
+
 }
 
 

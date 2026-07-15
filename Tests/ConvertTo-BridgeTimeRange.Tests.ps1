@@ -16,24 +16,15 @@ Describe 'ConvertTo-BridgeTimeRange' {
 
     Context 'Όταν το OCR κείμενο δεν περιέχει έγκυρες ημερομηνίες' {
 
-        It 'Πρέπει να ρίχνει σφάλμα "Δεν βρέθηκαν επαρκείς ημερομηνίες"' {
-
-            # Δημιουργούμε input που θα αποτύχει στο parsing
-
+        It 'Πρέπει να επιστρέφει $null "Δεν βρέθηκαν επαρκείς ημερομηνίες"' {
             $fakeLines = @('άκυρο κείμενο χωρίς ημερομηνίες')  # άδειο OCR αποτέλεσμα
-
-            { ConvertTo-BridgeTimeRange -Lines $fakeLines } | Should -Throw "*Δεν βρέθηκαν επαρκείς ημερομηνίες*"
-
+            $res = ConvertTo-BridgeTimeRange -Lines $fakeLines
+            $res | Should -BeNullOrEmpty
         }
 
-        It 'Πετάει σφάλμα όταν δίνονται μη αναγνωρίσιμες ημερομηνίες' {
-
-            {
-
-                ConvertTo-BridgeTimeRange -TimeRange 'ΗμερομηνίεςΠουΔενΥπάρχουνΣανFormat'
-
-            } | Should -Throw
-
+        It 'Επιστρέφει $null όταν δίνονται μη αναγνωρίσιμες ημερομηνίες' {
+            $res = ConvertTo-BridgeTimeRange -Lines @('ΗμερομηνίεςΠουΔενΥπάρχουνΣανFormat')
+            $res | Should -BeNullOrEmpty
         }
 
     }
@@ -64,16 +55,14 @@ Describe 'ConvertTo-BridgeTimeRange' {
 
     Context 'Έλεγχος ανεπαρκών matches και εξαιρέσεων' {
 
-        It 'Πετάει σφάλμα NotEnoughDateTimes όταν υπάρχει μόνο 1 ημερομηνία' {
-
-            { ConvertTo-BridgeTimeRange -Lines @('Μόνο μία: 25/04/2025 14:00') } | Should -Throw "*Δεν βρέθηκαν επαρκείς ημερομηνίες*"
-
+        It 'Επιστρέφει $null όταν υπάρχει μόνο 1 ημερομηνία' {
+            $res = ConvertTo-BridgeTimeRange -Lines @('Μόνο μία: 25/04/2025 14:00')
+            $res | Should -BeNullOrEmpty
         }
 
-        It 'Πετάει σφάλμα BridgeTimeParseError όταν αποτυγχάνει το parse' {
-
-            { ConvertTo-BridgeTimeRange -Lines @('99/99/2025 14:00', '25/04/2025 14:00') } | Should -Throw "*Αποτυχία ανάλυσης ημερομηνιών*"
-
+        It 'Επιστρέφει $null όταν αποτυγχάνει το parse' {
+            $res = ConvertTo-BridgeTimeRange -Lines @('99/99/2025 14:00', '25/04/2025 14:00')
+            $res | Should -BeNullOrEmpty
         }
 
     }

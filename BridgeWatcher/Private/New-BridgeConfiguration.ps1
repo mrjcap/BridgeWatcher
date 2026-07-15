@@ -61,6 +61,12 @@
         [Parameter()]
         [string]$LogDirectory = ''
     )
+    $configPath = Join-Path $PSScriptRoot '..\config.json'
+    if (-not (Test-Path $configPath)) {
+        throw "Δεν βρέθηκε το αρχείο configuration στο $configPath"
+    }
+
+    $jsonConfig = Get-Content -Path $configPath -Raw | ConvertFrom-Json
 
     if ([string]::IsNullOrWhiteSpace($LogDirectory)) {
         if (Test-Path 'TestDrive:\') {
@@ -70,127 +76,30 @@
         }
     }
 
-    if (-not $BaseUrl) { $BaseUrl = 'https://www.topvision.gr/dioriga' }
-    if (-not $OCRApiUrl) { $OCRApiUrl = 'https://vision.googleapis.com/v1/images:annotate' }
+    if (-not $BaseUrl) { $BaseUrl = $jsonConfig.Urls.Source }
+    if (-not $OCRApiUrl) { $OCRApiUrl = $jsonConfig.Urls.OCRApi }
+    if (-not $PushoverApiUrl) { $PushoverApiUrl = $jsonConfig.Urls.PushoverApi }
 
-    # Bridge name mappings (add new bridge slugs here)
-    $bridgeNames = @{
-        'isthmia'    = 'Ισθμία'
-        'poseidonia' = 'Ποσειδωνία'
+    $jsonConfig.Urls.Source = $BaseUrl.TrimEnd('/') + '/'
+    $jsonConfig.Urls.BaseImage = $BaseUrl.TrimEnd('/')
+    $jsonConfig.Urls.OCRApi = $OCRApiUrl
+    $jsonConfig.Urls.PushoverApi = $PushoverApiUrl
+
+    # Override defaults if passed explicitly
+    if ($PSBoundParameters.ContainsKey('DefaultIntervalSeconds')) {
+        $jsonConfig.Defaults.IntervalSeconds = $DefaultIntervalSeconds
+    }
+    if ($PSBoundParameters.ContainsKey('DefaultMaxIterations')) {
+        $jsonConfig.Defaults.MaxIterations = $DefaultMaxIterations
+    }
+    if ($PSBoundParameters.ContainsKey('MaxConsecutiveFailures')) {
+        $jsonConfig.Defaults.MaxConsecutiveFailures = $MaxConsecutiveFailures
     }
 
-    # Unified status strings
-    $statuses = [PSCustomObject]@{
-        Open                 = 'Ανοιχτή'
-        Closed               = 'Κλειστή'
-        ClosedForMaintenance = 'Κλειστή για συντήρηση'
-        ClosedWithSchedule   = 'Κλειστή με πρόγραμμα'
-        PermanentlyClosed    = 'Μόνιμα κλειστή'
-        Unknown              = 'Άγνωστη'
-    }
+    $jsonConfig.Defaults | Add-Member -MemberType NoteProperty -Name 'LogDirectory' -Value $LogDirectory -Force
 
-    # Status mappings
-    $statusMappings = @{
-        'ΚΛΕΙΣΤΗ' = 'Κλειστή'
-        'ΑΝΟΙΧΤΗ' = 'Ανοιχτή'
-        'CLOSED'  = 'Κλειστή'
-        'OPEN'    = 'Ανοιχτή'
-    }
+    $jsonConfig.psobject.TypeNames.Insert(0, 'BridgeWatcher.Configuration')
 
-    # Error messages
-    $errorMessages = @{
-        NoStatus             = '⛔ Δεν υπάρχει διαθέσιμο status για αποθήκευση.'
-        HtmlRetrievalFailure = 'Αποτυχία ανάκτησης HTML από τον server'
-        ExportFailure        = '⛔ Αποτυχία εξαγωγής δεδομένων'
-        OCRFailure           = '❌ Απέτυχε η OCR'
-        NetworkError         = '❌ Σφάλμα δικτύου'
-        MonitoringError      = '❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας'
-    }
-
-    # Status messages
-    $statusMessages = @{
-        MonitoringStart    = 'Ξεκίνησε ο κύκλος παρακολούθησης'
-        MonitoringComplete = '✅ Ο κύκλος παρακολούθησης ολοκληρώθηκε'
-    }
-
-    # Logging configuration
-    $loggingConfig = @{
-        ErrorStage   = 'Σφάλμα'
-        DebugStage   = 'Debug'
-        InfoStage    = 'Ανάλυση'
-        WarningLevel = 'Warning'
-        ErrorLevel   = 'Error'
-        InfoLevel    = 'Info'
-        DebugLevel   = 'Debug'
-        VerboseLevel = 'Verbose'
-    }
-
-    # Export messages
-    $exportMessages = @{
-        Success            = '✅ Επιτυχής εξαγωγή JSON'
-        Failed             = '❌ Αποτυχία εξαγωγής JSON'
-        DirectoryNotExists = '❌ Ο φάκελος προορισμού δεν υπάρχει'
-    }
-
-    # OCR messages
-    $ocrMessages = @{
-        StartOCR  = '🔍 Εκκίνηση OCR'
-        OCRFailed = '❌ Αποτυχία OCR'
-    }
-
-    # Pushover messages
-    $pushoverMessages = @{
-        SendFailed = '❌ Αποτυχία αποστολής Pushover'
-    }
-
-    # Advice messages
-    $adviceMessages = @{
-        DoNotWait = 'Είναι προτιμότερο να μην περιμένεις'
-        Wait      = 'Είναι προτιμότερο να περιμένεις'
-    }
-
-    return [PSCustomObject]@{
-        # URLs
-        Urls                      = [PSCustomObject]@{
-            Source      = $BaseUrl.TrimEnd('/') + '/'
-            BaseImage   = $BaseUrl.TrimEnd('/')
-            OCRApi      = $OCRApiUrl
-            PushoverApi = if ($PushoverApiUrl) { $PushoverApiUrl } else { 'https://api.pushover.net/1/messages.json' }
-        }
-
-        # Defaults
-        Defaults                  = [PSCustomObject]@{
-            IntervalSeconds        = $DefaultIntervalSeconds
-            MaxIterations          = $DefaultMaxIterations
-            MaxConsecutiveFailures = $MaxConsecutiveFailures
-            JsonDepth              = 5
-            MaxWaitTimeMinutes     = 12
-            LogDirectory           = $LogDirectory
-            TimezoneIds            = @('GTB Standard Time', 'Europe/Athens')
-        }
-
-        # Mappings
-        Statuses                  = $statuses
-        BridgeNames               = $bridgeNames
-        StatusMappings            = $statusMappings
-        ErrorMessages             = $errorMessages
-        StatusMessages            = $statusMessages
-        LoggingConfig             = $loggingConfig
-        ExportMessages            = $exportMessages
-        OCRMessages               = $ocrMessages
-        PushoverMessages          = $pushoverMessages
-        AdviceMessages            = $adviceMessages
-
-        # Patterns (can be extended)
-        TimePatterns              = @(
-            '\d{1,2}:\d{2}'
-            '\d{1,2}\.\d{2}'
-        )
-
-        # File extensions
-        SupportedImageExtensions  = @('.jpg', '.jpeg', '.png', '.gif')
-
-        PSTypeName                = 'BridgeWatcher.Configuration'
-    }
+    return $jsonConfig
 }
 

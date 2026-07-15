@@ -31,6 +31,7 @@ Describe 'New-BridgeConfiguration' {
 
         It 'Χρησιμοποιεί το PSScriptRoot όταν δεν υπάρχει TestDrive' {
             Mock -CommandName Test-Path -MockWith { return $false } -ParameterFilter { $Path -eq 'TestDrive:\' }
+            Mock -CommandName Test-Path -MockWith { return $true } -ParameterFilter { $Path -match 'config\.json$' }
             $config = New-BridgeConfiguration
             # Εφόσον το PSScriptRoot υπάρχει (στο script μας), το Path θα καταλήγει σε logs
             $config.Defaults.LogDirectory | Should -Match 'logs$'
@@ -46,6 +47,29 @@ Describe 'New-BridgeConfiguration' {
             $config.Statuses.PermanentlyClosed | Should -Be 'Μόνιμα κλειστή'
             $config.Statuses.Unknown | Should -Be 'Άγνωστη'
         }
+    }
+
+    It 'Χρησιμοποιεί DefaultMaxIterations αν παρασχεθεί' {
+        Mock Test-Path { $true }
+        $mockJson = '{"Urls": {"Source": "https://test.com", "BaseImage": "https://test.com", "OCRApi": "https://ocr.com", "PushoverApi": "https://po.com"}, "Defaults": {"IntervalSeconds": 300, "MaxIterations": 100}}'
+        Mock Get-Content { $mockJson }
+
+        $config = New-BridgeConfiguration -BaseUrl 'https://test.com' -OCRApiUrl 'https://ocr.com' -PushoverApiUrl 'https://po.com' -DefaultMaxIterations 500
+        $config.Defaults.MaxIterations | Should -Be 500
+    }
+
+    It 'Ρίχνει σφάλμα αν δεν βρεθεί το αρχείο config.json' {
+        Mock Test-Path { $false }
+        { New-BridgeConfiguration } | Should -Throw '*Δεν βρέθηκε το αρχείο configuration*'
+    }
+
+    It 'Θέτει MaxConsecutiveFailures αν παρασχεθεί' {
+        Mock Test-Path { $true }
+        $mockJson = '{"Urls": {"Source": "https://test.com", "BaseImage": "https://test.com", "OCRApi": "https://ocr.com", "PushoverApi": "https://po.com"}, "Defaults": {"IntervalSeconds": 300, "MaxIterations": 100, "MaxConsecutiveFailures": 50}}'
+        Mock Get-Content { $mockJson }
+
+        $config = New-BridgeConfiguration -BaseUrl 'https://test.com' -OCRApiUrl 'https://ocr.com' -PushoverApiUrl 'https://po.com' -MaxConsecutiveFailures 20
+        $config.Defaults.MaxConsecutiveFailures | Should -Be 20
     }
 
     Context 'Custom Instantiation' {

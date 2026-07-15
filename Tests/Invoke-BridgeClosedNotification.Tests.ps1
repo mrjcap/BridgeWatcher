@@ -26,9 +26,13 @@ Describe 'Invoke-BridgeClosedNotification' {
         It 'Καλεί OCR και στέλνει Pushover' {
 
             Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith {
-
-                return @{ 'Κλειστή για' = '1 ώρα' }
-
+                return [pscustomobject]@{
+                    From = '10:00'
+                    To = '11:00'
+                    ClosedFor = '1 ώρα'
+                    OpensIn = '30 λεπτά'
+                    Note1 = 'Test Note'
+                }
             }
 
             Mock -CommandName Send-BridgePushover -MockWith { }
@@ -155,7 +159,26 @@ Describe 'Invoke-BridgeClosedNotification' {
 
         }
 
-        It 'Χρησιμοποιεί NotificationProvider αντί Pushover όταν παρέχεται' {
+        It 'Αγνοεί κενές εγγραφές (null) στο CurrentState χωρίς σφάλμα' {
+        $state = @( $null, [PSCustomObject]@{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = $script:Config.Statuses.ClosedForMaintenance
+                timestamp    = '2023-10-27 10:00'
+                imageUrl     = 'https://example.com/nulltest.jpg'
+            } )
+
+        $providerMock = {
+            param($Title, $Message, $Type)
+            $script:ProviderCalled = $true
+            $script:ProviderArgs = @{ Title = $Title; Message = $Message; Type = $Type }
+        }
+
+        Invoke-BridgeClosedNotification -CurrentState $state -ApiKey 'fakekey' -Configuration $script:Config -NotificationProvider $providerMock
+
+        $script:ProviderCalled | Should -BeTrue
+    }
+
+    It 'Χρησιμοποιεί NotificationProvider αντί Pushover όταν παρέχεται' {
 
             $script:providerCalled = $false
             $script:providerTitle = ''
@@ -179,7 +202,7 @@ Describe 'Invoke-BridgeClosedNotification' {
             Mock Send-BridgePushover { throw 'Δεν έπρεπε να κληθεί Pushover!' }
             Mock Write-BridgeLog { }
 
-            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -NotificationProvider $provider
+            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -NotificationProvider $provider
 
             $script:providerCalled | Should -BeTrue
             $script:providerTitle | Should -BeLike '*κλειστή για συντήρηση*'

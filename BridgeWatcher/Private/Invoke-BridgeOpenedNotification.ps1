@@ -16,79 +16,103 @@
     .PARAMETER PoApiKey
     Το Pushover API Token της εφαρμογής.
 
+    .PARAMETER NotificationProvider
+    Εναλλακτικός πάροχος ειδοποιήσεων.
+
     .OUTPUTS
     None.
-
-    .EXAMPLE
-    Invoke-BridgeOpenedNotification -CurrentState $state -PoUserKey 'user123' -PoApiKey 'token123'
-
-    .NOTES
-    Στέλνει μόνο για γεφυρες με κατάσταση 'Ανοιχτή'.
     #>
-    [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey', Justification = 'Keys are provided securely from the environment, using SecureString here breaks backward compatibility.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey', Justification = 'Keys are provided securely from the environment, using SecureString here breaks backward compatibility.')]
+    [CmdletBinding(DefaultParameterSetName = 'Pushover')]
     [OutputType([void])]
     param (
-        [Parameter(Mandatory)][object[]]$CurrentState,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoUserKey,
-        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PoApiKey,
-        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
-        [Parameter()][scriptblock]$NotificationProvider
-    )
-    $null = $PoUserKey; $null = $PoApiKey; $null = $NotificationProvider
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [object]$CurrentState,
 
-    $SendNotification = {
-        param(
-        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
-            [string]$Title,
-            [string]$Message,
-            [string]$Type
-        )
-        if ($NotificationProvider) {
-            & $NotificationProvider -Title $Title -Message $Message -Type $Type
-        } else {
-            $pushoverSplat = @{
-                PoUserKey     = $PoUserKey
-                PoApiKey      = $PoApiKey
-                Title         = $Title
-                Message       = $Message
-                ErrorAction   = 'Stop'
-                Configuration = $Configuration
+        [Parameter(Mandatory, ParameterSetName = 'Pushover')]
+        [ValidateNotNullOrEmpty()]
+        [string]$PoUserKey,
+
+        [Parameter(Mandatory, ParameterSetName = 'Pushover')]
+        [ValidateNotNullOrEmpty()]
+        [string]$PoApiKey,
+
+        [Parameter(Mandatory, ParameterSetName = 'CustomProvider')]
+        [ValidateNotNull()]
+        [scriptblock]$NotificationProvider,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNull()]
+        [PSCustomObject]$Configuration
+    )
+
+    begin {
+        function Send-Notification {
+            <#
+            .SYNOPSIS
+            Στέλνει την ειδοποίηση ανοίγματος.
+            .DESCRIPTION
+            Βοηθητική συνάρτηση για την αποστολή μέσω Pushover ή CustomProvider.
+            #>
+            param(
+                [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Config,
+                [string]$Title,
+                [string]$Message,
+                [string]$Type,
+                [string]$PoUser,
+                [string]$PoApi,
+                [scriptblock]$Provider
+            )
+
+            if ($null -ne $Provider) {
+                & $Provider -Title $Title -Message $Message -Type $Type
+            } else {
+                $pushoverSplat = @{
+                    PoUserKey     = $PoUser
+                    PoApiKey      = $PoApi
+                    Title         = $Title
+                    Message       = $Message
+                    ErrorAction   = 'Stop'
+                    Configuration = $Config
+                }
+                Send-BridgePushover @pushoverSplat
             }
-            Send-BridgePushover @pushoverSplat
         }
     }
 
-    foreach ($entry in $CurrentState) {
-        if ($entry.GefyraStatus -eq $Configuration.Statuses.Open) {
-            try {
-                # Συνδυασμός log messages για αποφυγή spam
-                $logDetails = @(
-                    "Γέφυρα        : $($entry.GefyraName)",
-                    "Κατάσταση     : $($entry.GefyraStatus)",
-                    "Χρονική στιγμή: $($entry.Timestamp)",
-                    "Εικόνα        : $($entry.ImageUrl)"
-                ) -join "`n"
+    process {
+        foreach ($entry in $CurrentState) {
+            if ($null -ne $entry -and $Configuration.Statuses.Open -eq $entry.GefyraStatus) {
+                try {
+                    $logDetails = @"
+Γέφυρα        : $($entry.GefyraName)
+Κατάσταση     : $($entry.GefyraStatus)
+Χρονική στιγμή: $($entry.Timestamp)
+Εικόνα        : $($entry.ImageUrl)
+"@
+                    $writeBridgeLogSplat = @{
+                        Stage   = 'Ανάλυση'
+                        Message = $logDetails
+                    }
+                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
-                $writeBridgeLogSplat = @{
-                    Stage   = 'Ανάλυση'
-                    Message = $logDetails
+                    Send-Notification -Config $Configuration -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα $($entry.GefyraName) άνοιξε" -Type 'Opened' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
+                } catch [System.Net.WebException], [System.Management.Automation.MethodInvocationException] {
+                    $err = $_
+                    $writeBridgeLogSplat = @{
+                        Stage   = 'Σφάλμα'
+                        Message = "❌ Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.GefyraName): $($err.Exception.Message)"
+                        Level   = 'Warning'
+                    }
+                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+                    $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+                        [System.Exception]::new("Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.GefyraName)", $err.Exception),
+                        'NotificationFailed',
+                        [System.Management.Automation.ErrorCategory]::InvalidOperation,
+                        $entry
+                    ))
                 }
-                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                & $SendNotification -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα της $($entry.GefyraName)ς άνοιξε" -Type 'Opened' -Configuration $Configuration
-            } catch {
-                $err = $_
-                $writeBridgeLogSplat = @{
-                    Stage   = 'Σφάλμα'
-                    Message = "❌ Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.GefyraName): $($err.Exception.Message)"
-                    Level   = 'Warning'
-                }
-                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                    [System.Exception]::new("Αποτυχία αποστολής ειδοποίησης ανοίγματος για $($entry.GefyraName)", $err.Exception),
-                    'NotificationFailed',
-                    [System.Management.Automation.ErrorCategory]::InvalidOperation,
-                    $entry
-                ))
             }
         }
     }

@@ -40,17 +40,28 @@
 
     $previousStateArray = [array]$PreviousState
     $currentStateArray = [array]$CurrentState
+    $foundState = [System.Collections.Generic.List[object]]::new()
 
-    if ($Change.SideIndicator -eq '=>') {
-        # Νέα κατάσταση - ψάχνε στο CurrentState
-        $foundState = @($currentStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName })
-    } else {
-        # Παλιά κατάσταση (<=) - ψάχνε στο CurrentState πρώτα
-        $foundState = @($currentStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName })
+    if ($Change.SideIndicator -eq '<=') {
+        foreach ($item in $currentStateArray) {
+            if ($item.GefyraName -eq $Change.GefyraName) {
+                $foundState.Add($item)
+            }
+        }
         if ($foundState.Count -eq 0) {
-            # Fallback: χρήση PreviousState αν δεν υπάρχει στο Current
-            $foundState = @($previousStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName })
+            foreach ($item in $previousStateArray) {
+                if ($item.GefyraName -eq $Change.GefyraName) {
+                    $foundState.Add($item)
+                }
+            }
+        }
+    } else {
+        foreach ($item in $currentStateArray) {
+            if ($item.GefyraName -eq $Change.GefyraName) {
+                $foundState.Add($item)
+            }
         }
     }
-    return , $foundState
+
+    return , $foundState.ToArray()
 }

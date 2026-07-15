@@ -1,12 +1,25 @@
-﻿# Αρχείο Αλλαγών (Changelog)
+# Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.99] - 2026-07-03
+## [Unreleased]
 
+### ♻️ Αναδιαρθρώσεις
+
+- refactor(Invoke-BridgeStatusComparison): remove obsolete parameters and return explicit change events
+- refactor(Update-BridgeStatus): fix state evaluation logic to properly match indices
+- refactor(Resolve-BridgeStateForChange): fix state matching logic
+
+### 🐛 Διορθώσεις
+
+- fix(Export-BridgeStatusJson): restore atomic file writing to prevent partial reads (write to temp and rename)
+- fix(encoding): resolve global BOM encoding issues for .ps1, .psm1, and .psd1 files using UTF-8 BOM
+- fix(tests): fix missing mock variables and cover unhandled $null conditions to reach 100% test coverage
+
+## [1.0.99] - 2026-07-03
 ### 🐛 Διορθώσεις
 
 - fix: send fallback Pushover notifications when Google Cloud Vision OCR fails
