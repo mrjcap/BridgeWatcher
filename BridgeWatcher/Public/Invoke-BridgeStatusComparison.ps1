@@ -1,10 +1,11 @@
 ﻿<#
     .SYNOPSIS
-    Συγκρίνει τις λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
+    Συγκρίνει τις λίστες καταστάσεων γεφυρών και επιστρέφει γεγονότα διαφορών.
 
     .DESCRIPTION
     Η Invoke-BridgeStatusComparison συγκρίνει την προηγούμενη και την τρέχουσα
-    κατάσταση γεφυρών και καλεί ειδικούς handlers για αλλαγές (άνοιγμα/κλείσιμο).
+    κατάσταση γεφυρών, εμπλουτίζει τα δεδομένα με πληροφορίες από το προηγούμενο
+    ιστορικό και παράγει αντικείμενα diff events για τις αλλαγές κατάστασης.
 
     .PARAMETER PreviousState
     Η προηγούμενη λίστα καταστάσεων.
@@ -12,30 +13,21 @@
     .PARAMETER CurrentState
     Η τρέχουσα λίστα καταστάσεων.
 
-    .PARAMETER ApiKey
-    Το API Key για OCR αν απαιτηθεί.
-
-    .PARAMETER PoUserKey
-    Το User Key για Pushover ειδοποίηση.
-
-    .PARAMETER PoApiKey
-    Το API Token για Pushover ειδοποίηση.
-
     .PARAMETER Configuration
-    (Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
+    Αντικείμενο διαμόρφωσης με ρυθμίσεις, statuses και URLs.
 
     .OUTPUTS
-    [System.Boolean]
+    [PSCustomObject[]]
 
     .EXAMPLE
-    Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -ApiKey 'abc' -PoUserKey 'user' -PoApiKey 'token'
+    Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $config
 
     .NOTES
-    Καταγράφει αλλαγές και ενεργοποιεί κατάλληλες ειδοποιήσεις.
+    Λειτουργεί ως pure transformation pipeline χωρίς εξωτερικές παρενέργειες.
     #>
 function Invoke-BridgeStatusComparison {
     [CmdletBinding()]
-    [OutputType([System.Boolean])]
+    [OutputType([PSCustomObject[]])]
     param (
         [Parameter()]
         [AllowNull()]
@@ -45,7 +37,6 @@ function Invoke-BridgeStatusComparison {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [object]$CurrentState,
-
 
         [Parameter(Mandatory)]
         [ValidateNotNull()]

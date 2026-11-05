@@ -31,9 +31,7 @@ Describe 'New-BridgeConfiguration' {
 
         It 'Χρησιμοποιεί το PSScriptRoot όταν δεν υπάρχει TestDrive' {
             Mock -CommandName Test-Path -MockWith { return $false } -ParameterFilter { $Path -eq 'TestDrive:\' }
-            Mock -CommandName Test-Path -MockWith { return $true } -ParameterFilter { $Path -match 'config\.json$' }
             $config = New-BridgeConfiguration
-            # Εφόσον το PSScriptRoot υπάρχει (στο script μας), το Path θα καταλήγει σε logs
             $config.Defaults.LogDirectory | Should -Match 'logs$'
         }
 
@@ -49,30 +47,45 @@ Describe 'New-BridgeConfiguration' {
         }
     }
 
-    It 'Χρησιμοποιεί DefaultMaxIterations αν παρασχεθεί' {
-        Mock Test-Path { $true }
-        $mockJson = '{"Urls": {"Source": "https://test.com", "BaseImage": "https://test.com", "OCRApi": "https://ocr.com", "PushoverApi": "https://po.com"}, "Defaults": {"IntervalSeconds": 300, "MaxIterations": 100}}'
-        Mock Get-Content { $mockJson }
+    Context 'Optional ConfigurationPath parameter' {
+        It 'Loads and overlays settings when valid JSON path is provided' {
+            $customConfigPath = 'TestDrive:\custom-config.json'
+            $json = @'
+{
+    "Urls": {
+        "Source": "https://custom.example.com",
+        "CustomUrl": "https://custom.example.com/extra"
+    },
+    "Defaults": {
+        "IntervalSeconds": 60,
+        "CustomFlag": true
+    }
+}
+'@
+            Set-Content -Path $customConfigPath -Value $json -Encoding utf8
+            $config = New-BridgeConfiguration -ConfigurationPath $customConfigPath
+            $config.Urls.Source | Should -Be 'https://custom.example.com'
+            $config.Urls.CustomUrl | Should -Be 'https://custom.example.com/extra'
+            $config.Defaults.IntervalSeconds | Should -Be 60
+            $config.Defaults.CustomFlag | Should -Be $true
+        }
 
-        $config = New-BridgeConfiguration -BaseUrl 'https://test.com' -OCRApiUrl 'https://ocr.com' -PushoverApiUrl 'https://po.com' -DefaultMaxIterations 500
-        $config.Defaults.MaxIterations | Should -Be 500
+        It 'Throws FileNotFoundException when configuration path does not exist' {
+            { New-BridgeConfiguration -ConfigurationPath 'TestDrive:\missing.json' } | Should -Throw
+        }
     }
 
-    It 'Ρίχνει σφάλμα αν δεν βρεθεί το αρχείο config.json' {
-        Mock Test-Path { $false }
-        { New-BridgeConfiguration } | Should -Throw '*Δεν βρέθηκε το αρχείο configuration*'
-    }
+    Context 'Parameter overrides' {
+        It 'Χρησιμοποιεί DefaultMaxIterations αν παρασχεθεί' {
+            $config = New-BridgeConfiguration -BaseUrl 'https://test.com' -OCRApiUrl 'https://ocr.com' -PushoverApiUrl 'https://po.com' -DefaultMaxIterations 500
+            $config.Defaults.MaxIterations | Should -Be 500
+        }
 
-    It 'Θέτει MaxConsecutiveFailures αν παρασχεθεί' {
-        Mock Test-Path { $true }
-        $mockJson = '{"Urls": {"Source": "https://test.com", "BaseImage": "https://test.com", "OCRApi": "https://ocr.com", "PushoverApi": "https://po.com"}, "Defaults": {"IntervalSeconds": 300, "MaxIterations": 100, "MaxConsecutiveFailures": 50}}'
-        Mock Get-Content { $mockJson }
+        It 'Θέτει MaxConsecutiveFailures αν παρασχεθεί' {
+            $config = New-BridgeConfiguration -BaseUrl 'https://test.com' -OCRApiUrl 'https://ocr.com' -PushoverApiUrl 'https://po.com' -MaxConsecutiveFailures 20
+            $config.Defaults.MaxConsecutiveFailures | Should -Be 20
+        }
 
-        $config = New-BridgeConfiguration -BaseUrl 'https://test.com' -OCRApiUrl 'https://ocr.com' -PushoverApiUrl 'https://po.com' -MaxConsecutiveFailures 20
-        $config.Defaults.MaxConsecutiveFailures | Should -Be 20
-    }
-
-    Context 'Custom Instantiation' {
         It 'Allows overriding default intervals and iterations' {
             $config = New-BridgeConfiguration -DefaultIntervalSeconds 120 -DefaultMaxIterations 50
             $config.Defaults.IntervalSeconds | Should -Be 120

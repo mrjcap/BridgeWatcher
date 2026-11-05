@@ -39,6 +39,7 @@
 ## 📋 Πίνακας Περιεχομένων
 
 - [💡 Δυνατότητες](#-δυνατότητες)
+- [🏗️ Αρχιτεκτονική](#️-αρχιτεκτονική)
 - [🛠️ Προϋποθέσεις](#️-προϋποθέσεις)
 - [📦 Εγκατάσταση](#-εγκατάσταση)
 - [🚀 Παραδείγματα Χρήσης](#-παραδείγματα-χρήσης)
@@ -59,6 +60,85 @@
 - ✅ **Ευέλικτη παραμετροποίηση** διαστημάτων παρακολούθησης
 - ✅ Πλήρης κάλυψη δοκιμών με testing framework (Pester v5)
 - ✅ **CI/CD ready** με απόλυτη συμβατότητα για συνεχή ενσωμάτωση
+
+## 🏗️ Αρχιτεκτονική
+
+```mermaid
+flowchart TD
+
+subgraph group_monitoring["Monitoring & Orchestration"]
+  node_monitor["Status Monitor"]
+  node_update["Status Update Orchestrator"]
+  node_status["Status Retrieval"]
+end
+
+subgraph group_analysis["State Analysis & Persistence"]
+  node_prev_status["Previous State Reader"]
+  node_html_analysis["HTML Status Analysis"]
+  node_status_object["Status Object & Image Hasher"]
+  node_comparison["Pure Status Comparison"]
+  node_snapshot_export["Snapshot Exporter"]
+  node_state_file[("Bridge State Snapshot JSON")]
+end
+
+subgraph group_dispatch["Notification Dispatch & OCR"]
+  node_closed_handler["Closed Notification Handler"]
+  node_opened_handler["Opened Notification Handler"]
+  node_ocr["Google Cloud OCR Request"]
+  node_ocr_parser["OCR Schedule & Advice Parser"]
+  node_pushover_sender["Pushover Notification Sender"]
+end
+
+node_operator(("Operator"))
+node_bridge_source["Bridge Information Source"]
+node_vision["Google Vision API"]
+node_pushover["Pushover API"]
+
+node_operator -->|"starts polling loop"| node_monitor
+node_monitor -->|"invokes every interval"| node_update
+node_update -->|"loads prior state"| node_prev_status
+node_prev_status -->|"reads"| node_state_file
+node_update -->|"fetches live state"| node_status
+node_status -->|"downloads HTML"| node_bridge_source
+node_status -->|"parses bridge blocks"| node_html_analysis
+node_html_analysis -->|"builds state & hashes schedule"| node_status_object
+node_status_object -.->|"downloads schedule image bytes"| node_bridge_source
+node_update <-->|"passes states / receives Bridge Diff Events"| node_comparison
+node_update -.->|"dispatches Closed event"| node_closed_handler
+node_update -.->|"dispatches Opened event"| node_opened_handler
+node_closed_handler -.->|"requests OCR on scheduled closure"| node_ocr
+node_ocr -->|"sends image URI"| node_vision
+node_ocr -->|"parses timestamps & advice"| node_ocr_parser
+node_closed_handler -->|"sends closure alert"| node_pushover_sender
+node_opened_handler -->|"sends opening alert"| node_pushover_sender
+node_pushover_sender -->|"delivers push notification"| node_pushover
+node_update -->|"persists latest state"| node_snapshot_export
+node_snapshot_export -->|"atomically overwrites"| node_state_file
+
+click node_monitor "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Public/Get-BridgeStatusMonitor.ps1"
+click node_update "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Public/Update-BridgeStatus.ps1"
+click node_status "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Public/Get-BridgeStatus.ps1"
+click node_prev_status "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Public/Get-BridgePreviousStatus.ps1"
+click node_html_analysis "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Private/Get-BridgeStatusFromHtml.ps1"
+click node_status_object "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Private/Get-BridgeStatusObject.ps1"
+click node_comparison "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Public/Invoke-BridgeStatusComparison.ps1"
+click node_snapshot_export "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
+click node_closed_handler "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Private/Invoke-BridgeClosedNotification.ps1"
+click node_opened_handler "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
+click node_ocr "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Private/Invoke-BridgeOCRGoogleCloud.ps1"
+click node_ocr_parser "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
+click node_pushover_sender "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Public/Send-BridgePushover.ps1"
+
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+
+class node_monitor,node_update,node_status toneBlue
+class node_prev_status,node_html_analysis,node_status_object,node_comparison,node_snapshot_export,node_state_file toneAmber
+class node_closed_handler,node_opened_handler,node_ocr,node_ocr_parser,node_pushover_sender toneMint
+class node_operator,node_bridge_source,node_vision,node_pushover toneIndigo
+```
 
 ## 🛠️ Προϋποθέσεις
 
@@ -160,9 +240,12 @@ Get-BridgeStatusMonitor @params
 
 - Ο φάκελος του κωδικού (`C:\automation\passwd.xml`) πρέπει να είναι προστατευμένος με NTFS δικαιώματα.
 - Το vault παραμένει ξεκλείδωτο για όσο έχεις ορίσει στο `PasswordTimeout`.
-- Για cloud ή Linux/macOS automation προτίμησε secrets provider της πλατφόρμας (π.χ. [GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets), [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/)).
+- Για cloud ή Linux/macOS automation προτίμησε secrets provider της πλατφόρμας (π.χ.
+  [GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets),
+  [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/)).
 - Μην καταγράφεις ποτέ τα secrets σε log files.
-- Για auditability και compliance, δες [NIST SP 800-53 - IA-5](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf).
+- Για auditability και compliance, δες
+  [NIST SP 800-53 - IA-5](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf).
 
 ---
 

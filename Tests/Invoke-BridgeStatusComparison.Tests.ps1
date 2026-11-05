@@ -147,6 +147,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         }
 
         $result = Invoke-BridgeStatusComparison @params
+        $result.Count | Should -Be 1
 
 
     }
@@ -206,7 +207,8 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         }
 
-        $result = Invoke-BridgeStatusComparison @params 
+        $result = Invoke-BridgeStatusComparison @params
+        $result.Count | Should -Be 1
 
     }
 
@@ -228,7 +230,8 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         }
 
-        $result = Invoke-BridgeStatusComparison @params 
+        $result = Invoke-BridgeStatusComparison @params
+        $result | Should -BeNullOrEmpty
 
     }
 
@@ -255,6 +258,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         $params.CurrentState.timestamp = (Get-Date).AddMinutes(5)
 
         $result = Invoke-BridgeStatusComparison @params
+        $result | Should -BeNullOrEmpty
 
 
     }
@@ -307,7 +311,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         }
 
-        $result = Invoke-BridgeStatusComparison @params 
+        $result = Invoke-BridgeStatusComparison @params
 
         $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
         $evt_Closed.Count | Should -Be 1
@@ -466,7 +470,8 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     It 'Γράφει warning όταν λείπει κατάσταση' {
 
-        $result = Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ GefyraName = 'X'; GefyraStatus = 'Ανοιχτή' } -Configuration $script:Config 
+        $result = Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ GefyraName = 'X'; GefyraStatus = 'Ανοιχτή' } -Configuration $script:Config
+        $result.Count | Should -Be 1
 
     }
 
@@ -476,7 +481,8 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $same = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = Get-Date; imageUrl = 'x.jpg' }
 
-        $result = Invoke-BridgeStatusComparison -PreviousState $same -CurrentState $same -Configuration $script:Config -Verbose 
+        $result = Invoke-BridgeStatusComparison -PreviousState $same -CurrentState $same -Configuration $script:Config -Verbose
+        $result | Should -BeNullOrEmpty
 
     }
 
@@ -504,7 +510,8 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         }
 
-        $result = Invoke-BridgeStatusComparison @paramsMissingPrevious 
+        $result = Invoke-BridgeStatusComparison @paramsMissingPrevious
+        $result.Count | Should -Be 1
 
     }
 
@@ -534,7 +541,8 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         }
 
-        $result = Invoke-BridgeStatusComparison @params 
+        $result = Invoke-BridgeStatusComparison @params
+        $result | Should -BeNullOrEmpty
 
     }
 
@@ -566,7 +574,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             }
 
-            $result = Invoke-BridgeStatusComparison @invokeBridgeStatusComparisonSplat
+            $null = Invoke-BridgeStatusComparison @invokeBridgeStatusComparisonSplat
 
         } | Should -Not -Throw
 
@@ -753,6 +761,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             $obj = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($obj) -CurrentState @($obj)
+            $result | Should -BeNullOrEmpty
 
             (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match 'Καμία ουσιαστική αλλαγή'
 
@@ -765,6 +774,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             $emptyObj = @{ GefyraName = 'Foo'; GefyraStatus = 'Ανοιχτή' }
 
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($emptyObj) -CurrentState @($emptyObj)
+            $result | Should -BeNullOrEmpty
 
             (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match 'Καμία ουσιαστική αλλαγή'
 
@@ -828,6 +838,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Bar' }
 
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
+            $result | Should -BeNullOrEmpty
 
             (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match 'Άγνωστο combo'
 
@@ -922,7 +933,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             CurrentState  = @($curr)
             Configuration = $script:Config
         }
-        $result = Invoke-BridgeStatusComparison @params
+        $null = Invoke-BridgeStatusComparison @params
         $curr.From | Should -Be '10:00'
     }
 
@@ -938,11 +949,9 @@ Describe 'Invoke-BridgeStatusComparison' {
             CurrentState  = @($curr)
             Configuration = $script:Config
         }
-        $result = Invoke-BridgeStatusComparison @params
+        $null = Invoke-BridgeStatusComparison @params
         $curr.From | Should -Be '10:00'
     }
 }
-
-
 
 

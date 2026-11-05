@@ -19,13 +19,13 @@
     Το API Token της εφαρμογής Pushover.
 
     .PARAMETER Configuration
-    (Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
+    Αντικείμενο διαμόρφωσης με ρυθμίσεις, statuses και URLs.
 
     .OUTPUTS
-    None.
+    [object[]]
 
     .EXAMPLE
-    Update-BridgeStatus -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123'
+    Update-BridgeStatus -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123' -Configuration $Config
 
     .NOTES
     Χρησιμοποιεί OCR αν χρειάζεται, συγκρίνει states και αποστέλλει ειδοποιήσεις.
@@ -53,37 +53,15 @@ function Update-BridgeStatus {
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         if (-not (Test-Path $OutputFile)) {
-            $getDiorigaStatusSplat = @{
-                OutputFile    = $OutputFile
-                Configuration = $Configuration
-            }
-            $currentState = Get-BridgeStatus @getDiorigaStatusSplat -Configuration $Configuration
+            $currentState = Get-BridgeStatus -Configuration $Configuration
             $previousState = @()
         } else {
             $getDiorigaPreviousStatusSplat = @{
                 InputFile     = $OutputFile
                 Configuration = $Configuration
             }
-            $previousState = Get-BridgePreviousStatus @getDiorigaPreviousStatusSplat -Configuration $Configuration
+            $previousState = Get-BridgePreviousStatus @getDiorigaPreviousStatusSplat
             $currentState = Get-BridgeStatus -Configuration $Configuration
-        }
-
-        # Reduce / Backfill State
-        if ($previousState.Count -gt 0) {
-            foreach ($curr in $currentState) {
-                $prev = $previousState | Where-Object { $_.GefyraName -eq $curr.GefyraName } | Select-Object -First 1
-                if ($prev) {
-                    $ocrProps = @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')
-                    foreach ($prop in $ocrProps) {
-                        if ($prev.psobject.Properties.Match($prop).Count -gt 0 -and $null -ne $prev.$prop) {
-                            $curr | Add-Member -MemberType NoteProperty -Name $prop -Value $prev.$prop -Force
-                        }
-                    }
-                    if ([string]::IsNullOrEmpty($curr.ImageHash) -and -not [string]::IsNullOrEmpty($prev.ImageHash)) {
-                        $curr | Add-Member -MemberType NoteProperty -Name 'ImageHash' -Value $prev.ImageHash -Force
-                    }
-                }
-            }
         }
 
         if ($PSCmdlet.ShouldProcess("BridgeWatcher", "Update status and send notifications")) {
@@ -92,7 +70,7 @@ function Update-BridgeStatus {
                 CurrentState  = $currentState
                 Configuration = $Configuration
             }
-            $diffEvents = Invoke-BridgeStatusComparison @invokeSplat -Configuration $Configuration
+            $diffEvents = Invoke-BridgeStatusComparison @invokeSplat
             # Dispatch notifications based on diff events
             if ($null -ne $diffEvents -and $diffEvents.Count -gt 0) {
                 foreach ($diffEvent in $diffEvents) {
@@ -117,11 +95,9 @@ function Update-BridgeStatus {
                 Configuration = $Configuration
             }
             $null = Export-BridgeStatusJson @exportBridgeStatusJsonSplat
-            return $currentState
         }
         $writeBridgeLogSplat.Message = 'Finished comparison and saved snapshot.'
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+        return $currentState
     }
 }
-
-

@@ -23,6 +23,15 @@
     .PARAMETER DefaultMaxIterations
     Ο προεπιλεγμένος μέγιστος αριθμός επαναλήψεων.
 
+    .PARAMETER MaxConsecutiveFailures
+    Ο μέγιστος αριθμός διαδοχικών αποτυχιών.
+
+    .PARAMETER LogDirectory
+    Ο κατάλογος αποθήκευσης αρχείων καταγραφής.
+
+    .PARAMETER ConfigurationPath
+    Προαιρετική διαδρομή σε εξωτερικό αρχείο JSON για παράκαμψη των προεπιλογών.
+
     .OUTPUTS
     [PSCustomObject] - Αντικείμενο διαμόρφωσης με Urls, Defaults, Statuses και υπο-αντικείμενα μηνυμάτων.
 
@@ -59,14 +68,11 @@
         [int]$MaxConsecutiveFailures = 60,
 
         [Parameter()]
-        [string]$LogDirectory = ''
-    )
-    $configPath = Join-Path $PSScriptRoot '..\config.json'
-    if (-not (Test-Path $configPath)) {
-        throw "Δεν βρέθηκε το αρχείο configuration στο $configPath"
-    }
+        [string]$LogDirectory = '',
 
-    $jsonConfig = Get-Content -Path $configPath -Raw | ConvertFrom-Json
+        [Parameter()]
+        [string]$ConfigurationPath = ''
+    )
 
     if ([string]::IsNullOrWhiteSpace($LogDirectory)) {
         if (Test-Path 'TestDrive:\') {
@@ -76,30 +82,116 @@
         }
     }
 
-    if (-not $BaseUrl) { $BaseUrl = $jsonConfig.Urls.Source }
-    if (-not $OCRApiUrl) { $OCRApiUrl = $jsonConfig.Urls.OCRApi }
-    if (-not $PushoverApiUrl) { $PushoverApiUrl = $jsonConfig.Urls.PushoverApi }
+    $sourceUrl = if ($BaseUrl) { $BaseUrl } else { 'https://www.topvision.gr/dioriga' }
+    $ocrUrl = if ($OCRApiUrl) { $OCRApiUrl } else { 'https://vision.googleapis.com/v1/images:annotate' }
+    $poUrl = if ($PushoverApiUrl) { $PushoverApiUrl } else { 'https://api.pushover.net/1/messages.json' }
 
-    $jsonConfig.Urls.Source = $BaseUrl.TrimEnd('/') + '/'
-    $jsonConfig.Urls.BaseImage = $BaseUrl.TrimEnd('/')
-    $jsonConfig.Urls.OCRApi = $OCRApiUrl
-    $jsonConfig.Urls.PushoverApi = $PushoverApiUrl
-
-    # Override defaults if passed explicitly
-    if ($PSBoundParameters.ContainsKey('DefaultIntervalSeconds')) {
-        $jsonConfig.Defaults.IntervalSeconds = $DefaultIntervalSeconds
+    $config = [PSCustomObject]@{
+        Urls                      = [PSCustomObject]@{
+            Source      = $sourceUrl.TrimEnd('/') + '/'
+            BaseImage   = $sourceUrl.TrimEnd('/')
+            OCRApi      = $ocrUrl
+            PushoverApi = $poUrl
+        }
+        Defaults                  = [PSCustomObject]@{
+            IntervalSeconds        = $DefaultIntervalSeconds
+            MaxIterations          = $DefaultMaxIterations
+            MaxConsecutiveFailures = $MaxConsecutiveFailures
+            JsonDepth              = 5
+            MaxWaitTimeMinutes     = 12
+            HttpRequestTimeout     = 60
+            LogDirectory           = $LogDirectory
+            TimezoneIds            = @('GTB Standard Time', 'Europe/Athens')
+        }
+        Statuses                  = [PSCustomObject]@{
+            Open                 = 'Ανοιχτή'
+            Closed               = 'Κλειστή'
+            ClosedForMaintenance = 'Κλειστή για συντήρηση'
+            ClosedWithSchedule   = 'Κλειστή με πρόγραμμα'
+            PermanentlyClosed    = 'Μόνιμα κλειστή'
+            Unknown              = 'Άγνωστη'
+        }
+        BridgeNames               = @{
+            'isthmia'    = 'Ισθμία'
+            'poseidonia' = 'Ποσειδωνία'
+        }
+        StatusMappings            = @{
+            'ΚΛΕΙΣΤΗ' = 'Κλειστή'
+            'ΑΝΟΙΧΤΗ' = 'Ανοιχτή'
+            'CLOSED'  = 'Κλειστή'
+            'OPEN'    = 'Ανοιχτή'
+        }
+        ErrorMessages             = @{
+            NoStatus             = '⛔ Δεν υπάρχει διαθέσιμο status για αποθήκευση.'
+            HtmlRetrievalFailure = 'Αποτυχία ανάκτησης HTML από τον server'
+            ExportFailure        = '⛔ Αποτυχία εξαγωγής δεδομένων'
+            OCRFailure           = '❌ Απέτυχε η OCR'
+            NetworkError         = '❌ Σφάλμα δικτύου'
+            MonitoringError      = '❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας'
+        }
+        StatusMessages            = @{
+            MonitoringStart    = 'Ξεκίνησε ο κύκλος παρακολούθησης'
+            MonitoringComplete = '✅ Ο κύκλος παρακολούθησης ολοκληρώθηκε'
+        }
+        LoggingConfig             = @{
+            ErrorStage   = 'Σφάλμα'
+            DebugStage   = 'Debug'
+            InfoStage    = 'Ανάλυση'
+            WarningLevel = 'Warning'
+            ErrorLevel   = 'Error'
+            InfoLevel    = 'Info'
+            DebugLevel   = 'Debug'
+            VerboseLevel = 'Verbose'
+        }
+        ExportMessages            = @{
+            Success            = '✅ Επιτυχής εξαγωγή JSON'
+            Failed             = '❌ Αποτυχία εξαγωγής JSON'
+            DirectoryNotExists = '❌ Ο φάκελος προορισμού δεν υπάρχει'
+        }
+        OCRMessages               = @{
+            StartOCR  = '🔍 Εκκίνηση OCR'
+            OCRFailed = '❌ Αποτυχία OCR'
+        }
+        PushoverMessages          = @{
+            SendFailed = '❌ Αποτυχία αποστολής Pushover'
+        }
+        AdviceMessages            = @{
+            DoNotWait = 'Είναι προτιμότερο να μην περιμένεις'
+            Wait      = 'Είναι προτιμότερο να περιμένεις'
+        }
+        TimePatterns              = @(
+            '\d{1,2}:\d{2}'
+            '\d{1,2}\.\d{2}'
+        )
+        SupportedImageExtensions  = @('.jpg', '.jpeg', '.png', '.gif')
     }
-    if ($PSBoundParameters.ContainsKey('DefaultMaxIterations')) {
-        $jsonConfig.Defaults.MaxIterations = $DefaultMaxIterations
+
+    if (-not [string]::IsNullOrWhiteSpace($ConfigurationPath)) {
+        if (-not (Test-Path -Path $ConfigurationPath)) {
+            throw [System.IO.FileNotFoundException]::new("Configuration file not found: $ConfigurationPath", $ConfigurationPath)
+        }
+        $rawJson = Get-Content -Path $ConfigurationPath -Raw -Encoding utf8
+        $fileConfig = ConvertFrom-Json -InputObject $rawJson
+        if ($fileConfig.Urls) {
+            foreach ($prop in $fileConfig.Urls.psobject.Properties) {
+                if ($config.Urls.psobject.Properties[$prop.Name]) {
+                    $config.Urls.($prop.Name) = $prop.Value
+                } else {
+                    $config.Urls | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value -Force
+                }
+            }
+        }
+        if ($fileConfig.Defaults) {
+            foreach ($prop in $fileConfig.Defaults.psobject.Properties) {
+                if ($config.Defaults.psobject.Properties[$prop.Name]) {
+                    $config.Defaults.($prop.Name) = $prop.Value
+                } else {
+                    $config.Defaults | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value -Force
+                }
+            }
+        }
     }
-    if ($PSBoundParameters.ContainsKey('MaxConsecutiveFailures')) {
-        $jsonConfig.Defaults.MaxConsecutiveFailures = $MaxConsecutiveFailures
-    }
 
-    $jsonConfig.Defaults | Add-Member -MemberType NoteProperty -Name 'LogDirectory' -Value $LogDirectory -Force
-
-    $jsonConfig.psobject.TypeNames.Insert(0, 'BridgeWatcher.Configuration')
-
-    return $jsonConfig
+    $config.psobject.TypeNames.Insert(0, 'BridgeWatcher.Configuration')
+    return $config
 }
-

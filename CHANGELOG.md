@@ -1,4 +1,4 @@
-# Αρχείο Αλλαγών (Changelog)
+﻿# Αρχείο Αλλαγών (Changelog)
 
 Όλες οι σημαντικές αλλαγές σε αυτό το έργο θα καταγράφονται σε αυτό το αρχείο.
 
@@ -20,6 +20,7 @@
 - fix(tests): fix missing mock variables and cover unhandled $null conditions to reach 100% test coverage
 
 ## [1.0.99] - 2026-07-03
+
 ### 🐛 Διορθώσεις
 
 - fix: send fallback Pushover notifications when Google Cloud Vision OCR fails
@@ -618,13 +619,3 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
-
-
-
-
-
-
-
-
-
-
