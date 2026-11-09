@@ -36,7 +36,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
+            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'valid/path/file.json'
 
 
 
@@ -76,7 +76,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
+            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'valid/path/file.json'
 
 
 
@@ -84,7 +84,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             $result.Success | Should -Be $true
 
-            $result.Data.ExportedPath | Should -Be 'C:\valid\path\file.json'
+            $result.Data.ExportedPath | Should -Be 'valid/path/file.json'
 
             $result.Data.RecordCount | Should -Be 1
 
@@ -108,7 +108,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             Mock Write-BridgeLog {}
 
-            Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'C:\valid\path\file.json'
+            Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'valid/path/file.json'
 
             # Επιβεβαιώνουμε ότι κάλεσε το Write-BridgeLog μία φορά
 
