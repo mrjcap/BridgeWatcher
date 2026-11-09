@@ -8,7 +8,8 @@ ARG PGID=100
 # Install PowerShell and dependencies
 # hadolint ignore=DL3018
 RUN apk update && \
-    apk add --no-cache \
+    apk upgrade --no-cache && \
+    apk add --no-cache --upgrade \
         tzdata \
         ca-certificates \
         curl \
