@@ -34,7 +34,7 @@ services:
 
   # Option B: Filebeat sidecar container to forward logs to external SIEM
   filebeat:
-    image: docker.elastic.co/beats/filebeat:8.19.24@sha256:9f56481f830dbeedc8983aac02dbbafa51477540b17156d21bd4e385a3da0077
+    image: docker.elastic.co/beats/filebeat:9.5.6@sha256:13afd81be4fa1523865c987a22b7c4aebca739941270333c7ca0048a4c9efeb3
     container_name: bridgewatcher-filebeat
     restart: unless-stopped
     user: root
