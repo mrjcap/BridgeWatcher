@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/runtime:10.0.9-alpine3.23-amd64
 
 # renovate: datasource=github-releases depName=PowerShell/PowerShell
-ARG POWERSHELL_VERSION=7.6.3
+ARG POWERSHELL_VERSION=7.6.9
 ARG PUID=99
 ARG PGID=100
 
