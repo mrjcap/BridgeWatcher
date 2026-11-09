@@ -1,6 +1,6 @@
-﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
+$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "../../BridgeWatcher")
 $script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1 | Where-Object {
-    $_.FullName -like "*\Public\*" -or $_.FullName -like "*\Private\*"
+    $_.FullName -match '[\\/](Public|Private)[\\/]'
 }
 $Psm1Path = Resolve-Path (Join-Path $script:ModulePath "BridgeWatcher.psm1")
 

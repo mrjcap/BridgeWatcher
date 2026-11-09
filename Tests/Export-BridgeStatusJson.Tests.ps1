@@ -68,7 +68,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             Mock New-Item { }
 
-
+            Mock Set-Content {}
 
             Mock Move-Item {}
 
@@ -102,7 +102,7 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             Mock New-Item { }
 
-
+            Mock Set-Content {}
 
             Mock Move-Item {}
 

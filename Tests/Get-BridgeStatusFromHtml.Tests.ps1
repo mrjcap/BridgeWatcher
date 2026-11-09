@@ -35,7 +35,7 @@ Describe 'Get-BridgeStatusFromHtml' {
             $timestamp = '2025-04-18T08:00:00'
 
             $errs = @()
-            Get-BridgeStatusFromHtml -Configuration $script:Config -Html $html -Timestamp $timestamp -ErrorVariable errs
+            Get-BridgeStatusFromHtml -Configuration $script:Config -Html $html -Timestamp $timestamp -ErrorVariable errs -ErrorAction SilentlyContinue
             $matchFound = [bool]($errs.FullyQualifiedErrorId -match 'BridgeImagesNotFound')
             $matchFound | Should -Be $true
 

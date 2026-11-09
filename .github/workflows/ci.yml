@@ -17,12 +17,12 @@ env:
 
 jobs:
   test:
-    name: Test on ubuntu-latest with PowerShell
-    runs-on: ubuntu-latest
+    name: Test on ubuntu-24.04 with PowerShell
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -37,7 +37,7 @@ jobs:
           tag: 'v${{ env.POWERSHELL_VERSION }}'
 
       - name: Cache PowerShell modules
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.local/share/powershell/Modules
@@ -94,9 +94,10 @@ jobs:
       - name: Run Pester tests
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Continue'
           Write-Verbose "Running Pester tests..."
           if (Test-Path ./Tests/PesterConfiguration.psd1) {
-            $config = Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1
+            $config = New-PesterConfiguration -Hashtable (Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1)
             $result = Invoke-Pester -Configuration $config
             if ($result.Result -ne 'Passed') {
               Write-Error " Tests failed! $($result.FailedCount) of $($result.TotalCount) tests failed"
@@ -110,7 +111,7 @@ jobs:
           }
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: test-results-ubuntu-latest-v${{ env.POWERSHELL_VERSION }}
@@ -121,14 +122,14 @@ jobs:
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: testResults.xml
           report_type: test_results
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

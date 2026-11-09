@@ -136,15 +136,15 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
 
 
-        Mock ConvertTo-BridgeTimeRange { [pscustomobject]@{
-
-                From      = (Get-Date).AddMinutes(60)
-
-                To        = (Get-Date).AddMinutes(90)
-
+        Mock ConvertTo-BridgeTimeRange {
+            $tz = try { [System.TimeZoneInfo]::FindSystemTimeZoneById('Europe/Athens') } catch { [System.TimeZoneInfo]::FindSystemTimeZoneById('GTB Standard Time') }
+            $athensNow = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $tz)
+            [pscustomobject]@{
+                From      = $athensNow.AddMinutes(60)
+                To        = $athensNow.AddMinutes(90)
                 ClosedFor = [timespan]::FromMinutes(30)
-
-            } }
+            }
+        }
 
 
 
@@ -176,15 +176,15 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
 
 
-        Mock ConvertTo-BridgeTimeRange { [pscustomobject]@{
-
-                From      = (Get-Date).AddMinutes(-20)
-
-                To        = (Get-Date).AddMinutes(10)
-
+        Mock ConvertTo-BridgeTimeRange {
+            $tz = try { [System.TimeZoneInfo]::FindSystemTimeZoneById('Europe/Athens') } catch { [System.TimeZoneInfo]::FindSystemTimeZoneById('GTB Standard Time') }
+            $athensNow = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $tz)
+            [pscustomobject]@{
+                From      = $athensNow.AddMinutes(-20)
+                To        = $athensNow.AddMinutes(10)
                 ClosedFor = [timespan]::FromMinutes(30)
-
-            } }
+            }
+        }
 
 
 

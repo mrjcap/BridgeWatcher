@@ -1,4 +1,4 @@
-﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
+$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
 $script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1, *.psm1 | ForEach-Object {
     [PSCustomObject]@{
         Name     = $_.Name
@@ -129,7 +129,7 @@ Describe "Hot Path Configuration Review" {
                         }
 
                         # All helper functions in Public/ and Private/ are frequently called or part of hot paths.
-                        if ($inLoop -or $file.FullName -like '*\\Private\\*' -or $file.FullName -like '*\\Public\\*') {
+                        if ($inLoop -or $file.FullName -match '[\\/](Private|Public)[\\/]') {
                             $matchedString = if ($null -ne $matchingKeys) { @($matchingKeys) -join ', ' } else { '' }
                             throw "File $($file.Name) builds configuration object implicitly via PSCustomObject (matching keys: $matchedString)."
                         }
