@@ -5,6 +5,22 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.100] - 2026-11-09
+
+### 🐛 Διορθώσεις
+
+- fix: remove unnecessary blank lines at the end of Manage-Changelog.ps1
+
+### ♻️ Αναδιαρθρώσεις
+
+- Refactor: pure transformation pipeline and UTF-8 BOM compliance
+
+### ❓ Άλλες Αλλαγές
+
+- Remove SHA256 digest from Dockerfile base image
+- Remove SHA256 digest from Dockerfile base image
+- Fix all 10 code review findings and achieve 100% test coverage
+
 ## [Unreleased]
 
 ### ♻️ Αναδιαρθρώσεις
@@ -619,3 +635,4 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
+
