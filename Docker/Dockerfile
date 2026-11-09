@@ -1,23 +1,27 @@
-FROM mcr.microsoft.com/dotnet/runtime:10.0.9-alpine3.23
+FROM mcr.microsoft.com/dotnet/runtime:10.0.9-alpine3.23-amd64
 
+# renovate: datasource=github-releases depName=PowerShell/PowerShell
+ARG POWERSHELL_VERSION=7.6.3
 ARG PUID=99
 ARG PGID=100
 
 # Install PowerShell and dependencies
+# hadolint ignore=DL3018
 RUN apk update && \
     apk add --no-cache \
-        tzdata=2026b-r0 \
-        ca-certificates=20260611-r0 \
-        curl=8.19.0-r0 \
-        icu-libs=76.1-r1 \
-        icu-data-full=76.1-r1 \
-        krb5-libs=1.22.1-r0 \
-        libgcc=15.2.0-r2 \
-        libintl=0.24.1-r1 \
-        libssl3=3.5.7-r0 \
-        libstdc++=15.2.0-r2 \
-        zlib=1.3.2-r0 && \
-    curl -L https://github.com/PowerShell/PowerShell/releases/download/v7.6.3/powershell-7.6.3-linux-musl-x64.tar.gz \
+        tzdata \
+        ca-certificates \
+        curl \
+        icu-libs \
+        icu-data-full \
+        krb5-libs \
+        libgcc \
+        libintl \
+        libssl3 \
+        libstdc++ \
+        zlib && \
+    curl --fail --show-error --silent --location \
+        "https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-musl-x64.tar.gz" \
         -o /tmp/powershell.tar.gz && \
     mkdir -p /opt/microsoft/powershell/7 && \
     tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
