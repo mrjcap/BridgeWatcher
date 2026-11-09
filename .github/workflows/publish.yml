@@ -35,7 +35,7 @@ env:
 jobs:
   pre-publish-validation:
     name: Pre-publish Validation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       validation_passed: ${{ steps.validate.outputs.validation_passed }}
       module_name: ${{ steps.validate.outputs.module_name }}
@@ -124,7 +124,7 @@ jobs:
 
   publish:
     name: Publish to PowerShell Gallery
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: pre-publish-validation
     if: needs.pre-publish-validation.outputs.validation_passed == 'true'
     outputs:

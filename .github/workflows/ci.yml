@@ -18,7 +18,7 @@ env:
 jobs:
   test:
     name: Test on ubuntu-24.04 with PowerShell
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout repository

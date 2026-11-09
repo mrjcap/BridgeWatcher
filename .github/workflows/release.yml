@@ -33,7 +33,7 @@ permissions:
 jobs:
   pre-release:
     name: Pre-release Validation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       can_proceed: ${{ steps.validation.outputs.can_proceed }}
       validation_summary: ${{ steps.validation.outputs.summary }}
@@ -94,7 +94,7 @@ jobs:
 
   gatekeeper:
     name: Release Gatekeeper
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: [ci]
     if: always()
     outputs:
@@ -225,7 +225,7 @@ jobs:
 
   release-summary:
     name: Release Summary
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: [gatekeeper, publish-module, docker-build]
     if: always()
     steps:
@@ -268,7 +268,7 @@ jobs:
           fi
   cleanup:
     name: Cleanup
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: [release-summary]
     if: always()
 
