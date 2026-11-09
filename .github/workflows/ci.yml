@@ -12,38 +12,40 @@ on:
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  # renovate: datasource=github-releases depName=PowerShell/PowerShell
+  POWERSHELL_VERSION: '7.6.9'
 
 jobs:
   test:
-    name: Test on ubuntu-latest with PowerShell v7.6.3
+    name: Test on ubuntu-latest with PowerShell
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Run Gitleaks secret scanning
-        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup PowerShell
-        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36
+        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36 # v1
         with:
-          tag: 'v7.6.3'
+          tag: 'v${{ env.POWERSHELL_VERSION }}'
 
       - name: Cache PowerShell modules
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             ~/.local/share/powershell/Modules
             ~/Documents/PowerShell/Modules
             ~/Library/PowerShell/Modules
-          key: ubuntu-latest-v7.6.3-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
+          key: ubuntu-latest-v${{ env.POWERSHELL_VERSION }}-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
           restore-keys: |
-            ubuntu-latest-v7.6.3-pwshmodules-
+            ubuntu-latest-v${{ env.POWERSHELL_VERSION }}-pwshmodules-
 
       - name: Install required PowerShell modules
         shell: pwsh
@@ -108,10 +110,10 @@ jobs:
           }
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
-          name: test-results-ubuntu-latest-v7.6.3
+          name: test-results-ubuntu-latest-v${{ env.POWERSHELL_VERSION }}
           path: |
             testResults.xml
             coverage.xml
@@ -119,19 +121,19 @@ jobs:
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: testResults.xml
           report_type: test_results
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: unittests
-          name: codecov-ubuntu-latest-v7.6.3
+          name: codecov-ubuntu-latest-v${{ env.POWERSHELL_VERSION }}
           fail_ci_if_error: true
 
       - name: Run Codacy Coverage Reporter

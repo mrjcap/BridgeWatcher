@@ -1,7 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
   ],
   "dependencyDashboardAutoclose": true,
   "customManagers": [
@@ -12,6 +13,17 @@
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+ARG POWERSHELL_VERSION=(?<currentValue>\\S+)"
+      ],
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+POWERSHELL_VERSION:\\s*['\"]?(?<currentValue>[^'\"\\s]+)['\"]?"
       ],
       "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$",
       "versioningTemplate": "semver"
@@ -27,7 +39,8 @@
         "mcr.microsoft.com/dotnet/runtime"
       ],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-alpine(?<build>\\d+)\\.(?<revision>\\d+)-(?<compatibility>amd64)$",
-      "allowedVersions": "/^10\\.0\\.\\d+-alpine\\d+\\.\\d+-amd64$/"
+      "allowedVersions": "/^10\\.0\\.\\d+-alpine\\d+\\.\\d+-amd64$/",
+      "minimumReleaseAge": false
     },
     {
       "description": "Update PowerShell 7.6 patches",
@@ -37,7 +50,8 @@
       "matchPackageNames": [
         "PowerShell/PowerShell"
       ],
-      "allowedVersions": ">=7.6.0 <7.7.0"
+      "allowedVersions": ">=7.6.0 <7.7.0",
+      "minimumReleaseAge": false
     }
   ]
 }

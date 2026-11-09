@@ -1,0 +1,2 @@
+# Ignore synthetic API key fixture in unit test from historical commit
+3d8db7bc5e3430e0e694a09463de1f4e26bc058e:Tests/VulnerabilityReproduction.Tests.ps1:generic-api-key:28

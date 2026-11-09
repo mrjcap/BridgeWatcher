@@ -20,6 +20,9 @@ on:
       published_version:
         description: 'The version that was published'
         value: ${{ jobs.publish.outputs.published_version }}
+    secrets:
+      PSGALLERYAPIKEY:
+        required: true
 
 permissions:
   contents: write
@@ -39,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -60,6 +63,8 @@ jobs:
       - name: Validate module before publish
         id: validate
         shell: pwsh
+        env:
+          NEXT_VERSION: ${{ inputs.next_version }}
         run: |
           Write-Verbose "Validating module before publish..."
 
@@ -79,8 +84,8 @@ jobs:
             Write-Verbose " Module manifest is valid: $($manifest.Name) v$($manifest.Version)"
 
             # Validate version matches input
-            if ($manifest.Version -ne '${{ inputs.next_version }}') {
-              Write-Error " Module version ($($manifest.Version)) doesn't match expected version (${{ inputs.next_version }})"
+            if ($manifest.Version -ne $env:NEXT_VERSION) {
+              Write-Error " Module version ($($manifest.Version)) doesn't match expected version ($env:NEXT_VERSION)"
               exit 1
             }
 
@@ -128,7 +133,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -200,7 +205,7 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
         with:
           tag_name: v${{ inputs.next_version }}
           name: Release v${{ inputs.next_version }}
@@ -215,10 +220,11 @@ jobs:
         id: version_check
         shell: pwsh
         env:
+          MODULE_NAME: ${{ needs.pre-publish-validation.outputs.module_name }}
           NEXT_VERSION: ${{ inputs.next_version }}
         run: |
           Write-Verbose "Checking if module v$env:NEXT_VERSION is already in PSGallery…"
-          $existing = Find-Module -Name '${{ needs.pre-publish-validation.outputs.module_name }}' -RequiredVersion $env:NEXT_VERSION -Repository PSGallery -ErrorAction SilentlyContinue
+          $existing = Find-Module -Name $env:MODULE_NAME -RequiredVersion $env:NEXT_VERSION -Repository PSGallery -ErrorAction SilentlyContinue
           if ($existing) {
             Write-Host "Module v$env:NEXT_VERSION already exists. Skipping publish."
             echo "exists=true" >> $env:GITHUB_OUTPUT
@@ -228,17 +234,22 @@ jobs:
       - name: Publish module to PowerShell Gallery
         if: steps.version_check.outputs.exists == 'false'
         shell: pwsh
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          NEXT_VERSION: ${{ inputs.next_version }}
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERYAPIKEY }}
+          RELEASE_ID: ${{ steps.create_release.outputs.id }}
         run: |
           Write-Verbose "Publishing module to PowerShell Gallery..."
 
-          if ('${{ inputs.dry_run }}' -eq 'true') {
+          if ($env:DRY_RUN -eq 'true') {
             Write-Verbose " DRY RUN MODE - Skipping actual publish"
 
             # Validate the module would be publishable
             try {
               $publishSplat = @{
                 Path           = './BridgeWatcher'
-                NuGetApiKey    = '${{ secrets.PSGALLERYAPIKEY }}'
+                NuGetApiKey    = $env:PSGALLERY_API_KEY
                 WhatIf         = $true
                 Repository     = 'PSGallery'
                 Verbose        = $true
@@ -255,7 +266,7 @@ jobs:
             try {
               $publishSplat = @{
                 Path           = './BridgeWatcher'
-                NuGetApiKey    = '${{ secrets.PSGALLERYAPIKEY }}'
+                NuGetApiKey    = $env:PSGALLERY_API_KEY
                 Repository     = 'PSGallery'
                 Verbose        = $true
                 ErrorAction    = 'Stop'
@@ -267,12 +278,12 @@ jobs:
               Write-Error " Failed to publish module: $_"
 
               # Try to delete the release if publish failed
-              if ('${{ steps.create_release.outputs.id }}') {
+              if ($env:RELEASE_ID) {
                 Write-Verbose "Attempting to clean up failed release..."
                 try {
-                  gh release delete "v${{ inputs.next_version }}" --yes 2>/dev/null || true
-                  git tag -d "v${{ inputs.next_version }}" 2>/dev/null || true
-                  git push origin --delete "v${{ inputs.next_version }}" 2>/dev/null || true
+                  gh release delete "v$env:NEXT_VERSION" --yes 2>/dev/null || true
+                  git tag -d "v$env:NEXT_VERSION" 2>/dev/null || true
+                  git push origin --delete "v$env:NEXT_VERSION" 2>/dev/null || true
                 } catch {
                   Write-Verbose "Could not clean up release artifacts"
                 }
@@ -284,6 +295,9 @@ jobs:
       - name: Verify module publication
         if: inputs.dry_run == false
         shell: pwsh
+        env:
+          MODULE_NAME: ${{ needs.pre-publish-validation.outputs.module_name }}
+          NEXT_VERSION: ${{ inputs.next_version }}
         run: |
           Write-Verbose "Verifying module publication..."
 
@@ -297,7 +311,7 @@ jobs:
           do {
             try {
               Write-Verbose "Attempt $attempt of $maxAttempts to find published module..."
-              $module = Find-Module -Name '${{ needs.pre-publish-validation.outputs.module_name }}' -RequiredVersion '${{ inputs.next_version }}' -Repository PSGallery -ErrorAction Stop
+              $module = Find-Module -Name $env:MODULE_NAME -RequiredVersion $env:NEXT_VERSION -Repository PSGallery -ErrorAction Stop
 
               if ($module) {
                 Write-Verbose " Module successfully found in PowerShell Gallery"
@@ -325,25 +339,33 @@ jobs:
 
       - name: Set job outputs
         id: set_output
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          NEXT_VERSION: ${{ inputs.next_version }}
         run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             echo "published=dry-run" >> $GITHUB_OUTPUT
           else
             echo "published=true" >> $GITHUB_OUTPUT
           fi
-          echo "version=${{ inputs.next_version }}" >> $GITHUB_OUTPUT
+          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
 
       - name: Job summary
         if: always()
         shell: pwsh
+        env:
+          MODULE_NAME: ${{ needs.pre-publish-validation.outputs.module_name }}
+          NEXT_VERSION: ${{ inputs.next_version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          PUBLISHED_STATUS: ${{ steps.set_output.outputs.published }}
+          RELEASE_URL: ${{ steps.create_release.outputs.url || 'N/A' }}
         run: |
-          Write-Verbose "� Publish Summary"
           Write-Verbose "=================="
-          Write-Verbose "Module: ${{ needs.pre-publish-validation.outputs.module_name }}"
-          Write-Verbose "Version: ${{ inputs.next_version }}"
-          Write-Verbose "Dry Run: ${{ inputs.dry_run }}"
-          Write-Verbose "Published: ${{ steps.set_output.outputs.published }}"
-          Write-Verbose "Release Created: ${{ steps.create_release.outputs.url || 'N/A' }}"
+          Write-Verbose "Module: $env:MODULE_NAME"
+          Write-Verbose "Version: $env:NEXT_VERSION"
+          Write-Verbose "Dry Run: $env:DRY_RUN"
+          Write-Verbose "Published: $env:PUBLISHED_STATUS"
+          Write-Verbose "Release Created: $env:RELEASE_URL"
 
       - name: Set failure output
         if: failure()

@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
@@ -88,7 +88,9 @@ jobs:
     needs: [pre-release]
     if: needs.pre-release.outputs.can_proceed == 'true'
     uses: ./.github/workflows/ci.yml
-    secrets: inherit
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
 
   gatekeeper:
     name: Release Gatekeeper
@@ -102,7 +104,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
@@ -165,8 +167,11 @@ jobs:
 
       - name: Decide whether to proceed
         id: decide
+        env:
+          CHANGELOG_UPDATED: ${{ steps.changelog_check.outputs.updated }}
+          FORCE_RELEASE: ${{ inputs.force_release }}
         run: |
-          if [[ "${{ steps.changelog_check.outputs.updated }}" == "true" || "${{ inputs.force_release }}" == "true" ]]; then
+          if [[ "$CHANGELOG_UPDATED" == "true" || "$FORCE_RELEASE" == "true" ]]; then
             echo "proceed=true" >> $GITHUB_OUTPUT
             echo " Proceeding with release"
           else
@@ -179,14 +184,14 @@ jobs:
     needs: [gatekeeper]
     if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
     uses: ./.github/workflows/codequality.yml
-    secrets: inherit
+    secrets:
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
   docs-generation:
     name: Documentation Generation
     needs: [gatekeeper]
     if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
     uses: ./.github/workflows/powershell-docs.yml
-    secrets: inherit
 
   publish-module:
     name: Publish Module
@@ -200,7 +205,8 @@ jobs:
     with:
       next_version: ${{ needs.gatekeeper.outputs.next_version }}
       dry_run: ${{ inputs.dry_run }}
-    secrets: inherit
+    secrets:
+      PSGALLERYAPIKEY: ${{ secrets.PSGALLERYAPIKEY }}
 
   docker-build:
     name: Docker Build & Push
@@ -212,7 +218,9 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       version: ${{ needs.gatekeeper.outputs.next_version }}
-    secrets: inherit
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   release-summary:
     name: Release Summary
