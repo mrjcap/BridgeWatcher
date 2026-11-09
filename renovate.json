@@ -5,6 +5,7 @@
     "helpers:pinGitHubActionDigests"
   ],
   "dependencyDashboardAutoclose": true,
+  "minimumReleaseAge": "7 days",
   "customManagers": [
     {
       "customType": "regex",
@@ -40,7 +41,7 @@
       ],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-alpine(?<build>\\d+)\\.(?<revision>\\d+)-(?<compatibility>amd64)$",
       "allowedVersions": "/^10\\.0\\.\\d+-alpine\\d+\\.\\d+-amd64$/",
-      "minimumReleaseAge": false
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "Update PowerShell 7.6 patches",
@@ -51,7 +52,7 @@
         "PowerShell/PowerShell"
       ],
       "allowedVersions": ">=7.6.0 <7.7.0",
-      "minimumReleaseAge": false
+      "minimumReleaseAge": "7 days"
     }
   ]
 }
