@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/runtime:10.0.9-alpine3.23@sha256:036b39f319141abc97fb32652ecfa97294e8108840f807999a0d467f4f1118ab
+FROM mcr.microsoft.com/dotnet/runtime:10.0.9-alpine3.23
 
 ARG PUID=99
 ARG PGID=100
