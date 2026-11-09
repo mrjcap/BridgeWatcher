@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "docker:pinDigests"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)(Dockerfile|[^/]+\\.Dockerfile)$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+ARG POWERSHELL_VERSION=(?<currentValue>\\S+)"
+      ],
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Update .NET 10 patches and Alpine versions; preserve amd64",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "mcr.microsoft.com/dotnet/runtime"
+      ],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-alpine(?<build>\\d+)\\.(?<revision>\\d+)-(?<compatibility>amd64)$",
+      "allowedVersions": "/^10\\.0\\.\\d+-alpine\\d+\\.\\d+-amd64$/"
+    },
+    {
+      "description": "Update PowerShell 7.6 patches",
+      "matchDatasources": [
+        "github-releases"
+      ],
+      "matchPackageNames": [
+        "PowerShell/PowerShell"
+      ],
+      "allowedVersions": ">=7.6.0 <7.7.0"
+    }
+  ]
+}
