@@ -8,6 +8,11 @@ on:
         description: 'Version tag for the Docker image'
         required: true
         type: string
+      dry_run:
+        description: 'Perform a dry run without pushing or requiring a release tag'
+        required: false
+        type: boolean
+        default: false
     secrets:
       DOCKERHUB_USERNAME:
         required: true
@@ -31,7 +36,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: v${{ inputs.version }}
+          ref: ${{ inputs.dry_run && github.ref || format('v{0}', inputs.version) }}
           fetch-depth: 0
 
       - name: Set up Docker Buildx
@@ -200,7 +205,7 @@ jobs:
     name: Push Docker Image
     runs-on: ubuntu-24.04
     needs: build-and-test
-    if: success()
+    if: success() && !inputs.dry_run
 
     steps:
       - name: Set up Docker Buildx

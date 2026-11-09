@@ -218,6 +218,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       version: ${{ needs.gatekeeper.outputs.next_version }}
+      dry_run: ${{ inputs.dry_run }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
