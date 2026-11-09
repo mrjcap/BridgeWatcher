@@ -15,7 +15,7 @@ For the full security audit, see
 ## Risk Register
 
 | ID | Threat | Likelihood | Impact | Risk | Treatment |
-|----|--------|-----------|--------|------|-----------|
+| ---- | -------- | ----------- | -------- | ------ | ----------- |
 | R-1 | API key exposure via logs | Low (mitigated) | High | **MEDIUM** | Mitigated: moved to HTTP header |
 | R-2 | Upstream website serves malicious content | Low | Medium | **LOW** | Accepted |
 | R-3 | Supply chain compromise | Low | High | **MEDIUM** | Mitigated: SHA-pinned deps |

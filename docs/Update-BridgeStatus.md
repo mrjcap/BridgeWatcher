@@ -15,7 +15,7 @@ schema: 2.0.0
 
 ```
 Update-BridgeStatus [-OutputFile] <String> [-ApiKey] <String> [-PoUserKey] <String> [-PoApiKey] <String>
- [[-Configuration] <PSObject>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Configuration] <PSObject> [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -28,7 +28,7 @@ Update-BridgeStatus [-OutputFile] <String> [-ApiKey] <String> [-PoUserKey] <Stri
 ### EXAMPLE 1
 
 ```
-Update-BridgeStatus -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123'
+Update-BridgeStatus -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123' -Configuration $Config
 ```
 
 ## PARAMETERS
@@ -99,15 +99,14 @@ Accept wildcard characters: False
 
 ### -Configuration
 
-(Προαιρετικό) Αντικείμενο διαμόρφωσης.
-Αν δεν παρέχεται, δημιουργείται αυτόματα.
+Αντικείμενο διαμόρφωσης με ρυθμίσεις, statuses και URLs.
 
 ```yaml
 Type: PSObject
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: 5
 Default value: None
 Accept pipeline input: False
@@ -171,7 +170,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## OUTPUTS
 
-### None
+### [object[]]
 
 ## NOTES
 

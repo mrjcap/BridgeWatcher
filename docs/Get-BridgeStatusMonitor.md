@@ -14,8 +14,8 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-BridgeStatusMonitor [[-MaxIterations] <Int32>] [[-IntervalSeconds] <Int32>] [-OutputFile] <String>
- [[-ApiKey] <String>] [[-PoUserKey] <String>] [[-PoApiKey] <String>] [[-Configuration] <PSObject>]
+Get-BridgeStatusMonitor [-Configuration] <PSObject> [[-MaxIterations] <Int32>] [[-IntervalSeconds] <Int32>]
+ [-OutputFile] <String> [[-ApiKey] <String>] [[-PoUserKey] <String>] [[-PoApiKey] <String>]
  [[-Action] <ScriptBlock>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -39,13 +39,30 @@ Get-BridgeStatusMonitor -MaxIterations 100 -IntervalSeconds 60 -OutputFile 'C:\L
 
 ```
 Get-BridgeStatusMonitor -OutputFile 'C:\Logs\bridge.json' -Action {
-    param($splat)
+    param(
     Write-Host "Custom monitoring action running for $($splat.OutputFile)"
-    Update-BridgeStatus @splat
+    Update-BridgeStatus @splat -Configuration $Configuration
 }
 ```
 
 ## PARAMETERS
+
+### -Configuration
+
+(Προαιρετικό) Αντικείμενο διαμόρφωσης.
+Αν δεν παρέχεται, δημιουργείται αυτόματα.
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -MaxIterations
 
@@ -57,7 +74,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 1
+Position: 2
 Default value: 0
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -73,7 +90,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 2
+Position: 3
 Default value: 0
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -89,7 +106,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 3
+Position: 4
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -105,7 +122,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 4
+Position: 5
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -121,7 +138,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 5
+Position: 6
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -133,23 +150,6 @@ Accept wildcard characters: False
 
 ```yaml
 Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 6
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Configuration
-
-(Προαιρετικό) Αντικείμενο διαμόρφωσης.
-Αν δεν παρέχεται, δημιουργείται αυτόματα.
-
-```yaml
-Type: PSObject
 Parameter Sets: (All)
 Aliases:
 

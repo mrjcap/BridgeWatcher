@@ -9,27 +9,27 @@ schema: 2.0.0
 
 ## SYNOPSIS
 
-Συγκρίνει τις λίστες καταστάσεων γεφυρών και ενεργοποιεί ειδοποιήσεις.
+Συγκρίνει τις λίστες καταστάσεων γεφυρών και επιστρέφει γεγονότα διαφορών.
 
 ## SYNTAX
 
 ```
-Invoke-BridgeStatusComparison [[-PreviousState] <Object[]>] [-CurrentState] <Object[]> [-ApiKey] <String>
- [-PoUserKey] <String> [-PoApiKey] <String> [[-Configuration] <PSObject>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Invoke-BridgeStatusComparison [[-PreviousState] <Object>] [-CurrentState] <Object> [-Configuration] <PSObject>
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
 Η Invoke-BridgeStatusComparison συγκρίνει την προηγούμενη και την τρέχουσα
-κατάσταση γεφυρών και καλεί ειδικούς handlers για αλλαγές (άνοιγμα/κλείσιμο).
+κατάσταση γεφυρών, εμπλουτίζει τα δεδομένα με πληροφορίες από το προηγούμενο
+ιστορικό και παράγει αντικείμενα diff events για τις αλλαγές κατάστασης.
 
 ## EXAMPLES
 
 ### EXAMPLE 1
 
 ```
-Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -ApiKey 'abc' -PoUserKey 'user' -PoApiKey 'token'
+Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $config
 ```
 
 ## PARAMETERS
@@ -39,7 +39,7 @@ Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -ApiKey '
 Η προηγούμενη λίστα καταστάσεων.
 
 ```yaml
-Type: Object[]
+Type: Object
 Parameter Sets: (All)
 Aliases:
 
@@ -55,7 +55,7 @@ Accept wildcard characters: False
 Η τρέχουσα λίστα καταστάσεων.
 
 ```yaml
-Type: Object[]
+Type: Object
 Parameter Sets: (All)
 Aliases:
 
@@ -66,66 +66,17 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ApiKey
-
-Το API Key για OCR αν απαιτηθεί.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 3
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PoUserKey
-
-Το User Key για Pushover ειδοποίηση.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 4
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PoApiKey
-
-Το API Token για Pushover ειδοποίηση.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 5
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Configuration
 
-(Προαιρετικό) Αντικείμενο διαμόρφωσης.
-Αν δεν παρέχεται, δημιουργείται αυτόματα.
+Αντικείμενο διαμόρφωσης με ρυθμίσεις, statuses και URLs.
 
 ```yaml
 Type: PSObject
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: 6
+Required: True
+Position: 3
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -155,10 +106,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## OUTPUTS
 
-### [System.Boolean]
+### [PSCustomObject[]]
 
 ## NOTES
 
-Καταγράφει αλλαγές και ενεργοποιεί κατάλληλες ειδοποιήσεις.
+Λειτουργεί ως pure transformation pipeline χωρίς εξωτερικές παρενέργειες.
 
 ## RELATED LINKS

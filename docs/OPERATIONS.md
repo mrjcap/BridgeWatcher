@@ -58,7 +58,7 @@ docker run \
 ### Flag Explanations
 
 | Flag | Purpose |
-|------|---------|
+| ------ | --------- |
 | `--no-new-privileges` | Blocks `setuid`/`setgid` escalation |
 | `--read-only` | Makes root filesystem immutable |
 | `--tmpfs /tmp:rw,noexec,nosuid` | Writable `/tmp` without exec |

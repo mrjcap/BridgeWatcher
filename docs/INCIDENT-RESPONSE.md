@@ -26,7 +26,7 @@ tracks Corinth Canal bridge status using Google Vision API
 ## 2. Incident Classification
 
 | Severity | Category | Examples | Response SLA |
-|----------|----------|----------|--------------|
+| ---------- | ---------- | ---------- | -------------- |
 | **SEV-1** | Critical | API key leak, credential exposure | Immediate |
 | **SEV-2** | High | Service outage, container compromise | < 1 hour |
 | **SEV-3** | Low | Monitoring gaps, false alerts | < 24 hours |
@@ -47,7 +47,7 @@ tracks Corinth Canal bridge status using Google Vision API
 ### 3.1 Immediate — Revoke (< 5 min)
 
 | Step | Action | Owner |
-|------|--------|-------|
+| ------ | -------- | ------- |
 | 1 | **Google Vision API key**: Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → Delete or disable the compromised key | Operator |
 | 2 | **Pushover API/User key**: Go to [Pushover Dashboard](https://pushover.net/) → Reset application token | Operator |
 | 3 | Stop the BridgeWatcher container to prevent further API calls with the compromised key | Operator |
@@ -87,7 +87,7 @@ docker logs bridgewatcher --tail 20
 ### 3.3 Investigate — Audit Usage (< 1 hour)
 
 | Check | How |
-|-------|-----|
+| ------- | ----- |
 | Google API usage | Cloud Console → APIs & Services → Vision API → Metrics. Look for unexpected spikes or calls from unknown IPs. |
 | Pushover usage | Pushover dashboard → Message history. Check for unauthorized notifications sent. |
 | Source of leak | Search git history: `git log --all -p -- '*.ps1' '*.env' '*.yml'` for hardcoded keys. Check CI/CD logs. |
@@ -134,7 +134,7 @@ Invoke-RestMethod -Uri "https://vision.googleapis.com/v1/images:annotate?key=$en
 ```
 
 | Symptom | Likely Cause | Fix |
-|---------|-------------|-----|
+| --------- | ------------- | ----- |
 | Container `Exited` | Crash or OOM kill | Check logs, restart |
 | Container running, no output | Script hang or sleep loop | Restart container |
 | API 403/401 errors | Key invalid or quota exceeded | Rotate key / check quota |
@@ -185,7 +185,7 @@ docker export bridgewatcher > bridgewatcher-forensic.tar
 ### 5.2 Investigate
 
 | Action | Command / Location |
-|--------|--------------------|
+| -------- | -------------------- |
 | Preserve container logs | `docker logs bridgewatcher > compromise.log 2>&1` |
 | Check for unexpected processes | Review forensic tar for added binaries |
 | Review Trivy scan results | `docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image bridgewatcher:latest` |
@@ -220,7 +220,7 @@ docker run --rm aquasec/trivy image bridgewatcher:latest
 ## 6. Contact & Escalation
 
 | Role | Name | Contact | Escalation Path |
-|------|------|---------|-----------------|
+| ------ | ------ | --------- | ----------------- |
 | Primary Operator | Jay Cap (@mrjcap) | GitHub Issues / <mrjcap@users.noreply.github.com> | First responder |
 | Project Owner | Jay Cap (@mrjcap) | GitHub Issues / <mrjcap@users.noreply.github.com> | SEV-1 escalation |
 | Security Lead | Jay Cap (@mrjcap) | GitHub Issues / <mrjcap@users.noreply.github.com> | Compromise events |
@@ -241,7 +241,7 @@ Complete within **48 hours** of incident resolution.
 ### Incident Summary
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | Incident ID | *INC-YYYY-NNN* |
 | Severity | SEV-1 / SEV-2 / SEV-3 |
 | Date detected | *YYYY-MM-DD HH:MM UTC* |
@@ -267,7 +267,7 @@ Complete within **48 hours** of incident resolution.
 ### Lessons Learned
 
 | Question | Answer |
-|----------|--------|
+| ---------- | -------- |
 | What went well? | *...* |
 | What went wrong? | *...* |
 | What was lucky? | *...* |

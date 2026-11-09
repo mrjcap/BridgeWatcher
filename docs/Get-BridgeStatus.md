@@ -14,7 +14,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-BridgeStatus [[-OutputFile] <String>] [[-Configuration] <PSObject>] [-ProgressAction <ActionPreference>]
+Get-BridgeStatus [[-OutputFile] <String>] [-Configuration] <PSObject> [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
 
@@ -72,7 +72,7 @@ Type: PSObject
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: 2
 Default value: None
 Accept pipeline input: False

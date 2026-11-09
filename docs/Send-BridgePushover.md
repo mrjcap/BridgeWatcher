@@ -16,7 +16,7 @@ schema: 2.0.0
 ```
 Send-BridgePushover [-PoUserKey] <String> [-PoApiKey] <String> [-Message] <String> [[-Device] <String>]
  [[-Title] <String>] [[-Url] <String>] [[-UrlTitle] <String>] [[-Priority] <Int32>] [[-Sound] <String>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Configuration] <PSObject> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -173,6 +173,22 @@ Aliases:
 
 Required: False
 Position: 9
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Configuration
+
+Αντικείμενο ρυθμίσεων που δημιουργείται από New-BridgeConfiguration.
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 10
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
