@@ -1,19 +1,10 @@
 ﻿# BridgeWatcher: παρακολούθηση γεφυρών Ισθμού
 
 [![Κατάσταση CI](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml)
-[![Κατασκευή Docker](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml)
-[![Τεκμηρίωση PowerShell](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/powershell-docs.yml)
-[![Δημοσίευση](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/publish.yml)
-[![Release Orchestrator](https://github.com/mrjcap/BridgeWatcher/actions/workflows/release.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/release.yml)
-[![GitHub issues](https://img.shields.io/github/issues/mrjcap/BridgeWatcher)](https://github.com/mrjcap/BridgeWatcher/issues)
 [![Κάλυψη Κώδικα](https://img.shields.io/codecov/c/github/mrjcap/BridgeWatcher?logo=codecov)](https://codecov.io/gh/mrjcap/BridgeWatcher)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/38461665d3a642cf9574522e1713afa7)](https://app.codacy.com/gh/mrjcap/BridgeWatcher/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Pester Tests](https://img.shields.io/badge/Pester-v5-blue)](https://pester.dev/)
 [![Έκδοση PowerShell Gallery](https://img.shields.io/powershellgallery/v/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
-[![Λήψεις από Gallery](https://img.shields.io/powershellgallery/dt/BridgeWatcher?color=blue)](https://www.powershellgallery.com/packages/BridgeWatcher)
 [![Docker Pulls](https://img.shields.io/docker/pulls/mrjcap/bridgewatcher.svg)](https://hub.docker.com/r/mrjcap/bridgewatcher/)
-![Docker Image Size](https://img.shields.io/docker/image-size/mrjcap/bridgewatcher/latest)
-![Docker Stars](https://img.shields.io/docker/stars/mrjcap/bridgewatcher)
 [![Άδεια: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
