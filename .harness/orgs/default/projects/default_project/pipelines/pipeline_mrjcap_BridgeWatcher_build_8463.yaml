@@ -1,0 +1,56 @@
+pipeline:
+  id: pipeline_mrjcap_BridgeWatcher_build_8463
+  name: pipeline_mrjcap_BridgeWatcher_build_8463
+  stages:
+    - name: Test
+      platform:
+        os: linux
+        arch: amd64
+      runtime: cloud
+      clone:
+        enabled: true
+      cache:
+        enabled: true
+      steps:
+        - name: Install Modules and Run Tests
+          id: test
+          run:
+            container:
+              image: mcr.microsoft.com/powershell:lts-ubuntu-22.04
+            shell: pwsh
+            script: |-
+              $ErrorActionPreference = 'Stop'
+              Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+              Install-Module -Name Pester, PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
+
+              Write-Host "Running PSScriptAnalyzer..."
+              $analysisResults = @(
+                Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+                Invoke-ScriptAnalyzer -Path ./Tests -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+                Invoke-ScriptAnalyzer -Path ./run.ps1 -Settings ./PSScriptAnalyzerSettings.psd1
+                Invoke-ScriptAnalyzer -Path ./scripts -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 -Severity Error,Warning
+              )
+              if ($analysisResults.Count -gt 0) {
+                $analysisResults | Format-Table -AutoSize
+                throw "PSScriptAnalyzer found $($analysisResults.Count) issues!"
+              }
+
+              Write-Host "Running Pester tests..."
+              $config = New-PesterConfiguration -Hashtable (Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1)
+              $result = Invoke-Pester -Configuration $config
+              if ($result.Result -ne 'Passed') {
+                throw "Tests failed! $($result.FailedCount) of $($result.TotalCount) tests failed"
+              }
+            report:
+              type: junit
+              paths:
+                - testResults.xml
+        - name: Upload Coverage
+          id: upload_coverage
+          run:
+            shell: bash
+            script: |-
+              test -s "coverage.xml"
+              hcli cov upload --file="coverage.xml"
+  tags:
+    onboarding: "true"
