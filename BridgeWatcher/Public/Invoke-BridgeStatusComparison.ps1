@@ -1,5 +1,160 @@
 ﻿<#
     .SYNOPSIS
+    Αντιγράφει ιδιότητες OCR από την προηγούμενη στην τρέχουσα εγγραφή γέφυρας.
+
+    .DESCRIPTION
+    Συμπληρώνει κενές ιδιότητες OCR στην τρέχουσα εγγραφή γέφυρας από την προηγούμενη.
+
+    .PARAMETER PreviousBridge
+    Η προηγούμενη εγγραφή γέφυρας.
+
+    .PARAMETER CurrentBridge
+    Η τρέχουσα εγγραφή γέφυρας.
+
+    .PARAMETER PropertyNames
+    Τα ονόματα των ιδιοτήτων προς αντιγραφή.
+    #>
+function Copy-BridgePreviousOcrProperty {
+    [CmdletBinding()]
+    param (
+        [Parameter()][AllowNull()][object]$PreviousBridge,
+        [Parameter()][AllowNull()][object]$CurrentBridge,
+        [Parameter(Mandatory)][string[]]$PropertyNames
+    )
+    if (-not $PreviousBridge -or -not $CurrentBridge) {
+        return
+    }
+    foreach ($prop in $PropertyNames) {
+        if ($null -ne $PreviousBridge.$prop -and [string]::IsNullOrEmpty($CurrentBridge.$prop)) {
+            $CurrentBridge | Add-Member -MemberType NoteProperty -Name $prop -Value $PreviousBridge.$prop -Force
+        }
+    }
+}
+
+<#
+    .SYNOPSIS
+    Υπολογίζει τις ακατέργαστες διαφορές μεταξύ προηγούμενης και τρέχουσας κατάστασης.
+
+    .DESCRIPTION
+    Επιστρέφει τα αποτελέσματα σύγκρισης για την πρώτη εκτέλεση ή μέσω Compare-Object.
+
+    .PARAMETER PreviousStateArray
+    Ο πίνακας προηγούμενων καταστάσεων.
+
+    .PARAMETER CurrentStateArray
+    Ο πίνακας τρεχουσών καταστάσεων.
+
+    .PARAMETER Configuration
+    Το αντικείμενο διαμόρφωσης.
+    #>
+function Get-BridgeRawComparisonDiff {
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param (
+        [Parameter()][AllowEmptyCollection()][object[]]$PreviousStateArray = @(),
+        [Parameter(Mandatory)][object[]]$CurrentStateArray,
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
+    )
+    if ($PreviousStateArray.Count -eq 0) {
+        return @($CurrentStateArray | ForEach-Object {
+            [PSCustomObject]@{
+                GefyraName    = $_.GefyraName
+                GefyraStatus  = $_.GefyraStatus
+                ImageUrl      = $_.ImageUrl
+                ImageHash     = $_.ImageHash
+                SideIndicator = '=>'
+            }
+        })
+    }
+
+    $scheduledStatus = $Configuration.Statuses.ClosedWithSchedule
+    $hasPreviousHash = $PreviousStateArray | Where-Object { $_.GefyraStatus -eq $scheduledStatus -and $null -ne $_.ImageHash }
+    $hasCurrentHash = $CurrentStateArray | Where-Object { $_.GefyraStatus -eq $scheduledStatus -and $null -ne $_.ImageHash }
+
+    $imageProperty = if ($hasPreviousHash -and $hasCurrentHash) { 'ImageHash' } else { 'ImageUrl' }
+    $compareSplat = @{
+        ReferenceObject  = $PreviousStateArray
+        DifferenceObject = $CurrentStateArray
+        Property         = @('GefyraName', 'GefyraStatus', $imageProperty)
+        IncludeEqual     = $true
+    }
+    return @(Compare-Object @compareSplat)
+}
+
+<#
+    .SYNOPSIS
+    Ελέγχει αν μια αλλαγή κατάστασης γέφυρας απαιτεί αποστολή ειδοποίησης.
+
+    .DESCRIPTION
+    Αξιολογεί το SideIndicator, συμπληρώνει ιδιότητες OCR όταν δεν υπάρχει ουσιαστική αλλαγή,
+    και επιστρέφει $true μόνο όταν πρέπει να παραχθεί γεγονός αλλαγής.
+
+    .PARAMETER Change
+    Το αντικείμενο διαφοράς προς έλεγχο.
+
+    .PARAMETER PreviousStateArray
+    Ο πίνακας προηγούμενων καταστάσεων.
+
+    .PARAMETER CurrentStateArray
+    Ο πίνακας τρεχουσών καταστάσεων.
+
+    .PARAMETER Configuration
+    Το αντικείμενο διαμόρφωσης.
+    #>
+function Test-BridgeChangeIsActionable {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param (
+        [Parameter(Mandatory)][object]$Change,
+        [Parameter()][AllowEmptyCollection()][object[]]$PreviousStateArray = @(),
+        [Parameter(Mandatory)][object[]]$CurrentStateArray,
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
+    )
+    $logSplat = @{
+        Level = 'Verbose'
+        Stage = 'Ανάλυση'
+    }
+    $prevBridge = $PreviousStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
+    $currentBridge = $CurrentStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
+
+    if ($Change.SideIndicator -eq '==') {
+        $logSplat.Message = "Καμία ουσιαστική αλλαγή στην $($Change.GefyraName)."
+        Write-BridgeLog @logSplat -Configuration $Configuration
+        $ocrProps = @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2', 'ImageHash')
+        Copy-BridgePreviousOcrProperty -PreviousBridge $prevBridge -CurrentBridge $currentBridge -PropertyNames $ocrProps
+        return $false
+    }
+
+    if ($Change.SideIndicator -ne '=>') {
+        return $false
+    }
+
+    if (-not $prevBridge -or $prevBridge.GefyraStatus -ne $Change.GefyraStatus) {
+        return $true
+    }
+
+    if ($Change.GefyraStatus -ne $Configuration.Statuses.ClosedWithSchedule) {
+        $logSplat.Message = "Καμία ουσιαστική αλλαγή στην $($Change.GefyraName)."
+        Write-BridgeLog @logSplat -Configuration $Configuration
+        return $false
+    }
+
+    if ($currentBridge -and [string]::IsNullOrEmpty($currentBridge.ImageHash) -and -not [string]::IsNullOrEmpty($prevBridge.ImageHash)) {
+        $logSplat.Message = "Αποτυχία λήψης νέου hash. Επαναχρησιμοποίηση προηγούμενου hash για την $($Change.GefyraName)."
+        Write-BridgeLog @logSplat -Configuration $Configuration
+        $currentBridge.ImageHash = $prevBridge.ImageHash
+        $ocrProps = @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')
+        Copy-BridgePreviousOcrProperty -PreviousBridge $prevBridge -CurrentBridge $currentBridge -PropertyNames $ocrProps
+        return $false
+    }
+
+    $logSplat.Message = "Εντοπίστηκε ενημέρωση του προγράμματος κλεισίματος για την $($Change.GefyraName)."
+    Write-BridgeLog @logSplat -Configuration $Configuration
+    return $true
+}
+
+<#
+    .SYNOPSIS
     Συγκρίνει τις λίστες καταστάσεων γεφυρών και επιστρέφει γεγονότα διαφορών.
 
     .DESCRIPTION
@@ -47,37 +202,7 @@ function Invoke-BridgeStatusComparison {
         $currentStateArray = @($CurrentState | Where-Object { $null -ne $_ })
 
         $diffEvents = @()
-
-        if (-not $previousStateArray -or $previousStateArray.Count -eq 0) {
-            # Πρώτη εκτέλεση: όλες οι γέφυρες είναι νέες (=>)
-            $diff = $currentStateArray | ForEach-Object {
-                [PSCustomObject]@{
-                    GefyraName    = $_.GefyraName
-                    GefyraStatus  = $_.GefyraStatus
-                    ImageUrl      = $_.ImageUrl
-                    ImageHash     = $_.ImageHash
-                    SideIndicator = '=>'
-                }
-            }
-        } else {
-            $hasPreviousHash = $previousStateArray | Where-Object { $_.GefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
-            $hasCurrentHash = $currentStateArray | Where-Object { $_.GefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and $null -ne $_.ImageHash }
-
-            $compareProperty = @('GefyraName', 'GefyraStatus')
-            if ($hasPreviousHash -and $hasCurrentHash) {
-                $compareProperty += 'ImageHash'
-            } else {
-                $compareProperty += 'ImageUrl'
-            }
-
-            $compareSplat = @{
-                ReferenceObject  = $previousStateArray
-                DifferenceObject = $currentStateArray
-                Property         = $compareProperty
-                IncludeEqual     = $true
-            }
-            $diff = Compare-Object @compareSplat
-        }
+        $diff = Get-BridgeRawComparisonDiff -PreviousStateArray $previousStateArray -CurrentStateArray $currentStateArray -Configuration $Configuration
 
         $closedStatuses = @(
             $Configuration.Statuses.ClosedForMaintenance,
@@ -98,48 +223,15 @@ function Invoke-BridgeStatusComparison {
                 Message = "🌉 $($change.GefyraName) ➜ $($change.GefyraStatus) ($($change.SideIndicator))"
             }
             Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-            if ($change.SideIndicator -eq '==') {
-                $writeBridgeLogSplat.Message = "Καμία ουσιαστική αλλαγή στην $($change.GefyraName)."
-                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                # Backfill OCR properties for persistence
-                $prevBridge = $previousStateArray | Where-Object { $_.GefyraName -eq $change.GefyraName } | Select-Object -First 1
-                $currentBridge = $currentStateArray | Where-Object { $_.GefyraName -eq $change.GefyraName } | Select-Object -First 1
-                if ($prevBridge -and $currentBridge) {
-                    foreach ($prop in @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2', 'ImageHash')) {
-                        if ($null -ne $prevBridge.$prop -and [string]::IsNullOrEmpty($currentBridge.$prop)) {
-                            $currentBridge | Add-Member -MemberType NoteProperty -Name $prop -Value $prevBridge.$prop -Force
-                        }
-                    }
-                }
-                continue
-            }
-            if ($change.SideIndicator -ne '=>') {
-                continue
-            }
 
-            $prevBridge = $previousStateArray | Where-Object { $_.GefyraName -eq $change.GefyraName } | Select-Object -First 1
-            if ($prevBridge -and $prevBridge.GefyraStatus -eq $change.GefyraStatus) {
-                if ($change.GefyraStatus -ne $Configuration.Statuses.ClosedWithSchedule) {
-                    $writeBridgeLogSplat.Message = "Καμία ουσιαστική αλλαγή στην $($change.GefyraName)."
-                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                    continue
-                } else {
-                    $currentBridge = $currentStateArray | Where-Object { $_.GefyraName -eq $change.GefyraName } | Select-Object -First 1
-                    if ($currentBridge -and [string]::IsNullOrEmpty($currentBridge.ImageHash) -and -not [string]::IsNullOrEmpty($prevBridge.ImageHash)) {
-                        $writeBridgeLogSplat.Message = "Αποτυχία λήψης νέου hash. Επαναχρησιμοποίηση προηγούμενου hash για την $($change.GefyraName)."
-                        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                        $currentBridge.ImageHash = $prevBridge.ImageHash
-                        # Also backfill OCR properties since hash is same
-                        foreach ($prop in @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')) {
-                            if ($null -ne $prevBridge.$prop -and [string]::IsNullOrEmpty($currentBridge.$prop)) {
-                                $currentBridge | Add-Member -MemberType NoteProperty -Name $prop -Value $prevBridge.$prop -Force
-                            }
-                        }
-                        continue
-                    }
-                    $writeBridgeLogSplat.Message = "Εντοπίστηκε ενημέρωση του προγράμματος κλεισίματος για την $($change.GefyraName)."
-                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                }
+            $actionableSplat = @{
+                Change             = $change
+                PreviousStateArray = $previousStateArray
+                CurrentStateArray  = $currentStateArray
+                Configuration      = $Configuration
+            }
+            if (-not (Test-BridgeChangeIsActionable @actionableSplat)) {
+                continue
             }
 
             $key = "$($change.GefyraStatus)|$($change.SideIndicator)"

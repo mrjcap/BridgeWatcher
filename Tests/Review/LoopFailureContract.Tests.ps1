@@ -11,6 +11,33 @@ $script:Files = Get-ChildItem -Path $script:PublicPath, $script:PrivatePath -Fil
 
 Describe "Loop Failure Contract Review" {
     BeforeAll {
+        function Test-AstNodeIsThrow {
+            <#
+            .SYNOPSIS
+            Checks if an AST node is a throw or ThrowTerminatingError invocation.
+            #>
+            param($Node)
+            if ($Node -is [System.Management.Automation.Language.ThrowStatementAst]) { return $true }
+            if ($Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -like '*ThrowTerminatingError*') { return $true }
+            return ($Node -is [System.Management.Automation.Language.MemberExpressionAst] -and $Node.Member.Extent.Text -eq 'ThrowTerminatingError')
+        }
+
+        function Test-LoopHasFailureThrow {
+            <#
+            .SYNOPSIS
+            Checks if a loop contains or is followed by a throw or terminating error.
+            #>
+            param($Loop)
+            $hasThrowInside = $Loop.FindAll({ param($node) Test-AstNodeIsThrow $node }, $true).Count -gt 0
+            if ($hasThrowInside) { return $true }
+
+            if (-not $Loop.Parent) { return $false }
+            return $Loop.Parent.FindAll({
+                param($node)
+                (Test-AstNodeIsThrow $node) -and ($node.Extent.StartOffset -gt $Loop.Extent.EndOffset)
+            }, $true).Count -gt 0
+        }
+
         # AST analysis helper to find retry/polling/monitoring loops that violate the contract
         function Get-LoopFailureContractViolation {
             <#
@@ -24,39 +51,22 @@ Describe "Loop Failure Contract Review" {
             $errors = $null
             $ast = [System.Management.Automation.Language.Parser]::ParseInput($Content, [ref]$tokens, [ref]$errors)
 
-            # Find all loops (while, for, foreach)
             $loops = $ast.FindAll({
                 param($node)
-                $node -is [System.Management.Automation.Language.LoopStatementAst] -or
-                $node -is [System.Management.Automation.Language.ForStatementAst] -or
-                $node -is [System.Management.Automation.Language.ForEachStatementAst]
+                $node -is [System.Management.Automation.Language.LoopStatementAst]
             }, $true)
 
             foreach ($loop in $loops) {
-                # Check if it has retry/polling/monitoring indicators:
-                # - Contains 'Start-Sleep'
-                # - OR performs HTTP/Web requests (Invoke-WebRequest, Invoke-RestMethod)
-                $sleeps = $loop.FindAll({
+                $isRetryOrPolling = $loop.FindAll({
                     param($node)
                     $node -is [System.Management.Automation.Language.CommandAst] -and
-                    $node.GetCommandName() -eq 'Start-Sleep'
-                }, $true)
-
-                $webCalls = $loop.FindAll({
-                    param($node)
-                    $node -is [System.Management.Automation.Language.CommandAst] -and
-                    $node.GetCommandName() -in @('Invoke-WebRequest', 'Invoke-RestMethod')
-                }, $true)
-
-                $isRetryOrPolling = ($sleeps.Count -gt 0) -or ($webCalls.Count -gt 0)
+                    $node.GetCommandName() -in @('Start-Sleep', 'Invoke-WebRequest', 'Invoke-RestMethod')
+                }, $true).Count -gt 0
 
                 if (-not $isRetryOrPolling) {
-                    continue # Skip normal data-processing iteration loops
+                    continue
                 }
 
-                # Verify Requirement 1: Tracks failure count/state/iterations.
-                # Must contain update expression (e.g. $i++, $count++), assignment (e.g., $consecutiveFailures = ...),
-                # or a binary expression (comparison) checking a loop limit.
                 $hasTracking = $loop.FindAll({
                     param($node)
                     $node -is [System.Management.Automation.Language.UnaryExpressionAst] -or
@@ -69,35 +79,7 @@ Describe "Loop Failure Contract Review" {
                     $violations.Add("Loop at line $($loop.Extent.StartLineNumber) is a retry/polling loop but lacks failure/iteration tracking.")
                 }
 
-                # Verify Requirement 2 & 3: Throws or reports failure when ALL iterations fail, and does not silently succeed.
-                # Look for throw statements or ThrowTerminatingError invocations inside the loop or immediately following it.
-                $hasThrow = $loop.FindAll({
-                    param($node)
-                    $node -is [System.Management.Automation.Language.ThrowStatementAst] -or
-                    ($node -is [System.Management.Automation.Language.CommandAst] -and
-                     $node.GetCommandName() -like '*ThrowTerminatingError*') -or
-                    ($node -is [System.Management.Automation.Language.MemberExpressionAst] -and
-                     $node.Member.Extent.Text -eq 'ThrowTerminatingError')
-                }, $true).Count -gt 0
-
-                if (-not $hasThrow) {
-                    # Check if there is a throw statement immediately after the loop in the parent block (e.g. for while loops checking error state after)
-                    $parent = $loop.Parent
-                    if ($parent) {
-                        $hasThrowAfter = $parent.FindAll({
-                            param($node)
-                            ($node -is [System.Management.Automation.Language.ThrowStatementAst] -or
-                             ($node -is [System.Management.Automation.Language.CommandAst] -and
-                              $node.GetCommandName() -like '*ThrowTerminatingError*') -or
-                             ($node -is [System.Management.Automation.Language.MemberExpressionAst] -and
-                              $node.Member.Extent.Text -eq 'ThrowTerminatingError')) -and
-                            $node.Extent.StartOffset -gt $loop.Extent.EndOffset
-                        }, $true).Count -gt 0
-                        $hasThrow = $hasThrowAfter
-                    }
-                }
-
-                if (-not $hasThrow) {
+                if (-not (Test-LoopHasFailureThrow $loop)) {
                     $violations.Add("Loop at line $($loop.Extent.StartLineNumber) lacks a throw or terminating error when all iterations fail.")
                 }
             }

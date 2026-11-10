@@ -5,6 +5,54 @@ Describe 'Retry Jitter Requirement Review' {
         $script:PublicPath = Resolve-Path "$PSScriptRoot/../../BridgeWatcher/Public"
         $script:PrivatePath = Resolve-Path "$PSScriptRoot/../../BridgeWatcher/Private"
 
+        function Test-SleepInsideCatch {
+            <#
+            .SYNOPSIS
+                Checks if any sleep command is inside a catch block within the loop.
+            #>
+            param($Loop, $Sleeps)
+            foreach ($sleep in $Sleeps) {
+                $parent = $sleep.Parent
+                while ($null -ne $parent -and $parent -ne $Loop) {
+                    if ($parent -is [System.Management.Automation.Language.CatchClauseAst]) {
+                        return $true
+                    }
+                    $parent = $parent.Parent
+                }
+            }
+            return $false
+        }
+
+        function Test-IsRetryLoop {
+            <#
+            .SYNOPSIS
+                Checks if a loop with Start-Sleep is a network retry or backoff loop.
+            #>
+            param($Loop, $Sleeps)
+            if (Test-SleepInsideCatch -Loop $Loop -Sleeps $Sleeps) {
+                return $true
+            }
+
+            $hasNetworkCall = $Loop.FindAll({
+                param($node)
+                $node -is [System.Management.Automation.Language.CommandAst] -and
+                $node.GetCommandName() -in @('Invoke-WebRequest', 'Invoke-RestMethod')
+            }, $true).Count -gt 0
+            if ($hasNetworkCall) {
+                return $true
+            }
+
+            return $Loop.FindAll({
+                param($node)
+                ($node -is [System.Management.Automation.Language.MemberExpressionAst] -and
+                 $node.Expression.Extent.Text -eq '[Math]' -and
+                 $node.Member.Extent.Text -eq 'Pow') -or
+                ($node -is [System.Management.Automation.Language.BinaryExpressionAst] -and
+                 $node.Operator -in @('Multiply', 'Plus') -and
+                 $node.Left.Extent.Text -match '\b(i|retry|count|delay)\b')
+            }, $true).Count -gt 0
+        }
+
         # AST analysis helper function to find retry jitter violations
         function Get-RetryJitterViolation {
             <#
@@ -20,9 +68,7 @@ Describe 'Retry Jitter Requirement Review' {
 
             $loops = $ast.FindAll({
                 param($node)
-                $node -is [System.Management.Automation.Language.LoopStatementAst] -or
-                $node -is [System.Management.Automation.Language.ForStatementAst] -or
-                $node -is [System.Management.Automation.Language.ForEachStatementAst]
+                $node -is [System.Management.Automation.Language.LoopStatementAst]
             }, $true)
 
             foreach ($loop in $loops) {
@@ -32,50 +78,18 @@ Describe 'Retry Jitter Requirement Review' {
                     $node.GetCommandName() -eq 'Start-Sleep'
                 }, $true)
 
-                if ($sleeps.Count -eq 0) {
+                if ($sleeps.Count -eq 0 -or -not (Test-IsRetryLoop -Loop $loop -Sleeps $sleeps)) {
                     continue
                 }
 
-                $hasNetworkCall = $loop.FindAll({
+                $hasJitter = $loop.FindAll({
                     param($node)
                     $node -is [System.Management.Automation.Language.CommandAst] -and
-                    $node.GetCommandName() -in @('Invoke-WebRequest', 'Invoke-RestMethod')
+                    $node.GetCommandName() -eq 'Get-Random'
                 }, $true).Count -gt 0
 
-                $hasCatchSleep = $false
-                foreach ($sleep in $sleeps) {
-                    $parent = $sleep.Parent
-                    while ($null -ne $parent -and $parent -ne $loop) {
-                        if ($parent -is [System.Management.Automation.Language.CatchClauseAst]) {
-                            $hasCatchSleep = $true
-                            break
-                        }
-                        $parent = $parent.Parent
-                    }
-                }
-
-                $hasBackoffCalc = $loop.FindAll({
-                    param($node)
-                    ($node -is [System.Management.Automation.Language.MemberExpressionAst] -and
-                     $node.Expression.Extent.Text -eq '[Math]' -and
-                     $node.Member.Extent.Text -eq 'Pow') -or
-                    ($node -is [System.Management.Automation.Language.BinaryExpressionAst] -and
-                     $node.Operator -in @('Multiply', 'Plus') -and
-                     $node.Left.Extent.Text -match '\b(i|retry|count|delay)\b')
-                }, $true).Count -gt 0
-
-                $isRetryLoop = $hasNetworkCall -or $hasCatchSleep -or $hasBackoffCalc
-
-                if ($isRetryLoop) {
-                    $hasJitter = $loop.FindAll({
-                        param($node)
-                        $node -is [System.Management.Automation.Language.CommandAst] -and
-                        $node.GetCommandName() -eq 'Get-Random'
-                    }, $true).Count -gt 0
-
-                    if (-not $hasJitter) {
-                        $violations.Add("Loop at line $($loop.Extent.StartLineNumber) lacks Get-Random or jitter mechanism.")
-                    }
+                if (-not $hasJitter) {
+                    $violations.Add("Loop at line $($loop.Extent.StartLineNumber) lacks Get-Random or jitter mechanism.")
                 }
             }
             return $violations

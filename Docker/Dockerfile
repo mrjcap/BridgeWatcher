@@ -47,26 +47,25 @@ RUN if [ "${PGID}" = "100" ]; then \
     else \
         addgroup -g ${PGID} appgroup && \
         adduser -D -u ${PUID} -G appgroup -h /home/appuser -s /bin/sh appuser; \
-    fi
-# Use UID:GID directly - always works!
-RUN mkdir -p /home/appuser/scripts/modules \
+    fi && \
+    mkdir -p /home/appuser/scripts/modules \
             /home/appuser/logs \
             /home/appuser/output \
             /home/appuser/.cache/powershell \
             /home/appuser/.config/powershell \
             /home/appuser/.local/share/powershell \
-            /app/logs && \
+            /app/logs \
+            /tmp && \
     chown -R ${PUID}:${PGID} /home/appuser /app/logs && \
-    chmod -R 755 /home/appuser /app/logs
-
-RUN mkdir -p /tmp && chmod 1777 /tmp
+    chmod -R 755 /home/appuser /app/logs && \
+    chmod 1777 /tmp
 
 USER appuser
 WORKDIR /home/appuser/scripts
 
-COPY --chown=${PUID}:${PGID} ./BridgeWatcher ./modules/BridgeWatcher
-COPY --chown=${PUID}:${PGID} Docker/entrypoint.sh /home/appuser/scripts/entrypoint.sh
-COPY --chown=${PUID}:${PGID} run.ps1 .
+COPY --chmod=0555 ./BridgeWatcher ./modules/BridgeWatcher
+COPY --chmod=0555 Docker/entrypoint.sh /home/appuser/scripts/entrypoint.sh
+COPY --chmod=0555 run.ps1 .
 
 EXPOSE 8090
 

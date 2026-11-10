@@ -58,19 +58,10 @@
                 $result = Invoke-RestMethod @invokeRestMethodSplat
                 break
             } catch {
-                $ex = $_.Exception
-                $response = $null
-                if ($null -ne $ex.Response) {
-                    $response = $ex.Response
-                }
-
+                $response = $_.Exception.Response
                 try {
-                    if ($response) {
-                        $statusCode = [int]$response.StatusCode
-                        if ($statusCode -in @(400, 401, 403)) { throw }
-                    }
-
-                    if ($i -eq $maxRetries) { throw }
+                    $isFatalStatus = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 403))
+                    if ($isFatalStatus -or $i -eq $maxRetries) { throw }
                     $baseSleep = [Math]::Pow(2, $i)
                     $jitter = Get-Random -Minimum 0 -Maximum 3
                     Start-Sleep -Seconds ($baseSleep + $jitter)

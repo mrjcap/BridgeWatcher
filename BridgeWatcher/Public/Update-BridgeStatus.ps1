@@ -52,17 +52,15 @@ function Update-BridgeStatus {
             Level   = $Configuration.LoggingConfig.VerboseLevel
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-        if (-not (Test-Path $OutputFile)) {
-            $currentState = Get-BridgeStatus -Configuration $Configuration
-            $previousState = @()
-        } else {
+        $previousState = @()
+        if (Test-Path $OutputFile) {
             $getDiorigaPreviousStatusSplat = @{
                 InputFile     = $OutputFile
                 Configuration = $Configuration
             }
             $previousState = Get-BridgePreviousStatus @getDiorigaPreviousStatusSplat
-            $currentState = Get-BridgeStatus -Configuration $Configuration
         }
+        $currentState = Get-BridgeStatus -Configuration $Configuration
 
         if ($PSCmdlet.ShouldProcess("BridgeWatcher", "Update status and send notifications")) {
             $invokeSplat = @{
@@ -72,20 +70,18 @@ function Update-BridgeStatus {
             }
             $diffEvents = Invoke-BridgeStatusComparison @invokeSplat
             # Dispatch notifications based on diff events
-            if ($null -ne $diffEvents -and $diffEvents.Count -gt 0) {
-                foreach ($diffEvent in $diffEvents) {
-                    $notificationSplat = @{
-                        CurrentState  = $diffEvent.StateInfo
-                        PoUserKey     = $PoUserKey
-                        PoApiKey      = $PoApiKey
-                        Configuration = $Configuration
-                    }
-                    if ($diffEvent.Type -eq 'Closed') {
-                        $notificationSplat.ApiKey = $ApiKey
-                        Invoke-BridgeClosedNotification @notificationSplat
-                    } else {
-                        Invoke-BridgeOpenedNotification @notificationSplat
-                    }
+            foreach ($diffEvent in $diffEvents) {
+                $notificationSplat = @{
+                    CurrentState  = $diffEvent.StateInfo
+                    PoUserKey     = $PoUserKey
+                    PoApiKey      = $PoApiKey
+                    Configuration = $Configuration
+                }
+                if ($diffEvent.Type -eq 'Closed') {
+                    $notificationSplat.ApiKey = $ApiKey
+                    Invoke-BridgeClosedNotification @notificationSplat
+                } else {
+                    Invoke-BridgeOpenedNotification @notificationSplat
                 }
             }
 

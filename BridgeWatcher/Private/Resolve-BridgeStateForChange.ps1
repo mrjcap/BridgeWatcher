@@ -38,30 +38,11 @@
         [Parameter(Mandatory)][object]$CurrentState
     )
 
-    $previousStateArray = [array]$PreviousState
-    $currentStateArray = [array]$CurrentState
-    $foundState = [System.Collections.Generic.List[object]]::new()
-
-    if ($Change.SideIndicator -eq '<=') {
-        foreach ($item in $currentStateArray) {
-            if ($item.GefyraName -eq $Change.GefyraName) {
-                $foundState.Add($item)
-            }
-        }
-        if ($foundState.Count -eq 0) {
-            foreach ($item in $previousStateArray) {
-                if ($item.GefyraName -eq $Change.GefyraName) {
-                    $foundState.Add($item)
-                }
-            }
-        }
-    } else {
-        foreach ($item in $currentStateArray) {
-            if ($item.GefyraName -eq $Change.GefyraName) {
-                $foundState.Add($item)
-            }
-        }
+    $currentMatches = @([array]$CurrentState | Where-Object { $null -ne $_ -and $_.GefyraName -eq $Change.GefyraName })
+    if ($currentMatches.Count -gt 0 -or $Change.SideIndicator -ne '<=') {
+        return , $currentMatches
     }
 
-    return , $foundState.ToArray()
+    $previousMatches = @([array]$PreviousState | Where-Object { $null -ne $_ -and $_.GefyraName -eq $Change.GefyraName })
+    return , $previousMatches
 }

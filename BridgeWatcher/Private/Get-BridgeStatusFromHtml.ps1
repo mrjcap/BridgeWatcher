@@ -58,7 +58,7 @@
             Configuration = $Configuration
         }
         $bridgeImages = Get-BridgeImage @getBridgeImagesSplat
-        if (-not $bridgeImages -or $bridgeImages.Count -eq 0) {
+        if (-not $bridgeImages) {
             $writeBridgeLogSplat = @{
                 Stage   = 'Σφάλμα'
                 Message = "❌ Δεν εντοπίστηκαν εικόνες για $location"
@@ -92,16 +92,14 @@
             $pattern = $statusEntry.Value
             # Inline Resolve-BridgeStatus
             $image = $bridgeImages | Where-Object { $_.src -match $pattern } | Select-Object -First 1
-            if ($status -eq $Configuration.Statuses.Open) {
-                $hasInfoImage = $bridgeImages | Where-Object { $_.src -match 'info\.php\?\d+' }
-                if (-not $hasInfoImage -or $hasInfoImage.Count -eq 0) {
-                    $writeBridgeLogSplat = @{
-                        Stage   = 'Ανάλυση'
-                        Message = "Λείπει η εικόνα info.php για $location ($status). Η γέφυρα θα θεωρηθεί Ανοιχτή, αλλά ενδέχεται να υπάρχει σφάλμα."
-                        Level   = 'Warning'
-                    }
-                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+            $hasInfoImage = $bridgeImages | Where-Object { $_.src -match 'info\.php\?\d+' }
+            if ($status -eq $Configuration.Statuses.Open -and -not $hasInfoImage) {
+                $writeBridgeLogSplat = @{
+                    Stage   = 'Ανάλυση'
+                    Message = "Λείπει η εικόνα info.php για $location ($status). Η γέφυρα θα θεωρηθεί Ανοιχτή, αλλά ενδέχεται να υπάρχει σφάλμα."
+                    Level   = 'Warning'
                 }
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             }
             if ($image) {
                 $writeBridgeLogSplat = @{

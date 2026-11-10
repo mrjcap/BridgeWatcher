@@ -10,7 +10,7 @@ on:
   workflow_call:
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
@@ -22,6 +22,8 @@ jobs:
   generate-docs:
     name: Generate PowerShell Documentation
     runs-on: ubuntu-26.04
+    permissions:
+      contents: write
 
     if: "!contains(github.event.head_commit.message, '[skip docs]') && !contains(github.event.head_commit.message, 'docs: auto-generate')"
 
@@ -194,7 +196,7 @@ jobs:
         run: |
           echo "Installing markdownlint-cli2 with retries..."
           for attempt in 1 2 3; do
-            npm install --no-save markdownlint-cli2 && break
+            npm install --no-save --ignore-scripts markdownlint-cli2@0.24.0 && break
             echo "npm install failed, retrying (attempt $attempt)..."
             sleep 5
           done
@@ -207,7 +209,7 @@ jobs:
 
       - name: Lint & auto-fix Markdown (warn-only)
         run: |
-          npx markdownlint-cli2 "docs/*.md" || EXIT_CODE=$?
+          ./node_modules/.bin/markdownlint-cli2 "docs/*.md" || EXIT_CODE=$?
           if [ "$EXIT_CODE" -ne 0 ]; then
             echo "::warning file=docs::MarkdownLint found issues, but build will continue."
           fi

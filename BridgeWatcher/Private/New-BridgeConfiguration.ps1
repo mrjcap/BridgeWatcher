@@ -74,19 +74,16 @@
         [string]$ConfigurationPath = ''
     )
 
-    if ([string]::IsNullOrWhiteSpace($LogDirectory)) {
-        if (-not [string]::IsNullOrWhiteSpace($Env:BRIDGEWATCHER_OUT)) {
-            $LogDirectory = $Env:BRIDGEWATCHER_OUT.Trim()
-        } elseif (Test-Path 'TestDrive:\') {
-            $LogDirectory = 'TestDrive:\logs'
-        } else {
-            $LogDirectory = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'logs'
-        }
-    }
+    $testDriveLog = if (Test-Path 'TestDrive:\') { 'TestDrive:\logs' } else { '' }
+    $defaultLogDir = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'logs'
+    $LogDirectory = @($LogDirectory, $Env:BRIDGEWATCHER_OUT, $testDriveLog, $defaultLogDir) |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        ForEach-Object { $_.Trim() } |
+        Select-Object -First 1
 
-    $sourceUrl = if ($BaseUrl) { $BaseUrl } else { 'https://www.topvision.gr/dioriga' }
-    $ocrUrl = if ($OCRApiUrl) { $OCRApiUrl } else { 'https://vision.googleapis.com/v1/images:annotate' }
-    $poUrl = if ($PushoverApiUrl) { $PushoverApiUrl } else { 'https://api.pushover.net/1/messages.json' }
+    $sourceUrl = @($BaseUrl, 'https://www.topvision.gr/dioriga') | Where-Object { $_ } | Select-Object -First 1
+    $ocrUrl = @($OCRApiUrl, 'https://vision.googleapis.com/v1/images:annotate') | Where-Object { $_ } | Select-Object -First 1
+    $poUrl = @($PushoverApiUrl, 'https://api.pushover.net/1/messages.json') | Where-Object { $_ } | Select-Object -First 1
 
     $config = [PSCustomObject]@{
         Urls                      = [PSCustomObject]@{
@@ -174,21 +171,10 @@
         }
         $rawJson = Get-Content -Path $ConfigurationPath -Raw -Encoding utf8
         $fileConfig = ConvertFrom-Json -InputObject $rawJson
-        if ($fileConfig.Urls) {
-            foreach ($prop in $fileConfig.Urls.psobject.Properties) {
-                if ($config.Urls.psobject.Properties[$prop.Name]) {
-                    $config.Urls.($prop.Name) = $prop.Value
-                } else {
-                    $config.Urls | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value -Force
-                }
-            }
-        }
-        if ($fileConfig.Defaults) {
-            foreach ($prop in $fileConfig.Defaults.psobject.Properties) {
-                if ($config.Defaults.psobject.Properties[$prop.Name]) {
-                    $config.Defaults.($prop.Name) = $prop.Value
-                } else {
-                    $config.Defaults | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value -Force
+        foreach ($section in @('Urls', 'Defaults')) {
+            if ($fileConfig.$section) {
+                foreach ($prop in $fileConfig.$section.psobject.Properties) {
+                    $config.$section | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value -Force
                 }
             }
         }

@@ -1,4 +1,4 @@
-$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "../../BridgeWatcher")
+﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "../../BridgeWatcher")
 $script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1 | Where-Object {
     $_.FullName -match '[\\/](Public|Private)[\\/]'
 }
@@ -20,6 +20,76 @@ function global:Find-AssignmentVariable($node) {
     return $null
 }
 
+# Helper function to assert disposal of a module-scoped resource variable
+function global:Assert-ModuleVariableIsDisposed($varName, $file) {
+    <#
+    .SYNOPSIS
+        Asserts a module-scoped variable is disposed in OnRemove.
+    #>
+    $psm1Path = Join-Path (Split-Path (Split-Path $file.FullName)) "BridgeWatcher.psm1"
+    $psm1Ast = [System.Management.Automation.Language.Parser]::ParseFile($psm1Path, [ref]$null, [ref]$null)
+    $onRemove = $psm1Ast.FindAll({
+        param($n)
+        $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+        $n.Left.ToString() -match '\.OnRemove$'
+    }, $true)
+
+    if (-not $onRemove) {
+        throw "Module-scoped variable '$varName' used but no OnRemove cleanup handler found in module script."
+    }
+
+    $bareName = $varName -replace '^(script|global):'
+    foreach ($or in $onRemove) {
+        $disposes = $or.Right.FindAll({
+            param($n)
+            $n -is [System.Management.Automation.Language.MemberExpressionAst] -and
+            $n.Member.Value -in @('Dispose', 'Close') -and
+            ($n.Expression.ToString() -match "\b(script:|global:)?$bareName\b")
+        }, $true)
+        if ($disposes) {
+            return
+        }
+    }
+
+    throw "Module-scoped variable '$varName' is not cleaned up in OnRemove block in module script."
+}
+
+# Helper function to assert disposal of a local resource variable
+function global:Assert-LocalVariableIsDisposed($varName, $node) {
+    <#
+    .SYNOPSIS
+        Asserts a local variable is disposed in a finally block.
+    #>
+    $parent = $node.Parent
+    $tryAst = $null
+    while ($parent) {
+        if ($parent -is [System.Management.Automation.Language.TryStatementAst]) {
+            $tryAst = $parent
+            break
+        }
+        $parent = $parent.Parent
+    }
+
+    if (-not $tryAst) {
+        throw "Variable '$varName' at line $($node.Extent.StartLineNumber) is not enclosed in a try block."
+    }
+
+    if (-not $tryAst.FinallyBlock) {
+        throw "Variable '$varName' at line $($node.Extent.StartLineNumber) has a try block but lacks a finally block."
+    }
+
+    $cleanFound = $tryAst.FinallyBlock.FindAll({
+        param($n)
+        $n -is [System.Management.Automation.Language.MemberExpressionAst] -and
+        $n.Member.Value -in @('Dispose', 'Close') -and
+        ($n.Expression.ToString() -match "\b$varName\b")
+    }, $true)
+
+    if (-not $cleanFound) {
+        throw "Variable '$varName' is not cleaned up (Dispose/Close) inside the finally block of the try statement at line $($tryAst.Extent.StartLineNumber)."
+    }
+}
+
 # Helper function to assert disposal of a resource variable
 function global:Assert-VariableIsDisposed($varName, $node, $file) {
     <#
@@ -30,69 +100,10 @@ function global:Assert-VariableIsDisposed($varName, $node, $file) {
         throw "Resource at line $($node.Extent.StartLineNumber) is not assigned to a variable (leak risk)."
     }
 
-    # Check if variable is module-scoped
     if ($varName -like 'script:*' -or $varName -like 'global:*') {
-        $psm1Path = Join-Path (Split-Path (Split-Path $file.FullName)) "BridgeWatcher.psm1"
-        $psm1Ast = [System.Management.Automation.Language.Parser]::ParseFile($psm1Path, [ref]$null, [ref]$null)
-        $onRemove = $psm1Ast.FindAll({
-            param($n)
-            $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and
-            $n.Left.ToString() -match '\.OnRemove$'
-        }, $true)
-
-        if (-not $onRemove) {
-            throw "Module-scoped variable '$varName' used but no OnRemove cleanup handler found in module script."
-        }
-
-        $bareName = $varName -replace '^(script|global):'
-        $cleanFound = $false
-        foreach ($or in $onRemove) {
-            $disposes = $or.Right.FindAll({
-                param($n)
-                $n -is [System.Management.Automation.Language.MemberExpressionAst] -and
-                $n.Member.Value -in @('Dispose', 'Close') -and
-                ($n.Expression.ToString() -match "\b(script:|global:)?$bareName\b")
-            }, $true)
-            if ($disposes) {
-                $cleanFound = $true
-                break
-            }
-        }
-
-        if (-not $cleanFound) {
-            throw "Module-scoped variable '$varName' is not cleaned up in OnRemove block in module script."
-        }
+        Assert-ModuleVariableIsDisposed $varName $file
     } else {
-        # Local variable: find TryStatementAst parent
-        $parent = $node.Parent
-        $tryAst = $null
-        while ($parent) {
-            if ($parent -is [System.Management.Automation.Language.TryStatementAst]) {
-                $tryAst = $parent
-                break
-            }
-            $parent = $parent.Parent
-        }
-
-        if (-not $tryAst) {
-            throw "Variable '$varName' at line $($node.Extent.StartLineNumber) is not enclosed in a try block."
-        }
-
-        if (-not $tryAst.FinallyBlock) {
-            throw "Variable '$varName' at line $($node.Extent.StartLineNumber) has a try block but lacks a finally block."
-        }
-
-        $bareName = $varName
-        $cleanFound = $tryAst.FinallyBlock.FindAll({
-            param($n)
-            $n -is [System.Management.Automation.Language.MemberExpressionAst] -and
-            $n.Member.Value -in @('Dispose', 'Close') -and
-            ($n.Expression.ToString() -match "\b$bareName\b")
-        }, $true)
-
-        if (-not $cleanFound) {
-            throw "Variable '$varName' is not cleaned up (Dispose/Close) inside the finally block of the try statement at line $($tryAst.Extent.StartLineNumber)."
-        }
+        Assert-LocalVariableIsDisposed $varName $node
     }
 }
 

@@ -40,11 +40,7 @@
 
     begin {
         $items = [System.Collections.Generic.List[object]]::new()
-
-        if (-not $JsonDepth) {
-            $JsonDepth = $Configuration.Defaults.JsonDepth
-            if (-not $JsonDepth) { $JsonDepth = 10 }
-        }
+        $resolvedDepth = @($JsonDepth, $Configuration.Defaults.JsonDepth, 10) | Where-Object { $_ -gt 0 } | Select-Object -First 1
 
         $successMessage = $Configuration.ExportMessages.Success
         $failedMessage = $Configuration.ExportMessages.Failed
@@ -54,12 +50,9 @@
     }
 
     process {
-        if ($null -ne $Data) {
-            if ($Data -is [System.Collections.IEnumerable] -and -not ($Data -is [string]) -and ($Data.Count -eq 0)) {
-                # Skip empty arrays passed directly to parameter
-            } else {
-                $items.Add($Data)
-            }
+        $isEmptyCollection = ($Data -is [System.Collections.IEnumerable]) -and ($Data -isnot [string]) -and ($Data.Count -eq 0)
+        if ($null -ne $Data -and -not $isEmptyCollection) {
+            $items.Add($Data)
         }
     }
 
@@ -91,7 +84,7 @@
                 }
                 }
 
-                $json = ConvertTo-Json -InputObject $dataToExport -Depth $JsonDepth -Compress
+                $json = ConvertTo-Json -InputObject $dataToExport -Depth $resolvedDepth -Compress
                 $tmpPath = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
                 Set-Content -Path $tmpPath -Value $json -Encoding UTF8 -Force
                 Move-Item -Path $tmpPath -Destination $Path -Force -ErrorAction Stop

@@ -1,4 +1,4 @@
-$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "../../BridgeWatcher")
+﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "../../BridgeWatcher")
 $script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1 | Where-Object {
     $_.FullName -match '[\\/](Public|Private)[\\/]'
 }
@@ -21,111 +21,99 @@ BeforeAll {
         return $false
     }
 
+    function Find-ParentAstOfType($node, [type[]]$types) {
+        <#
+        .SYNOPSIS
+        Finds the nearest ancestor AST node matching any of the given types.
+        #>
+        $parent = $node.Parent
+        while ($parent) {
+            foreach ($t in $types) {
+                if ($parent -is $t) { return $parent }
+            }
+            $parent = $parent.Parent
+        }
+        return $null
+    }
+
+    function Test-VariableReadAfterTry($varName, $tryAst, $enclosingScope) {
+        <#
+        .SYNOPSIS
+        Checks if a variable is read lexically after the try-catch block.
+        #>
+        $allRefs = $enclosingScope.FindAll({
+            param($n)
+            $n -is [System.Management.Automation.Language.VariableExpressionAst] -and
+            $n.VariablePath.UserPath -eq $varName
+        }, $true)
+
+        foreach ($ref in $allRefs) {
+            $isAfter = $ref.Extent.StartOffset -gt $tryAst.Extent.EndOffset
+            if ($isAfter -and -not (Test-IsAssignmentLeft $ref)) {
+                return $true
+            }
+        }
+        return $false
+    }
+
+    function Test-CatchSetsFailureVariable($catchBlock, $ast) {
+        <#
+        .SYNOPSIS
+        Checks if a catch block sets a failure state variable read after the try block.
+        #>
+        $tryAst = Find-ParentAstOfType $catchBlock @([System.Management.Automation.Language.TryStatementAst])
+        if (-not $tryAst) { return $false }
+
+        $scopeTypes = @(
+            [System.Management.Automation.Language.FunctionDefinitionAst],
+            [System.Management.Automation.Language.ScriptBlockAst]
+        )
+        $enclosingScope = Find-ParentAstOfType $catchBlock $scopeTypes
+        if (-not $enclosingScope) { $enclosingScope = $ast }
+
+        $ignorePattern = '(?i)(splat|log|errorRecord|errorMessage|title|message|^null$|^true$|^false$|^_$|^args$|^this$|^input$)'
+        $assignments = $catchBlock.FindAll({ param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] }, $true)
+        foreach ($assign in $assignments) {
+            $varsInLeft = $assign.Left.FindAll({ param($n) $n -is [System.Management.Automation.Language.VariableExpressionAst] }, $true)
+            foreach ($var in $varsInLeft) {
+                $varName = $var.VariablePath.UserPath
+                if ($varName -notmatch $ignorePattern -and (Test-VariableReadAfterTry -VarName $varName -TryAst $tryAst -EnclosingScope $enclosingScope)) {
+                    return $true
+                }
+            }
+        }
+        return $false
+    }
+
     function Test-CatchBlockCompliance($catchBlock, $ast) {
         <#
         .SYNOPSIS
         Checks if a catch block complies with Section 6 of AGENTS.md.
         #>
-        # 1. Check for throw statement
-        $hasThrow = $catchBlock.FindAll({ param($n) $n -is [System.Management.Automation.Language.ThrowStatementAst] }, $true)
-        if ($hasThrow) { return $true }
+        $controlFlowTypes = @(
+            [System.Management.Automation.Language.ThrowStatementAst],
+            [System.Management.Automation.Language.ReturnStatementAst],
+            [System.Management.Automation.Language.ExitStatementAst],
+            [System.Management.Automation.Language.BreakStatementAst],
+            [System.Management.Automation.Language.ContinueStatementAst]
+        )
+        $hasControlFlow = $catchBlock.FindAll({
+            param($n)
+            foreach ($t in $controlFlowTypes) {
+                if ($n -is $t) { return $true }
+            }
+            return $false
+        }, $true)
+        if ($hasControlFlow) { return $true }
 
-        # 2. Check for ThrowTerminatingError call
         $hasThrowTerminating = $catchBlock.FindAll({
             param($n)
-            ($n -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and ($n.Member.ToString() -eq 'ThrowTerminatingError' -or ($n.Member -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $n.Member.Value -eq 'ThrowTerminatingError'))) -or
-            ($n -is [System.Management.Automation.Language.MemberExpressionAst] -and ($n.Member.ToString() -eq 'ThrowTerminatingError' -or ($n.Member -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $n.Member.Value -eq 'ThrowTerminatingError'))) -or
+            ($n -is [System.Management.Automation.Language.MemberExpressionAst] -and $n.Member.ToString() -match '^''?ThrowTerminatingError''?$') -or
             ($n -is [System.Management.Automation.Language.CommandAst] -and $n.GetCommandName() -eq 'ThrowTerminatingError')
         }, $true)
         if ($hasThrowTerminating) { return $true }
 
-        # 3. Check for return or exit statement
-        $hasReturnOrExit = $catchBlock.FindAll({
-            param($n)
-            $n -is [System.Management.Automation.Language.ReturnStatementAst] -or
-            $n -is [System.Management.Automation.Language.ExitStatementAst]
-        }, $true)
-        if ($hasReturnOrExit) { return $true }
-
-        # 4. Check for break or continue statement
-        $hasBreakOrContinue = $catchBlock.FindAll({
-            param($n)
-            $n -is [System.Management.Automation.Language.BreakStatementAst] -or
-            $n -is [System.Management.Automation.Language.ContinueStatementAst]
-        }, $true)
-        if ($hasBreakOrContinue) { return $true }
-
-        # 5. Check for failure-state variables checked outside the try-catch block
-        $parent = $catchBlock.Parent
-        $tryAst = $null
-        while ($parent) {
-            if ($parent -is [System.Management.Automation.Language.TryStatementAst]) {
-                $tryAst = $parent
-                break
-            }
-            $parent = $parent.Parent
-        }
-
-        # Find the enclosing scope
-        $parent = $catchBlock.Parent
-        $enclosingScope = $null
-        while ($parent) {
-            if ($parent -is [System.Management.Automation.Language.FunctionDefinitionAst] -or $parent -is [System.Management.Automation.Language.ScriptBlockAst]) {
-                $enclosingScope = $parent
-                break
-            }
-            $parent = $parent.Parent
-        }
-        if (-not $enclosingScope) { $enclosingScope = $ast }
-
-        $assignments = $catchBlock.FindAll({ param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] }, $true)
-        foreach ($assign in $assignments) {
-            $varExpr = $assign.Left
-            $varsInLeft = $varExpr.FindAll({ param($n) $n -is [System.Management.Automation.Language.VariableExpressionAst] }, $true)
-            foreach ($var in $varsInLeft) {
-                $varName = $var.VariablePath.UserPath
-                # Ignore temporary formatting, logging, and automatic variables
-                if ($varName -match '(?i)(splat|log|errorRecord|errorMessage|title|message|^null$|^true$|^false$|^_$|^args$|^this$|^input$)') { continue }
-
-                if ($tryAst) {
-                    $allRefs = $enclosingScope.FindAll({
-                        param($n)
-                        $n -is [System.Management.Automation.Language.VariableExpressionAst] -and
-                        $n.VariablePath.UserPath -eq $varName
-                    }, $true)
-
-                    $outsideReadCount = 0
-                    foreach ($ref in $allRefs) {
-                        # Reference must be outside the try-catch block
-                        $refParent = $ref.Parent
-                        $isInsideTry = $false
-                        while ($refParent) {
-                            if ($refParent -eq $tryAst) {
-                                $isInsideTry = $true
-                                break
-                            }
-                            $refParent = $refParent.Parent
-                        }
-
-                        if (-not $isInsideTry) {
-                            # Must be lexically after the try-catch block
-                            $isAfter = $ref.Extent.StartOffset -gt $tryAst.Extent.EndOffset
-                            # Must be a read (not on the left side of an assignment)
-                            $isRead = -not (Test-IsAssignmentLeft $ref)
-
-                            if ($isAfter -and $isRead) {
-                                $outsideReadCount++
-                            }
-                        }
-                    }
-                    if ($outsideReadCount -gt 0) {
-                        return $true
-                    }
-                }
-            }
-        }
-
-        return $false
+        return (Test-CatchSetsFailureVariable $catchBlock $ast)
     }
 }
 

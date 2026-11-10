@@ -22,7 +22,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 env:
   REGISTRY: docker.io
@@ -35,6 +34,9 @@ jobs:
   build-and-test:
     name: Build and Test Docker Image
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      security-events: write
     outputs:
       image_version: ${{ steps.meta.outputs.version }}
       image_digest: ${{ steps.build.outputs.digest }}
@@ -113,7 +115,8 @@ jobs:
 
           # Create test secrets directory with lowercase names matching docker-compose.yml
           mkdir -p test-secrets test-logs
-          chmod 777 test-logs
+          sudo chown 99:100 test-logs
+          chmod 750 test-logs
           echo "test-api-key" > test-secrets/api_key
           echo "test-po-api-key" > test-secrets/pushover_token
           echo "test-po-user-key" > test-secrets/pushover_user

@@ -35,8 +35,7 @@
     $analysisStage = $Configuration.LoggingConfig.InfoStage
     $errorStage = $Configuration.LoggingConfig.ErrorStage
 
-    $timeout = $Configuration.Defaults.HttpRequestTimeout
-    if (-not $timeout) { $timeout = 60 }
+    $timeout = @($Configuration.Defaults.HttpRequestTimeout, 60) | Where-Object { $_ -gt 0 } | Select-Object -First 1
 
     try {
         $invokeRestMethodSplat = @{
@@ -66,20 +65,11 @@
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 return $result
             } catch {
-                $ex = $_.Exception
-                $response = $null
-                if ($null -ne $ex.Response) {
-                    $response = $ex.Response
-                }
-
+                $response = $_.Exception.Response
                 try {
-                    if ($response) {
-                        $statusCode = [int]$response.StatusCode
-                        # Do not abort on 403 (Quota) or 429 (Rate Limit). Abort on 400, 401, 413, 422.
-                        if ($statusCode -in @(400, 401, 413, 422)) { throw }
-                    }
-
-                    if ($i -eq $maxRetries) { throw }
+                    # Do not abort on 403 (Quota) or 429 (Rate Limit). Abort on 400, 401, 413, 422.
+                    $isFatalStatus = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 413, 422))
+                    if ($isFatalStatus -or $i -eq $maxRetries) { throw }
                     $baseSleep = [Math]::Pow(2, $i)
                     $jitter = Get-Random -Minimum 0 -Maximum 4
                     Start-Sleep -Seconds ($baseSleep + $jitter)
