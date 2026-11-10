@@ -1,4 +1,4 @@
-﻿# 🌉 BridgeWatcher: Προηγμένη Παρακολούθηση Γεφυρών Ισθμού
+﻿# BridgeWatcher: παρακολούθηση γεφυρών Ισθμού
 
 [![Κατάσταση CI](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/ci.yml)
 [![Κατασκευή Docker](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml/badge.svg)](https://github.com/mrjcap/BridgeWatcher/actions/workflows/docker-build.yml)
@@ -18,102 +18,93 @@
 
 ---
 
-## 📖 Περιγραφή
+## Περιγραφή
 
-Το **BridgeWatcher** αποτελεί ένα υψηλής εξειδίκευσης και
-πλήρως αυτοματοποιημένο PowerShell module,
-σχεδιασμένο με σκοπό την αξιόπιστη εποπτεία της λειτουργικής κατάστασης
-των γεφυρών **Ποσειδωνίας** και **Ισθμίας** στον Ισθμό της Κορίνθου.
+Το BridgeWatcher είναι ένα PowerShell module για την παρακολούθηση της κατάστασης των βυθιζόμενων γεφυρών
+Ποσειδωνίας και Ισθμίας στον Ισθμό της Κορίνθου.
 
-Με την αξιοποίηση τεχνικών HTML scraping και Οπτικής Αναγνώρισης Χαρακτήρων (OCR)
+Το εργαλείο αντλεί δεδομένα από τον ιστότοπο της διώρυγας, αναγνωρίζει το πρόγραμμα διελεύσεων από ανακοινώσεις
+με το [Google Vision API](https://cloud.google.com/vision), στέλνει ειδοποιήσεις push μέσω
+[Pushover](https://pushover.net/) όταν αλλάζει η κατάσταση μιας γέφυρας και αποθηκεύει το ιστορικό σε αρχεία JSON.
 
-μέσω του [Google Vision API](https://cloud.google.com/vision),
+## Πίνακας περιεχομένων
 
-το σύστημα διενεργεί σε βάθος ανάλυση δεδομένων σε πραγματικό χρόνο,
+- [Δυνατότητες](#δυνατότητες)
+- [Αρχιτεκτονική](#αρχιτεκτονική)
+- [Προϋποθέσεις](#προϋποθέσεις)
+- [Εγκατάσταση](#εγκατάσταση)
+- [Παραδείγματα χρήσης](#παραδείγματα-χρήσης)
+- [Παράμετροι και ρυθμίσεις](#παράμετροι-και-ρυθμίσεις)
+- [Δομή δεδομένων](#δομή-δεδομένων)
+- [Εξαρτήσεις module](#εξαρτήσεις-module)
+- [Αντιμετώπιση προβλημάτων](#αντιμετώπιση-προβλημάτων)
+- [Άδεια χρήσης και συνεισφορά](#άδεια-χρήσης-και-συνεισφορά)
+- [Οδικός χάρτης ανάπτυξης](#οδικός-χάρτης-ανάπτυξης)
+- [Συχνές ερωτήσεις](#συχνές-ερωτήσεις)
 
-αποστέλλει κρίσιμες ειδοποιήσεις μέσω της πλατφόρμας
+## Δυνατότητες
 
-[Pushover](https://pushover.net/) και διατηρεί ιστορικό καταγραφών σε μορφή JSON
-για εκ των υστέρων επεξεργασία και αξιολόγηση.
+- Ανάκτηση κατάστασης γεφυρών από τον ιστότοπο της διώρυγας.
+- Αναγνώριση κειμένου (OCR) από εικόνες ανακοινώσεων μέσω Google Vision API.
+- Αποστολή ειδοποιήσεων push μέσω Pushover σε αλλαγή κατάστασης.
+- Εξαγωγή στιγμιοτύπων κατάστασης σε αρχεία JSON.
+- Παραμετροποίηση συχνότητας ελέγχου και μέγιστου αριθμού επαναλήψεων.
+- Σουίτα δοκιμών με Pester v5 και κάλυψη κώδικα 100%.
+- Αυτοματοποιημένη ροή CI/CD για έλεγχο, δόμηση και δημοσίευση.
 
-## 📋 Πίνακας Περιεχομένων
-
-- [💡 Δυνατότητες](#-δυνατότητες)
-- [🏗️ Αρχιτεκτονική](#️-αρχιτεκτονική)
-- [🛠️ Προϋποθέσεις](#️-προϋποθέσεις)
-- [📦 Εγκατάσταση](#-εγκατάσταση)
-- [🚀 Παραδείγματα Χρήσης](#-παραδείγματα-χρήσης)
-- [⚙️ Παράμετροι & Ρυθμίσεις](#️-παράμετροι--ρυθμίσεις)
-- [📊 Δομή Δεδομένων](#-δομή-δεδομένων)
-- [🧩 Εξαρτήσεις Module](#-εξαρτήσεις-module)
-- [🔧 Troubleshooting](#-troubleshooting)
-- [📝 Άδεια Χρήσης & Συμμετοχή](#-άδεια-χρήσης--συμμετοχή)
-- [🗺️ Οδικός Χάρτης Ανάπτυξης](#️-οδικός-χάρτης-ανάπτυξης)
-- [❓ Συχνές Ερωτήσεις (FAQ)](#-συχνές-ερωτήσεις-faq)
-
-## 💡 Δυνατότητες
-
-- ✅ **Αυτοματοποιημένη ανάκτηση δεδομένων** από την επίσημη διαδικτυακή πηγή
-- ✅ **OCR ανάλυση** με εξελιγμένους αλγορίθμους για ακριβή εξαγωγή χρονικών παραμέτρων
-- ✅ **Push notifications** με στιγμιαία αποστολή προσαρμοσμένων ειδοποιήσεων
-- ✅ Ιστορικό καταγραφών με δημιουργία στιγμιοτύπων σε μορφή JSON
-- ✅ **Ευέλικτη παραμετροποίηση** διαστημάτων παρακολούθησης
-- ✅ Πλήρης κάλυψη δοκιμών με testing framework (Pester v5)
-- ✅ **CI/CD ready** με απόλυτη συμβατότητα για συνεχή ενσωμάτωση
-
-## 🏗️ Αρχιτεκτονική
+## Αρχιτεκτονική
 
 ```mermaid
 flowchart TD
 
-subgraph group_monitoring["Monitoring & Orchestration"]
-  node_monitor["Status Monitor"]
-  node_update["Status Update Orchestrator"]
-  node_status["Status Retrieval"]
+subgraph group_monitoring["Παρακολούθηση και ενορχήστρωση"]
+  node_monitor["Παρακολούθηση κατάστασης"]
+  node_update["Ενορχηστρωτής ενημέρωσης κατάστασης"]
+  node_status["Ανάκτηση κατάστασης"]
 end
 
-subgraph group_analysis["State Analysis & Persistence"]
-  node_prev_status["Previous State Reader"]
-  node_html_analysis["HTML Status Analysis"]
-  node_status_object["Status Object & Image Hasher"]
-  node_comparison["Pure Status Comparison"]
-  node_snapshot_export["Snapshot Exporter"]
-  node_state_file[("Bridge State Snapshot JSON")]
+subgraph group_analysis["Ανάλυση κατάστασης και αποθήκευση"]
+  node_prev_status["Ανάγνωση προηγούμενης κατάστασης"]
+  node_html_analysis["Ανάλυση κατάστασης από HTML"]
+  node_status_object["Αντικείμενο κατάστασης και hash εικόνας"]
+  node_comparison["Σύγκριση κατάστασης"]
+  node_snapshot_export["Εξαγωγέας στιγμιοτύπου"]
+  node_state_file[("Στιγμιότυπο κατάστασης JSON")]
 end
 
-subgraph group_dispatch["Notification Dispatch & OCR"]
-  node_closed_handler["Closed Notification Handler"]
-  node_opened_handler["Opened Notification Handler"]
-  node_ocr["Google Cloud OCR Request"]
-  node_ocr_parser["OCR Schedule & Advice Parser"]
-  node_pushover_sender["Pushover Notification Sender"]
+subgraph group_dispatch["Δρομολόγηση ειδοποιήσεων και OCR"]
+  node_closed_handler["Διαχειριστής ειδοποίησης κλεισίματος"]
+  node_opened_handler["Διαχειριστής ειδοποίησης ανοίγματος"]
+  node_ocr["Αίτημα OCR Google Cloud"]
+  node_ocr_parser["Αναλυτής προγράμματος και οδηγιών OCR"]
+  node_pushover_sender["Αποστολέας ειδοποίησης Pushover"]
 end
 
-node_operator(("Operator"))
-node_bridge_source["Bridge Information Source"]
-node_vision["Google Vision API"]
-node_pushover["Pushover API"]
+node_operator(("Χειριστής"))
+node_bridge_source["Πηγή πληροφοριών γεφυρών"]
+node_vision["API Google Vision"]
+node_pushover["API Pushover"]
 
-node_operator -->|"starts polling loop"| node_monitor
-node_monitor -->|"invokes every interval"| node_update
-node_update -->|"loads prior state"| node_prev_status
-node_prev_status -->|"reads"| node_state_file
-node_update -->|"fetches live state"| node_status
-node_status -->|"downloads HTML"| node_bridge_source
-node_status -->|"parses bridge blocks"| node_html_analysis
-node_html_analysis -->|"builds state & hashes schedule"| node_status_object
-node_status_object -.->|"downloads schedule image bytes"| node_bridge_source
-node_update <-->|"passes states / receives Bridge Diff Events"| node_comparison
-node_update -.->|"dispatches Closed event"| node_closed_handler
-node_update -.->|"dispatches Opened event"| node_opened_handler
-node_closed_handler -.->|"requests OCR on scheduled closure"| node_ocr
-node_ocr -->|"sends image URI"| node_vision
-node_ocr -->|"parses timestamps & advice"| node_ocr_parser
-node_closed_handler -->|"sends closure alert"| node_pushover_sender
-node_opened_handler -->|"sends opening alert"| node_pushover_sender
-node_pushover_sender -->|"delivers push notification"| node_pushover
-node_update -->|"persists latest state"| node_snapshot_export
-node_snapshot_export -->|"atomically overwrites"| node_state_file
+node_operator -->|"εκκίνηση βρόχου ελέγχου"| node_monitor
+node_monitor -->|"εκτέλεση ανά μεσοδιάστημα"| node_update
+node_update -->|"φόρτωση προηγούμενης κατάστασης"| node_prev_status
+node_prev_status -->|"ανάγνωση"| node_state_file
+node_update -->|"ανάκτηση ζωντανής κατάστασης"| node_status
+node_status -->|"λήψη HTML"| node_bridge_source
+node_status -->|"ανάλυση τμημάτων γεφυρών"| node_html_analysis
+node_html_analysis -->|"δόμηση κατάστασης και hash εικόνας"| node_status_object
+node_status_object -.->|"λήψη δεδομένων εικόνας προγράμματος"| node_bridge_source
+node_update <-->|"αποστολή καταστάσεων / λήψη συμβάντων διαφοράς"| node_comparison
+node_update -.->|"αποστολή συμβάντος κλεισίματος"| node_closed_handler
+node_update -.->|"αποστολή συμβάντος ανοίγματος"| node_opened_handler
+node_closed_handler -.->|"αίτημα OCR για προγραμματισμένο κλείσιμο"| node_ocr
+node_ocr -->|"αποστολή URI εικόνας"| node_vision
+node_ocr -->|"ανάλυση χρονοσημάνσεων και οδηγιών"| node_ocr_parser
+node_closed_handler -->|"αποστολή ειδοποίησης κλεισίματος"| node_pushover_sender
+node_opened_handler -->|"αποστολή ειδοποίησης ανοίγματος"| node_pushover_sender
+node_pushover_sender -->|"παράδοση ειδοποίησης push"| node_pushover
+node_update -->|"αποθήκευση τελευταίας κατάστασης"| node_snapshot_export
+node_snapshot_export -->|"ατομική εγγραφή"| node_state_file
 
 click node_monitor "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Public/Get-BridgeStatusMonitor.ps1"
 click node_update "https://github.com/mrjcap/bridgewatcher/blob/main/BridgeWatcher/Public/Update-BridgeStatus.ps1"
@@ -140,42 +131,41 @@ class node_closed_handler,node_opened_handler,node_ocr,node_ocr_parser,node_push
 class node_operator,node_bridge_source,node_vision,node_pushover toneIndigo
 ```
 
-## 🛠️ Προϋποθέσεις
+## Προϋποθέσεις
 
-### 📄 Απαραίτητες Παράμετροι
+### Απαραίτητες παράμετροι
 
-Προτού ξεκινήσεις την αξιοποίηση του **BridgeWatcher**,
-βεβαιώσου ότι έχεις εξασφαλίσει τα ακόλουθα:
+Πριν από την εκτέλεση του BridgeWatcher χρειάζονται τα εξής στοιχεία:
 
-| Απαίτηση | Περιγραφή | Πώς να το αποκτήσεις |
-| -------- | --------- | -------------------- |
-| **Google Vision API Key** | Απαραίτητο για OCR λειτουργίες | [Google Cloud Console](https://console.cloud.google.com/) |
-| **Pushover API Key** | Για αποστολή ειδοποιήσεων | [Pushover Dashboard](https://pushover.net/apps) |
-| **Pushover User Key** | Για προσωποποιημένες ειδοποιήσεις | [Pushover Account](https://pushover.net/) |
-| **Pushover Mobile App** | Για λήψη ειδοποιήσεων | [iOS](https://apps.apple.com/us/app/pushover-notifications/id506088175) / [Android](https://play.google.com/store/apps/details?id=net.superblock.pushover) |
+| Απαίτηση | Περιγραφή | Πηγή απόκτησης |
+| -------- | --------- | -------------- |
+| Google Vision API Key | Κλειδί πρόσβασης για τις κλήσεις OCR | [Google Cloud Console](https://console.cloud.google.com/) |
+| Pushover API Key | Κλειδί εφαρμογής για αποστολή ειδοποιήσεων | [Pushover Dashboard](https://pushover.net/apps) |
+| Pushover User Key | Κλειδί χρήστη ή ομάδας παραληπτών | [Pushover Account](https://pushover.net/) |
+| Pushover Client | Εφαρμογή λήψης ειδοποιήσεων | [iOS](https://apps.apple.com/us/app/pushover-notifications/id506088175) / [Android](https://play.google.com/store/apps/details?id=net.superblock.pushover) |
 
-### 💻 Απαιτήσεις Συστήματος
+### Απαιτήσεις συστήματος
 
-- PowerShell 5.1 ή νεότερο
+- PowerShell 5.1 ή νεότερο, συνιστάται PowerShell Core 7 και νεότερο
 - Windows, macOS ή Linux
 - Σύνδεση στο διαδίκτυο
 
-## 📦 Εγκατάσταση
+## Εγκατάσταση
 
-### Μέθοδος 1: PowerShell Gallery (Προτεινόμενη)
+### Μέθοδος 1: PowerShell Gallery
 
 ```powershell
 # Εγκατάσταση για τον τρέχοντα χρήστη
 Install-Module -Name BridgeWatcher -Scope CurrentUser
 
-# Εγκατάσταση για όλους τους χρήστες (απαιτεί admin)
+# Εγκατάσταση για όλους τους χρήστες (απαιτεί δικαιώματα διαχειριστή)
 Install-Module -Name BridgeWatcher -Scope AllUsers
 ```
 
-### Μέθοδος 2: Χειροκίνητη εγκατάσταση από GitHub
+### Μέθοδος 2: χειροκίνητη εγκατάσταση από το GitHub
 
 ```powershell
-# Κλωνοποίηση του repository
+# Κλωνοποίηση του αποθετηρίου
 git clone https://github.com/mrjcap/BridgeWatcher.git
 
 # Μετάβαση στον φάκελο
@@ -185,15 +175,15 @@ cd BridgeWatcher
 Import-Module ./BridgeWatcher.psd1 -Force
 ```
 
-## 🚀 Παραδείγματα Χρήσης
+## Παραδείγματα χρήσης
 
-### Παράδειγμα 1: Εκκίνηση συνεχούς παρακολούθησης
+### Παράδειγμα 1: εκκίνηση συνεχούς παρακολούθησης
 
 ```powershell
-# Δημιουργία hashtable με παραμέτρους
+# Παράμετροι συνεχούς ελέγχου
 $params = @{
-    MaxIterations      = 0           # 0 = άπειρες επαναλήψεις
-    IntervalSeconds    = 600         # Έλεγχος κάθε 10 λεπτά
+    MaxIterations      = 0           # 0 για απεριόριστες επαναλήψεις
+    IntervalSeconds    = 600         # Έλεγχος κάθε 10 λεπτά (600 δευτερόλεπτα)
     PoApiKey           = 'your-pushover-api-key'
     PoUserKey          = 'your-pushover-user-key'
     ApiKey             = 'your-google-vision-api-key'
@@ -204,27 +194,27 @@ $params = @{
 Get-BridgeStatusMonitor @params
 ```
 
-### Παράδειγμα 2: Άμεση ανάκτηση κατάστασης
+### Παράδειγμα 2: άμεση ανάκτηση κατάστασης
 
 ```powershell
-# Απλή κλήση
+# Απλή εκτέλεση
 Get-BridgeStatus
 
-# Με verbose output για debugging
+# Αναλυτική καταγραφή
 Get-BridgeStatus -Verbose
 
-# Αποθήκευση σε μεταβλητή για περαιτέρω επεξεργασία
+# Αποθήκευση σε μεταβλητή και προβολή πίνακα
 $status = Get-BridgeStatus
 $status | Format-Table -AutoSize
 ```
 
-### Παράδειγμα 3: Περιορισμένη παρακολούθηση
+### Παράδειγμα 3: περιορισμένη παρακολούθηση
 
 ```powershell
-# Παρακολούθηση για 24 ώρες με έλεγχο κάθε 30 λεπτά
+# Παρακολούθηση για 24 ώρες με έλεγχο κάθε 30 λεπτά (48 επαναλήψεις)
 $params = @{
-    MaxIterations      = 48          # 24 ώρες / 30 λεπτά = 48 επαναλήψεις
-    IntervalSeconds    = 1800        # 30 λεπτά = 1800 δευτερόλεπτα
+    MaxIterations      = 48
+    IntervalSeconds    = 1800
     PoApiKey           = $env:PUSHOVER_API_KEY
     PoUserKey          = $env:PUSHOVER_USER_KEY
     ApiKey             = $env:GOOGLE_VISION_API_KEY
@@ -236,35 +226,34 @@ Get-BridgeStatusMonitor @params
 
 ---
 
-#### ⚡ Σημειώσεις & Best Practices
+#### Σημειώσεις και πρακτικές ασφαλείας
 
-- Ο φάκελος του κωδικού (`C:\automation\passwd.xml`) πρέπει να είναι προστατευμένος με NTFS δικαιώματα.
-- Το vault παραμένει ξεκλείδωτο για όσο έχεις ορίσει στο `PasswordTimeout`.
-- Για cloud ή Linux/macOS automation προτίμησε secrets provider της πλατφόρμας (π.χ.
-  [GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets),
-  [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/)).
-- Μην καταγράφεις ποτέ τα secrets σε log files.
-- Για auditability και compliance, δες
-  [NIST SP 800-53 - IA-5](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf).
+- Περιορίστε τα δικαιώματα πρόσβασης σε αρχεία ρυθμίσεων και μυστικών στο σύστημα αρχείων.
+- Σε περιβάλλοντα αυτοματισμού ή CI/CD, αποθηκεύστε τα κλειδιά σε μεταβλητές περιβάλλοντος ή σε διαχειριστή μυστικών,
+  όπως [GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) ή
+  [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/).
+- Μην καταγράφετε μυστικά κλειδιά και διακριτικά πρόσβασης σε αρχεία καταγραφής.
+- Για οδηγίες ασφάλειας αυθεντικοποίησης, ανατρέξτε στο
+  [NIST SP 800-53 IA-5](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf).
 
 ---
 
-## ⚙️ Παράμετροι & Ρυθμίσεις
+## Παράμετροι και ρυθμίσεις
 
-### Get-BridgeStatusMonitor Parameters
+### Παράμετροι Get-BridgeStatusMonitor
 
 | Παράμετρος | Τύπος | Περιγραφή | Προεπιλογή |
 | ---------- | ----- | --------- | ---------- |
-| `MaxIterations` | int | Αριθμός επαναλήψεων (0 = άπειρες) | 0 |
-| `IntervalSeconds` | int | Χρονικό διάστημα μεταξύ ελέγχων | 600 |
-| `PoApiKey` | string | Pushover API Key | - |
+| `MaxIterations` | int | Αριθμός επαναλήψεων, 0 για απεριόριστες | 0 |
+| `IntervalSeconds` | int | Δευτερόλεπτα αναμονής μεταξύ ελέγχων | 600 |
+| `PoApiKey` | string | Pushover API Token | - |
 | `PoUserKey` | string | Pushover User Key | - |
 | `ApiKey` | string | Google Vision API Key | - |
-| `OutputFile` | string | Διαδρομή αρχείου JSON | ./BridgeStatusSnapshot.json |
+| `OutputFile` | string | Διαδρομή αρχείου εξαγωγής JSON | ./BridgeStatusSnapshot.json |
 
-## 📊 Δομή Δεδομένων
+## Δομή δεδομένων
 
-### Παράδειγμα JSON Output
+### Παράδειγμα εξόδου JSON
 
 ```json
 [
@@ -283,111 +272,106 @@ Get-BridgeStatusMonitor @params
 ]
 ```
 
-## 🧩 Εξαρτήσεις Module
+## Εξαρτήσεις module
 
-Το **BridgeWatcher** έχει αναπτυχθεί ως αυτάρκες module χωρίς εξωτερικές εξαρτήσεις:
+Το BridgeWatcher δεν απαιτεί εξωτερικές βιβλιοθήκες κατά την εκτέλεση:
 
-- ✅ **Παραγωγή**: Καμία εξωτερική εξάρτηση
-- 🧪 **Ανάπτυξη/Testing**: Pester v5 (για unit tests)
+- Παραγωγή: καμία εξωτερική εξάρτηση.
+- Δοκιμές: Pester v5 για την εκτέλεση των δοκιμών μονάδας.
 
-## 🔧 Troubleshooting
+## Αντιμετώπιση προβλημάτων
 
-### Κοινά Προβλήματα & Λύσεις
+### Κοινά προβλήματα και λύσεις
 
-#### 🔴 Σφάλμα: "Cannot connect to bridge status website"
+#### Αποτυχία σύνδεσης στον ιστότοπο
 
 ```powershell
-# Έλεγχος σύνδεσης
+# Έλεγχος δικτυακής σύνδεσης προς τον ιστότοπο
 Test-NetConnection -ComputerName "www.topvision.gr" -Port 443
-
 ```
 
-#### 🔴 Σφάλμα: "Pushover notification failed"
+#### Αποτυχία αποστολής ειδοποίησης Pushover
 
 ```powershell
-# Δοκιμή Pushover connection
+# Δοκιμαστική αποστολή ειδοποίησης Pushover
 Send-BridgePushover -Token $PoApiKey -User $PoUserKey -Message "Test" -Verbose
 ```
 
-### Debug Mode
+### Λειτουργία αποσφαλμάτωσης
 
 ```powershell
-# Ενεργοποίηση verbose logging
+# Ενεργοποίηση αναλυτικής καταγραφής στην κονσόλα
 $VerbosePreference = "Continue"
 Get-BridgeStatusMonitor @params -Verbose
 
-# Αποθήκευση debug log
+# Καταγραφή σε αρχείο αποσφαλμάτωσης
 Start-Transcript -Path ".\debug_log.txt"
 Get-BridgeStatusMonitor @params -Verbose
 Stop-Transcript
 ```
 
-## 📝 Άδεια Χρήσης & Συμμετοχή
+## Άδεια χρήσης και συνεισφορά
 
-- **📜 Άδεια**: [MIT License](LICENSE)
-- **👨‍💻 Συγγραφέας**: Γιάννης Καπλατζής
-- **🔗 Repository**: [GitHub: mrjcap/BridgeWatcher](https://github.com/mrjcap/BridgeWatcher)
-- **🤝 Συνεισφορά**: Pull Requests και Issues είναι ευπρόσδεκτα!
+- Άδεια: [MIT License](LICENSE)
+- Συγγραφέας: Γιάννης Καπλατζής
+- Αποθετήριο: [GitHub mrjcap/BridgeWatcher](https://github.com/mrjcap/BridgeWatcher)
+- Συνεισφορά: υποβολή pull requests και αναφορών σφαλμάτων στο GitHub.
 
-### Πώς να συνεισφέρεις
+### Διαδικασία συνεισφοράς
 
-1. Fork το repository
-2. Δημιούργησε ένα feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit τις αλλαγές σου (`git commit -m 'Add some AmazingFeature'`)
-4. Push στο branch (`git push origin feature/AmazingFeature`)
-5. Άνοιξε ένα Pull Request
+1. Δημιουργήστε ένα fork του αποθετηρίου.
+2. Δημιουργήστε νέο κλαδί (`git checkout -b feature/NewFeature`).
+3. Καταχωρίστε τις αλλαγές (`git commit -m 'feat: add NewFeature'`).
+4. Προωθήστε το κλαδί (`git push origin feature/NewFeature`).
+5. Ανοίξτε νέο Pull Request.
 
-## 🗺️ Οδικός Χάρτης Ανάπτυξης
+## Οδικός χάρτης ανάπτυξης
 
-### ✅ Ολοκληρωμένα
+### Ολοκληρωμένα
 
-- [x] Βασική λειτουργικότητα module
-- [x] OCR integration με Google Vision
-- [x] Pushover notifications
-- [x] Ολοκληρωμένη κάλυψη μέσω Pester tests
-- [x] Ενσωμάτωση GitHub Actions για CI
+- [x] Βασικές συναρτήσεις module
+- [x] Ενσωμάτωση OCR με Google Vision
+- [x] Αποστολή ειδοποιήσεων Pushover
+- [x] Πλήρης σουίτα δοκιμών Pester v5
+- [x] Ροή ελέγχων CI στο GitHub Actions
 - [x] Δημοσίευση στο PowerShell Gallery
-- [x] Δημιουργία Docker Image
-- [x] Υποστήριξη Codecov
-- [x] Αυτοματοποιημένο Changelog σε ελληνικά με PowerShell scripts
-- [x] Αυτοματοποιημένη τεκμηρίωση μέσω platyPS και markdownlint
-- [x] Ασφαλές, modular CI/CD με version pinning, reproducibility και audit trail
-- [x] Σαφής έλεγχος ποιότητας και ασφάλειας: Codacy, Trivy Docker scan
-- [x] Επαναχρησιμοποιήσιμα workflows
-- [x] Αυτόματη πρόβλεψη επόμενης έκδοσης
-- [x] Κεντρική διαχείριση release gates, cleanup & orchestrator στο pipeline
+- [x] Δημιουργία και δημοσίευση εικόνας Docker
+- [x] Αναφορές κάλυψης κώδικα στο Codecov
+- [x] Αυτόματη ενημέρωση Changelog στα ελληνικά
+- [x] Αυτόματη παραγωγή τεκμηρίωσης με platyPS και markdownlint
+- [x] Ροή CI/CD με έκδοση και έλεγχο ταυτότητας
+- [x] Στατική ανάλυση κώδικα και σάρωση ασφαλείας Docker με Codacy και Trivy
+- [x] Επαναχρησιμοποιήσιμες ροές εργασίας GitHub Actions
+- [x] Αυτόματος υπολογισμός επόμενης έκδοσης
+- [x] Κεντρική διαχείριση release gates και orchestrator
 
-### 📅 Μελλοντικά
+### Μελλοντικά χαρακτηριστικά
 
-- [ ] REST API endpoint
+- [ ] Τελικό σημείο REST API
 
-## ❓ Συχνές Ερωτήσεις (FAQ)
+## Συχνές ερωτήσεις
 
-### Πόσο συχνά πρέπει να ελέγχω την κατάσταση των γεφυρών
+### Πόσο συχνά πρέπει να ελέγχεται η κατάσταση των γεφυρών
 
-- Συνιστάται έλεγχος κάθε 5-10 λεπτά.
+Έλεγχος κάθε 5 έως 10 λεπτά (300 έως 600 δευτερόλεπτα) αρκεί για να καταγράφονται οι αλλαγές χωρίς περιττή επιβάρυνση.
 
-### Μπορώ να χρησιμοποιήσω το module σε Linux/macOS
+### Μπορεί να χρησιμοποιηθεί το module σε Linux ή macOS
 
-- Ναι! Το BridgeWatcher είναι συμβατό με PowerShell (7+).
+Ναι, το BridgeWatcher λειτουργεί σε PowerShell Core 7 και νεότερο σε Windows, Linux και macOS.
 
-### Πώς μπορώ να αποθηκεύσω τα API keys με ασφάλεια
+### Πώς αποθηκεύονται τα κλειδιά API με ασφάλεια
 
 ```powershell
-# Χρήση environment variables
+# Χρήση μεταβλητών περιβάλλοντος
 $env:GOOGLE_VISION_API_KEY = "your-key"
 $env:PUSHOVER_API_KEY = "your-key"
 $env:PUSHOVER_USER_KEY = "your-key"
 
-# Ή χρήση SecretManagement module
+# Χρήση του module SecretManagement
 Install-Module Microsoft.PowerShell.SecretManagement
 Set-Secret -Name "GoogleVisionKey" -Secret "your-key"
 ```
 
 ### Υποστηρίζει το module άλλες υπηρεσίες ειδοποιήσεων
 
-- Προς το παρόν υποστηρίζεται μόνο το Pushover.
-
----
-
-Φτιαγμένο με ❤️ στην Ελλάδα
+Η τρέχουσα έκδοση υποστηρίζει μόνο το Pushover.
