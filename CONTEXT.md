@@ -1,4 +1,4 @@
-﻿# BridgeWatcher Domain Context
+﻿# BridgeWatcher domain context
 
 Context for monitoring Isthmia and Poseidonia bridge statuses, parsing schedule notices, and sending alerts.
 

@@ -48,7 +48,7 @@
         'Debug' { Write-Debug $output }
         'Warning' { Write-Warning $output }
     }
-    # File logging — uses configured log directory
+    # File logging using configured log directory
     $logDir = $Configuration.Defaults.LogDirectory
     if (-not (Test-Path $logDir)) {
         $newItemSplat = @{
