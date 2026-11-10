@@ -90,11 +90,19 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
 
+  security-analysis:
+    name: Security Analysis
+    needs: [pre-release]
+    if: needs.pre-release.outputs.can_proceed == 'true'
+    uses: ./.github/workflows/codequality.yml
+    secrets:
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
   gatekeeper:
     name: Release Gatekeeper
     runs-on: ubuntu-26.04
-    needs: [ci]
-    if: always()
+    needs: [ci, security-analysis]
+    if: needs.ci.result == 'success' && needs.security-analysis.result == 'success'
     permissions:
       contents: write
     outputs:
@@ -171,22 +179,19 @@ jobs:
         env:
           CHANGELOG_UPDATED: ${{ steps.changelog_check.outputs.updated }}
           FORCE_RELEASE: ${{ inputs.force_release }}
+          NEXT_VERSION: ${{ steps.determine_version.outputs.version }}
         run: |
-          if [[ "$CHANGELOG_UPDATED" == "true" || "$FORCE_RELEASE" == "true" ]]; then
+          UNTAGGED_ENTRY="false"
+          if grep -qF "## [$NEXT_VERSION]" CHANGELOG.md 2>/dev/null && ! git rev-parse -q --verify "refs/tags/v$NEXT_VERSION" >/dev/null 2>&1; then
+            UNTAGGED_ENTRY="true"
+          fi
+          if [[ "$CHANGELOG_UPDATED" == "true" || "$FORCE_RELEASE" == "true" || "$UNTAGGED_ENTRY" == "true" ]]; then
             echo "proceed=true" >> $GITHUB_OUTPUT
             echo " Proceeding with release"
           else
             echo "proceed=false" >> $GITHUB_OUTPUT
             echo " No significant changes detected, skipping release"
           fi
-
-  security-analysis:
-    name: Security Analysis
-    needs: [gatekeeper]
-    if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
-    uses: ./.github/workflows/codequality.yml
-    secrets:
-      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
   docs-generation:
     name: Documentation Generation
