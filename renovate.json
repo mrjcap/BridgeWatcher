@@ -59,7 +59,7 @@
       "matchManagers": [
         "html"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "font-awesome"
       ],
       "matchUpdateTypes": [
