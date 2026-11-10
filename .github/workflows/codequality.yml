@@ -1,19 +1,30 @@
 name: Codacy Analysis
 
-# semgrep:ignore yaml.github-actions.security.curl-eval.curl-eval
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_call:
     secrets:
       CODACY_PROJECT_TOKEN:
-        required: true
+        required: false
+
+permissions:
+  contents: read
 
 jobs:
   codacy-analysis:
     runs-on: ubuntu-26.04
+    env:
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Run Codacy Analysis CLI
+        if: ${{ env.CODACY_PROJECT_TOKEN != '' }}
         uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08 # v4.4.7
         with:
           tool: psscriptanalyzer

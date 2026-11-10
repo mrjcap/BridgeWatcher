@@ -25,10 +25,7 @@ on:
         default: false
 
 permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-  security-events: write
+  contents: read
 
 jobs:
   pre-release:
@@ -43,6 +40,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Validate release conditions
         id: validation
@@ -97,6 +95,8 @@ jobs:
     runs-on: ubuntu-26.04
     needs: [ci]
     if: always()
+    permissions:
+      contents: write
     outputs:
       next_version: ${{ steps.determine_version.outputs.version }}
       changelog_updated: ${{ steps.changelog_check.outputs.updated }}
@@ -191,6 +191,8 @@ jobs:
     name: Documentation Generation
     needs: [gatekeeper]
     if: always() && needs.gatekeeper.outputs.proceed_with_release == 'true'
+    permissions:
+      contents: write
     uses: ./.github/workflows/powershell-docs.yml
 
   publish-module:
@@ -201,6 +203,9 @@ jobs:
       needs.gatekeeper.outputs.proceed_with_release == 'true' &&
       needs.security-analysis.result == 'success' &&
       needs.ci.result == 'success'
+    permissions:
+      contents: write
+      pull-requests: read
     uses: ./.github/workflows/publish.yml
     with:
       next_version: ${{ needs.gatekeeper.outputs.next_version }}
@@ -215,6 +220,9 @@ jobs:
       always() &&
       needs.gatekeeper.outputs.proceed_with_release == 'true' &&
       (needs.publish-module.outputs.module_published == 'true' || needs.publish-module.outputs.module_published == 'dry-run')
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/docker-build.yml
     with:
       version: ${{ needs.gatekeeper.outputs.next_version }}

@@ -6,6 +6,15 @@ Describe 'New-BridgeConfiguration' {
         $script:Config = New-BridgeConfiguration
     }
 
+    BeforeEach {
+        $script:SavedOutEnv = $Env:BRIDGEWATCHER_OUT
+        $Env:BRIDGEWATCHER_OUT = $null
+    }
+
+    AfterEach {
+        $Env:BRIDGEWATCHER_OUT = $script:SavedOutEnv
+    }
+
     Context 'Default Instantiation' {
         It 'Returns an object with the correct type name' {
             $config = New-BridgeConfiguration
@@ -22,6 +31,12 @@ Describe 'New-BridgeConfiguration' {
             $config = New-BridgeConfiguration -BaseUrl 'https://example.com'
             $config.Urls.Source | Should -Be 'https://example.com/'
             $config.Urls.BaseImage | Should -Be 'https://example.com'
+        }
+
+        It 'Defaults LogDirectory to BRIDGEWATCHER_OUT when set' {
+            $Env:BRIDGEWATCHER_OUT = '/app/logs'
+            $config = New-BridgeConfiguration
+            $config.Defaults.LogDirectory | Should -Be '/app/logs'
         }
 
         It 'Defaults LogDirectory to TestDrive:\logs when running in Pester' {

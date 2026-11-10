@@ -60,6 +60,9 @@ Describe 'Get-BridgeStatusObject' {
                 -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'schedule.php' -Configuration $config
             $obj.ImageHash | Should -Not -BeNullOrEmpty
             $obj.ImageHash | Should -Be '50E7825D3A7F7EF39C0D330A69E9AC35'
+            Should -Invoke -CommandName Get-BridgeImageBuffer -Times 1 -Exactly -ParameterFilter {
+                $TimeoutSec -eq $config.Defaults.HttpRequestTimeout
+            }
         }
 
         It 'Πετάει σφάλμα και καταγράφει προειδοποίηση όταν η λήψη αποτυγχάνει' {

@@ -9,6 +9,13 @@
 
 ### 🐛 Διορθώσεις
 
+- fix(docker): υποστήριξη πεζών ονομάτων secrets από το Docker Compose στο entrypoint.sh και το run.ps1
+- fix(config): χρήση του BRIDGEWATCHER_OUT για τον κατάλογο καταγραφής σε read-only containers
+- fix(alerts): προσθήκη παραμέτρου Configuration στο Send-BridgePushover κατά την αποτυχία και αποστολή HTTP πριν την
+  εγγραφή log
+- fix(Update-BridgeStatus): έλεγχος επιτυχίας του Export-BridgeStatusJson και ρίψη σφάλματος σε αποτυχία εγγραφής
+- fix(http): προσθήκη TimeoutSec στις κλήσεις Invoke-WebRequest των Get-BridgeStatus και Get-BridgeImageBuffer
+- fix(filebeat): μετάβαση εισόδου σε filestream για συμβατότητα με το Filebeat 9
 - fix(docker): αναβάθμιση πακέτων Alpine κατά το build για επίλυση του CVE-2026-4738
 - fix(Export-BridgeStatusJson): αποκατάσταση ατομικής εγγραφής αρχείου μέσω προσωρινού αρχείου και μετονομασίας
 

@@ -21,6 +21,19 @@ Describe 'Send-BridgePushoverRequest' {
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
     }
 
+    It 'Στέλνει το αίτημα HTTP πριν την εγγραφή στο αρχείο καταγραφής ώστε να μην μπλοκάρεται η ειδοποίηση' {
+        Mock -CommandName Invoke-RestMethod -MockWith {
+            return @{ status = 1; request = 'abcd' }
+        }
+        Mock -CommandName Write-BridgeLog -MockWith {
+            throw 'Read-only file system'
+        }
+
+        $payload = @{ message = 'crash alert' }
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Read-only file system*'
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
+    }
+
     It 'Ρίχνει απευθείας terminating error σε HTTP 400 (Bad Request)' {
         Mock -CommandName Invoke-RestMethod -MockWith {
             $response = [System.Net.HttpWebResponse]::new()

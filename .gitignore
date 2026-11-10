@@ -10,6 +10,10 @@ test.json
 logs/
 *.log
 
+# Secrets
+secrets/
+test-secrets/
+
 # PowerShell
 *.ps1xml~
 *.psc1

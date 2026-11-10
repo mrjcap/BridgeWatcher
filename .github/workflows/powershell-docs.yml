@@ -1,8 +1,16 @@
 name: PowerShell Documentation
 
-# semgrep:ignore yaml.github-actions.security.curl-eval.curl-eval
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'BridgeWatcher/**'
+      - 'docs/**'
+      - '.github/workflows/powershell-docs.yml'
   workflow_call:
+
+permissions:
+  contents: write
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
@@ -23,6 +31,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          persist-credentials: ${{ github.event_name != 'pull_request' }}
 
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36 # v1
@@ -255,7 +264,7 @@ jobs:
           fi
 
       - name: Commit documentation changes
-        if: steps.docs_changes.outputs.changes_detected == 'true'
+        if: steps.docs_changes.outputs.changes_detected == 'true' && github.event_name != 'pull_request'
         uses: stefanzweifel/git-auto-commit-action@d0b01107b5db882071f96de5dd4b54961ea93f4c # v7.2.1
         continue-on-error: true
         id: auto_commit
@@ -275,7 +284,7 @@ jobs:
           skip_checkout: false
 
       - name: Manual commit and push on conflict
-        if: steps.docs_changes.outputs.changes_detected == 'true' && steps.auto_commit.outcome == 'failure'
+        if: steps.docs_changes.outputs.changes_detected == 'true' && steps.auto_commit.outcome == 'failure' && github.event_name != 'pull_request'
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |

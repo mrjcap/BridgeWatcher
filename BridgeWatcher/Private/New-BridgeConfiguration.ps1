@@ -75,7 +75,9 @@
     )
 
     if ([string]::IsNullOrWhiteSpace($LogDirectory)) {
-        if (Test-Path 'TestDrive:\') {
+        if (-not [string]::IsNullOrWhiteSpace($Env:BRIDGEWATCHER_OUT)) {
+            $LogDirectory = $Env:BRIDGEWATCHER_OUT.Trim()
+        } elseif (Test-Path 'TestDrive:\') {
             $LogDirectory = 'TestDrive:\logs'
         } else {
             $LogDirectory = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'logs'

@@ -94,7 +94,15 @@ function Update-BridgeStatus {
                 Path          = $OutputFile
                 Configuration = $Configuration
             }
-            $null = Export-BridgeStatusJson @exportBridgeStatusJsonSplat
+            $exportResult = Export-BridgeStatusJson @exportBridgeStatusJsonSplat
+            if (-not $exportResult.Success) {
+                $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+                    [System.Exception]::new($exportResult.ErrorMessage),
+                    $exportResult.ErrorCode,
+                    [System.Management.Automation.ErrorCategory]::WriteError,
+                    $OutputFile
+                ))
+            }
         }
         $writeBridgeLogSplat.Message = 'Finished comparison and saved snapshot.'
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration

@@ -42,33 +42,21 @@
     $warningLevel = $Configuration.LoggingConfig.WarningLevel
 
     try {
-        $writeBridgeLogSplat = @{
-            Stage   = $Configuration.LoggingConfig.InfoStage
-            Message = "📲 Αποστολή ειδοποίησης Pushover (Τίτλος: $($Payload.title))..."
-            Level   = $Configuration.LoggingConfig.VerboseLevel
-        }
-        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+        Write-Verbose "📲 Αποστολή ειδοποίησης Pushover (Τίτλος: $($Payload.title))..."
 
         $invokeRestMethodSplat = @{
             Method      = 'Post'
             Uri         = $pushoverApiUrl
             Body        = $Payload
-            TimeoutSec  = 30
+            TimeoutSec  = $Configuration.Defaults.HttpRequestTimeout
             ErrorAction = 'Stop'
         }
         $maxRetries = 3
+        $result = $null
         for ($i = 1; $i -le $maxRetries; $i++) {
             try {
                 $result = Invoke-RestMethod @invokeRestMethodSplat
-
-                $writeBridgeLogSuccess = @{
-                    Stage   = $Configuration.LoggingConfig.InfoStage
-                    Message = "✅ Η ειδοποίηση Pushover στάλθηκε με επιτυχία!"
-                    Level   = $Configuration.LoggingConfig.VerboseLevel
-                }
-                Write-BridgeLog @writeBridgeLogSuccess -Configuration $Configuration
-
-                return $result
+                break
             } catch {
                 $ex = $_.Exception
                 $response = $null
@@ -91,6 +79,15 @@
                 }
             }
         }
+
+        $writeBridgeLogSuccess = @{
+            Stage   = $Configuration.LoggingConfig.InfoStage
+            Message = "✅ Η ειδοποίηση Pushover στάλθηκε με επιτυχία!"
+            Level   = $Configuration.LoggingConfig.VerboseLevel
+        }
+        Write-BridgeLog @writeBridgeLogSuccess -Configuration $Configuration
+
+        return $result
     } catch {
         $writeBridgeLogSplat = @{
             Stage   = $errorStage

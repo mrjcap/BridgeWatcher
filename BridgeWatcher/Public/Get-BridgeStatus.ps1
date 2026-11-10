@@ -42,7 +42,7 @@ function Get-BridgeStatus {
         $response = $null
         for ($i = 1; $i -le $maxRetries; $i++) {
             try {
-                $response = Invoke-WebRequest -Uri $Uri -UseBasicParsing -ErrorAction 'Stop'
+                $response = Invoke-WebRequest -Uri $Uri -TimeoutSec $Configuration.Defaults.HttpRequestTimeout -UseBasicParsing -ErrorAction 'Stop'
                 break
             } catch {
                 if ($i -eq $maxRetries) {

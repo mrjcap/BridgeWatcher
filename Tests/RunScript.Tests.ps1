@@ -148,4 +148,81 @@ Describe 'run.ps1 Script Execution' {
         $script:calledParams.PoApiKey | Should -Be 'file-po-api-key'
         $script:calledParams.PoUserKey | Should -Be 'file-po-user-key'
     }
+
+    It 'Should load lowercase compose secret files (/run/secrets/api_key, pushover_token, pushover_user)' {
+        $Env:API_KEY = $null
+        $Env:POAPI_KEY = $null
+        $Env:POUSER_KEY = $null
+
+        $null = New-Item -ItemType Directory -Path "$TestDrive/run/secrets_lower" -Force
+        "lower-api-key`n" | Out-File -FilePath "$TestDrive/run/secrets_lower/api_key" -NoNewline
+        "lower-po-api-key`n" | Out-File -FilePath "$TestDrive/run/secrets_lower/pushover_token" -NoNewline
+        "lower-po-user-key`n" | Out-File -FilePath "$TestDrive/run/secrets_lower/pushover_user" -NoNewline
+
+        Mock Get-BridgeStatusMonitor {
+            param($Configuration, $IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
+            $script:calledParams = @{
+                Configuration = $Configuration
+                ApiKey        = $ApiKey
+                PoApiKey      = $PoApiKey
+                PoUserKey     = $PoUserKey
+            }
+        }
+
+        Mock Get-BridgeStatusMonitor {
+            param($Configuration, $IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
+            $script:calledParams = @{
+                Configuration = $Configuration
+                ApiKey        = $ApiKey
+                PoApiKey      = $PoApiKey
+                PoUserKey     = $PoUserKey
+            }
+        } -ModuleName 'BridgeWatcher'
+
+        Mock Test-Path {
+            param($Path)
+            if ($Path -like '*/run/secrets/*') {
+                $fileName = Split-Path $Path -Leaf
+                return ( & (Get-Command Test-Path -CommandType Cmdlet) -Path "$TestDrive/run/secrets_lower/$fileName" )
+            }
+            return ( & (Get-Command Test-Path -CommandType Cmdlet) @PSBoundParameters )
+        }
+
+        Mock Get-Content {
+            param($Path, $Raw)
+            $null = $Raw
+            if ($Path -like '*/run/secrets/*') {
+                $fileName = Split-Path $Path -Leaf
+                return ( & (Get-Command Get-Content -CommandType Cmdlet) -Path "$TestDrive/run/secrets_lower/$fileName" -Raw )
+            }
+            return ( & (Get-Command Get-Content -CommandType Cmdlet) @PSBoundParameters )
+        }
+
+        . "$PSScriptRoot/../run.ps1"
+
+        Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
+        $script:calledParams.ApiKey | Should -Be 'lower-api-key'
+        $script:calledParams.PoApiKey | Should -Be 'lower-po-api-key'
+        $script:calledParams.PoUserKey | Should -Be 'lower-po-user-key'
+        $script:calledParams.Configuration.Defaults.LogDirectory | Should -Be "$TestDrive"
+    }
+
+    It 'Should send a Pushover crash alert with -Configuration when Get-BridgeStatusMonitor throws' {
+        $Env:API_KEY = 'env-api-key'
+        $Env:POAPI_KEY = 'env-po-api-key'
+        $Env:POUSER_KEY = 'env-po-user-key'
+
+        Mock Get-BridgeStatusMonitor { throw 'Simulated monitor crash' }
+        Mock Write-Error {}
+        Mock Send-BridgePushover {}
+
+        & "$PSScriptRoot/../run.ps1"
+
+        $LASTEXITCODE | Should -Be 1
+        Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly -ParameterFilter {
+            $null -ne $Configuration -and $Configuration.Defaults.LogDirectory -eq "$TestDrive" -and $Priority -eq 1
+        }
+    }
 }

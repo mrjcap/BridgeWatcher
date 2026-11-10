@@ -6,8 +6,11 @@
     Κατεβάζει την εικόνα και επιστρέφει τα bytes της.
     #>
     [CmdletBinding()]
-    param([string]$Url)
-    $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -ErrorAction Stop -Method Get
+    param(
+        [string]$Url,
+        [int]$TimeoutSec = 60
+    )
+    $response = Invoke-WebRequest -Uri $Url -TimeoutSec $TimeoutSec -UseBasicParsing -ErrorAction Stop -Method Get
     try {
         if ($response.Content -is [byte[]]) {
             return $response.Content
@@ -80,7 +83,7 @@ function Get-BridgeStatusObject {
     $ImageHash = $null
     if ($Status -eq $Configuration.Statuses.ClosedWithSchedule) {
         try {
-            $bytes = Get-BridgeImageBuffer -Url $ImageUrl
+            $bytes = Get-BridgeImageBuffer -Url $ImageUrl -TimeoutSec $Configuration.Defaults.HttpRequestTimeout
             $md5 = [System.Security.Cryptography.MD5]::Create()
             try {
                 $hashBytes = $md5.ComputeHash($bytes)

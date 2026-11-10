@@ -1,5 +1,6 @@
 filebeat.inputs:
-  - type: log
+  - type: filestream
+    id: bridgewatcher-logs
     enabled: true
     paths:
       - /var/log/bridgewatcher/*.log

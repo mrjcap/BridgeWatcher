@@ -1,25 +1,32 @@
 #!/bin/sh
 set -e  # Exit on error
 
-# Validate secrets με πιο descriptive errors
-for secret in API_KEY PUSHOVER_TOKEN PUSHOVER_USER; do
-  if [ ! -f "/run/secrets/$secret" ]; then
-    echo "❌ Error: Secret $secret is missing in /run/secrets/" >&2
+resolve_secret() {
+  lower_path="/run/secrets/$1"
+  upper_path="/run/secrets/$2"
+  if [ -f "$lower_path" ]; then
+    secret_path="$lower_path"
+  elif [ -f "$upper_path" ]; then
+    secret_path="$upper_path"
+  else
+    echo "❌ Error: Secret $1 is missing in /run/secrets/" >&2
     echo "   Please ensure the secret is properly mounted" >&2
     exit 1
   fi
 
-  # Check που το secret δεν είναι empty
-  if [ ! -s "/run/secrets/$secret" ]; then
-    echo "❌ Error: Secret $secret exists but is empty" >&2
+  if [ ! -s "$secret_path" ]; then
+    echo "❌ Error: Secret $secret_path exists but is empty" >&2
     exit 1
   fi
-done
+
+  tr -d '\r\n' < "$secret_path" | xargs
+}
 
 # Read and export secrets so they are available in-memory to appuser
-export API_KEY=$(tr -d '\r\n' < /run/secrets/API_KEY | xargs)
-export POAPI_KEY=$(tr -d '\r\n' < /run/secrets/PUSHOVER_TOKEN | xargs)
-export POUSER_KEY=$(tr -d '\r\n' < /run/secrets/PUSHOVER_USER | xargs)
+API_KEY=$(resolve_secret api_key API_KEY)
+POAPI_KEY=$(resolve_secret pushover_token PUSHOVER_TOKEN)
+POUSER_KEY=$(resolve_secret pushover_user PUSHOVER_USER)
+export API_KEY POAPI_KEY POUSER_KEY
 
 # Change to user directory για write access
 cd /home/appuser/scripts

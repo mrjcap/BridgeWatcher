@@ -104,4 +104,20 @@ Describe 'Update-BridgeStatus' {
         Should -Not -Invoke -CommandName Export-BridgeStatusJson -Scope It
         Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Message -eq 'Finished comparison and saved snapshot.' } -Times 1 -Scope It
     }
+
+    It 'Ρίχνει terminating error όταν η Export-BridgeStatusJson επιστρέφει Success = $false' {
+        $jsonFile = "TestDrive:\bridge_status_export_fail.json"
+
+        Mock Test-Path { return $false }
+        Mock Get-BridgeStatus { return @([PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοικτή' }) }
+        Mock Invoke-BridgeStatusComparison { return @() }
+        Mock Export-BridgeStatusJson {
+            return New-BridgeResult -Success $false -ErrorMessage 'Disk full' -ErrorCode 'JSON_EXPORT_FAILURE'
+        }
+        Mock Write-BridgeLog {}
+
+        {
+            Update-BridgeStatus -Configuration $script:Config -OutputFile $jsonFile -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
+        } | Should -Throw -ExpectedMessage '*Disk full*'
+    }
 }

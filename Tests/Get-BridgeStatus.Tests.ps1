@@ -41,7 +41,9 @@ Describe 'Test Get-BridgeStatus function' {
             $result[0].Location | Should -Be 'Isthmia'
             $result[0].Status | Should -Be 'Ανοιχτή'
 
-            Should -Invoke -CommandName Invoke-WebRequest -Times 1 -Exactly -Scope It
+            Should -Invoke -CommandName Invoke-WebRequest -Times 1 -Exactly -Scope It -ParameterFilter {
+                $TimeoutSec -eq $script:Config.Defaults.HttpRequestTimeout
+            }
             Should -Invoke -CommandName Get-BridgeStatusFromHtml -Times 1 -Exactly -Scope It
             Should -Invoke -CommandName Export-BridgeStatusJson -Times 1 -Exactly -Scope It
         }
