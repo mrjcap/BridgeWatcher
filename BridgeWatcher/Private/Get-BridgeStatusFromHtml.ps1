@@ -87,6 +87,7 @@
             Level   = 'Debug'
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+        $matched = $false
         foreach ($statusEntry in $patterns[$location].GetEnumerator()) {
             $status = $statusEntry.Key
             $pattern = $statusEntry.Value
@@ -102,6 +103,7 @@
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             }
             if ($image) {
+                $matched = $true
                 $writeBridgeLogSplat = @{
                     Stage   = 'Ανάλυση'
                     Message = "✅ Εντοπίστηκε: Γέφυρα: $location Κατάσταση: $status"
@@ -120,6 +122,21 @@
                 $result.Add($object)
                 break
             }
+        }
+        if (-not $matched) {
+            $writeBridgeLogSplat = @{
+                Stage   = 'Σφάλμα'
+                Message = "❌ Δεν βρέθηκε έγκυρη εικόνα κατάστασης για $location"
+                Level   = 'Warning'
+            }
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+            $errorRecord = [System.Management.Automation.ErrorRecord]::new(
+                ([System.Exception]::new("Δεν βρέθηκε έγκυρη εικόνα κατάστασης για το $location.")),
+                'BridgeStatusPatternNotFound',
+                [System.Management.Automation.ErrorCategory]::ParserError,
+                $location
+            )
+            $PSCmdlet.WriteError($errorRecord)
         }
     }
     return $result.ToArray()
