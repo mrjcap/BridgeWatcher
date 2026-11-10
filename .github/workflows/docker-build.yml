@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        if: ${{ github.event_name == 'workflow_call' && !inputs.dry_run }}
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: v${{ inputs.version }}
@@ -51,7 +51,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout repository (dry run)
-        if: ${{ github.event_name != 'workflow_call' || inputs.dry_run }}
+        if: ${{ github.event_name == 'pull_request' || inputs.dry_run }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -64,7 +64,7 @@ jobs:
           driver-opts: network=host
 
       - name: Log in to Docker Hub
-        if: ${{ github.event_name == 'workflow_call' && !inputs.dry_run }}
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run }}
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ${{ env.REGISTRY }}
@@ -115,8 +115,8 @@ jobs:
 
           # Create test secrets directory with lowercase names matching docker-compose.yml
           mkdir -p test-secrets test-logs
-          sudo chown 99:100 test-logs
           chmod 750 test-logs
+          sudo chown 99:100 test-logs
           echo "test-api-key" > test-secrets/api_key
           echo "test-po-api-key" > test-secrets/pushover_token
           echo "test-po-user-key" > test-secrets/pushover_user
@@ -231,14 +231,14 @@ jobs:
       - name: Clean up
         if: always()
         run: |
-          rm -rf test-secrets test-logs
+          sudo rm -rf test-secrets test-logs
           docker system prune -f
 
   push:
     name: Push Docker Image
     runs-on: ubuntu-26.04
     needs: build-and-test
-    if: ${{ success() && github.event_name == 'workflow_call' && !inputs.dry_run }}
+    if: ${{ success() && github.event_name != 'pull_request' && !inputs.dry_run }}
 
     steps:
       - name: Set up Docker Buildx

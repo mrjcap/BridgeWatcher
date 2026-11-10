@@ -106,6 +106,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Calculate next version
@@ -194,6 +195,8 @@ jobs:
     permissions:
       contents: write
     uses: ./.github/workflows/powershell-docs.yml
+    secrets:
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
   publish-module:
     name: Publish Module
@@ -212,6 +215,7 @@ jobs:
       dry_run: ${{ inputs.dry_run }}
     secrets:
       PSGALLERYAPIKEY: ${{ secrets.PSGALLERYAPIKEY }}
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
   docker-build:
     name: Docker Build & Push

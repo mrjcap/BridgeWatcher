@@ -23,6 +23,8 @@ on:
     secrets:
       PSGALLERYAPIKEY:
         required: true
+      RELEASE_TOKEN:
+        required: false
 
 permissions:
   contents: read
@@ -140,7 +142,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Set final module version
@@ -216,7 +218,7 @@ jobs:
           prerelease: false
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Check if version already exists on PSGallery
         id: version_check

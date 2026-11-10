@@ -8,6 +8,9 @@ on:
       - 'docs/**'
       - '.github/workflows/powershell-docs.yml'
   workflow_call:
+    secrets:
+      RELEASE_TOKEN:
+        required: false
 
 permissions:
   contents: read
@@ -31,7 +34,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
           persist-credentials: ${{ github.event_name != 'pull_request' }}
 
