@@ -17,8 +17,11 @@ env:
 
 jobs:
   test:
-    name: Test on ubuntu-24.04 with PowerShell
-    runs-on: ubuntu-26.04
+    strategy:
+      matrix:
+        os: [ubuntu-26.04]
+    name: Test on ${{ matrix.os }} with PowerShell
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repository
@@ -43,9 +46,9 @@ jobs:
             ~/.local/share/powershell/Modules
             ~/Documents/PowerShell/Modules
             ~/Library/PowerShell/Modules
-          key: ubuntu-latest-v${{ env.POWERSHELL_VERSION }}-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
+          key: ${{ matrix.os }}-v${{ env.POWERSHELL_VERSION }}-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
           restore-keys: |
-            ubuntu-latest-v${{ env.POWERSHELL_VERSION }}-pwshmodules-
+            ${{ matrix.os }}-v${{ env.POWERSHELL_VERSION }}-pwshmodules-
 
       - name: Install required PowerShell modules
         shell: pwsh
@@ -114,7 +117,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: test-results-ubuntu-latest-v${{ env.POWERSHELL_VERSION }}
+          name: test-results-${{ matrix.os }}-v${{ env.POWERSHELL_VERSION }}
           path: |
             testResults.xml
             coverage.xml
@@ -134,7 +137,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: unittests
-          name: codecov-ubuntu-latest-v${{ env.POWERSHELL_VERSION }}
+          name: codecov-${{ matrix.os }}-v${{ env.POWERSHELL_VERSION }}
           fail_ci_if_error: true
 
       - name: Run Codacy Coverage Reporter
