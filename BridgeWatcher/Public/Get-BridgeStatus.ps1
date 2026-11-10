@@ -63,7 +63,7 @@ function Get-BridgeStatus {
         # Stage 2: Data Processing - Convert HTML to bridge status
         Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.InfoStage -Message '🔍 Ανάλυση HTML για εύρεση καταστάσεων γέφυρας'
         try {
-            $bridgeStatuses = Get-BridgeStatusFromHtml -Configuration $Configuration -Html $htmlData -Timestamp (Get-Date -Format o)
+            $bridgeStatuses = Get-BridgeStatusFromHtml -Configuration $Configuration -Html $htmlData -Timestamp (Get-Date -Format o) -ErrorAction Stop
             if (-not $bridgeStatuses -or $bridgeStatuses.Count -eq 0) {
                 Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.ErrorStage -Message '⛔ Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο' -Level $Configuration.LoggingConfig.WarningLevel
                 throw [System.Exception]::new('Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο')

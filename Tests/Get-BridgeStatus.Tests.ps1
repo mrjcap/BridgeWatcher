@@ -142,6 +142,32 @@ Describe 'Get-BridgeStatus Integration' {
         Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $html } }
         { Get-BridgeStatus -Configuration $script:Config } | Should -Throw "*Δεν βρέθηκε block*"
     }
+
+    It 'Ρίχνει σφάλμα PARSING_ERROR όταν η μία γέφυρα δεν έχει έγκυρη εικόνα κατάστασης (partial scrape)' {
+        $partialHtml = @'
+<div class="panel panel-primary ">
+        <h4><b>ΠΟΣΕΙΔΩΝΊΑ</b></h4>
+    </div>
+    <div class="panel-body">
+    <div class="form-group">
+    <center><img style="width:100%;" src="image-bridge-open-no-schedule.php?1744355551"></center>
+    <img src="info.php?1744355551">
+        </div>
+    </div>
+</div>
+<div class="panel panel-primary">
+        <h4><b>ΙΣΘΜΊΑ</b></h4>
+    </div>
+<div class="panel-body">
+<div class="form-group">
+<center><img style="width:100%;" src="unrecognized-placeholder.png"></center>
+        </div>
+    </div>
+</div>
+'@
+        Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $partialHtml } }
+        { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ErrorId '*PARSING_ERROR*'
+    }
 }
 
 Describe 'Get-BridgeStatus Configuration Fallbacks' {
