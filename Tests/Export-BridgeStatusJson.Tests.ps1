@@ -56,6 +56,19 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         }
 
+        It 'Διαγράφει το προσωρινό αρχείο .tmp όταν το Move-Item αποτυγχάνει' {
+            $targetPath = Join-Path $TestDrive 'atomic-fail.json'
+            Mock Move-Item { throw 'Simulated atomic move failure' }
+            Mock Write-BridgeLog {}
+
+            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{ Bridge = 'Test' }) -Path $targetPath
+            $result.Success | Should -Be $false
+            $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
+
+            $leftoverTmp = Get-ChildItem -Path $TestDrive -Filter 'atomic-fail.json.*.tmp'
+            $leftoverTmp | Should -BeNullOrEmpty
+        }
+
     }
 
 
