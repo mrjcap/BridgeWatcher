@@ -12,6 +12,12 @@
         $script:entrypointContent = Get-Content -Path $script:entrypointPath -Raw
     }
 
+    It 'Requires CI and security-analysis success before gatekeeper commits changelog and resumes untagged releases' {
+        $script:releaseContent | Should -Match "needs:\s*\[ci,\s*security-analysis\]"
+        $script:releaseContent | Should -Match "if:\s*needs\.ci\.result\s*==\s*'success'\s*&&\s*needs\.security-analysis\.result\s*==\s*'success'"
+        $script:releaseContent | Should -Match 'refs/tags/v\$NEXT_VERSION'
+    }
+
     It 'Ελέγχει την ακριβή έκδοση release tag στο build-and-test job' {
         # Check if the file contains ref config under checkout
         $script:content | Should -Match 'ref:\s+v\$\{\{\s*inputs\.version\s*\}\}'
