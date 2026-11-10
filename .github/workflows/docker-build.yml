@@ -23,6 +23,8 @@ env:
   REGISTRY: docker.io
   IMAGE_NAME: bridgewatcher
   DOCKER_CONTENT_TRUST: 0
+  # renovate: datasource=github-releases depName=aquasecurity/trivy
+  TRIVY_VERSION: '0.76.2'
 
 jobs:
   build-and-test:
@@ -157,6 +159,7 @@ jobs:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
           format: 'sarif'
           output: 'trivy-results.sarif'
+          version: 'v${{ env.TRIVY_VERSION }}'
 
       - name: Check Trivy SARIF exists
         id: trivy_sarif_check
@@ -181,6 +184,7 @@ jobs:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}
           format: 'cyclonedx'
           output: 'sbom.json'
+          version: 'v${{ env.TRIVY_VERSION }}'
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

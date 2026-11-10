@@ -24,7 +24,7 @@
         "/^\\.github/workflows/[^/]+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+POWERSHELL_VERSION:\\s*['\"]?(?<currentValue>[^'\"\\s]+)['\"]?"
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+(?:POWERSHELL|TRIVY)_VERSION:\\s*['\"]?(?<currentValue>[^'\"\\s]+)['\"]?"
       ],
       "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$",
       "versioningTemplate": "semver"
