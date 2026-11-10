@@ -86,8 +86,15 @@
 
                 $json = ConvertTo-Json -InputObject $dataToExport -Depth $resolvedDepth -Compress
                 $tmpPath = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
-                Set-Content -Path $tmpPath -Value $json -Encoding UTF8 -Force
-                Move-Item -Path $tmpPath -Destination $Path -Force -ErrorAction Stop
+                try {
+                    Set-Content -Path $tmpPath -Value $json -Encoding UTF8 -Force
+                    Move-Item -Path $tmpPath -Destination $Path -Force -ErrorAction Stop
+                }
+                finally {
+                    if (Test-Path -Path $tmpPath) {
+                        Remove-Item -Path $tmpPath -Force -ErrorAction SilentlyContinue
+                    }
+                }
 
                 $writeBridgeLogSplat = @{
                     Stage   = $analysisStage
