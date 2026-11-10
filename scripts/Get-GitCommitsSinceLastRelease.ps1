@@ -79,7 +79,7 @@ if ($ExcludeHousekeeping) { # Εξαίρεση housekeeping/CI/τεχνικών 
 
 # 3. Εκτέλεση git log και καθαρισμός αποτελεσμάτων
 try {
-    $messages = git log @gitArgs | Where-Object { $_.Trim() }
+    $messages = git log @gitArgs | Where-Object { $_.Trim() } | Select-Object -Unique
     if ($messages) {
         $messages
     } else {

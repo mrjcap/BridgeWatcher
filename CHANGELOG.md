@@ -5,10 +5,18 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.100] - 2026-11-09
+## [1.0.100] - 2026-11-10
 
 ### 🐛 Διορθώσεις
 
+- fix(ci): scope codacy cli to psscriptanalyzer and pin trivy to v0.76.2
+- fix(docker): upgrade Alpine packages during build to remediate CVE-2026-4738
+- fix(renovate): set minimumReleaseAge to string duration (fixes #38)
+- fix(ci): keep release tag checkout step alongside dry-run checkout
+- fix(ci): support dry_run in docker-build workflow
+- fix(ci): preserve package subdirectories in coverage.xml for Codacy
+- fix(tests): use cross-platform relative path in Export-BridgeStatusJson tests
+- fix(ci): update actions to Node 24, pin ubuntu-24.04, and fix Linux test compatibility
 - fix: remove unnecessary blank lines at the end of Manage-Changelog.ps1
 
 ### ♻️ Αναδιαρθρώσεις
@@ -17,7 +25,6 @@
 
 ### ❓ Άλλες Αλλαγές
 
-- Remove SHA256 digest from Dockerfile base image
 - Remove SHA256 digest from Dockerfile base image
 - Fix all 10 code review findings and achieve 100% test coverage
 
@@ -635,4 +642,3 @@
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη publish.yml για το PowerShell Gallery
-
