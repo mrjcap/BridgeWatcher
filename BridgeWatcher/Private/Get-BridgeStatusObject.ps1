@@ -79,6 +79,16 @@ function Get-BridgeStatusObject {
         $BaseUrl = $Configuration.Urls.BaseImage
     }
     $ImageUrl = if ($ImageSrc -match '^https?://') { $ImageSrc } else { "$($BaseUrl.TrimEnd('/'))/$ImageSrc" }
+    $baseHost = ([uri]$BaseUrl).Host -replace '^www\.', ''
+    $imageUriObj = $null
+    if (-not [uri]::TryCreate($ImageUrl, [UriKind]::Absolute, [ref]$imageUriObj) -or (($imageUriObj.Host -replace '^www\.', '') -ne $baseHost)) {
+        $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+            [System.Exception]::new("Untrusted or invalid image URI host: $ImageUrl"),
+            'INVALID_IMAGE_HOST',
+            [System.Management.Automation.ErrorCategory]::SecurityError,
+            $ImageUrl
+        ))
+    }
 
     $ImageHash = $null
     if ($Status -eq $Configuration.Statuses.ClosedWithSchedule) {

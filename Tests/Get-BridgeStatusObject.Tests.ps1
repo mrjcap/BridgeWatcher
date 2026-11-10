@@ -47,6 +47,19 @@ Describe 'Get-BridgeStatusObject' {
             $obj = Get-BridgeStatusObject -Configuration $script:Config -Location 'poseidonia' -Status 'Ανοιχτή' -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'test.jpg' -BaseUrl 'https://custom.com/'
             $obj.imageUrl | Should -Be 'https://custom.com/test.jpg'
         }
+
+        It 'Ρίχνει σφάλμα INVALID_IMAGE_HOST όταν το absolute ImageSrc δείχνει σε μη έγκριτο host' {
+            Mock Get-BridgeImageBuffer { }
+            $untrustedSplat = @{
+                Configuration = $script:Config
+                Location      = 'isthmia'
+                Status        = $script:Config.Statuses.ClosedWithSchedule
+                Timestamp     = '2025-04-10T13:00:00Z'
+                ImageSrc      = 'http://169.254.169.254/latest/meta-data/schedule.php'
+            }
+            { Get-BridgeStatusObject @untrustedSplat } | Should -Throw -ErrorId '*INVALID_IMAGE_HOST*'
+            Should -Invoke -CommandName Get-BridgeImageBuffer -Times 0 -Exactly
+        }
     }
 
     Context 'ClosedWithSchedule Hashing' {
