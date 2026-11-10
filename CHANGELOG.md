@@ -9,181 +9,173 @@
 
 ### 🐛 Διορθώσεις
 
-- fix(ci): scope codacy cli to psscriptanalyzer and pin trivy to v0.76.2
-- fix(docker): upgrade Alpine packages during build to remediate CVE-2026-4738
-- fix(renovate): set minimumReleaseAge to string duration (fixes #38)
-- fix(ci): keep release tag checkout step alongside dry-run checkout
-- fix(ci): support dry_run in docker-build workflow
-- fix(ci): preserve package subdirectories in coverage.xml for Codacy
-- fix(tests): use cross-platform relative path in Export-BridgeStatusJson tests
-- fix(ci): update actions to Node 24, pin ubuntu-24.04, and fix Linux test compatibility
-- fix: remove unnecessary blank lines at the end of Manage-Changelog.ps1
+- fix(ci): χρήση πολυγραμμικής εξόδου heredoc για τα release notes και αφαίρεση διπλότυπων commits στο changelog
+- fix(ci): περιορισμός του Codacy CLI στο psscriptanalyzer και κλείδωμα του Trivy στην έκδοση v0.76.2
+- fix(docker): αναβάθμιση πακέτων Alpine κατά το build για επίλυση του CVE-2026-4738
+- fix(renovate): ορισμός του minimumReleaseAge ως χρονικής διάρκειας κειμένου (#38)
+- fix(ci): διατήρηση του βήματος checkout για release tag παράλληλα με το dry-run checkout
+- fix(ci): υποστήριξη dry_run στο workflow κατασκευής Docker
+- fix(ci): διατήρηση υποκαταλόγων πακέτων στο coverage.xml για το Codacy
+- fix(tests): χρήση σχετικής διαδρομής ανεξάρτητης πλατφόρμας στις δοκιμές Export-BridgeStatusJson
+- fix(ci): αναβάθμιση GitHub Actions σε Node 24, κλείδωμα runner και διόρθωση συμβατότητας δοκιμών σε Linux
+- fix(Export-BridgeStatusJson): αποκατάσταση ατομικής εγγραφής αρχείου μέσω προσωρινού αρχείου και μετονομασίας
+- fix(encoding): επίλυση ζητημάτων κωδικοποίησης UTF-8 BOM σε αρχεία .ps1, .psm1 και .psd1
+- fix(tests): προσθήκη μεταβλητών mock που έλειπαν και κάλυψη συνθηκών $null για 100% κάλυψη κώδικα
+- fix: αφαίρεση περιττών κενών γραμμών στο τέλος του Manage-Changelog.ps1
 
 ### ♻️ Αναδιαρθρώσεις
 
-- Refactor: pure transformation pipeline and UTF-8 BOM compliance
+- refactor: καθαρή ροή μετασχηματισμού και συμμόρφωση με κωδικοποίηση UTF-8 BOM
+- refactor(Invoke-BridgeStatusComparison): αφαίρεση παρωχημένων παραμέτρων και επιστροφή ρητών συμβάντων αλλαγής
+- refactor(Update-BridgeStatus): διόρθωση λογικής αξιολόγησης κατάστασης για σωστή αντιστοίχιση δεικτών
+- refactor(Resolve-BridgeStateForChange): διόρθωση λογικής αντιστοίχισης κατάστασης
 
 ### ❓ Άλλες Αλλαγές
 
-- Remove SHA256 digest from Dockerfile base image
-- Fix all 10 code review findings and achieve 100% test coverage
-
-## [Unreleased]
-
-### ♻️ Αναδιαρθρώσεις
-
-- refactor(Invoke-BridgeStatusComparison): remove obsolete parameters and return explicit change events
-- refactor(Update-BridgeStatus): fix state evaluation logic to properly match indices
-- refactor(Resolve-BridgeStateForChange): fix state matching logic
-
-### 🐛 Διορθώσεις
-
-- fix(Export-BridgeStatusJson): restore atomic file writing to prevent partial reads (write to temp and rename)
-- fix(encoding): resolve global BOM encoding issues for .ps1, .psm1, and .psd1 files using UTF-8 BOM
-- fix(tests): fix missing mock variables and cover unhandled $null conditions to reach 100% test coverage
+- Αφαίρεση SHA256 digest από τη βασική εικόνα του Dockerfile
+- Επίλυση όλων των 10 ευρημάτων ελέγχου κώδικα και επίτευξη 100% κάλυψης δοκιμών
 
 ## [1.0.99] - 2026-07-03
 
 ### 🐛 Διορθώσεις
 
-- fix: send fallback Pushover notifications when Google Cloud Vision OCR fails
+- fix: αποστολή εφεδρικών ειδοποιήσεων Pushover όταν αποτυγχάνει το Google Cloud Vision OCR
 
 ## [1.0.98] - 2026-07-03
 
 ### 🐛 Διορθώσεις
 
-- fix: backfill ImageHash on legacy state files to prevent StrictMode errors
+- fix: συμπλήρωση ImageHash σε παλαιότερα αρχεία κατάστασης για αποφυγή σφαλμάτων StrictMode
 
 ## [1.0.97] - 2026-07-03
 
 ### 🐛 Διορθώσεις
 
-- fix: use image content hashing to deduplicate schedule updates
+- fix: χρήση κατακερματισμού περιεχομένου εικόνας (hash) για αποφυγή διπλότυπων ενημερώσεων προγράμματος
 
 ## [1.0.96] - 2026-07-03
 
 ### 🐛 Διορθώσεις
 
-- fix: compare ImageUrl in status comparison to detect scheduled closure updates
+- fix: σύγκριση του ImageUrl στη σύγκριση κατάστασης για εντοπισμό ενημερώσεων προγραμματισμένου κλεισίματος
 
 ## [1.0.93] - 2026-07-02
 
 ### 🐛 Διορθώσεις
 
-- fix: allow empty PreviousState in Resolve-BridgeStateForChange parameter
+- fix: αποδοχή κενής τιμής στην παράμετρο PreviousState της Resolve-BridgeStateForChange
 
 ## [1.0.91] - 2026-07-02
 
 ### 🐛 Διορθώσεις
 
-- fix: send notification on first run when no previous state exists
-- fix(docker): create /app/logs directory and fix healthcheck path
+- fix: αποστολή ειδοποίησης κατά την πρώτη εκτέλεση όταν δεν υπάρχει προηγούμενη κατάσταση
+- fix(docker): δημιουργία καταλόγου /app/logs και διόρθωση διαδρομής healthcheck
 
 ## [1.0.90] - 2026-07-02
 
 ### 🐛 Διορθώσεις
 
-- fix(ci): fix container test and Trivy SARIF upload in docker workflow
+- fix(ci): διόρθωση δοκιμής container και μεταφόρτωσης Trivy SARIF στο workflow Docker
 
 ## [1.0.89] - 2026-07-02
 
 ### 🐛 Διορθώσεις
 
-- fix: resolve PSScriptAnalyzer violations for UTF8-BOM and trailing whitespaces
+- fix: επίλυση παραβιάσεων PSScriptAnalyzer για UTF-8 BOM και κενά στο τέλος γραμμών
 
 ## [1.0.88] - 2026-07-02
 
 ### 🐛 Διορθώσεις
 
-- fix: replace orphaned  with  in OCR request headers
+- fix: αντικατάσταση ορφανής μεταβλητής στις κεφαλίδες αιτήματος OCR
 
 ## [1.0.87] - 2026-07-01
 
 ### ♻️ Αναδιαρθρώσεις
 
-- refactor(Update-BridgeStatus): translate comments, documentation, and logs to Greek
-- refactor(Send-BridgePushover): translate comments, documentation, and logs to Greek
-- refactor(Invoke-BridgeStatusComparison): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgeStatusMonitor): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgeStatus): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgePreviousStatus): translate comments, documentation, and logs to Greek
-- refactor(Write-BridgeLog): translate comments, documentation, and logs to Greek
-- refactor(Test-BridgeResult): translate comments, documentation, and logs to Greek
-- refactor(Send-BridgePushoverRequest): translate comments, documentation, and logs to Greek
-- refactor(Send-BridgeNotification): translate comments, documentation, and logs to Greek
-- refactor(Resolve-BridgeStatus): translate comments, documentation, and logs to Greek
-- refactor(Resolve-BridgeStateForChange): translate comments, documentation, and logs to Greek
-- refactor(New-BridgeResult): translate comments, documentation, and logs to Greek
-- refactor(New-BridgeConfiguration): translate comments, documentation, and logs to Greek
-- refactor(Invoke-BridgeOpenedNotification): translate comments, documentation, and logs to Greek
-- refactor(Invoke-BridgeOCRRequest): translate comments, documentation, and logs to Greek
-- refactor(Invoke-BridgeOCRGoogleCloud): translate comments, documentation, and logs to Greek
-- refactor(Invoke-BridgeClosedNotification): translate comments, documentation, and logs to Greek
-- refactor(Get-SafeBridgeConfiguration): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgeStatusObject): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgeStatusFromHtml): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgeStatusAdvice): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgePushoverPayload): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgeOCRRequestBody): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgeNameFromUri): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgeImage): translate comments, documentation, and logs to Greek
-- refactor(Get-BridgeHtml): translate comments, documentation, and logs to Greek
-- refactor(Export-BridgeStatusJson): translate comments, documentation, and logs to Greek
-- refactor(ConvertTo-BridgeTimeRange): translate comments, documentation, and logs to Greek
-- refactor(ConvertTo-BridgeClosedDuration): translate comments, documentation, and logs to Greek
-- refactor(ConvertFrom-BridgeOCRResult): translate comments, documentation, and logs to Greek
-- refactor(ConvertFrom-BridgeHtml): translate comments, documentation, and logs to Greek
-- refactor(module): clean up region markers and set strict mode module-wide
+- refactor(Update-BridgeStatus): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Send-BridgePushover): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Invoke-BridgeStatusComparison): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgeStatusMonitor): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgeStatus): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgePreviousStatus): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Write-BridgeLog): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Test-BridgeResult): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Send-BridgePushoverRequest): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Send-BridgeNotification): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Resolve-BridgeStatus): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Resolve-BridgeStateForChange): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(New-BridgeResult): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(New-BridgeConfiguration): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Invoke-BridgeOpenedNotification): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Invoke-BridgeOCRRequest): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Invoke-BridgeOCRGoogleCloud): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Invoke-BridgeClosedNotification): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-SafeBridgeConfiguration): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgeStatusObject): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgeStatusFromHtml): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgeStatusAdvice): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgePushoverPayload): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgeOCRRequestBody): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgeNameFromUri): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgeImage): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Get-BridgeHtml): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(Export-BridgeStatusJson): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(ConvertTo-BridgeTimeRange): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(ConvertTo-BridgeClosedDuration): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(ConvertFrom-BridgeOCRResult): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(ConvertFrom-BridgeHtml): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
+- refactor(module): καθαρισμός δεικτών region και ενεργοποίηση StrictMode σε όλο το module
 
 ### 🧪 Δοκιμές
 
-- test(Invoke-BridgeOCRRequest): fix file BOM encoding for compliance
-- test(ConvertFrom-BridgeHtml): fix file BOM encoding for compliance
-- test(Write-BridgeLog): translate test blocks, descriptions, and comments to Greek
-- test(Update-BridgeStatus): translate test blocks, descriptions, and comments to Greek
-- test(Test-BridgeResult): translate test blocks, descriptions, and comments to Greek
-- test(Test-BridgeResult): translate test blocks, descriptions, and comments to Greek
-- test(Send-BridgePushoverRequest): translate test blocks, descriptions, and comments to Greek
-- test(Send-BridgePushover): translate test blocks, descriptions, and comments to Greek
-- test(Send-BridgeNotification): translate test blocks, descriptions, and comments to Greek
-- test(RunScript): translate test blocks, descriptions, and comments to Greek
-- test(Resolve-BridgeStatus): translate test blocks, descriptions, and comments to Greek
-- test(Resolve-BridgeStateForChange): translate test blocks, descriptions, and comments to Greek
-- test(PesterConfiguration): translate test blocks, descriptions, and comments to Greek
-- test(PSScriptAnalyzerSettings): translate test blocks, descriptions, and comments to Greek
-- test(New-BridgeResult): translate test blocks, descriptions, and comments to Greek
-- test(New-BridgeConfiguration): translate test blocks, descriptions, and comments to Greek
-- test(ModuleExports): translate test blocks, descriptions, and comments to Greek
-- test(MockHelper): translate test blocks, descriptions, and comments to Greek
-- test(Invoke-BridgeStatusComparison): translate test blocks, descriptions, and comments to Greek
-- test(Invoke-BridgeOpenedNotification): translate test blocks, descriptions, and comments to Greek
-- test(Invoke-BridgeOCRRequest): translate test blocks, descriptions, and comments to Greek
-- test(Invoke-BridgeOCRGoogleCloud): translate test blocks, descriptions, and comments to Greek
-- test(Invoke-BridgeClosedNotification): translate test blocks, descriptions, and comments to Greek
-- test(Integration): translate test blocks, descriptions, and comments to Greek
-- test(Get-SafeBridgeConfiguration): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeStatusObject): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeStatusMonitor): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeStatusFromHtml): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeStatusAdvice): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeStatus): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeStatus-Refactored): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgePushoverPayload): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgePreviousStatus): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeOCRRequestBody): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeNameFromUri): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeImage): translate test blocks, descriptions, and comments to Greek
-- test(Get-BridgeHtml): translate test blocks, descriptions, and comments to Greek
-- test(Export-BridgeStatusJson): translate test blocks, descriptions, and comments to Greek
-- test(DockerBuildWorkflow): translate test blocks, descriptions, and comments to Greek
-- test(ConvertTo-BridgeTimeRange): translate test blocks, descriptions, and comments to Greek
-- test(ConvertTo-BridgeClosedDuration): translate test blocks, descriptions, and comments to Greek
-- test(ConvertFrom-BridgeOCRResult): translate test blocks, descriptions, and comments to Greek
-- test(ConvertFrom-BridgeHtml): translate test blocks, descriptions, and comments to Greek
+- test(Invoke-BridgeOCRRequest): διόρθωση κωδικοποίησης BOM αρχείου για συμμόρφωση
+- test(ConvertFrom-BridgeHtml): διόρθωση κωδικοποίησης BOM αρχείου για συμμόρφωση
+- test(Write-BridgeLog): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Update-BridgeStatus): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Test-BridgeResult): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Send-BridgePushoverRequest): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Send-BridgePushover): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Send-BridgeNotification): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(RunScript): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Resolve-BridgeStatus): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Resolve-BridgeStateForChange): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(PesterConfiguration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(PSScriptAnalyzerSettings): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(New-BridgeResult): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(New-BridgeConfiguration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(ModuleExports): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(MockHelper): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Invoke-BridgeStatusComparison): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Invoke-BridgeOpenedNotification): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Invoke-BridgeOCRRequest): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Invoke-BridgeOCRGoogleCloud): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Invoke-BridgeClosedNotification): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Integration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-SafeBridgeConfiguration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeStatusObject): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeStatusMonitor): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeStatusFromHtml): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeStatusAdvice): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeStatus): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeStatus-Refactored): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgePushoverPayload): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgePreviousStatus): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeOCRRequestBody): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeNameFromUri): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeImage): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Get-BridgeHtml): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(Export-BridgeStatusJson): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(DockerBuildWorkflow): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(ConvertTo-BridgeTimeRange): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(ConvertTo-BridgeClosedDuration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(ConvertFrom-BridgeOCRResult): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
+- test(ConvertFrom-BridgeHtml): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
 
 ### 🎨 Στυλ & Μορφοποίηση
 
-- style(docs): fix table formatting in README.md for better readability
+- style(docs): διόρθωση μορφοποίησης πίνακα στο README.md για καλύτερη αναγνωσιμότητα
 
 ## [1.0.86] - 2026-07-01
 

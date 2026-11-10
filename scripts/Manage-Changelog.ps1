@@ -207,6 +207,12 @@ switch ($Action) {
             if ($headerMatch.Success) {
                 $header = $headerMatch.Value
                 $body = $changelog.Substring($header.Length)
+                $unreleasedRegex = '^## \[(?:Unreleased|Μη Κυκλοφορημένα)\][^\r\n]*\r?\n(?:(?!## \[\d).*?\r?\n)*'
+                $unreleasedMatch = [regex]::Match($body, $unreleasedRegex)
+                if ($unreleasedMatch.Success) {
+                    $header += $unreleasedMatch.Value.TrimEnd() + "`n`n"
+                    $body = $body.Substring($unreleasedMatch.Length).TrimStart("`r", "`n")
+                }
             } else {
                 $header = ""
                 $body = $changelog
