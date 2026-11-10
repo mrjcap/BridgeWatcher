@@ -43,3 +43,6 @@ config.json
 graphify-out/
 refactor.py
 scratch/
+
+# Architecture Decision Records (local only)
+docs/adr/
