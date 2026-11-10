@@ -34,9 +34,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-          persist-credentials: ${{ github.event_name != 'pull_request' }}
+          persist-credentials: false
 
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36 # v1
@@ -59,13 +58,13 @@ jobs:
 
           Write-Verbose "Installing required modules..."
           $modules = @(
-            @{ Name = 'platyPS'; MinimumVersion = '0.14.2' }
-            @{ Name = 'PSScriptAnalyzer'; MinimumVersion = '1.21.0' }
+            @{ Name = 'platyPS'; RequiredVersion = '0.14.2' }
+            @{ Name = 'PSScriptAnalyzer'; RequiredVersion = '1.23.0' }
           )
 
           foreach ($module in $modules) {
-            Write-Verbose "Installing $($module.Name)..."
-            Install-Module -Name $module.Name -MinimumVersion $module.MinimumVersion -Force -Scope CurrentUser -AllowClobber
+            Write-Verbose "Installing $($module.Name) v$($module.RequiredVersion)..."
+            Install-Module -Name $module.Name -RequiredVersion $module.RequiredVersion -Force -Scope CurrentUser -AllowClobber
           }
 
           Write-Verbose " All modules installed successfully"
@@ -267,6 +266,14 @@ jobs:
             echo "Documentation changes detected"
             git diff --name-status docs/
           fi
+
+      - name: Configure git credentials for documentation push
+        if: steps.docs_changes.outputs.changes_detected == 'true' && github.event_name != 'pull_request'
+        env:
+          GIT_PUSH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          ENCODED_TOKEN=$(printf 'x-access-token:%s' "$GIT_PUSH_TOKEN" | base64 -w 0)
+          git config --local http.https://github.com/.extraheader "AUTHORIZATION: basic $ENCODED_TOKEN"
 
       - name: Commit documentation changes
         if: steps.docs_changes.outputs.changes_detected == 'true' && github.event_name != 'pull_request'
