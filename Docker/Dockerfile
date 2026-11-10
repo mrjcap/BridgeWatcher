@@ -71,5 +71,6 @@ EXPOSE 8090
 
 ENTRYPOINT ["sh", "./entrypoint.sh"]
 
+# hadolint ignore=DL3025
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD pwsh -Command "if (Test-Path '/app/logs/bridge_status.json' -NewerThan (Get-Date).AddMinutes(-10)) { exit 0 } else { exit 1 }"
+    CMD ["pwsh", "-NoLogo", "-NoProfile", "-Command", "if (Test-Path '/app/logs/bridge_status.json' -NewerThan (Get-Date).AddMinutes(-10)) { exit 0 } else { exit 1 }"]

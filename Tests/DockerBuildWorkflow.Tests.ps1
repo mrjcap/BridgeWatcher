@@ -10,6 +10,8 @@
         $script:docsContent = Get-Content -Path $script:docsPath -Raw
         $script:entrypointPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../Docker/entrypoint.sh'))
         $script:entrypointContent = Get-Content -Path $script:entrypointPath -Raw
+        $script:dockerfilePath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../Docker/Dockerfile'))
+        $script:dockerfileContent = Get-Content -Path $script:dockerfilePath -Raw
     }
 
     It 'Requires CI and security-analysis success before gatekeeper commits changelog and resumes untagged releases' {
@@ -51,5 +53,10 @@
         $script:docsContent | Should -Match 'persist-credentials:\s*false'
         $script:docsContent | Should -Not -Match '-MinimumVersion'
         $script:docsContent | Should -Match 'Install-Module -Name \$module\.Name -RequiredVersion \$module\.RequiredVersion'
+    }
+
+    It 'Uses JSON exec array notation for HEALTHCHECK CMD in Dockerfile (Hadolint DL3025)' {
+        $script:dockerfileContent | Should -Match '# hadolint ignore=DL3025'
+        $script:dockerfileContent | Should -Match 'CMD \["pwsh", "-NoLogo", "-NoProfile", "-Command",'
     }
 }
