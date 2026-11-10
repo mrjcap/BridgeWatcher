@@ -46,4 +46,10 @@
         $script:entrypointContent | Should -Match 'tr -d ''\\r\\n'' < "\$secret_path"'
         $script:entrypointContent | Should -Not -Match '\|\s*xargs'
     }
+
+    It 'Disables persist-credentials on checkout and pins exact module versions in powershell-docs.yml' {
+        $script:docsContent | Should -Match 'persist-credentials:\s*false'
+        $script:docsContent | Should -Not -Match '-MinimumVersion'
+        $script:docsContent | Should -Match 'Install-Module -Name \$module\.Name -RequiredVersion \$module\.RequiredVersion'
+    }
 }
