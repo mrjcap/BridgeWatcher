@@ -41,6 +41,24 @@ Describe 'Get-BridgeStatusFromHtml' {
 
         }
 
+        It 'Πετάει σφάλμα BridgeStatusPatternNotFound όταν οι εικόνες δεν ταιριάζουν σε κανένα πρότυπο' {
+            Mock Get-BridgeImage {
+                return [System.Collections.ArrayList]@(
+                    [pscustomobject]@{ src = 'unknown-banner.jpg' }
+                )
+            }
+            Mock Write-BridgeLog { }
+
+            $html = '<html><body>unrecognized images</body></html>'
+            $timestamp = '2025-04-18T08:00:00'
+
+            $errs = @()
+            $result = Get-BridgeStatusFromHtml -Configuration $script:Config -Html $html -Timestamp $timestamp -ErrorVariable errs -ErrorAction SilentlyContinue
+            $result | Should -BeNullOrEmpty
+            $matchFound = [bool]($errs.FullyQualifiedErrorId -match 'BridgeStatusPatternNotFound')
+            $matchFound | Should -Be $true
+        }
+
     }
 
     Context 'Όταν υπάρχει Open image αλλά δεν υπάρχει info εικόνα' {

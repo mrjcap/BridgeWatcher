@@ -8,6 +8,8 @@
         $script:publishContent = Get-Content -Path $script:publishPath -Raw
         $script:docsPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../.github/workflows/powershell-docs.yml'))
         $script:docsContent = Get-Content -Path $script:docsPath -Raw
+        $script:entrypointPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../Docker/entrypoint.sh'))
+        $script:entrypointContent = Get-Content -Path $script:entrypointPath -Raw
     }
 
     It 'Ελέγχει την ακριβή έκδοση release tag στο build-and-test job' {
@@ -32,5 +34,10 @@
         $script:releaseContent | Should -Match 'secrets\.RELEASE_TOKEN\s*\|\|\s*secrets\.GITHUB_TOKEN'
         $script:publishContent | Should -Match 'secrets\.RELEASE_TOKEN\s*\|\|\s*secrets\.GITHUB_TOKEN'
         $script:docsContent | Should -Match 'secrets\.RELEASE_TOKEN\s*\|\|\s*secrets\.GITHUB_TOKEN'
+    }
+
+    It 'Reads secrets in entrypoint.sh without piping through xargs' {
+        $script:entrypointContent | Should -Match 'tr -d ''\\r\\n'' < "\$secret_path"'
+        $script:entrypointContent | Should -Not -Match '\|\s*xargs'
     }
 }
