@@ -9,31 +9,14 @@
 
 ### 🐛 Διορθώσεις
 
-- fix(ci): χρήση πολυγραμμικής εξόδου heredoc για τα release notes και αφαίρεση διπλότυπων commits στο changelog
-- fix(ci): περιορισμός του Codacy CLI στο psscriptanalyzer και κλείδωμα του Trivy στην έκδοση v0.76.2
 - fix(docker): αναβάθμιση πακέτων Alpine κατά το build για επίλυση του CVE-2026-4738
-- fix(renovate): ορισμός του minimumReleaseAge ως χρονικής διάρκειας κειμένου (#38)
-- fix(ci): διατήρηση του βήματος checkout για release tag παράλληλα με το dry-run checkout
-- fix(ci): υποστήριξη dry_run στο workflow κατασκευής Docker
-- fix(ci): διατήρηση υποκαταλόγων πακέτων στο coverage.xml για το Codacy
-- fix(tests): χρήση σχετικής διαδρομής ανεξάρτητης πλατφόρμας στις δοκιμές Export-BridgeStatusJson
-- fix(ci): αναβάθμιση GitHub Actions σε Node 24, κλείδωμα runner και διόρθωση συμβατότητας δοκιμών σε Linux
 - fix(Export-BridgeStatusJson): αποκατάσταση ατομικής εγγραφής αρχείου μέσω προσωρινού αρχείου και μετονομασίας
-- fix(encoding): επίλυση ζητημάτων κωδικοποίησης UTF-8 BOM σε αρχεία .ps1, .psm1 και .psd1
-- fix(tests): προσθήκη μεταβλητών mock που έλειπαν και κάλυψη συνθηκών $null για 100% κάλυψη κώδικα
-- fix: αφαίρεση περιττών κενών γραμμών στο τέλος του Manage-Changelog.ps1
 
 ### ♻️ Αναδιαρθρώσεις
 
-- refactor: καθαρή ροή μετασχηματισμού και συμμόρφωση με κωδικοποίηση UTF-8 BOM
 - refactor(Invoke-BridgeStatusComparison): αφαίρεση παρωχημένων παραμέτρων και επιστροφή ρητών συμβάντων αλλαγής
 - refactor(Update-BridgeStatus): διόρθωση λογικής αξιολόγησης κατάστασης για σωστή αντιστοίχιση δεικτών
 - refactor(Resolve-BridgeStateForChange): διόρθωση λογικής αντιστοίχισης κατάστασης
-
-### ❓ Άλλες Αλλαγές
-
-- Αφαίρεση SHA256 digest από τη βασική εικόνα του Dockerfile
-- Επίλυση όλων των 10 ευρημάτων ελέγχου κώδικα και επίτευξη 100% κάλυψης δοκιμών
 
 ## [1.0.99] - 2026-07-03
 
@@ -72,18 +55,6 @@
 - fix: αποστολή ειδοποίησης κατά την πρώτη εκτέλεση όταν δεν υπάρχει προηγούμενη κατάσταση
 - fix(docker): δημιουργία καταλόγου /app/logs και διόρθωση διαδρομής healthcheck
 
-## [1.0.90] - 2026-07-02
-
-### 🐛 Διορθώσεις
-
-- fix(ci): διόρθωση δοκιμής container και μεταφόρτωσης Trivy SARIF στο workflow Docker
-
-## [1.0.89] - 2026-07-02
-
-### 🐛 Διορθώσεις
-
-- fix: επίλυση παραβιάσεων PSScriptAnalyzer για UTF-8 BOM και κενά στο τέλος γραμμών
-
 ## [1.0.88] - 2026-07-02
 
 ### 🐛 Διορθώσεις
@@ -94,104 +65,7 @@
 
 ### ♻️ Αναδιαρθρώσεις
 
-- refactor(Update-BridgeStatus): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Send-BridgePushover): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Invoke-BridgeStatusComparison): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgeStatusMonitor): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgeStatus): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgePreviousStatus): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Write-BridgeLog): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Test-BridgeResult): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Send-BridgePushoverRequest): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Send-BridgeNotification): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Resolve-BridgeStatus): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Resolve-BridgeStateForChange): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(New-BridgeResult): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(New-BridgeConfiguration): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Invoke-BridgeOpenedNotification): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Invoke-BridgeOCRRequest): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Invoke-BridgeOCRGoogleCloud): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Invoke-BridgeClosedNotification): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-SafeBridgeConfiguration): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgeStatusObject): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgeStatusFromHtml): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgeStatusAdvice): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgePushoverPayload): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgeOCRRequestBody): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgeNameFromUri): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgeImage): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Get-BridgeHtml): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(Export-BridgeStatusJson): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(ConvertTo-BridgeTimeRange): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(ConvertTo-BridgeClosedDuration): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(ConvertFrom-BridgeOCRResult): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
-- refactor(ConvertFrom-BridgeHtml): μετάφραση σχολίων, τεκμηρίωσης και καταγραφών στα Ελληνικά
 - refactor(module): καθαρισμός δεικτών region και ενεργοποίηση StrictMode σε όλο το module
-
-### 🧪 Δοκιμές
-
-- test(Invoke-BridgeOCRRequest): διόρθωση κωδικοποίησης BOM αρχείου για συμμόρφωση
-- test(ConvertFrom-BridgeHtml): διόρθωση κωδικοποίησης BOM αρχείου για συμμόρφωση
-- test(Write-BridgeLog): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Update-BridgeStatus): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Test-BridgeResult): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Send-BridgePushoverRequest): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Send-BridgePushover): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Send-BridgeNotification): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(RunScript): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Resolve-BridgeStatus): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Resolve-BridgeStateForChange): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(PesterConfiguration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(PSScriptAnalyzerSettings): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(New-BridgeResult): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(New-BridgeConfiguration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(ModuleExports): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(MockHelper): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Invoke-BridgeStatusComparison): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Invoke-BridgeOpenedNotification): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Invoke-BridgeOCRRequest): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Invoke-BridgeOCRGoogleCloud): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Invoke-BridgeClosedNotification): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Integration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-SafeBridgeConfiguration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeStatusObject): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeStatusMonitor): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeStatusFromHtml): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeStatusAdvice): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeStatus): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeStatus-Refactored): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgePushoverPayload): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgePreviousStatus): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeOCRRequestBody): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeNameFromUri): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeImage): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Get-BridgeHtml): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(Export-BridgeStatusJson): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(DockerBuildWorkflow): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(ConvertTo-BridgeTimeRange): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(ConvertTo-BridgeClosedDuration): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(ConvertFrom-BridgeOCRResult): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-- test(ConvertFrom-BridgeHtml): μετάφραση μπλοκ δοκιμών, περιγραφών και σχολίων στα Ελληνικά
-
-### 🎨 Στυλ & Μορφοποίηση
-
-- style(docs): διόρθωση μορφοποίησης πίνακα στο README.md για καλύτερη αναγνωσιμότητα
-
-## [1.0.86] - 2026-07-01
-
-### 🐛 Διορθώσεις
-
-- fix(docker): αντικατάσταση περιττού cat με ανακατεύθυνση εισόδου (SC2002)
-
-### 🎨 Στυλ & Μορφοποίηση
-
-- style(tests): διόρθωση indentation και alignment για συμμόρφωση με Codacy
-
-## [1.0.85] - 2026-07-01
-
-### 🐛 Διορθώσεις
-
-- fix(ci): ενεργοποίηση upload αποτελεσμάτων ανάλυσης Codacy
 
 ## [1.0.84] - 2026-07-01
 
@@ -207,173 +81,46 @@
 
 ### 🐛 Διορθώσεις
 
-- fix: επίλυση τελικών παραβιάσεων PSScriptAnalyzer για εξασφάλιση CI pipeline
-- fix: διασφάλιση διατήρησης BOM κατά την ενημέρωση έκδοσης module
 - fix: διόρθωση ελληνικών τόνων και συνένωσης URL
-
-## [1.0.81] - 2026-07-01
-
-### 🐛 Διορθώσεις
-
-- fix: απενεργοποίηση DOCKER_CONTENT_TRUST καθολικά για διόρθωση Trivy action
-
-## [1.0.80] - 2026-07-01
-
-### 🐛 Διορθώσεις
-
-- fix: διόρθωση GitHub Actions pipelines
 
 ## [1.0.79] - 2026-06-30
 
 ### ✨ Χαρακτηριστικά
 
-- feat(ci): σταθεροποίηση (pin) Codecov actions στο commit SHA fb8b3582
-- feat(ci): μετάβαση βημάτων Codecov σε χρήση codecov-action@v7
-- feat(ci): ενημέρωση έκδοσης Codecov test results action σε v5
-- feat(ci): προσθήκη βήματος upload αποτελεσμάτων δοκιμών Codecov
+- feat(config): προσθήκη βοηθητικού Get-SafeBridgeConfiguration για ασφαλείς ελέγχους null στη ρύθμιση
 - feat(Send-BridgePushover): ενημέρωση Send-BridgePushover βάσει ευρημάτων αναθεώρησης
 - feat(Invoke-BridgeStatusComparison): ενημέρωση Invoke-BridgeStatusComparison βάσει ευρημάτων αναθεώρησης
 - feat(Get-BridgeStatusMonitor): ενημέρωση Get-BridgeStatusMonitor βάσει ευρημάτων αναθεώρησης
 - feat(Get-BridgeStatusComparison): ενημέρωση Get-BridgeStatusComparison βάσει ευρημάτων αναθεώρησης
 - feat(Get-BridgeStatus): ενημέρωση Get-BridgeStatus βάσει ευρημάτων αναθεώρησης
-- feat(config): προσθήκη βοηθητικού Get-SafeBridgeConfiguration για ασφαλείς ελέγχους null στη ρύθμιση
-- feat: προσθήκη script για αυτοματοποίηση κατηγοριοποίησης changelog και ενημέρωση υπαρχόντων εγγραφών
-- feat: υλοποίηση Manage-Changelog.ps1 και βοηθητικού script για αυτόματες ενημερώσεις changelog και δημιουργία PR
-- feat: εισαγωγή Manage-Changelog.ps1 για ενοποίηση ροών ενημέρωσης, μορφοποίησης changelog και δημιουργίας PR
-- feat: προσθήκη scripts για αυτοματοποίηση ενημερώσεων changelog και μετατροπή ιστορικού commits
-
-### 🐛 Διορθώσεις
-
-- fix(scripts): αφαίρεση κλήσης στο ανύπαρκτο Translate-CommitMessage.ps1
-- fix(scripts): χρήση Join-Path για cross-platform κλήσεις scripts
-- fix(lint): επίλυση όλων των σφαλμάτων και προειδοποιήσεων PSScriptAnalyzer
-- fix(ci): διόρθωση διαδρομής PSScriptAnalyzer και παραμέτρου report_type του Codecov
-- fix(ci): διόρθωση έκδοσης Gitleaks action στο ci.yml
-- fix(PesterConfiguration): αλλαγή μορφής εξόδου TestResult σε JUnitXml
-- fix: ενημέρωση regex αντικατάστασης έκδοσης module για υποστήριξη πολυγραμμικής αντιστοίχισης
-- fix: βελτίωση επεξεργασίας μηνυμάτων commit με αφαίρεση εμπρόσθιων emojis και κενών
-- fix(changelog): καθαρισμός εμπρόσθιων emojis κατά την αντιστοίχιση
-
-### ♻️ Αναδιαρθρώσεις
-
-- refactor(run): ενημέρωση run βάσει ευρημάτων αναθεώρησης
-- refactor(Write-BridgeLog): ενημέρωση Write-BridgeLog βάσει ευρημάτων αναθεώρησης
-- refactor(Send-BridgePushoverRequest): ενημέρωση Send-BridgePushoverRequest βάσει ευρημάτων αναθεώρησης
-- refactor(Send-BridgeNotification): ενημέρωση Send-BridgeNotification βάσει ευρημάτων αναθεώρησης
-- refactor(Invoke-BridgeOpenedNotification): ενημέρωση Invoke-BridgeOpenedNotification βάσει ευρημάτων αναθεώρησης
-- refactor(Invoke-BridgeOCRRequest): ενημέρωση Invoke-BridgeOCRRequest βάσει ευρημάτων αναθεώρησης
-- refactor(Invoke-BridgeOCRGoogleCloud): ενημέρωση Invoke-BridgeOCRGoogleCloud βάσει ευρημάτων αναθεώρησης
-- refactor(Invoke-BridgeClosedNotification): ενημέρωση Invoke-BridgeClosedNotification βάσει ευρημάτων αναθεώρησης
-- refactor(Get-BridgeStatusFromHtml): ενημέρωση Get-BridgeStatusFromHtml βάσει ευρημάτων αναθεώρησης
-- refactor(Get-BridgePushoverPayload): ενημέρωση Get-BridgePushoverPayload βάσει ευρημάτων αναθεώρησης
-- refactor(Get-BridgeImage): ενημέρωση Get-BridgeImage βάσει ευρημάτων αναθεώρησης
-- refactor(Get-BridgeHtml): ενημέρωση Get-BridgeHtml βάσει ευρημάτων αναθεώρησης
-- refactor(Export-BridgeStatusJson): ενημέρωση Export-BridgeStatusJson βάσει ευρημάτων αναθεώρησης
-- refactor(ConvertFrom-BridgeHtml): ενημέρωση ConvertFrom-BridgeHtml βάσει ευρημάτων αναθεώρησης
-- refactor(BridgeWatcher): ενημέρωση BridgeWatcher βάσει ευρημάτων αναθεώρησης
-
-### 🧪 Δοκιμές
-
-- test(Write-BridgeLog.Tests): ενημέρωση Write-BridgeLog.Tests βάσει ευρημάτων αναθεώρησης
-- test(Test-BridgeResult.Tests): ενημέρωση Test-BridgeResult.Tests βάσει ευρημάτων αναθεώρησης
-- test(Test-BridgeResult-Simple.Tests): ενημέρωση Test-BridgeResult-Simple.Tests βάσει ευρημάτων αναθεώρησης
-- test(Send-BridgePushoverRequest.Tests): ενημέρωση Send-BridgePushoverRequest.Tests βάσει ευρημάτων αναθεώρησης
-- test(Send-BridgePushover.Tests): ενημέρωση Send-BridgePushover.Tests βάσει ευρημάτων αναθεώρησης
-- test(Resolve-BridgeStatus.Tests): ενημέρωση Resolve-BridgeStatus.Tests βάσει ευρημάτων αναθεώρησης
-- test(Resolve-BridgeStateForChange.Tests): ενημέρωση Resolve-BridgeStateForChange.Tests βάσει ευρημάτων αναθεώρησης
-- test(New-BridgeResult.Tests): ενημέρωση New-BridgeResult.Tests βάσει ευρημάτων αναθεώρησης
-- test(Invoke-BridgeStatusComparison.Tests): ενημέρωση Invoke-BridgeStatusComparison.Tests βάσει ευρημάτων αναθεώρησης
-- test(Invoke-BridgeOpenedNotification.Tests): ενημέρωση Invoke-BridgeOpenedNotification.Tests βάσει ευρημάτων αναθεώρησης
-- test(Invoke-BridgeOCRRequest.Tests): ενημέρωση Invoke-BridgeOCRRequest.Tests βάσει ευρημάτων αναθεώρησης
-- test(Invoke-BridgeOCRGoogleCloud.Tests): ενημέρωση Invoke-BridgeOCRGoogleCloud.Tests βάσει ευρημάτων αναθεώρησης
-- test(Invoke-BridgeClosedNotification.Tests): ενημέρωση Invoke-BridgeClosedNotification.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeStatusObject.Tests): ενημέρωση Get-BridgeStatusObject.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeStatusMonitor.Tests): ενημέρωση Get-BridgeStatusMonitor.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeStatusFromHtml.Tests): ενημέρωση Get-BridgeStatusFromHtml.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeStatusComparison.Tests): ενημέρωση Get-BridgeStatusComparison.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeStatusAdvice.Tests): ενημέρωση Get-BridgeStatusAdvice.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeStatus.Tests): ενημέρωση Get-BridgeStatus.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeStatus-Refactored.Tests): ενημέρωση Get-BridgeStatus-Refactored.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgePushoverPayload.Tests): ενημέρωση Get-BridgePushoverPayload.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgePreviousStatus.Tests): ενημέρωση Get-BridgePreviousStatus.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeOCRRequestBody.Tests): ενημέρωση Get-BridgeOCRRequestBody.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeNameFromUri.Tests): ενημέρωση Get-BridgeNameFromUri.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeImages.Tests): ενημέρωση Get-BridgeImages.Tests βάσει ευρημάτων αναθεώρησης
-- test(Get-BridgeHtml.Tests): ενημέρωση Get-BridgeHtml.Tests βάσει ευρημάτων αναθεώρησης
-- test(Export-BridgeStatusJson.Tests): ενημέρωση Export-BridgeStatusJson.Tests βάσει ευρημάτων αναθεώρησης
-- test(ConvertTo-BridgeTimeRange.Tests): ενημέρωση ConvertTo-BridgeTimeRange.Tests βάσει ευρημάτων αναθεώρησης
-- test(ConvertTo-BridgeClosedDuration.Tests): ενημέρωση ConvertTo-BridgeClosedDuration.Tests βάσει ευρημάτων αναθεώρησης
-- test(ConvertFrom-BridgeOCRResult.Tests): ενημέρωση ConvertFrom-BridgeOCRResult.Tests βάσει ευρημάτων αναθεώρησης
-- test(ConvertFrom-BridgeHtml.Tests): ενημέρωση ConvertFrom-BridgeHtml.Tests βάσει ευρημάτων αναθεώρησης
-- test(integration): δημιουργία integration tests ζωντανής ανάλυσης HTML
-
-### 🎨 Στυλ & Μορφοποίηση
-
-- style(changelog): διόρθωση μήκους γραμμής markdown και κενών γραμμών στο τέλος
 
 ## [1.0.78] - 2026-06-25
 
-### ✨ Χαρακτηριστικά
-
-- feat: ενημέρωση του regex αντικατάστασης έκδοσης module
-
 ### 🐛 Διορθώσεις
 
-- fix(docs): αφαίρεση κατεστραμμένου μπλοκ begin από το docstring
 - fix(logging): προσθήκη των σταδίων που λείπουν στο ValidateSet του Write-BridgeStage
 - fix(resilience): επιβολή ατομικών εγγραφών κατάστασης μέσω μετονομασίας προσωρινού αρχείου
 - fix(logging): ευθυγράμμιση του ValidateSet με τον υποκείμενο logger
 - fix(security): καθαρισμός διαπιστευτηρίων από το ErrorRecord payload
 - fix(docker): υποστήριξη δυναμικού PGID στο COPY
-- fix(module-version): διατήρηση της μορφοποίησης έκδοσης psd1
-  - διατήρηση της δομής της γραμμής ModuleVersion
-  - αντικατάσταση μόνο της τιμής έκδοσης μέσα στο εισαγωγικό
-  - αποφυγή επανασυγγραφής ολόκληρης της γραμμής ανάθεσης
-
-## [1.0.77] - 2026-06-24
-
-### ✨ Χαρακτηριστικά
-
-- feat: προσθήκη UTF-8 BOM στο module manifest για συμμόρφωση με το PSScriptAnalyzer
 
 ## [1.0.76] - 2026-06-24
 
 ### ✨ Χαρακτηριστικά
 
-- feat(ci): ενημέρωση του περιβάλλοντος εκτέλεσης powershell ci
-  - μετονομασία του workflow σε PowerShell Module CI
-  - αναβάθμιση του setup-pwsh tag από v7.5.1 σε v7.6.3
-  - ενημέρωση των cache keys και των ονομάτων artifacts σε v7.6.3
-  - διατήρηση των βημάτων analyzer, manifest και coverage αμετάβλητων
 - feat(container): αναβάθμιση περιβάλλοντος εκτέλεσης και powershell
   - ενημέρωση της βασικής εικόνας σε mcr.microsoft.com/dotnet/runtime:10.0.9-alpine3.23
   - αναβάθμιση του PowerShell σε 7.6.3 linux-musl-x64
   - ανανέωση των πακέτων Alpine για τη νέα βάση
 - feat: κεντρικοποίηση configuration και επίτευξη 100% test coverage
 - feat: εξαγωγή Resolve-BridgeStateForChange ως ξεχωριστό Private function με comprehensive tests
-- feat: προσθήκη [OutputType()] attributes για καλύτερη τεκμηρίωση
 - feat(error-handling): βελτίωση error handling, validation και test coverage
-- feat(docs): εναρμόνιση comment-based help σε Private functions
 
 ### 🐛 Διορθώσεις
 
-- fix(ci): σταθεροποίηση (pin) του sha της ενέργειας codecov
-  - αντικατάσταση του codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 με το
-    fb8b3582c8e4def4969c97caa2f19720cb33a72f
-  - διατήρηση των coverage upload inputs αμετάβλητων
-  - διατήρηση της συμπεριφοράς artifact και cache
 - fix: επίλυση συμβατότητας εξαγωγής JSON με αφαίρεση του μη υποστηριζόμενου ορίσματος Set-Content Encoding
-- fix: διόρθωση μορφοποίησης και indentation στο Resolve-BridgeStateForChange
-- fix: βελτίωση formatting και splatting consistency στα Resolve-BridgeStateForChange tests
-- fix: διόρθωση code style στο Write-BridgeLog.Tests.ps1
-- fix: διόρθωση syntax errors και ενίσχυση parameter validation
-- fix: συμμόρφωση με PSScriptAnalyzer και βελτιώσεις επικύρωσης παραμέτρων
 
 ## [1.0.75] - 2025-06-13
-
-### ✨ Χαρακτηριστικά
-
-- feat(ci): προσθήκη ελέγχου για υπάρχουσα έκδοση μονάδας στο PSGallery
 
 ### 🐛 Διορθώσεις
 
@@ -383,70 +130,23 @@
 
 ### 🐛 Διορθώσεις
 
-- fix(release.yml): διορθώσεις ασφαλείας και CI στο release workflow
-- fix(security): αντιμετώπιση shell injection vulnerabilities στο release.yml
 - fix(dockerfile): αλλαγή έκδοσης curl σε 8.14.1-r0
 
 ## [1.0.73] - 2025-06-12
 
 ### ✨ Χαρακτηριστικά
 
-- feat: προσθήκη Semgrep ignore comments για PowerShell workflows
 - feat: προσθήκη version pinning για Docker packages
 
 ### 🐛 Διορθώσεις
 
-- fix(security): αντιμετώπιση shell injection vulnerabilities
-- fix: διόρθωση security issues σε workflow αρχεία
 - fix(notifications): διόρθωση λογικής εύρεσης bridge state για αποστολή ειδοποιήσεων
-- fix(encoding): μαζική διόρθωση encoding σε UTF8BOM για όλα τα αρχεία
-
-## [1.0.72] - 2025-06-12
-
-### ✨ Χαρακτηριστικά
-
-- feat: ενημέρωση Update-ReleaseChangeLog.ps1 για χρήση Manage-Changelog.ps1
-- feat: δημιουργία Manage-Changelog.ps1 για consolidated changelog operations
-- feat: βελτίωση Get-PotentialNextVersion.ps1 με καλύτερο error handling
-- feat: βελτίωση Update-ModuleVersion.ps1 για υποστήριξη specific versions
-
-### 🐛 Διορθώσεις
-
-- fix(scripts): βελτίωση κατηγοριοποίησης commits με conventional commit support
-- fix(scripts): διόρθωση syntax error στο Update-ReleaseChangeLog.ps1
-- fix(scripts): διόρθωση syntax errors και αφαίρεση duplicate κώδικα στο Manage-Changelog.ps1
-- fix(scripts): διόρθωση σφάλματος 'Cannot index into a null array' στο Update-ReleaseChangeLog.ps1
-- fix: αντικατάσταση null-coalescing operator για PowerShell compatibility
-- fix(scripts): διόρθωση empty changelog generation στο Update-ReleaseChangeLog.ps1
 
 ## [1.0.71] - 2025-06-11
 
 ### ✨ Χαρακτηριστικά
 
 - feat(docker): προσθήκη Docker container για BridgeWatcher
-
-## [1.0.70] - 2025-06-11
-
-### ✨ Χαρακτηριστικά
-
-- feat: revert "ci(workflows): προσθήκη manual trigger στο CI workflow"
-- feat: revert "ci(workflows): προσθήκη manual trigger στο code quality workflow"
-- feat: revert "ci(workflows): προσθήκη manual trigger στο Docker build workflow"
-- feat: revert "ci(workflows): προσθήκη manual trigger στο documentation workflow"
-- feat: revert "ci(workflows): προσθήκη manual trigger στο publish workflow"
-- feat(scripts): προσθήκη demo script για changelog format validation
-- feat(scripts): προσθήκη perfect validation demo script
-- feat(scripts): νέο content validation script για commits
-- feat(scripts): comprehensive format validation για markdown αρχεία
-- feat(scripts): νέο comprehensive validation script
-- feat(scripts): τελικό validation script για quality assurance
-- feat(scripts): ultimate validation με perfect score achievement
-- feat(scripts): προσθήκη emoji support στα section headers
-
-### 🐛 Διορθώσεις
-
-- fix(scripts): διόρθωση syntax error στο changelog workflow test
-- fix(scripts): διόρθωση duplicate function name και function call
 
 ## [1.0.68] - 2025-06-10
 
@@ -490,86 +190,17 @@
 - fix(bridgeocr): διόρθωση OutputType σε PSCustomObject
 - fix(ocr): διόρθωση ορθογραφίας σε "Ανοίγει σε"
 
-## [1.0.60] - 2025-06-03
-
-### ✨ Χαρακτηριστικά
-
-- feat(ci): ενσωμάτωση job CI στο Release Orchestrator και ενημέρωση εξαρτήσεων
-- feat(ci): προσθήκη Release Orchestrator GitHub Actions workflow
-
-### 🐛 Διορθώσεις
-
-- fix(ci): διόρθωση συνθήκης εκκίνησης job ci από gatekeeper σε pre-release
-
 ## [1.0.59] - 2025-06-03
 
 ### ✨ Χαρακτηριστικά
 
-- feat(changelog): προσθήκη Update-ChangelogAndCreatePR.ps1 για αυτόματη ενημέρωση CHANGELOG και PR (#9)
 - feat(bridgewatcher): προσθήκη ApiKey/PoUserKey/PoApiKey σε Send-BridgeNotification και ενημέρωση handlerMap
-- feat(changelog): προσθήκη Test-ChangelogWorkflow και Compare-ChangelogApproach για τοπικό testing changelog workflow
-- feat(changelog): προσθήκη Test-ChangelogWorkflow και Compare-ChangelogApproaches scripts
-- feat(script): προσθήκη script για ενημέρωση και έλεγχο μορφοποίησης CHANGELOG.md
-
-### 🐛 Διορθώσεις
-
-- fix(ci): απόκρυψη επιπλέον ροών εξόδου στο Invoke-Pester (#7)
-- fix(script): διόρθωση Join-Path να χρησιμοποιεί named parameters αντί για positional
-- fix(test): αφαίρεση unused variable
-- fix(script): αφαίρεση Write-Host
-- fix(script): αφαίρεση CRLF
-- fix(script): αλλαγή encoding του Test-ChangelogWorkflow.ps1 σε UTF8BOM
-- fix(ci): ασφαλής ανάθεση VERSION_BUMP_TYPE μέσω περιβάλλοντος
-- fix(update-releasechangelog): χρήση ονομαστικών παραμέτρων για Join-Path
-
-## [1.0.53] - 2025-05-31
-
-### ✨ Χαρακτηριστικά
-
-- feat(scripts): έξυπνη επιλογή From ref με Get-LatestTagOnCurrentBranch και απλοποίηση logic git log
-
-## [1.0.52] - 2025-05-30
-
-### ✨ Χαρακτηριστικά
-
-- feat(scripts): προσθήκη ExcludeHousekeeping switch στο Update-ReleaseChangeLog.ps1 και έξυπνο commit filtering
-- feat(scripts): έξυπνη επιλογή From/To refs, προσθήκη ExcludeHousekeeping & IncludeMergeCommits flags με advanced
-  filtering
-- feat: προσθήκη συγχρονισμού branch πριν το push
-
-### 🐛 Διορθώσεις
-
-- fix(run.ps1): προσθήκη BOM και διασφάλιση συμβατότητας Unicode
-
-## [1.0.51] - 2025-05-29
-
-### ✨ Χαρακτηριστικά
-
-- feat: προσθήκη ξεχωριστού βήματος tagging εικόνας ως latest
-
-## [1.0.49] - 2025-05-29
-
-### ✨ Χαρακτηριστικά
-
-- feat: προσθήκη Set-FinalModuleVersion.ps1 για ενημέρωση module manifest
-- feat: προσθήκη Get-PotentialNextVersion.ps1 για υπολογισμό επόμενης έκδοσης
-- feat: προσθήκη gatekeeper job και επιλογής bump τύπου έκδοσης
-
-## [1.0.46] - 2025-05-29
-
-### ✨ Χαρακτηριστικά
-
-- feat: αποφυγή δημιουργίας tag αν το "v${{ env.new_version }}" υπάρχει ήδη στο βήμα Create Tag
-- feat: βελτίωση του workflow Publish με έλεγχο νέων commits, αποθήκευση flag, debug βήμα και ορθή εξαγωγή του
-  new_version.
 
 ## [1.0.45] - 2025-05-29
 
 ### ✨ Χαρακτηριστικά
 
 - feat: προσθήκη εισαγωγής των helper functions Send-BridgeNotification και Write-BridgeStage στο BridgeWatcher.psm1
-- feat: προσθήκη workflow_call trigger με required secrets, έξοδος module_published μέσω set_output και αφαίρεση
-  βημάτων Pester/tests.
 
 ## [1.0.38] - 2025-05-20
 
@@ -591,36 +222,6 @@
 - feat: προσθήκη υποστήριξης ειδοποίησης για "Κλειστή για συντήρηση" στο Invoke-BridgeClosedNotification
 - feat: προσθήκη υποστήριξης status "Κλειστή για συντήρηση" στη Get-BridgeStatusFromHtml
 
-## [1.0.29] - 2025-05-06
-
-### ✨ Χαρακτηριστικά
-
-- feat: προσθήκη emojis στα release notes και βελτιωμένο help στο Get-FormattedReleaseNotes
-
-## [1.0.27] - 2025-05-01
-
-### ✨ Χαρακτηριστικά
-
-- feat: προσθήκη script για αυτόματη αύξηση patch version σε PowerShell module manifest
-
-## [1.0.24] - 2025-05-01
-
-### ✨ Χαρακτηριστικά
-
-- feat: προσθήκη script για αυτόματη εξαγωγή release notes & βελτιώσεις workflow
-
-## [1.0.20] - 2025-05-01
-
-### ✨ Χαρακτηριστικά
-
-- feat: προσθήκη συστήματος αυτόματης ενημέρωσης CHANGELOG στο /scripts/
-
-## [1.0.18] - 2025-05-01
-
-### 🐛 Διορθώσεις
-
-- fix: μετάφραση description και διόρθωση αναμενόμενων κλήσεων Write-BridgeLog σε Start-BridgeStatusMonitor.Tests
-
 ## [1.0.9] - 2025-04-29
 
 ### ✨ Χαρακτηριστικά
@@ -628,9 +229,3 @@
 - feat(docker): προσθήκη entrypoint.sh για εκκίνηση Docker container
 - feat(config): προσθήκη αρχείου .env για παραμετροποίηση μεταβλητών περιβάλλοντος
 - feat(docker): προσθήκη Dockerfile για containerization του BridgeWatcher
-
-## [1.0.3] - 2025-04-27
-
-### ✨ Χαρακτηριστικά
-
-- feat: προσθήκη publish.yml για το PowerShell Gallery

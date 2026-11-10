@@ -72,7 +72,7 @@ if (-not $IncludeMergeCommits) { $gitArgs += '--no-merges' }
 if ($ExcludeHousekeeping) { # Εξαίρεση housekeeping/CI/τεχνικών commits με approved patterns
     $gitArgs += @(
         '--invert-grep',
-        '--grep=^(chore:|chore\(|ci:|ci\(|docs:|docs\(|build:|test:|refactor:|perf:|style:|Ενημέρωση|Προσθήκη συγχρονισμού|\[skip ci\]|Update changelog)',
+        '--grep=^(chore:|chore\(|ci:|ci\(|docs:|docs\(|build:|test:|test\(|refactor:|perf:|style:|(feat|fix)\((ci|tests?|scripts?|lint|changelog|encoding|renovate|release\.yml|update-releasechangelog)\):|Ενημέρωση|Προσθήκη συγχρονισμού|\[skip ci\]|Update changelog)',
         '--extended-regexp'
     )
 }
