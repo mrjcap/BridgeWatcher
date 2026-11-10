@@ -19,7 +19,7 @@ resolve_secret() {
     exit 1
   fi
 
-  tr -d '\r\n' < "$secret_path" | xargs
+  tr -d '\r\n' < "$secret_path"
 }
 
 # Read and export secrets so they are available in-memory to appuser
