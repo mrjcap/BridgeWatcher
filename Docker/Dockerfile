@@ -37,6 +37,9 @@ ENV TZ=Europe/Athens
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
+ENV XDG_CACHE_HOME=/tmp/.cache
+ENV XDG_CONFIG_HOME=/tmp/.config
+ENV XDG_DATA_HOME=/tmp/.local/share
 
 # Smart user creation - reuse 'users' group for GID 100
 RUN if [ "${PGID}" = "100" ]; then \
@@ -49,8 +52,9 @@ RUN if [ "${PGID}" = "100" ]; then \
 RUN mkdir -p /home/appuser/scripts/modules \
             /home/appuser/logs \
             /home/appuser/output \
-            /home/appuser/.cache \
-            /home/appuser/.local \
+            /home/appuser/.cache/powershell \
+            /home/appuser/.config/powershell \
+            /home/appuser/.local/share/powershell \
             /app/logs && \
     chown -R ${PUID}:${PGID} /home/appuser /app/logs && \
     chmod -R 755 /home/appuser /app/logs
