@@ -2,65 +2,50 @@
 
 ## about_BridgeWatcher
 
-```powershell
-ABOUT TOPIC NOTE:
-The first header of the about topic should be the topic name.
-The second header contains the lookup name used by the help system.
-
-IE:
-# Some Help Topic Name
-## SomeHelpTopicFileName
-
-This will be transformed into the text file
-as `about_SomeHelpTopicFileName`.
-Do not include file extensions.
-The second header should have no spaces.
-```
-
 ## SHORT DESCRIPTION
 
-{{ Short Description Placeholder }}
-
-```powershell
-ABOUT TOPIC NOTE:
-About topics can be no longer than 80 characters wide when rendered to text.
-Any topics greater than 80 characters will be automatically wrapped.
-The generated about topic will be encoded UTF-8.
-```
+BridgeWatcher monitors the submersible bridges at the Corinth Canal, parses schedule updates, and dispatches alerts.
 
 ## LONG DESCRIPTION
 
-{{ Long Description Placeholder }}
+BridgeWatcher periodically scrapes the public status page for the Poseidonia and Isthmia submersible bridges.
+When a bridge closes on a published schedule, the module retrieves the schedule notice image, calls the Google
+Vision API for text detection (OCR), parses the closure timeframe, and delivers push notifications via Pushover.
 
-## Optional Subtopics
-
-{{ Optional Subtopic Placeholder }}
+State changes are tracked across polling iterations and persisted to an atomic JSON snapshot file.
 
 ## EXAMPLES
 
-{{ Code or descriptive examples of how to leverage the functions described. }}
+Start continuous monitoring:
+
+```powershell
+Get-BridgeStatusMonitor -OutputFile './BridgeStatusSnapshot.json' `
+    -ApiKey $env:GOOGLE_VISION_API_KEY `
+    -PoUserKey $env:PUSHOVER_USER_KEY `
+    -PoApiKey $env:PUSHOVER_API_KEY
+```
+
+Fetch current status once:
+
+```powershell
+Get-BridgeStatus -Configuration (New-BridgeConfiguration)
+```
 
 ## NOTE
 
-{{ Note Placeholder - Additional information that a user needs to know.}}
-
-## TROUBLESHOOTING NOTE
-
-{{ Troubleshooting Placeholder - Warns users of bugs}}
-
-{{ Explains behavior that is likely to change with fixes }}
+BridgeWatcher requires an active internet connection to query topvision.gr and Google Cloud Vision APIs.
 
 ## SEE ALSO
 
-{{ See also placeholder }}
-
-{{ You can also list related articles, blogs, and video URLs. }}
+- Get-BridgeStatus
+- Get-BridgeStatusMonitor
+- Update-BridgeStatus
+- Invoke-BridgeStatusComparison
+- Send-BridgePushover
 
 ## KEYWORDS
 
-{{List alternate names or titles for this topic that readers might use.}}
-
-- {{ Keyword Placeholder }}
-- {{ Keyword Placeholder }}
-- {{ Keyword Placeholder }}
-- {{ Keyword Placeholder }}
+- BridgeWatcher
+- Corinth
+- Canal
+- Bridge

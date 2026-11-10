@@ -1,13 +1,11 @@
-# BridgeWatcher Incident Response Runbook
+# BridgeWatcher incident response runbook
 
 > Last updated: 2026-06-26
 
-## 1. Purpose & Scope
+## 1. Purpose and scope
 
-This runbook defines incident response procedures for
-**BridgeWatcher** — a PowerShell-based monitoring tool that
-tracks Corinth Canal bridge status using Google Vision API
-(OCR) and Pushover (notifications), deployed in Docker.
+This runbook defines incident response procedures for BridgeWatcher, a PowerShell-based monitoring tool that
+tracks Corinth Canal bridge status using Google Vision API (OCR) and Pushover (notifications), deployed in Docker.
 
 **In scope:**
 
@@ -19,50 +17,45 @@ tracks Corinth Canal bridge status using Google Vision API
 **Out of scope:**
 
 - Infrastructure outside the BridgeWatcher stack
-- Upstream Google/Pushover platform outages
+- Upstream Google or Pushover platform outages
 
 ---
 
-## 2. Incident Classification
+## 2. Incident classification
 
 | Severity | Category | Examples | Response SLA |
-| ---------- | ---------- | ---------- | -------------- |
-| **SEV-1** | Critical | API key leak, credential exposure | Immediate |
-| **SEV-2** | High | Service outage, container compromise | < 1 hour |
-| **SEV-3** | Low | Monitoring gaps, false alerts | < 24 hours |
+| --- | --- | --- | --- |
+| SEV-1 | Critical | API key leak, credential exposure | Immediate |
+| SEV-2 | High | Service outage, container compromise | < 1 hour |
+| SEV-3 | Low | Monitoring gaps, false alerts | < 24 hours |
 
-### Escalation Triggers
+### Escalation triggers
 
-- SEV-3 → SEV-2: Gap exceeds 4 hours or repeats 3×
-- SEV-2 → SEV-1: Unauthorized access confirmed
+- SEV-3 to SEV-2: Gap exceeds 4 hours or repeats 3 times.
+- SEV-2 to SEV-1: Unauthorized access confirmed.
 
 ---
 
-## 3. SEV-1: API Key Compromise Playbook
+## 3. SEV-1: API key compromise playbook
 
-> **Priority: This is the most critical scenario.**
-> A leaked API key can incur costs, enable abuse,
-> or expose the notification pipeline.
-
-### 3.1 Immediate — Revoke (< 5 min)
+### 3.1 Immediate revocation (< 5 min)
 
 | Step | Action | Owner |
-| ------ | -------- | ------- |
-| 1 | **Google Vision API key**: Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → Delete or disable the compromised key | Operator |
-| 2 | **Pushover API/User key**: Go to [Pushover Dashboard](https://pushover.net/) → Reset application token | Operator |
-| 3 | Stop the BridgeWatcher container to prevent further API calls with the compromised key | Operator |
+| --- | --- | --- |
+| 1 | Google Vision API key: disable or delete key in [Google Cloud Console](https://console.cloud.google.com/apis/credentials) | Operator |
+| 2 | Pushover API/User key: reset application token in [Pushover Dashboard](https://pushover.net/) | Operator |
+| 3 | Stop BridgeWatcher container to halt outbound requests | Operator |
 
 ```powershell
 # Stop the container immediately
 docker stop bridgewatcher
 ```
 
-### 3.2 Rotate — Generate New Credentials (< 15 min)
+### 3.2 Key rotation (< 15 min)
 
-1. **Google Cloud Console**: Create a new API key with
-   restrictions (HTTP referrer or IP-based).
-2. **Pushover**: Generate a new application token.
-3. **Update Docker secrets / environment variables**:
+1. Create a new API key in Google Cloud Console with IP or referrer restrictions.
+2. Generate a new application token in Pushover.
+3. Update Docker secrets or environment variables:
 
 ```powershell
 # If using docker run with env vars:
@@ -84,39 +77,37 @@ echo "<new-token>" | docker secret create pushover_token -
 docker logs bridgewatcher --tail 20
 ```
 
-### 3.3 Investigate — Audit Usage (< 1 hour)
+### 3.3 Usage audit (< 1 hour)
 
 | Check | How |
-| ------- | ----- |
-| Google API usage | Cloud Console → APIs & Services → Vision API → Metrics. Look for unexpected spikes or calls from unknown IPs. |
-| Pushover usage | Pushover dashboard → Message history. Check for unauthorized notifications sent. |
-| Source of leak | Search git history: `git log --all -p -- '*.ps1' '*.env' '*.yml'` for hardcoded keys. Check CI/CD logs. |
-| Container logs | `docker logs bridgewatcher 2>&1 > incident.log` — preserve before removal. |
+| --- | --- |
+| Google API usage | Check Cloud Console metrics for unexpected spikes or unknown IPs. |
+| Pushover usage | Review Pushover message history for unauthorized notifications. |
+| Source of leak | Search git history via `git log -S "key"` or CI logs. |
+| Container logs | Export logs with `docker logs bridgewatcher > incident.log`. |
 
-### 3.4 Notify Stakeholders
+### 3.4 Stakeholder notification
 
 - Inform project maintainers of the compromise.
-- If third-party data was exposed, follow disclosure
-  obligations.
-- Log the incident in the project issue tracker.
+- Follow disclosure obligations if third-party data was exposed.
+- Log the incident in the issue tracker.
 
-### 3.5 Post-Incident Hardening
+### 3.5 Post-incident hardening
 
-- [ ] Ensure keys are **never** committed to source control
-- [ ] Add `.env` and secrets files to `.gitignore`
-- [ ] Enable Google API key restrictions (IP/referrer)
-- [ ] Set Pushover monthly message limits
-- [ ] Run `git secrets --scan` or `gitleaks detect`
-- [ ] Consider Docker secrets instead of env vars
+- [ ] Ensure keys are not committed to source control.
+- [ ] Add secrets files to `.gitignore`.
+- [ ] Enable Google API key restrictions.
+- [ ] Set Pushover monthly message limits.
+- [ ] Run `gitleaks detect` locally.
+- [ ] Use Docker secrets instead of plain environment variables.
 
 ---
 
-## 4. SEV-2: Service Outage Playbook
+## 4. SEV-2: service outage playbook
 
-Bridge monitoring is offline — status updates are not
-being sent.
+Bridge monitoring is offline and status updates are interrupted.
 
-### 4.1 Diagnose (< 10 min)
+### 4.1 Diagnosis (< 10 min)
 
 ```powershell
 # Check container status
@@ -133,15 +124,15 @@ Invoke-RestMethod -Uri "https://vision.googleapis.com/v1/images:annotate?key=$en
   -Method POST -Body '{}' -ContentType 'application/json'
 ```
 
-| Symptom | Likely Cause | Fix |
-| --------- | ------------- | ----- |
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
 | Container `Exited` | Crash or OOM kill | Check logs, restart |
 | Container running, no output | Script hang or sleep loop | Restart container |
-| API 403/401 errors | Key invalid or quota exceeded | Rotate key / check quota |
+| API 403/401 errors | Key invalid or quota exceeded | Rotate key or check quota |
 | Network timeout | DNS or connectivity issue | Check Docker network |
 | Pushover errors | Token invalid or rate limit | Check Pushover dashboard |
 
-### 4.2 Recover
+### 4.2 Recovery
 
 ```powershell
 # Restart existing container
@@ -155,42 +146,41 @@ docker run -d --name bridgewatcher \
   bridgewatcher:latest
 ```
 
-### 4.3 Verify
+### 4.3 Verification
 
-- [ ] Container shows `Up` in `docker ps`
-- [ ] Logs show successful OCR processing
-- [ ] Test notification is received via Pushover
-- [ ] Confirm monitoring cycle resumes at expected interval
+- [ ] Container shows `Up` in `docker ps`.
+- [ ] Logs show successful OCR processing.
+- [ ] Test notification arrives via Pushover.
+- [ ] Monitoring cycle resumes at configured interval.
 
 ---
 
-## 5. SEV-2: Container Compromise Playbook
+## 5. SEV-2: container compromise playbook
 
-Suspected unauthorized access or malicious activity
-in the BridgeWatcher container.
+Suspected unauthorized access or unexpected execution in the container.
 
-### 5.1 Isolate (Immediate)
+### 5.1 Isolation
 
 ```powershell
 # Disconnect from network first to preserve state
 docker network disconnect bridge bridgewatcher
 
-# Stop the container (do NOT remove yet)
+# Stop the container (do not remove yet)
 docker stop bridgewatcher
 
 # Export container filesystem for investigation
 docker export bridgewatcher > bridgewatcher-forensic.tar
 ```
 
-### 5.2 Investigate
+### 5.2 Investigation
 
-| Action | Command / Location |
-| -------- | -------------------- |
+| Action | Command / location |
+| --- | --- |
 | Preserve container logs | `docker logs bridgewatcher > compromise.log 2>&1` |
 | Check for unexpected processes | Review forensic tar for added binaries |
-| Review Trivy scan results | `docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image bridgewatcher:latest` |
-| Check image integrity | Compare `docker image inspect` hash against known-good |
-| Review Docker daemon logs | `journalctl -u docker` (Linux) or Docker Desktop logs |
+| Review Trivy scan results | Run `trivy image bridgewatcher:latest` |
+| Check image integrity | Compare `docker image inspect` hash against known-good build |
+| Review Docker daemon logs | Check systemd journal or Docker Desktop logs |
 
 ### 5.3 Rebuild
 
@@ -205,28 +195,28 @@ docker build --no-cache -t bridgewatcher:latest .
 docker run --rm aquasec/trivy image bridgewatcher:latest
 ```
 
-### 5.4 Rotate All Credentials
+### 5.4 Credential rotation
 
-> **Assume all secrets in the container are compromised.**
+Assume all secrets mounted in the container are compromised:
 
-- [ ] Rotate Google Vision API key (see §3.2)
-- [ ] Rotate Pushover application token (see §3.2)
-- [ ] Rotate any other credentials mounted in the container
-- [ ] Update Docker secrets or env files
-- [ ] Redeploy with new credentials
+- [ ] Rotate Google Vision API key.
+- [ ] Rotate Pushover application token.
+- [ ] Rotate any additional secrets mounted in container.
+- [ ] Update Docker secrets or environment variables.
+- [ ] Redeploy container.
 
 ---
 
-## 6. Contact & Escalation
+## 6. Contact and escalation
 
-| Role | Name | Contact | Escalation Path |
-| ------ | ------ | --------- | ----------------- |
+| Role | Name | Contact | Escalation path |
+| --- | --- | --- | --- |
 | Primary Operator | Jay Cap (@mrjcap) | GitHub Issues / <mrjcap@users.noreply.github.com> | First responder |
 | Project Owner | Jay Cap (@mrjcap) | GitHub Issues / <mrjcap@users.noreply.github.com> | SEV-1 escalation |
 | Security Lead | Jay Cap (@mrjcap) | GitHub Issues / <mrjcap@users.noreply.github.com> | Compromise events |
 | Google Cloud Admin | Jay Cap (@mrjcap) | Google Cloud Console / Console Admin | API key rotation |
 
-**External Resources:**
+External resources:
 
 - [Google Cloud Support](https://cloud.google.com/support)
 - [Pushover Support](https://pushover.net/support)
@@ -234,14 +224,14 @@ docker run --rm aquasec/trivy image bridgewatcher:latest
 
 ---
 
-## 7. Post-Incident Review Template
+## 7. Post-incident review template
 
-Complete within **48 hours** of incident resolution.
+Complete within 48 hours of incident resolution.
 
-### Incident Summary
+### Incident summary
 
 | Field | Value |
-| ------- | ------- |
+| --- | --- |
 | Incident ID | *INC-YYYY-NNN* |
 | Severity | SEV-1 / SEV-2 / SEV-3 |
 | Date detected | *YYYY-MM-DD HH:MM UTC* |
@@ -250,30 +240,28 @@ Complete within **48 hours** of incident resolution.
 | Responder(s) | *Names* |
 | Root cause | *Brief description* |
 
-### Review Checklist
+### Review checklist
 
-- [ ] Timeline of events documented
-- [ ] Root cause identified and confirmed
-- [ ] Immediate fix applied and verified
-- [ ] All compromised credentials rotated
-- [ ] Logs preserved for reference
-- [ ] Detection gap identified (how could we
-      have caught this sooner?)
-- [ ] Preventive measures defined
-- [ ] Runbook updated with lessons learned
-- [ ] Issue/ticket filed for follow-up actions
-- [ ] Stakeholders notified of resolution
+- [ ] Document timeline of events.
+- [ ] Confirm root cause.
+- [ ] Verify applied remediations.
+- [ ] Rotate all exposed credentials.
+- [ ] Archive logs for audit records.
+- [ ] Identify detection and alerting gaps.
+- [ ] Document preventive controls.
+- [ ] Update runbook with findings.
+- [ ] Open GitHub issues for follow-up engineering work.
+- [ ] Notify stakeholders of resolution.
 
-### Lessons Learned
+### Lessons learned
 
 | Question | Answer |
-| ---------- | -------- |
-| What went well? | *...* |
-| What went wrong? | *...* |
-| What was lucky? | *...* |
-| What will we change? | *...* |
+| --- | --- |
+| What worked well? | *...* |
+| What failed? | *...* |
+| What surprised us? | *...* |
+| What concrete change will we make? | *...* |
 
 ---
 
-*This runbook is a living document. Update it after
-every incident and review quarterly.*
+Update this runbook after each incident and review quarterly.

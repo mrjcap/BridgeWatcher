@@ -1,10 +1,9 @@
-# Application Security Requirements
+# Application security requirements
 
-This document defines the security requirements for
-BridgeWatcher, aligned with ISO 27001:2022 Annex A
+This document defines security requirements for BridgeWatcher, aligned with ISO 27001:2022 Annex A
 control A.8.26 (Application Security Requirements).
 
-## 1. Input Validation
+## 1. Input validation
 
 | Requirement | Implementation | Enforcement |
 | --- | --- | --- |
@@ -14,7 +13,7 @@ control A.8.26 (Application Security Requirements).
 | URL params must validate format | `[ValidateScript({ $_ -match '^https?://' })]` | Runtime validation |
 | File paths must be validated before use | `Test-Path` checks before file operations | Code review |
 
-## 2. Error Handling
+## 2. Error handling
 
 | Requirement | Implementation |
 | --- | --- |
@@ -23,7 +22,7 @@ control A.8.26 (Application Security Requirements).
 | API failures must not expose credentials | URLs in error records contain no API keys |
 | Errors must be logged with severity level | `Write-BridgeLog` with Warning/Error levels |
 
-## 3. Credential Handling
+## 3. Credential handling
 
 | Requirement | Implementation |
 | --- | --- |
@@ -32,7 +31,7 @@ control A.8.26 (Application Security Requirements).
 | Credential params have suppression justification | `SuppressMessageAttribute` on all key params |
 | Credentials must never be logged | Logging excludes credential values |
 
-## 4. Transport Security
+## 4. Transport security
 
 | Requirement | Implementation |
 | --- | --- |
@@ -40,15 +39,15 @@ control A.8.26 (Application Security Requirements).
 | TLS version must be 1.2 or higher | `[Net.ServicePointManager]::SecurityProtocol` |
 | Certificate validation must not be disabled | Default .NET validation preserved |
 
-## 5. Data Integrity
+## 5. Data integrity
 
 | Requirement | Implementation |
 | --- | --- |
 | JSON output must use atomic writes | Temp file + `Move-Item` rename pattern |
 | Status files must be validated on read | `Test-Path` and JSON parse validation |
-| Previous status must survive process restart | Persisted to `bridge_status.json` |
+| Previous status must survive process restart | Persisted to JSON snapshot file |
 
-## 6. Container Security
+## 6. Container security
 
 | Requirement | Implementation |
 | --- | --- |
@@ -57,13 +56,15 @@ control A.8.26 (Application Security Requirements).
 | Unnecessary ports must not be exposed | No EXPOSE directives active |
 | Health check must validate output freshness | HEALTHCHECK with 10-minute threshold |
 
-## 7. Data Protection at Rest
+## 7. Data protection at rest
 
-| Requirement | Implementation & Justification |
-| --- | --- |
-| Output JSON encryption at rest | **Accepted Risk (Not Required)**: The output JSON files contain only public operational status of the Corinth Canal bridges scraped from public web resources. They contain no personal data (GDPR), payment card data (PCI DSS), or proprietary intellectual property. Implementing encryption at rest would add unnecessary runtime overhead without increasing the security posture of the public data. |
+Output JSON encryption at rest:
+
+Accepted risk (not required). Output JSON files contain only public operational status of Corinth Canal
+bridges scraped from public resources. They contain no personal data (GDPR), payment data (PCI DSS),
+or proprietary secrets. Implementing encryption at rest would add runtime overhead without security benefit
+for publicly accessible bridge status data.
 
 ---
 
-*Last reviewed: 2026-06-26*
-*Review frequency: Annually or when architecture changes*
+Last reviewed: 2026-06-26. Review frequency: annually or when architecture changes.

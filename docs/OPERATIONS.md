@@ -1,11 +1,10 @@
-# Operations Guide — BridgeWatcher
+# Operations guide: BridgeWatcher
 
-## 1. Recovery / Business Continuity (F-11)
+## 1. Recovery and business continuity (F-11)
 
-BridgeWatcher is stateless. Recovery is a fresh
-container deploy from the published image.
+BridgeWatcher is stateless. Recovery is a fresh container deploy from the published image.
 
-### Recovery Procedure
+### Recovery procedure
 
 ```bash
 # 1. Pull the latest image
@@ -30,18 +29,18 @@ docker run -d \
   bridgewatcher:latest
 ```
 
-### Recovery Objectives
+### Recovery objectives
 
 | Metric | Target | Notes |
-|--------|--------|-------|
-| **RPO** | Last JSON snapshot | Data is re-fetched on restart |
-| **RTO** | ~5 minutes | Pull image + start container |
+| --- | --- | --- |
+| RPO | Last JSON snapshot | Data is re-fetched on restart |
+| RTO | ~5 minutes | Pull image and start container |
 
 No database restore or state migration is required.
 
 ---
 
-## 2. Recommended Docker Runtime Flags (F-12)
+## 2. Recommended Docker runtime flags (F-12)
 
 ```bash
 docker run \
@@ -55,10 +54,10 @@ docker run \
   bridgewatcher:latest
 ```
 
-### Flag Explanations
+### Flag explanations
 
 | Flag | Purpose |
-| ------ | --------- |
+| --- | --- |
 | `--no-new-privileges` | Blocks `setuid`/`setgid` escalation |
 | `--read-only` | Makes root filesystem immutable |
 | `--tmpfs /tmp:rw,noexec,nosuid` | Writable `/tmp` without exec |
@@ -67,7 +66,7 @@ docker run \
 | `--restart=unless-stopped` | Auto-restart on crash |
 | `-v ...:/run/secrets:ro` | Mount secrets read-only |
 
-### Additional Hardening (Optional)
+### Additional hardening (optional)
 
 ```bash
 --security-opt=no-new-privileges:true
@@ -77,17 +76,15 @@ docker run \
 
 ---
 
-## 3. Log Management (F-13)
+## 3. Log management (F-13)
 
-### Current Behaviour
+### Current behavior
 
-BridgeWatcher writes daily rotating `.log` files
-inside the container filesystem.
+BridgeWatcher writes daily rotating `.log` files inside the container filesystem.
 
-### Recommended: Syslog Forwarding
+### Recommended: syslog forwarding
 
-Use the Docker syslog driver to forward logs to a
-central collector:
+Use the Docker syslog driver to forward logs to a central collector:
 
 ```bash
 docker run \
@@ -97,7 +94,7 @@ docker run \
   bridgewatcher:latest
 ```
 
-### Alternative: Bind-Mount + Shipper
+### Alternative: bind-mount and shipper
 
 Mount the log directory and use Filebeat or Promtail:
 
@@ -120,8 +117,9 @@ filebeat.inputs:
 
 ### Retention
 
-- **Local**: 7 days (default rotation)
-- **Central**: 90 days recommended for audit trail
+- Local: 7 days (default rotation)
+- Central: 90 days recommended for audit trail
 
 ---
-**Document History:** *created 2026-06-26*
+
+Document history: created 2026-06-26
