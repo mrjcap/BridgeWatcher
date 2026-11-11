@@ -5,7 +5,7 @@
     "helpers:pinGitHubActionDigests"
   ],
   "dependencyDashboardAutoclose": true,
-  "minimumReleaseAge": "7 days",
+  "minimumReleaseAge": "0 days",
   "customManagers": [
     {
       "customType": "regex",
@@ -32,6 +32,14 @@
   ],
   "packageRules": [
     {
+      "description": "Automerge non-major dependency updates after checks pass",
+      "matchUpdateTypes": ["patch", "minor", "digest"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "automergeStrategy": "squash"
+    },
+    {
       "description": "Update .NET 10 patches and Alpine versions; preserve amd64",
       "matchDatasources": [
         "docker"
@@ -40,8 +48,7 @@
         "mcr.microsoft.com/dotnet/runtime"
       ],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-alpine(?<build>\\d+)\\.(?<revision>\\d+)-(?<compatibility>amd64)$",
-      "allowedVersions": "/^10\\.0\\.\\d+-alpine\\d+\\.\\d+-amd64$/",
-      "minimumReleaseAge": "7 days"
+      "allowedVersions": "/^10\\.0\\.\\d+-alpine\\d+\\.\\d+-amd64$/"
     },
     {
       "description": "Update PowerShell 7.6 patches",
@@ -51,8 +58,7 @@
       "matchPackageNames": [
         "PowerShell/PowerShell"
       ],
-      "allowedVersions": ">=7.6.0 <7.7.0",
-      "minimumReleaseAge": "7 days"
+      "allowedVersions": ">=7.6.0 <7.7.0"
     },
     {
       "description": "Keep Font Awesome on v6 in the compliance dashboard; v7 renames and resizes icons",
