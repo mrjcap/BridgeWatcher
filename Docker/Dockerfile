@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/runtime:10.0.14-alpine3.24-amd64
+FROM mcr.microsoft.com/dotnet/runtime:10.0.15-alpine3.24-amd64
 
 # renovate: datasource=github-releases depName=PowerShell/PowerShell
 ARG POWERSHELL_VERSION=7.6.10
