@@ -51,14 +51,14 @@
       "allowedVersions": "/^10\\.0\\.\\d+-alpine\\d+\\.\\d+-amd64$/"
     },
     {
-      "description": "Update PowerShell 7.6 patches",
+      "description": "Update PowerShell 7.7 patches",
       "matchDatasources": [
         "github-releases"
       ],
       "matchPackageNames": [
         "PowerShell/PowerShell"
       ],
-      "allowedVersions": ">=7.6.0 <7.7.0"
+      "allowedVersions": ">=7.7.0 <7.8.0"
     },
     {
       "description": "Keep Font Awesome on v6 in the compliance dashboard; v7 renames and resizes icons",
