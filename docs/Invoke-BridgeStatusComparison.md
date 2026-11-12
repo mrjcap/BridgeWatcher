@@ -13,7 +13,7 @@ schema: 2.0.0
 
 ## SYNTAX
 
-```
+```powershell
 Invoke-BridgeStatusComparison [[-PreviousState] <Object>] [-CurrentState] <Object> [-Configuration] <PSObject>
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
@@ -28,7 +28,8 @@ Invoke-BridgeStatusComparison [[-PreviousState] <Object>] [-CurrentState] <Objec
 
 ### EXAMPLE 1
 
-```
+```powershell
+$config = New-BridgeConfiguration
 Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $config
 ```
 
@@ -100,7 +101,9 @@ Accept wildcard characters: False
 
 ### CommonParameters
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

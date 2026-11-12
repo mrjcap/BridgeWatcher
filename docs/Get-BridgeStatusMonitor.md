@@ -13,7 +13,7 @@ schema: 2.0.0
 
 ## SYNTAX
 
-```
+```powershell
 Get-BridgeStatusMonitor [-Configuration] <PSObject> [[-MaxIterations] <Int32>] [[-IntervalSeconds] <Int32>]
  [-OutputFile] <String> [[-ApiKey] <String>] [[-PoUserKey] <String>] [[-PoApiKey] <String>]
  [[-Action] <ScriptBlock>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
@@ -31,17 +31,28 @@ periodically fetching and analyzing the status and storing results.
 
 ### EXAMPLE 1
 
-```
-Get-BridgeStatusMonitor -MaxIterations 100 -IntervalSeconds 60 -OutputFile 'C:\Logs\bridge.json' -ApiKey 'api123' -PoUserKey 'user123' -PoApiKey 'token123'
+```powershell
+$config = New-BridgeConfiguration
+$monitorParams = @{
+    Configuration   = $config
+    MaxIterations   = 100
+    IntervalSeconds = 60
+    OutputFile      = 'C:\Logs\bridge.json'
+    ApiKey          = 'api123'
+    PoUserKey       = 'user123'
+    PoApiKey        = 'token123'
+}
+Get-BridgeStatusMonitor @monitorParams
 ```
 
 ### EXAMPLE 2
 
-```
-Get-BridgeStatusMonitor -OutputFile 'C:\Logs\bridge.json' -Action {
-    param(
-    Write-Host "Custom monitoring action running for $($splat.OutputFile)"
-    Update-BridgeStatus @splat -Configuration $Configuration
+```powershell
+$config = New-BridgeConfiguration
+Get-BridgeStatusMonitor -Configuration $config -OutputFile 'C:\Logs\bridge.json' -Action {
+    param($splat)
+    Write-Verbose "Custom monitoring action running for $($splat.OutputFile)"
+    Update-BridgeStatus @splat
 }
 ```
 
@@ -49,8 +60,7 @@ Get-BridgeStatusMonitor -OutputFile 'C:\Logs\bridge.json' -Action {
 
 ### -Configuration
 
-(Προαιρετικό) Αντικείμενο διαμόρφωσης.
-Αν δεν παρέχεται, δημιουργείται αυτόματα.
+Αντικείμενο διαμόρφωσης από τη New-BridgeConfiguration.
 
 ```yaml
 Type: PSObject
@@ -178,7 +188,7 @@ Accept wildcard characters: False
 
 ### -ProgressAction
 
-{{ Fill ProgressAction Description }}
+Καθορίζει τον τρόπο χειρισμού ενημερώσεων προόδου από το PowerShell.
 
 ```yaml
 Type: ActionPreference
@@ -194,7 +204,9 @@ Accept wildcard characters: False
 
 ### CommonParameters
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

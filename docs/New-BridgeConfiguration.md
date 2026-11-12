@@ -13,7 +13,7 @@ schema: 2.0.0
 
 ## SYNTAX
 
-```
+```powershell
 New-BridgeConfiguration [[-BaseUrl] <String>] [[-OCRApiUrl] <String>] [[-PushoverApiUrl] <String>]
  [[-DefaultIntervalSeconds] <Int32>] [[-DefaultMaxIterations] <Int32>] [[-MaxConsecutiveFailures] <Int32>]
  [[-LogDirectory] <String>] [[-ConfigurationPath] <String>] [-ProgressAction <ActionPreference>]
@@ -32,10 +32,10 @@ New-BridgeConfiguration [[-BaseUrl] <String>] [[-OCRApiUrl] <String>] [[-Pushove
 ### Example 1
 
 ```powershell
-PS C:\> {{ Add example code here }}
+$config = New-BridgeConfiguration
 ```
 
-{{ Add example description here }}
+Δημιουργεί ένα αντικείμενο διαμόρφωσης με τις προεπιλεγμένες ρυθμίσεις.
 
 ## PARAMETERS
 
@@ -185,7 +185,9 @@ Accept wildcard characters: False
 
 ### CommonParameters
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

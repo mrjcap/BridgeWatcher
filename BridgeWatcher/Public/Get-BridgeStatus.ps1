@@ -9,18 +9,16 @@
     .PARAMETER OutputFile
     (Προαιρετικό) Το αρχείο όπου θα αποθηκευτεί η τρέχουσα κατάσταση.
     .PARAMETER Configuration
-    (Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
+    Αντικείμενο διαμόρφωσης από τη New-BridgeConfiguration.
     .OUTPUTS
-    [PSCustomObject] - Αντικείμενο αποτελέσματος με Success, Data, ErrorMessage, ErrorCode και Timestamp.
+    [PSCustomObject] - Λίστα αντικειμένων κατάστασης γεφυρών.
     .EXAMPLE
-    Get-BridgeStatus -OutputFile 'C:\Logs\current-status.json'
+    $config = New-BridgeConfiguration
+    Get-BridgeStatus -Configuration $config -OutputFile 'C:\Logs\current-status.json'
     .EXAMPLE
-    $result = Get-BridgeStatus
-    if (Test-BridgeResult $result) {
-        Write-Host "Success: $($result.Data.Count) bridges found"
-    } else {
-        Write-Warning "Error: $($result.ErrorMessage)"
-    }
+    $config = New-BridgeConfiguration
+    $statuses = Get-BridgeStatus -Configuration $config
+    $statuses | Format-Table -AutoSize
     .NOTES
     Χρησιμοποιεί pipeline approach με New-BridgeResult/Test-BridgeResult για καλύτερο error handling.
     #>

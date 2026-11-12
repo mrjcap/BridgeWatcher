@@ -13,7 +13,7 @@ schema: 2.0.0
 
 ## SYNTAX
 
-```
+```powershell
 Update-BridgeStatus [-OutputFile] <String> [-ApiKey] <String> [-PoUserKey] <String> [-PoApiKey] <String>
  [-Configuration] <PSObject> [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -27,8 +27,16 @@ Update-BridgeStatus [-OutputFile] <String> [-ApiKey] <String> [-PoUserKey] <Stri
 
 ### EXAMPLE 1
 
-```
-Update-BridgeStatus -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123' -Configuration $Config
+```powershell
+$config = New-BridgeConfiguration
+$updateParams = @{
+    OutputFile    = 'C:\Logs\bridge-status.json'
+    ApiKey        = 'abc123'
+    PoUserKey     = 'user123'
+    PoApiKey      = 'token123'
+    Configuration = $config
+}
+Update-BridgeStatus @updateParams
 ```
 
 ## PARAMETERS
@@ -164,7 +172,9 @@ Accept wildcard characters: False
 
 ### CommonParameters
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

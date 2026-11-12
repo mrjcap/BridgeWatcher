@@ -13,7 +13,7 @@ schema: 2.0.0
 
 ## SYNTAX
 
-```
+```powershell
 Get-BridgeStatus [[-OutputFile] <String>] [-Configuration] <PSObject> [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
@@ -29,19 +29,17 @@ Get-BridgeStatus [[-OutputFile] <String>] [-Configuration] <PSObject> [-Progress
 
 ### EXAMPLE 1
 
-```
-Get-BridgeStatus -OutputFile 'C:\Logs\current-status.json'
+```powershell
+$config = New-BridgeConfiguration
+Get-BridgeStatus -Configuration $config -OutputFile 'C:\Logs\current-status.json'
 ```
 
 ### EXAMPLE 2
 
-```
-$result = Get-BridgeStatus
-if (Test-BridgeResult $result) {
-    Write-Host "Success: $($result.Data.Count) bridges found"
-} else {
-    Write-Warning "Error: $($result.ErrorMessage)"
-}
+```powershell
+$config = New-BridgeConfiguration
+$statuses = Get-BridgeStatus -Configuration $config
+$statuses | Format-Table -AutoSize
 ```
 
 ## PARAMETERS
@@ -64,8 +62,7 @@ Accept wildcard characters: False
 
 ### -Configuration
 
-(Προαιρετικό) Αντικείμενο διαμόρφωσης.
-Αν δεν παρέχεται, δημιουργείται αυτόματα.
+Αντικείμενο διαμόρφωσης από τη New-BridgeConfiguration.
 
 ```yaml
 Type: PSObject
@@ -81,7 +78,7 @@ Accept wildcard characters: False
 
 ### -ProgressAction
 
-{{ Fill ProgressAction Description }}
+Καθορίζει τον τρόπο χειρισμού ενημερώσεων προόδου από το PowerShell.
 
 ```yaml
 Type: ActionPreference
@@ -97,7 +94,9 @@ Accept wildcard characters: False
 
 ### CommonParameters
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

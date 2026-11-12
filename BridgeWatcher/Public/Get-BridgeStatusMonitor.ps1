@@ -28,7 +28,7 @@
     Το API Token της εφαρμογής Pushover.
 
     .PARAMETER Configuration
-    (Προαιρετικό) Αντικείμενο διαμόρφωσης. Αν δεν παρέχεται, δημιουργείται αυτόματα.
+    Αντικείμενο διαμόρφωσης από τη New-BridgeConfiguration.
 
     .PARAMETER Action
     (Προαιρετικό) Scriptblock που εκτελείται κατά τη διάρκεια του monitoring αντί για την προεπιλεγμένη Update-BridgeStatus.
@@ -37,13 +37,24 @@
     None.
 
     .EXAMPLE
-    Get-BridgeStatusMonitor -MaxIterations 100 -IntervalSeconds 60 -OutputFile 'C:\Logs\bridge.json' -ApiKey 'api123' -PoUserKey 'user123' -PoApiKey 'token123'
+    $config = New-BridgeConfiguration
+    $monitorParams = @{
+        Configuration   = $config
+        MaxIterations   = 100
+        IntervalSeconds = 60
+        OutputFile      = 'C:\Logs\bridge.json'
+        ApiKey          = 'api123'
+        PoUserKey       = 'user123'
+        PoApiKey        = 'token123'
+    }
+    Get-BridgeStatusMonitor @monitorParams
 
     .EXAMPLE
-    Get-BridgeStatusMonitor -OutputFile 'C:\Logs\bridge.json' -Action {
-        param(
-        Write-Host "Custom monitoring action running for $($splat.OutputFile)"
-        Update-BridgeStatus @splat -Configuration $Configuration
+    $config = New-BridgeConfiguration
+    Get-BridgeStatusMonitor -Configuration $config -OutputFile 'C:\Logs\bridge.json' -Action {
+        param($splat)
+        Write-Verbose "Custom monitoring action running for $($splat.OutputFile)"
+        Update-BridgeStatus @splat
     }
 
     .NOTES
