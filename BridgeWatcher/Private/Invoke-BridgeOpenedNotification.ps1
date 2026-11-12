@@ -47,40 +47,6 @@
         [PSCustomObject]$Configuration
     )
 
-    begin {
-        function Send-Notification {
-            <#
-            .SYNOPSIS
-            Στέλνει την ειδοποίηση ανοίγματος.
-            .DESCRIPTION
-            Βοηθητική συνάρτηση για την αποστολή μέσω Pushover ή CustomProvider.
-            #>
-            param(
-                [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Config,
-                [string]$Title,
-                [string]$Message,
-                [string]$Type,
-                [string]$PoUser,
-                [string]$PoApi,
-                [scriptblock]$Provider
-            )
-
-            if ($null -ne $Provider) {
-                & $Provider -Title $Title -Message $Message -Type $Type
-            } else {
-                $pushoverSplat = @{
-                    PoUserKey     = $PoUser
-                    PoApiKey      = $PoApi
-                    Title         = $Title
-                    Message       = $Message
-                    ErrorAction   = 'Stop'
-                    Configuration = $Config
-                }
-                Send-BridgePushover @pushoverSplat
-            }
-        }
-    }
-
     process {
         foreach ($entry in $CurrentState) {
             if ($null -ne $entry -and $Configuration.Statuses.Open -eq $entry.GefyraStatus) {
@@ -97,7 +63,7 @@
                     }
                     Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
-                    Send-Notification -Config $Configuration -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα $($entry.GefyraName) άνοιξε" -Type 'Opened' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
+                    Send-BridgeNotification -Configuration $Configuration -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα $($entry.GefyraName) άνοιξε" -Type 'Opened' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
                 } catch [System.Net.WebException], [System.Management.Automation.MethodInvocationException] {
                     $err = $_
                     $writeBridgeLogSplat = @{

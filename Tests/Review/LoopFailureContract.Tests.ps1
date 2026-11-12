@@ -109,6 +109,7 @@ Describe "Loop Failure Contract Review" {
             $LocalPrivatePath = Resolve-Path "$PSScriptRoot/../../BridgeWatcher/Private"
             . "$LocalPrivatePath\New-BridgeConfiguration.ps1"
             . "$LocalPrivatePath\Write-BridgeLog.ps1"
+            . "$LocalPrivatePath\Get-BridgeHttpExceptionInfo.ps1"
             . "$LocalPrivatePath\Send-BridgePushoverRequest.ps1"
             . "$LocalPrivatePath\Invoke-BridgeOCRRequest.ps1"
             . "$LocalPublicPath\Get-BridgeStatus.ps1"

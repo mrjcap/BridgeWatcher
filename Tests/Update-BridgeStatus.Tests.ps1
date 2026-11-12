@@ -6,6 +6,8 @@ Describe 'Update-BridgeStatus' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/TestHelper.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeOptionalProperty.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgeNotification.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeClosedNotification.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
