@@ -59,7 +59,9 @@
 
     It 'Uses JSON exec array notation for HEALTHCHECK CMD in Dockerfile (Hadolint DL3025)' {
         $script:dockerfileContent | Should -Match '# hadolint ignore=DL3025'
-        $script:dockerfileContent | Should -Match 'CMD \["pwsh", "-NoLogo", "-NoProfile", "-Command",'
+        $script:dockerfileContent | Should -Match 'CMD \["sh", "-c",'
+        $script:dockerfileContent | Should -Match '\$\{BRIDGEWATCHER_OUT:-/app/logs\}'
+        $script:dockerfileContent | Should -Not -Match 'CMD \["pwsh"'
     }
 
     It 'Integrates upstream branch changes without --force-with-lease in powershell-docs.yml' {
