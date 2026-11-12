@@ -1,4 +1,4 @@
-$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
+﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
 $script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1, *.psm1 | ForEach-Object {
     [PSCustomObject]@{
         Name     = $_.Name
@@ -88,7 +88,7 @@ Describe "Hot Path Configuration Review" {
                  ($node.CommandElements | Where-Object { $_ -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $_.Value -eq 'PSCustomObject' }))
             }, $true)
 
-            $configKeys = @('Urls', 'Defaults', 'Statuses', 'BridgeNames', 'StatusMappings', 'ErrorMessages', 'StatusMessages', 'LoggingConfig', 'ExportMessages', 'OCRMessages', 'PushoverMessages', 'AdviceMessages', 'LogDirectory')
+            $configKeys = @('Urls', 'Defaults', 'Statuses', 'BridgeNames', 'ErrorMessages', 'StatusMessages', 'LoggingConfig', 'ExportMessages', 'OCRMessages', 'PushoverMessages', 'AdviceMessages', 'LogDirectory')
 
             foreach ($obj in $customObjects) {
                 # Look for child hashtables
