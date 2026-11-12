@@ -59,6 +59,41 @@ Describe 'New-BridgeConfiguration' {
             $config.Statuses.PermanentlyClosed | Should -Be 'Μόνιμα κλειστή'
             $config.Statuses.Unknown | Should -Be 'Άγνωστη'
         }
+
+        It 'Defines only LoggingConfig stages and levels accepted by Write-BridgeLog ValidateSet' {
+            $config = New-BridgeConfiguration
+            $validSets = InModuleScope BridgeWatcher {
+                $cmd = Get-Command -Name Write-BridgeLog -CommandType Function
+                $stageAttr = $cmd.Parameters['Stage'].Attributes |
+                    Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
+                    Select-Object -First 1
+                $levelAttr = $cmd.Parameters['Level'].Attributes |
+                    Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
+                    Select-Object -First 1
+                @{
+                    Stages = @($stageAttr.ValidValues)
+                    Levels = @($levelAttr.ValidValues)
+                }
+            }
+
+            $stageKeys = @($config.LoggingConfig.Keys | Where-Object { $_ -like '*Stage' })
+            $levelKeys = @($config.LoggingConfig.Keys | Where-Object { $_ -like '*Level' })
+
+            $stageKeys.Count | Should -BeGreaterThan 0
+            $levelKeys.Count | Should -BeGreaterThan 0
+            ($stageKeys.Count + $levelKeys.Count) | Should -Be $config.LoggingConfig.Keys.Count
+
+            foreach ($key in $stageKeys) {
+                $validSets.Stages | Should -Contain $config.LoggingConfig[$key]
+            }
+            foreach ($key in $levelKeys) {
+                $validSets.Levels | Should -Contain $config.LoggingConfig[$key]
+            }
+
+            $config.LoggingConfig.Keys | Should -Not -Contain 'DebugStage'
+            $config.LoggingConfig.Keys | Should -Not -Contain 'ErrorLevel'
+            $config.LoggingConfig.Keys | Should -Not -Contain 'InfoLevel'
+        }
     }
 
     Context 'Optional ConfigurationPath parameter' {

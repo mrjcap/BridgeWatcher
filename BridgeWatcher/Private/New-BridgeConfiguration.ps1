@@ -134,11 +134,8 @@
         }
         LoggingConfig             = @{
             ErrorStage   = 'Σφάλμα'
-            DebugStage   = 'Debug'
             InfoStage    = 'Ανάλυση'
             WarningLevel = 'Warning'
-            ErrorLevel   = 'Error'
-            InfoLevel    = 'Info'
             DebugLevel   = 'Debug'
             VerboseLevel = 'Verbose'
         }
