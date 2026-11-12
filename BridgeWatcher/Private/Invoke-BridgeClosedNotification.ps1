@@ -1,4 +1,30 @@
-﻿function Invoke-BridgeClosedNotification {
+﻿function Set-BridgeEntryOcrMetadata {
+    <#
+    .SYNOPSIS
+    Αντιγράφει τα πεδία αποτελέσματος OCR στην εγγραφή κατάστασης γέφυρας.
+    #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Ενημερώνει μόνο αντικείμενο στη μνήμη χωρίς εξωτερικές αλλαγές συστήματος.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification = 'Το Metadata αποτελεί καθιερωμένο συλλογικό όρο.')]
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][ValidateNotNull()][object]$Entry,
+        [Parameter()][AllowNull()][object]$OcrResult
+    )
+    if ($null -eq $OcrResult) {
+        return
+    }
+    $ocrProperties = @('ScheduleState', 'From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')
+    foreach ($prop in $ocrProperties) {
+        $val = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName $prop
+        if ($Entry -is [System.Collections.IDictionary]) {
+            $Entry[$prop] = $val
+        } else {
+            $Entry | Add-Member -MemberType NoteProperty -Name $prop -Value $val -Force
+        }
+    }
+}
+
+function Invoke-BridgeClosedNotification {
     <#
     .SYNOPSIS
     Στέλνει ειδοποίηση ότι η γέφυρα έκλεισε.
@@ -160,6 +186,7 @@
                     }
                     try {
                         $ocrResult = Invoke-BridgeOCRGoogleCloud @ocrSplat
+                        Set-BridgeEntryOcrMetadata -Entry $entry -OcrResult $ocrResult
                         $content = Get-BridgeScheduledNotificationContent -Entry $entry -OcrResult $ocrResult
                         Send-BridgeNotification -Configuration $Configuration -Title $content.Title -Message $content.Message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
                     } catch {
