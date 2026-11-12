@@ -12,6 +12,8 @@
         $script:entrypointContent = Get-Content -Path $script:entrypointPath -Raw
         $script:dockerfilePath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../Docker/Dockerfile'))
         $script:dockerfileContent = Get-Content -Path $script:dockerfilePath -Raw
+        $script:composePath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../docker-compose.yml'))
+        $script:composeContent = Get-Content -Path $script:composePath -Raw
     }
 
     It 'Requires CI and security-analysis success before gatekeeper commits changelog and resumes untagged releases' {
@@ -81,5 +83,14 @@
         $script:publishContent | Should -Match "(?s)-\s*name:\s*Push changes\s+if:\s*\$\{\{\s*!inputs\.dry_run\s*\}\}"
         $script:publishContent | Should -Match "(?s)-\s*name:\s*Create GitHub Release\s+id:\s*create_release\s+if:\s*\$\{\{\s*!inputs\.dry_run\s*\}\}"
         $script:publishContent | Should -Match "RELEASE_URL:\s*\$\{\{\s*steps\.create_release\.outputs\.url\s*\|\|\s*'N/A'\s*\}\}"
+    }
+
+    It 'Gates filebeat behind the siem profile and hardens privileges in docker-compose.yml' {
+        $filebeatSection = (($script:composeContent -split '(?m)^\s{2}filebeat:\r?\n')[1] -split '(?m)^volumes:\r?\n')[0]
+        $filebeatSection | Should -Not -BeNullOrEmpty
+        $filebeatSection | Should -Match 'image:\s*docker\.elastic\.co/beats/filebeat:'
+        $filebeatSection | Should -Match 'profiles:\s*(?:\[\s*"?siem"?\s*\]|\r?\n\s*-\s*siem\b)'
+        $filebeatSection | Should -Match 'security_opt:\s*(?:\[\s*"?no-new-privileges:true"?\s*\]|\r?\n\s*-\s*no-new-privileges:true\b)'
+        $filebeatSection | Should -Match 'cap_drop:\s*(?:\[\s*"?ALL"?\s*\]|\r?\n\s*-\s*ALL\b)'
     }
 }

@@ -36,8 +36,14 @@ services:
   filebeat:
     image: docker.elastic.co/beats/filebeat:9.5.6@sha256:13afd81be4fa1523865c987a22b7c4aebca739941270333c7ca0048a4c9efeb3
     container_name: bridgewatcher-filebeat
+    profiles:
+      - siem
     restart: unless-stopped
     user: root
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     volumes:
       - log-data:/var/log/bridgewatcher:ro
       - ./Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
