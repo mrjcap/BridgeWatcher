@@ -166,7 +166,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Commit and Push Changelog
-        if: steps.changelog_check.outputs.updated == 'true'
+        if: steps.changelog_check.outputs.updated == 'true' && !inputs.dry_run
         env:
           NEXT_VERSION: ${{ steps.determine_version.outputs.version }}
         run: |
@@ -200,6 +200,8 @@ jobs:
     permissions:
       contents: write
     uses: ./.github/workflows/powershell-docs.yml
+    with:
+      dry_run: ${{ inputs.dry_run }}
     secrets:
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 

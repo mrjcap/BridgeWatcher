@@ -165,6 +165,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Commit version update
+        if: ${{ !inputs.dry_run }}
         env:
           NEXT_VERSION: ${{ inputs.next_version }}
         run: |
@@ -172,6 +173,7 @@ jobs:
           git commit -m "chore: bump version to $NEXT_VERSION [skip ci]" || echo "No changes to commit"
 
       - name: Push changes
+        if: ${{ !inputs.dry_run }}
         env:
           REF_NAME: ${{ github.ref_name }}
         run: |
@@ -209,6 +211,7 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
+        if: ${{ !inputs.dry_run }}
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: v${{ inputs.next_version }}

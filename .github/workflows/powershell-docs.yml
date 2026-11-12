@@ -8,6 +8,12 @@ on:
       - 'docs/**'
       - '.github/workflows/powershell-docs.yml'
   workflow_call:
+    inputs:
+      dry_run:
+        description: 'Perform a dry run without committing or pushing documentation'
+        required: false
+        type: boolean
+        default: false
     secrets:
       RELEASE_TOKEN:
         required: false
@@ -269,7 +275,7 @@ jobs:
           fi
 
       - name: Configure git credentials for documentation push
-        if: steps.docs_changes.outputs.changes_detected == 'true' && github.event_name != 'pull_request'
+        if: steps.docs_changes.outputs.changes_detected == 'true' && github.event_name != 'pull_request' && !inputs.dry_run
         env:
           GIT_PUSH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
@@ -277,7 +283,7 @@ jobs:
           git config --local http.https://github.com/.extraheader "AUTHORIZATION: basic $ENCODED_TOKEN"
 
       - name: Commit and push documentation changes
-        if: steps.docs_changes.outputs.changes_detected == 'true' && github.event_name != 'pull_request'
+        if: steps.docs_changes.outputs.changes_detected == 'true' && github.event_name != 'pull_request' && !inputs.dry_run
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |

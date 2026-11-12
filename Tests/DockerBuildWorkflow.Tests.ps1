@@ -70,4 +70,16 @@
     It 'Enforces blocking HIGH and CRITICAL severity exit-code on Trivy vulnerability scan in docker-build.yml' {
         $script:content | Should -Match "(?s)-\s*name:\s*Scan Docker image for vulnerabilities.*?exit-code:\s*'1'.*?severity:\s*'HIGH,CRITICAL'"
     }
+
+    It 'Gates git push and GitHub Release creation steps on !inputs.dry_run across release workflows' {
+        $script:releaseContent | Should -Match "(?s)-\s*name:\s*Commit and Push Changelog\s+if:\s*steps\.changelog_check\.outputs\.updated\s*==\s*'true'\s*&&\s*!inputs\.dry_run"
+        $script:releaseContent | Should -Match "(?s)uses:\s*\./\.github/workflows/powershell-docs\.yml\s+with:\s+dry_run:\s*\$\{\{\s*inputs\.dry_run\s*\}\}"
+        $script:docsContent | Should -Match "(?s)workflow_call:\s+inputs:\s+dry_run:.*?type:\s*boolean\s+default:\s*false"
+        $script:docsContent | Should -Match "(?s)-\s*name:\s*Configure git credentials for documentation push\s+if:\s*steps\.docs_changes\.outputs\.changes_detected\s*==\s*'true'\s*&&\s*github\.event_name\s*!=\s*'pull_request'\s*&&\s*!inputs\.dry_run"
+        $script:docsContent | Should -Match "(?s)-\s*name:\s*Commit and push documentation changes\s+if:\s*steps\.docs_changes\.outputs\.changes_detected\s*==\s*'true'\s*&&\s*github\.event_name\s*!=\s*'pull_request'\s*&&\s*!inputs\.dry_run"
+        $script:publishContent | Should -Match "(?s)-\s*name:\s*Commit version update\s+if:\s*\$\{\{\s*!inputs\.dry_run\s*\}\}"
+        $script:publishContent | Should -Match "(?s)-\s*name:\s*Push changes\s+if:\s*\$\{\{\s*!inputs\.dry_run\s*\}\}"
+        $script:publishContent | Should -Match "(?s)-\s*name:\s*Create GitHub Release\s+id:\s*create_release\s+if:\s*\$\{\{\s*!inputs\.dry_run\s*\}\}"
+        $script:publishContent | Should -Match "RELEASE_URL:\s*\$\{\{\s*steps\.create_release\.outputs\.url\s*\|\|\s*'N/A'\s*\}\}"
+    }
 }
