@@ -8,8 +8,6 @@
         $script:publishContent = Get-Content -Path $script:publishPath -Raw
         $script:docsPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../.github/workflows/powershell-docs.yml'))
         $script:docsContent = Get-Content -Path $script:docsPath -Raw
-        $script:entrypointPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../Docker/entrypoint.sh'))
-        $script:entrypointContent = Get-Content -Path $script:entrypointPath -Raw
         $script:dockerfilePath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../Docker/Dockerfile'))
         $script:dockerfileContent = Get-Content -Path $script:dockerfilePath -Raw
         $script:composePath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../docker-compose.yml'))
@@ -46,9 +44,11 @@
         $script:docsContent | Should -Match 'secrets\.RELEASE_TOKEN\s*\|\|\s*secrets\.GITHUB_TOKEN'
     }
 
-    It 'Reads secrets in entrypoint.sh without piping through xargs' {
-        $script:entrypointContent | Should -Match 'tr -d ''\\r\\n'' < "\$secret_path"'
-        $script:entrypointContent | Should -Not -Match '\|\s*xargs'
+    It 'Invokes run.ps1 directly via pwsh ENTRYPOINT without entrypoint.sh exporting secrets to env' {
+        $entrypointFile = Join-Path -Path $PSScriptRoot -ChildPath '../Docker/entrypoint.sh'
+        Test-Path -Path $entrypointFile | Should -BeFalse
+        $script:dockerfileContent | Should -Not -Match 'entrypoint\.sh'
+        $script:dockerfileContent | Should -Match 'ENTRYPOINT \["pwsh", "-NoLogo", "-NoProfile", "-File", "\./run\.ps1"\]'
     }
 
     It 'Disables persist-credentials on checkout and pins exact module versions in powershell-docs.yml' {
