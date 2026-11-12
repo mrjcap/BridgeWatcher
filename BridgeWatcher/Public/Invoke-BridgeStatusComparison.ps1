@@ -103,14 +103,21 @@ function Get-BridgeRawComparisonDiff {
     }
 
     $scheduledStatus = $Configuration.Statuses.ClosedWithSchedule
-    $hasPreviousHash = $PreviousStateArray | Where-Object {
-        $_.GefyraStatus -eq $scheduledStatus -and $null -ne (Get-BridgeOptionalProperty -InputObject $_ -PropertyName 'ImageHash')
+    # Compare each bridge independently. Explicitly missing hashes are unknown,
+    # not image changes; records without the field retain the legacy URL fallback.
+    $imageProperty = {
+        $hasHashProperty = if ($_ -is [System.Collections.IDictionary]) {
+            $_.Contains('ImageHash')
+        } else {
+            $null -ne $_.PSObject.Properties['ImageHash']
+        }
+        if ($_.GefyraStatus -eq $scheduledStatus -and $hasHashProperty) {
+            $hash = Get-BridgeOptionalProperty -InputObject $_ -PropertyName 'ImageHash'
+            if (-not [string]::IsNullOrEmpty([string]$hash)) { $hash }
+        } else {
+            Get-BridgeOptionalProperty -InputObject $_ -PropertyName 'ImageUrl'
+        }
     }
-    $hasCurrentHash = $CurrentStateArray | Where-Object {
-        $_.GefyraStatus -eq $scheduledStatus -and $null -ne (Get-BridgeOptionalProperty -InputObject $_ -PropertyName 'ImageHash')
-    }
-
-    $imageProperty = if ($hasPreviousHash -and $hasCurrentHash) { 'ImageHash' } else { 'ImageUrl' }
     $compareSplat = @{
         ReferenceObject  = $PreviousStateArray
         DifferenceObject = $CurrentStateArray
