@@ -21,7 +21,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
                     }
                 )
             }
-            $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+            $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse
             $res | Should -BeNullOrEmpty
         }
 
@@ -44,7 +44,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
             Mock Write-Verbose {}
             Mock Write-Warning {}
             # Εκτέλεση της συνάρτησης
-            $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+            $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse
             $res | Should -BeNullOrEmpty
         }
 
@@ -63,7 +63,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
         Mock ConvertTo-BridgeTimeRange { return $null }
         Mock Write-BridgeLog {}
 
-        ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+        ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse
 
         Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Message -like '*Δεν κατέστη δυνατή η ανάλυση χρονικού διαστήματος*' } -Times 1 -Exactly -Scope It
     }
@@ -96,7 +96,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         # Εκτέλεση της συνάρτησης
 
-        $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+        $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse
 
         # Ελέγχουμε αν επιστρέφει το αναμενόμενο κενό array
 
@@ -118,10 +118,6 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
 
 
-        Mock Get-BridgeNameFromUri { 'Ισθμία' }
-
-
-
         Mock ConvertTo-BridgeTimeRange {
             $tz = try { [System.TimeZoneInfo]::FindSystemTimeZoneById('Europe/Athens') } catch { [System.TimeZoneInfo]::FindSystemTimeZoneById('GTB Standard Time') }
             $athensNow = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $tz)
@@ -138,7 +134,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         Mock Get-BridgeStatusAdvice { 'Επέστρεψε μετά τις 00:00' }
 
-        $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
+        $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse
 
         $result.Note2 | Should -Match 'θα κλείσει στις'
         $result.ScheduleState | Should -Be 'Future'
@@ -160,10 +156,6 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
 
 
-        Mock Get-BridgeNameFromUri { 'Ποσειδωνία' }
-
-
-
         Mock ConvertTo-BridgeTimeRange {
             $tz = try { [System.TimeZoneInfo]::FindSystemTimeZoneById('Europe/Athens') } catch { [System.TimeZoneInfo]::FindSystemTimeZoneById('GTB Standard Time') }
             $athensNow = [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $tz)
@@ -180,7 +172,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         Mock Get-BridgeStatusAdvice { 'Κατέβα για καφέ' }
 
-        $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
+        $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse
 
         $result.Note2 | Should -Match 'ήδη κλειστή από τις'
         $result.ScheduleState | Should -Be 'Active'
@@ -216,8 +208,6 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         }
 
-        Mock Get-BridgeNameFromUri { 'Ισθμία' }
-
         Mock ConvertTo-BridgeTimeRange { [pscustomobject]@{
 
                 From      = [datetime]::ParseExact('25/04/2025 14:00', 'dd/MM/yyyy HH:mm', $null)
@@ -234,7 +224,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
 
 
-        $null = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
+        $null = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse
 
 
 
@@ -263,7 +253,7 @@ Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος α
                 }
             )
         }
-        $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse -ImageUri 'https://example.com/mock_image.jpg'
+        $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse
         $res | Should -BeNullOrEmpty
         Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Stage -eq 'Σφάλμα' } -Times 1 -Exactly -Scope It
     }

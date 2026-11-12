@@ -199,7 +199,6 @@ Describe 'Invoke-BridgeClosedNotification' {
         It 'Ξεχωρίζει μελλοντικό πρόγραμμα κλεισίματος χωρίς να δηλώνει ότι η γέφυρα έκλεισε ήδη' {
             Mock Invoke-BridgeOCRGoogleCloud {
                 return [pscustomobject]@{
-                    Bridge        = 'Ισθμία'
                     ScheduleState = 'Future'
                     From          = '25/04/2025 10:00'
                     To            = '25/04/2025 11:00'
@@ -238,7 +237,6 @@ Describe 'Invoke-BridgeClosedNotification' {
         It 'Συμπεριλαμβάνει το Note2 και το Ανοίγει σε για ενεργό κλείσιμο' {
             Mock Invoke-BridgeOCRGoogleCloud {
                 return [pscustomobject]@{
-                    Bridge        = 'Ισθμία'
                     ScheduleState = 'Active'
                     From          = '25/04/2025 10:00'
                     To            = '25/04/2025 11:00'
@@ -277,7 +275,6 @@ Describe 'Invoke-BridgeClosedNotification' {
         It 'Ξεχωρίζει ληγμένο πρόγραμμα κλεισίματος χωρίς να δηλώνει ότι η γέφυρα έκλεισε' {
             Mock Invoke-BridgeOCRGoogleCloud {
                 return [pscustomobject]@{
-                    Bridge        = 'Ισθμία'
                     ScheduleState = 'Expired'
                     From          = '25/04/2025 10:00'
                     To            = '25/04/2025 11:00'

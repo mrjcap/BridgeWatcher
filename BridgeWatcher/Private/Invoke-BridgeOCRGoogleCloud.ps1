@@ -61,8 +61,7 @@
         }
         $apiResponse = Invoke-BridgeOCRRequest @invokeOCRRequestSplat
         $convertFromOCRResultSplat = @{
-            ApiResponse = $apiResponse
-            ImageUri    = $ImageUri
+            ApiResponse   = $apiResponse
             Configuration = $Configuration
         }
         $result = ConvertFrom-BridgeOCRResult @convertFromOCRResultSplat

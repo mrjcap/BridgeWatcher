@@ -32,42 +32,6 @@ Describe 'Invoke-BridgeOCRRequest' {
 
 
 
-    It 'Ανιχνεύει Ποσειδωνία ως τοποθεσία από το imageUri' {
-
-
-
-        $resp = @{
-
-            responses = @(
-
-                @{
-
-                    textAnnotations = @(
-
-                        @{ description = @(
-
-                                'Από', '01/01/2025', '10:00', 'Έως', '01/01/2025', '10:30'
-
-                            )
-
-                        }
-
-                    )
-
-                }
-
-            )
-
-        }
-
-        $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $resp -ImageUri 'https://example.com/image-bridge-open-with-schedule-posidonia.php'
-
-        $res.Bridge | Should -Be 'Ποσειδωνία'
-
-    }
-
-
-
     It 'Υπολογίζει διάρκεια με ημέρες, ώρες και λεπτά' {
         $resp = @{
             responses = @(
@@ -81,7 +45,7 @@ Describe 'Invoke-BridgeOCRRequest' {
                 }
             )
         }
-        $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $resp -ImageUri 'https://example.com/image-bridge-open-with-schedule-isthmia.php'
+        $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $resp
         $res.ClosedFor | Should -Match 'ημέρες'
         $res.ClosedFor | Should -Match 'ώρες'
         $res.ClosedFor | Should -Match 'λεπτά'

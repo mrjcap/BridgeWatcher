@@ -7,17 +7,17 @@
     Η ConvertFrom-BridgeOCRResult λαμβάνει τα αποτελέσματα OCR και επιστρέφει αντικείμενα
     που περιγράφουν αν η γέφυρα είναι κλειστή, ανοιχτή ή άγνωστη.
 
+    .PARAMETER Configuration
+    Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
+
     .PARAMETER ApiResponse
     Το αντικείμενο απόκρισης από το Google Vision API.
-
-    .PARAMETER ImageUri
-    Το URI της εικόνας που αναλύθηκε με OCR.
 
     .OUTPUTS
     [pscustomobject[]] - Αντικείμενα κατάστασης γέφυρας.
 
     .EXAMPLE
-    ConvertFrom-BridgeOCRResult -ApiResponse $response -ImageUri 'https://example.com/bridge.jpg'
+    ConvertFrom-BridgeOCRResult -Configuration $config -ApiResponse $response
 
     .NOTES
     Χρησιμοποιείται για την ανάλυση των αποκρίσεων OCR και την εξαγωγή της κατάστασης της γέφυρας.
@@ -26,11 +26,7 @@
     param (
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
         [Parameter(Mandatory)]
-        [PSCustomObject]$ApiResponse,
-
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$ImageUri
+        [PSCustomObject]$ApiResponse
     )
 
     if ($null -eq $ApiResponse -or $null -eq $ApiResponse.responses -or $ApiResponse.responses.Count -eq 0 -or $null -eq $ApiResponse.responses[0].textAnnotations -or $ApiResponse.responses[0].textAnnotations.Count -eq 0) {
@@ -65,11 +61,6 @@
     # Χρήση του ήδη εξαχθέντος ασφαλούς κειμένου
     $rawText = $ocrText
     $Lines = $rawText
-
-    $getBridgeNameFromUriSplat = @{
-        ImageUri = $ImageUri
-    }
-    $bridgeName = Get-BridgeNameFromUri @getBridgeNameFromUriSplat -Configuration $Configuration
 
     $convertToBridgeTimeRangeSplat = @{
         Lines = $Lines
@@ -123,7 +114,6 @@
 
     if ($minutesLeft -le 0) {
         return [PSCustomObject]@{
-            'Bridge'        = $bridgeName
             'ScheduleState' = 'Expired'
             'From'          = $from.ToString('dd/MM/yyyy HH:mm')
             'To'            = $to.ToString('dd/MM/yyyy HH:mm')
@@ -141,7 +131,6 @@
 
     if ($from -gt $athensNow) {
         return [PSCustomObject]@{
-            'Bridge'        = $bridgeName
             'ScheduleState' = 'Future'
             'From'          = $from.ToString('dd/MM/yyyy HH:mm')
             'To'            = $to.ToString('dd/MM/yyyy HH:mm')
@@ -157,7 +146,6 @@
     }
     $advice = Get-BridgeStatusAdvice @getBridgeStatusAdviceSplat -Configuration $Configuration
     return [PSCustomObject]@{
-        'Bridge'        = $bridgeName
         'ScheduleState' = 'Active'
         'From'          = $from.ToString('dd/MM/yyyy HH:mm')
         'To'            = $to.ToString('dd/MM/yyyy HH:mm')
