@@ -309,6 +309,100 @@ Describe 'Invoke-BridgeClosedNotification' {
             $script:expiredMessage | Should -Match 'Η γέφυρα είναι ανοιχτή\.'
         }
 
+        It 'Εμπλουτίζει επιτόπου εγγραφή PSCustomObject με όλα τα πεδία OCR' {
+            Mock Invoke-BridgeOCRGoogleCloud {
+                return [pscustomobject]@{
+                    Bridge        = 'Ισθμία'
+                    ScheduleState = 'Active'
+                    From          = '25/04/2025 10:00'
+                    To            = '25/04/2025 11:00'
+                    ClosedFor     = '1 ώρα'
+                    OpensIn       = '45 λεπτά'
+                    Note1         = 'Σημείωση 1'
+                    Note2         = 'Σημείωση 2'
+                }
+            }
+            Mock Send-BridgePushover { }
+            Mock Write-BridgeLog { }
+
+            $entry = [pscustomobject]@{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                Timestamp    = '2025-04-25T10:15:00'
+                ImageUrl     = 'https://example.com/active.jpg'
+            }
+
+            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'u' -PoApiKey 'p'
+
+            $entry.ScheduleState | Should -Be 'Active'
+            $entry.From | Should -Be '25/04/2025 10:00'
+            $entry.To | Should -Be '25/04/2025 11:00'
+            $entry.ClosedFor | Should -Be '1 ώρα'
+            $entry.OpensIn | Should -Be '45 λεπτά'
+            $entry.Note1 | Should -Be 'Σημείωση 1'
+            $entry.Note2 | Should -Be 'Σημείωση 2'
+        }
+
+        It 'Εμπλουτίζει επιτόπου εγγραφή hashtable με όλα τα πεδία OCR' {
+            Mock Invoke-BridgeOCRGoogleCloud {
+                return [pscustomobject]@{
+                    Bridge        = 'Ποσειδωνία'
+                    ScheduleState = 'Future'
+                    From          = '25/04/2025 12:00'
+                    To            = '25/04/2025 13:00'
+                    ClosedFor     = '1 ώρα'
+                    OpensIn       = ''
+                    Note1         = ''
+                    Note2         = 'Η γέφυρα θα κλείσει στις 12:00 για 1 ώρα.'
+                }
+            }
+            Mock Send-BridgePushover { }
+            Mock Write-BridgeLog { }
+
+            $entry = @{
+                GefyraName   = 'Ποσειδωνία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                Timestamp    = '2025-04-25T11:30:00'
+                ImageUrl     = 'https://example.com/future.jpg'
+            }
+
+            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'u' -PoApiKey 'p'
+
+            $entry['ScheduleState'] | Should -Be 'Future'
+            $entry['From'] | Should -Be '25/04/2025 12:00'
+            $entry['To'] | Should -Be '25/04/2025 13:00'
+            $entry['ClosedFor'] | Should -Be '1 ώρα'
+            $entry['OpensIn'] | Should -Be ''
+            $entry['Note1'] | Should -Be ''
+            $entry['Note2'] | Should -Be 'Η γέφυρα θα κλείσει στις 12:00 για 1 ώρα.'
+        }
+
+        It 'Δεν τροποποιεί την εγγραφή όταν το OCR επιστρέφει $null' {
+            Mock Invoke-BridgeOCRGoogleCloud { return $null }
+            Mock Send-BridgePushover { }
+            Mock Write-BridgeLog { }
+
+            $psEntry = [pscustomobject]@{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                Timestamp    = '2025-04-25T10:15:00'
+                ImageUrl     = 'https://example.com/null.jpg'
+            }
+            $htEntry = @{
+                GefyraName   = 'Ποσειδωνία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                Timestamp    = '2025-04-25T10:15:00'
+                ImageUrl     = 'https://example.com/null2.jpg'
+            }
+
+            { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($psEntry, $htEntry) -ApiKey 'x' -PoUserKey 'u' -PoApiKey 'p' } | Should -Not -Throw
+
+            $psEntry.PSObject.Properties['ScheduleState'] | Should -BeNullOrEmpty
+            $psEntry.PSObject.Properties['From'] | Should -BeNullOrEmpty
+            $htEntry.ContainsKey('ScheduleState') | Should -BeFalse
+            $htEntry.ContainsKey('From') | Should -BeFalse
+        }
+
     }
 
 }
