@@ -37,10 +37,12 @@
     )
 
     try {
+        [byte[]]$imageBytes = Get-BridgeCachedImageBytes -Url $ImageUri -TimeoutSec $Configuration.Defaults.HttpRequestTimeout
+        $base64Image = [System.Convert]::ToBase64String($imageBytes)
         $requestObject = @{
             requests = @(
                 @{
-                    image    = @{ source = @{ imageUri = $ImageUri } }
+                    image    = @{ content = $base64Image }
                     features = @(
                         @{
                             type       = 'DOCUMENT_TEXT_DETECTION'

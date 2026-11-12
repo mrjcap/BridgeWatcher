@@ -1,4 +1,6 @@
-﻿function Get-BridgeImageBuffer {
+﻿$script:BridgeImageBytesByUrl = @{}
+
+function Get-BridgeImageBuffer {
     <#
     .SYNOPSIS
     Λήψη δεδομένων εικόνας.
@@ -22,6 +24,41 @@
             $response.Dispose()
         }
     }
+}
+
+function Get-BridgeCachedImageBytes {
+    <#
+    .SYNOPSIS
+    Ανακτά τα bytes εικόνας από τη μνήμη cache ή μέσω HTTP.
+
+    .DESCRIPTION
+    Η Get-BridgeCachedImageBytes επιστρέφει τα αποθηκευμένα bytes από το
+    $script:BridgeImageBytesByUrl αν υπάρχουν και δεν είναι κενά, διαφορετικά
+    καλεί την Get-BridgeImageBuffer για λήψη τους.
+
+    .PARAMETER Url
+    Το πλήρες URL της εικόνας προς ανάκτηση.
+
+    .PARAMETER TimeoutSec
+    Το χρονικό όριο αναμονής HTTP σε δευτερόλεπτα.
+
+    .OUTPUTS
+    [byte[]]
+    #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification = 'Returns raw image byte array from cache or HTTP')]
+    [CmdletBinding()]
+    [OutputType([byte[]])]
+    param(
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Url,
+        [int]$TimeoutSec = 60
+    )
+
+    $cachedBytes = $script:BridgeImageBytesByUrl[$Url]
+    if ($null -ne $cachedBytes -and $cachedBytes.Count -gt 0) {
+        return [byte[]]$cachedBytes
+    }
+
+    return [byte[]](Get-BridgeImageBuffer -Url $Url -TimeoutSec $TimeoutSec)
 }
 
 function Get-BridgeStatusObject {
@@ -101,6 +138,10 @@ function Get-BridgeStatusObject {
             } finally {
                 if ($null -ne $md5) { $md5.Dispose() }
             }
+            if ($script:BridgeImageBytesByUrl.Count -ge 4) {
+                $script:BridgeImageBytesByUrl.Clear()
+            }
+            $script:BridgeImageBytesByUrl[$ImageUrl] = [byte[]]$bytes
         } catch {
             $writeBridgeLogSplat = @{
                 Stage   = 'Σφάλμα'
