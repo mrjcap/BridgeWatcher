@@ -85,8 +85,61 @@ Describe 'Write-BridgeLog' {
             }
         }
     }
+}
 
+Describe 'Write-BridgeLog Retention Pruning' {
+    BeforeAll {
+        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
+        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
+    }
 
+    It 'Διαγράφει BridgeWatcher-*.log αρχεία παλαιότερα από 7 ημέρες κατά τη δημιουργία νέου ημερήσιου log' {
+        $logDir = Join-Path $TestDrive 'retention-new'
+        New-Item -Path $logDir -ItemType Directory -Force | Out-Null
+
+        $expiredLog = Join-Path $logDir 'BridgeWatcher-2020-01-01.log'
+        $recentLog = Join-Path $logDir 'BridgeWatcher-2020-01-02.log'
+        $unrelatedFile = Join-Path $logDir 'custom-audit.log'
+
+        Set-Content -Path $expiredLog -Value 'expired log entry' -Encoding utf8
+        (Get-Item -Path $expiredLog).LastWriteTime = (Get-Date).AddDays(-8)
+
+        Set-Content -Path $recentLog -Value 'recent log entry' -Encoding utf8
+        (Get-Item -Path $recentLog).LastWriteTime = (Get-Date).AddDays(-3)
+
+        Set-Content -Path $unrelatedFile -Value 'unrelated file' -Encoding utf8
+        (Get-Item -Path $unrelatedFile).LastWriteTime = (Get-Date).AddDays(-30)
+
+        $cfg = New-BridgeConfiguration -LogDirectory $logDir
+        Write-BridgeLog -Configuration $cfg -Stage 'Ανάλυση' -Message 'First daily log entry'
+
+        $todayStr = (Get-Date).ToString('yyyy-MM-dd')
+        $todayLog = Join-Path $logDir "BridgeWatcher-$todayStr.log"
+
+        $todayLog | Should -Exist
+        $expiredLog | Should -Not -Exist
+        $recentLog | Should -Exist
+        $unrelatedFile | Should -Exist
+    }
+
+    It 'Δεν εκτελεί εκκαθάριση όταν το ημερήσιο αρχείο καταγραφής υπάρχει ήδη' {
+        $logDir = Join-Path $TestDrive 'retention-existing'
+        New-Item -Path $logDir -ItemType Directory -Force | Out-Null
+
+        $todayStr = (Get-Date).ToString('yyyy-MM-dd')
+        $todayLog = Join-Path $logDir "BridgeWatcher-$todayStr.log"
+        Set-Content -Path $todayLog -Value 'existing entry' -Encoding utf8
+
+        $expiredLog = Join-Path $logDir 'BridgeWatcher-2020-01-01.log'
+        Set-Content -Path $expiredLog -Value 'expired log entry' -Encoding utf8
+        (Get-Item -Path $expiredLog).LastWriteTime = (Get-Date).AddDays(-10)
+
+        $cfg = New-BridgeConfiguration -LogDirectory $logDir
+        Write-BridgeLog -Configuration $cfg -Stage 'Ανάλυση' -Message 'Second daily log entry'
+
+        $expiredLog | Should -Exist
+        (Get-Content -Path $todayLog -Raw) | Should -Match 'Second daily log entry'
+    }
 }
 
 
