@@ -72,6 +72,53 @@ function Invoke-BridgeDiffEventDelivery {
 
 <#
     .SYNOPSIS
+    Συνθέτει το snapshot καταστάσεων προς αποθήκευση μετά από μερική επιτυχία ειδοποιήσεων.
+
+    .DESCRIPTION
+    Ξεκινά από την προηγούμενη κατάσταση ανά γέφυρα και ενημερώνει τις αμετάβλητες
+    καθώς και όσες γέφυρες ειδοποιήθηκαν επιτυχώς με την τρέχουσα εγγραφή τους.
+
+    .PARAMETER PreviousState
+    Η προηγούμενη λίστα καταστάσεων γεφυρών.
+
+    .PARAMETER CurrentState
+    Η τρέχουσα λίστα καταστάσεων γεφυρών.
+
+    .PARAMETER DiffEvents
+    Τα γεγονότα αλλαγών κατάστασης που προέκυψαν από τη σύγκριση.
+
+    .PARAMETER NotifiedBridgeNames
+    Τα ονόματα των γεφυρών των οποίων η ειδοποίηση ολοκληρώθηκε επιτυχώς.
+    #>
+function Resolve-BridgeAlertSnapshot {
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param (
+        [Parameter()][AllowNull()][AllowEmptyCollection()][object[]]$PreviousState = @(),
+        [Parameter()][AllowNull()][AllowEmptyCollection()][object[]]$CurrentState = @(),
+        [Parameter()][AllowNull()][AllowEmptyCollection()][object[]]$DiffEvents = @(),
+        [Parameter()][AllowNull()][AllowEmptyCollection()][string[]]$NotifiedBridgeNames = @()
+    )
+    $persistedByBridge = [ordered]@{}
+    foreach ($entry in $PreviousState) {
+        $persistedByBridge[$entry.GefyraName] = $entry
+    }
+    $pendingBridgeNames = @(
+        $DiffEvents |
+            ForEach-Object { @($_.StateInfo) } |
+            ForEach-Object { $_.GefyraName } |
+            Where-Object { $_ -notin $NotifiedBridgeNames }
+    )
+    foreach ($entry in $CurrentState) {
+        if ($entry.GefyraName -notin $pendingBridgeNames) {
+            $persistedByBridge[$entry.GefyraName] = $entry
+        }
+    }
+    return @($persistedByBridge.Values)
+}
+
+<#
+    .SYNOPSIS
     Συγκρίνει προηγούμενη και τρέχουσα κατάσταση γεφυρών.
 
     .DESCRIPTION
@@ -142,7 +189,7 @@ function Update-BridgeStatus {
             }
             $diffEvents = Invoke-BridgeStatusComparison @invokeSplat
             # Checkpoint successful deliveries independently, keeping failed bridges pending.
-            $checkpointState = @($previousState)
+            $notifiedBridgeNames = [System.Collections.Generic.List[string]]::new()
             $notificationFailures = @()
             foreach ($diffEvent in $diffEvents) {
                 $deliverySplat = @{
@@ -159,10 +206,15 @@ function Update-BridgeStatus {
                     continue
                 }
 
-                $notifiedBridgeNames = @($diffEvent.StateInfo.GefyraName)
-                $checkpointState = @($checkpointState | Where-Object {
-                    $_.GefyraName -notin $notifiedBridgeNames
-                }) + @($diffEvent.StateInfo)
+                $eventBridgeNames = [string[]]@($diffEvent.StateInfo | ForEach-Object { [string]$_.GefyraName })
+                $notifiedBridgeNames.AddRange($eventBridgeNames)
+                $snapshotSplat = @{
+                    PreviousState       = $previousState
+                    CurrentState        = $currentState
+                    DiffEvents          = @($diffEvents)
+                    NotifiedBridgeNames = $notifiedBridgeNames.ToArray()
+                }
+                $checkpointState = @(Resolve-BridgeAlertSnapshot @snapshotSplat)
                 $checkpointResult = Export-BridgeStatusJson -Data $checkpointState -Path $OutputFile -Configuration $Configuration
                 Assert-BridgeSnapshotExport -ExportResult $checkpointResult -OutputFile $OutputFile -Cmdlet $PSCmdlet
             }
