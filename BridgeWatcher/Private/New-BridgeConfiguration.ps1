@@ -114,18 +114,7 @@
             'isthmia'    = 'Ισθμία'
             'poseidonia' = 'Ποσειδωνία'
         }
-        StatusMappings            = @{
-            'ΚΛΕΙΣΤΗ' = 'Κλειστή'
-            'ΑΝΟΙΧΤΗ' = 'Ανοιχτή'
-            'CLOSED'  = 'Κλειστή'
-            'OPEN'    = 'Ανοιχτή'
-        }
         ErrorMessages             = @{
-            NoStatus             = '⛔ Δεν υπάρχει διαθέσιμο status για αποθήκευση.'
-            HtmlRetrievalFailure = 'Αποτυχία ανάκτησης HTML από τον server'
-            ExportFailure        = '⛔ Αποτυχία εξαγωγής δεδομένων'
-            OCRFailure           = '❌ Απέτυχε η OCR'
-            NetworkError         = '❌ Σφάλμα δικτύου'
             MonitoringError      = '❌ Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας'
         }
         StatusMessages            = @{
@@ -155,11 +144,6 @@
             DoNotWait = 'Είναι προτιμότερο να μην περιμένεις'
             Wait      = 'Είναι προτιμότερο να περιμένεις'
         }
-        TimePatterns              = @(
-            '\d{1,2}:\d{2}'
-            '\d{1,2}\.\d{2}'
-        )
-        SupportedImageExtensions  = @('.jpg', '.jpeg', '.png', '.gif')
     }
 
     if (-not [string]::IsNullOrWhiteSpace($ConfigurationPath)) {

@@ -49,11 +49,6 @@ RUN if [ "${PGID}" = "100" ]; then \
         adduser -D -u ${PUID} -G appgroup -h /home/appuser -s /bin/sh appuser; \
     fi && \
     mkdir -p /home/appuser/scripts/modules \
-            /home/appuser/logs \
-            /home/appuser/output \
-            /home/appuser/.cache/powershell \
-            /home/appuser/.config/powershell \
-            /home/appuser/.local/share/powershell \
             /app/logs \
             /tmp && \
     chown -R ${PUID}:${PGID} /home/appuser /app/logs && \
@@ -65,8 +60,6 @@ WORKDIR /home/appuser/scripts
 
 COPY --chmod=0555 ./BridgeWatcher ./modules/BridgeWatcher
 COPY --chmod=0555 run.ps1 .
-
-EXPOSE 8090
 
 ENTRYPOINT ["pwsh", "-NoLogo", "-NoProfile", "-File", "./run.ps1"]
 
