@@ -1,26 +1,12 @@
 ﻿BeforeAll {
-    $script:ModuleRoot = Join-Path $PSScriptRoot '../BridgeWatcher'
-    foreach ($relativePath in @(
-        'Private/New-BridgeConfiguration.ps1'
-        'Private/Write-BridgeLog.ps1'
-        'Private/Export-BridgeStatusJson.ps1'
-        'Private/Resolve-BridgeStateForChange.ps1'
-        'Private/Invoke-BridgeOpenedNotification.ps1'
-        'Private/Invoke-BridgeClosedNotification.ps1'
-        'Public/Get-BridgeStatus.ps1'
-        'Public/Get-BridgePreviousStatus.ps1'
-        'Public/Invoke-BridgeStatusComparison.ps1'
-        'Public/Update-BridgeStatus.ps1'
-    )) {
-        . (Join-Path $script:ModuleRoot $relativePath)
-    }
+    Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 }
 
 Describe 'Per-bridge notification checkpoints' {
     BeforeEach {
         $script:Config = New-BridgeConfiguration -LogDirectory (Join-Path $TestDrive 'logs')
         $script:OutputFile = Join-Path $TestDrive 'status.json'
-        Mock Write-BridgeLog { }
+        Mock -ModuleName BridgeWatcher Write-BridgeLog { }
         $previous = foreach ($location in @('poseidonia', 'isthmia')) {
             [pscustomobject]@{
                 GefyraName = $script:Config.BridgeNames.$location
@@ -30,7 +16,9 @@ Describe 'Per-bridge notification checkpoints' {
                 Timestamp = '2026-11-12T10:00:00Z'
             }
         }
-        $null = Export-BridgeStatusJson -Data $previous -Path $script:OutputFile -Configuration $script:Config -Confirm:$false
+        InModuleScope BridgeWatcher -Parameters @{ Prev = $previous; Out = $script:OutputFile; Cfg = $script:Config } {
+            $null = Export-BridgeStatusJson -Data $Prev -Path $Out -Configuration $Cfg -Confirm:$false
+        }
         $script:Current = foreach ($entry in $previous) {
             [pscustomobject]@{
                 GefyraName = $entry.GefyraName
@@ -48,13 +36,13 @@ Describe 'Per-bridge notification checkpoints' {
             PoApiKey = 'test'
             Confirm = $false
         }
-        Mock Get-BridgeStatus { $script:Current }
-        Mock Invoke-BridgeOpenedNotification { }
-        Mock Invoke-BridgeClosedNotification { }
+        Mock -ModuleName BridgeWatcher Get-BridgeStatus { $script:Current }
+        Mock -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification { }
+        Mock -ModuleName BridgeWatcher Invoke-BridgeClosedNotification { }
     }
 
     It 'Does not replay a delivered alert when a later bridge keeps failing' {
-        Mock Invoke-BridgeOpenedNotification {
+        Mock -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification {
             param($CurrentState)
             if ($CurrentState[0].GefyraName -eq $script:Config.BridgeNames.isthmia) {
                 throw 'Synthetic delivery failure'
@@ -63,10 +51,10 @@ Describe 'Per-bridge notification checkpoints' {
         foreach ($poll in 1..3) {
             { Update-BridgeStatus @script:Update } | Should -Throw '*delivery failure*'
         }
-        Should -Invoke Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
+        Should -Invoke -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
             $CurrentState[0].GefyraName -eq $script:Config.BridgeNames.poseidonia
         }
-        Should -Invoke Invoke-BridgeOpenedNotification -Times 3 -Exactly -ParameterFilter {
+        Should -Invoke -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification -Times 3 -Exactly -ParameterFilter {
             $CurrentState[0].GefyraName -eq $script:Config.BridgeNames.isthmia
         }
         $saved = @(Get-BridgePreviousStatus -InputFile $script:OutputFile -Configuration $script:Config)
@@ -75,14 +63,14 @@ Describe 'Per-bridge notification checkpoints' {
     }
 
     It 'Continues with the other bridge after the first notification fails' {
-        Mock Invoke-BridgeOpenedNotification {
+        Mock -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification {
             param($CurrentState)
             if ($CurrentState[0].GefyraName -eq $script:Config.BridgeNames.poseidonia) {
                 throw 'Synthetic delivery failure'
             }
         }
         { Update-BridgeStatus @script:Update } | Should -Throw '*delivery failure*'
-        Should -Invoke Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
+        Should -Invoke -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
             $CurrentState[0].GefyraName -eq $script:Config.BridgeNames.isthmia
         }
         $saved = @(Get-BridgePreviousStatus -InputFile $script:OutputFile -Configuration $script:Config)
@@ -92,7 +80,7 @@ Describe 'Per-bridge notification checkpoints' {
 
     It 'Retries only the failed bridge when delivery recovers' {
         $script:FailSecond = $true
-        Mock Invoke-BridgeOpenedNotification {
+        Mock -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification {
             param($CurrentState)
             if ($script:FailSecond -and $CurrentState[0].GefyraName -eq $script:Config.BridgeNames.isthmia) {
                 throw 'Synthetic delivery failure'
@@ -101,10 +89,10 @@ Describe 'Per-bridge notification checkpoints' {
         { Update-BridgeStatus @script:Update } | Should -Throw '*delivery failure*'
         $script:FailSecond = $false
         $null = Update-BridgeStatus @script:Update
-        Should -Invoke Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
+        Should -Invoke -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
             $CurrentState[0].GefyraName -eq $script:Config.BridgeNames.poseidonia
         }
-        Should -Invoke Invoke-BridgeOpenedNotification -Times 2 -Exactly -ParameterFilter {
+        Should -Invoke -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification -Times 2 -Exactly -ParameterFilter {
             $CurrentState[0].GefyraName -eq $script:Config.BridgeNames.isthmia
         }
         $saved = @(Get-BridgePreviousStatus -InputFile $script:OutputFile -Configuration $script:Config)
@@ -112,17 +100,17 @@ Describe 'Per-bridge notification checkpoints' {
     }
 
     It 'Stops sending when a successful notification cannot be checkpointed' {
-        Mock Export-BridgeStatusJson {
+        Mock -ModuleName BridgeWatcher Export-BridgeStatusJson {
             [pscustomobject]@{Success=$false; ErrorCode='JSON_EXPORT_FAILURE'; ErrorMessage='Synthetic disk failure'}
         }
         { Update-BridgeStatus @script:Update } | Should -Throw '*disk failure*'
-        Should -Invoke Invoke-BridgeOpenedNotification -Times 1 -Exactly
+        Should -Invoke -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification -Times 1 -Exactly
     }
 
     It 'Keeps cold-start progress across a failed first broadcast' {
         Remove-Item -LiteralPath $script:OutputFile -Confirm:$false
         $script:FailSecond = $true
-        Mock Invoke-BridgeOpenedNotification {
+        Mock -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification {
             param($CurrentState)
             if ($script:FailSecond -and $CurrentState[0].GefyraName -eq $script:Config.BridgeNames.isthmia) {
                 throw 'Synthetic delivery failure'
@@ -131,10 +119,10 @@ Describe 'Per-bridge notification checkpoints' {
         { Update-BridgeStatus @script:Update } | Should -Throw '*delivery failure*'
         $script:FailSecond = $false
         $null = Update-BridgeStatus @script:Update
-        Should -Invoke Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
+        Should -Invoke -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
             $CurrentState[0].GefyraName -eq $script:Config.BridgeNames.poseidonia
         }
-        Should -Invoke Invoke-BridgeOpenedNotification -Times 2 -Exactly -ParameterFilter {
+        Should -Invoke -ModuleName BridgeWatcher Invoke-BridgeOpenedNotification -Times 2 -Exactly -ParameterFilter {
             $CurrentState[0].GefyraName -eq $script:Config.BridgeNames.isthmia
         }
     }
