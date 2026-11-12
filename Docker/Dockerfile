@@ -64,12 +64,11 @@ USER appuser
 WORKDIR /home/appuser/scripts
 
 COPY --chmod=0555 ./BridgeWatcher ./modules/BridgeWatcher
-COPY --chmod=0555 Docker/entrypoint.sh /home/appuser/scripts/entrypoint.sh
 COPY --chmod=0555 run.ps1 .
 
 EXPOSE 8090
 
-ENTRYPOINT ["sh", "./entrypoint.sh"]
+ENTRYPOINT ["pwsh", "-NoLogo", "-NoProfile", "-File", "./run.ps1"]
 
 # hadolint ignore=DL3025
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
