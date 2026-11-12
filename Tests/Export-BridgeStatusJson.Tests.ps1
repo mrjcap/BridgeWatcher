@@ -1,16 +1,9 @@
 ﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-
-
+InModuleScope BridgeWatcher {
 Describe 'Δοκιμές Export-BridgeStatusJson' {
 
     BeforeAll {
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
         $script:Config = New-BridgeConfiguration
     }
 
@@ -66,6 +59,26 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
             $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
 
             $leftoverTmp = Get-ChildItem -Path $TestDrive -Filter 'atomic-fail.json.*.tmp'
+            $leftoverTmp | Should -BeNullOrEmpty
+        }
+
+        It 'Δεν αντικαθιστά το υπάρχον snapshot όταν η Set-Content αποτυγχάνει με non-terminating σφάλμα' {
+            $targetPath = Join-Path $TestDrive 'preserve-good-state.json'
+            $originalJson = '[{"GefyraName":"Ισθμία","GefyraStatus":"Ανοιχτή"}]'
+            Microsoft.PowerShell.Management\Set-Content -Path $targetPath -Value $originalJson -Encoding UTF8 -Force
+
+            Mock Write-BridgeLog {}
+            Mock Set-Content {
+                [System.IO.File]::WriteAllText($Path, '{"corrupt":')
+                Write-Error 'Simulated non-terminating disk quota error'
+            }
+
+            $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή' }) -Path $targetPath -ErrorAction Continue
+            $result.Success | Should -Be $false
+            $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
+            (Get-Content -Path $targetPath -Raw).Trim() | Should -Be $originalJson
+
+            $leftoverTmp = Get-ChildItem -Path $TestDrive -Filter 'preserve-good-state.json.*.tmp'
             $leftoverTmp | Should -BeNullOrEmpty
         }
 
@@ -352,5 +365,6 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
     }
 
+}
 }
 

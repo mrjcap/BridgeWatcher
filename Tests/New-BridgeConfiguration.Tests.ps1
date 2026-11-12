@@ -2,7 +2,6 @@
 
 Describe 'New-BridgeConfiguration' {
     BeforeAll {
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         $script:Config = New-BridgeConfiguration
     }
 
@@ -45,7 +44,7 @@ Describe 'New-BridgeConfiguration' {
         }
 
         It 'Χρησιμοποιεί το PSScriptRoot όταν δεν υπάρχει TestDrive' {
-            Mock -CommandName Test-Path -MockWith { return $false } -ParameterFilter { $Path -eq 'TestDrive:\' }
+            Mock -ModuleName BridgeWatcher -CommandName Test-Path -MockWith { return $false } -ParameterFilter { $Path -eq 'TestDrive:\' }
             $config = New-BridgeConfiguration
             $config.Defaults.LogDirectory | Should -Match 'logs$'
         }
@@ -87,6 +86,22 @@ Describe 'New-BridgeConfiguration' {
 
         It 'Throws FileNotFoundException when configuration path does not exist' {
             { New-BridgeConfiguration -ConfigurationPath 'TestDrive:\missing.json' } | Should -Throw
+        }
+
+        It 'Loads partial JSON override containing only Defaults without Urls under strict mode' {
+            $partialDefaultsPath = 'TestDrive:\partial-defaults.json'
+            Set-Content -Path $partialDefaultsPath -Value '{"Defaults":{"IntervalSeconds":60}}' -Encoding utf8
+            $config = New-BridgeConfiguration -ConfigurationPath $partialDefaultsPath
+            $config.Defaults.IntervalSeconds | Should -Be 60
+            $config.Urls.Source | Should -Be 'https://www.topvision.gr/dioriga/'
+        }
+
+        It 'Loads partial JSON override containing only Urls without Defaults under strict mode' {
+            $partialUrlsPath = 'TestDrive:\partial-urls.json'
+            Set-Content -Path $partialUrlsPath -Value '{"Urls":{"Source":"https://partial.example.com/"}}' -Encoding utf8
+            $config = New-BridgeConfiguration -ConfigurationPath $partialUrlsPath
+            $config.Urls.Source | Should -Be 'https://partial.example.com/'
+            $config.Defaults.IntervalSeconds | Should -Be 300
         }
     }
 

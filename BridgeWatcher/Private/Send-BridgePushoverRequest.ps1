@@ -1,4 +1,21 @@
-﻿function Send-BridgePushoverRequest {
+﻿function Get-BridgePushoverExceptionInfo {
+    <#
+    .SYNOPSIS
+    Εξάγει την απόκριση HTTP και αν το σφάλμα Pushover είναι μη ανακτήσιμο.
+    #>
+    param (
+        [Parameter(Mandatory)][ValidateNotNull()][System.Exception]$Exception
+    )
+    $responseProp = $Exception.PSObject.Properties['Response']
+    $response = if ($null -ne $responseProp) { $responseProp.Value } else { $null }
+    $isFatal = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 403))
+    return [PSCustomObject]@{
+        Response = $response
+        IsFatal  = $isFatal
+    }
+}
+
+function Send-BridgePushoverRequest {
     <#
     .SYNOPSIS
     Αποστέλλει αίτημα ειδοποίησης στο API του Pushover.
@@ -42,7 +59,7 @@
     $warningLevel = $Configuration.LoggingConfig.WarningLevel
 
     try {
-        Write-Verbose "📲 Αποστολή ειδοποίησης Pushover (Τίτλος: $($Payload.title))..."
+        Write-Verbose "📲 Αποστολή ειδοποίησης Pushover (Τίτλος: $($Payload['title']))..."
 
         $invokeRestMethodSplat = @{
             Method      = 'Post'
@@ -58,10 +75,10 @@
                 $result = Invoke-RestMethod @invokeRestMethodSplat
                 break
             } catch {
-                $response = $_.Exception.Response
+                $errInfo = Get-BridgePushoverExceptionInfo -Exception $_.Exception
+                $response = $errInfo.Response
                 try {
-                    $isFatalStatus = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 403))
-                    if ($isFatalStatus -or $i -eq $maxRetries) { throw }
+                    if ($errInfo.IsFatal -or $i -eq $maxRetries) { throw }
                     $baseSleep = [Math]::Pow(2, $i)
                     $jitter = Get-Random -Minimum 0 -Maximum 3
                     Start-Sleep -Seconds ($baseSleep + $jitter)

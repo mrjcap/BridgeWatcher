@@ -1,4 +1,21 @@
-﻿function Invoke-BridgeOCRRequest {
+﻿function Get-BridgeOcrExceptionInfo {
+    <#
+    .SYNOPSIS
+    Εξάγει την απόκριση HTTP και αν το σφάλμα OCR είναι μη ανακτήσιμο.
+    #>
+    param (
+        [Parameter(Mandatory)][ValidateNotNull()][System.Exception]$Exception
+    )
+    $responseProp = $Exception.PSObject.Properties['Response']
+    $response = if ($null -ne $responseProp) { $responseProp.Value } else { $null }
+    $isFatal = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 413, 422))
+    return [PSCustomObject]@{
+        Response = $response
+        IsFatal  = $isFatal
+    }
+}
+
+function Invoke-BridgeOCRRequest {
     <#
     .SYNOPSIS
     Αποστέλλει OCR αίτημα σε υπηρεσία.
@@ -65,11 +82,11 @@
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 return $result
             } catch {
-                $response = $_.Exception.Response
+                $errInfo = Get-BridgeOcrExceptionInfo -Exception $_.Exception
+                $response = $errInfo.Response
                 try {
                     # Do not abort on 403 (Quota) or 429 (Rate Limit). Abort on 400, 401, 413, 422.
-                    $isFatalStatus = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 413, 422))
-                    if ($isFatalStatus -or $i -eq $maxRetries) { throw }
+                    if ($errInfo.IsFatal -or $i -eq $maxRetries) { throw }
                     $baseSleep = [Math]::Pow(2, $i)
                     $jitter = Get-Random -Minimum 0 -Maximum 4
                     Start-Sleep -Seconds ($baseSleep + $jitter)

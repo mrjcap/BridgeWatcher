@@ -59,4 +59,15 @@
         $script:dockerfileContent | Should -Match '# hadolint ignore=DL3025'
         $script:dockerfileContent | Should -Match 'CMD \["pwsh", "-NoLogo", "-NoProfile", "-Command",'
     }
+
+    It 'Integrates upstream branch changes without --force-with-lease in powershell-docs.yml' {
+        $script:docsContent | Should -Not -Match '--force-with-lease'
+        $script:docsContent | Should -Match "ref:\s*\$\{\{\s*github\.event_name\s*==\s*'pull_request'\s*&&\s*github\.ref\s*\|\|\s*\(github\.head_ref\s*\|\|\s*github\.ref_name\)\s*\}\}"
+        $script:docsContent | Should -Match 'git pull --rebase origin "\$BRANCH_NAME"'
+        $script:docsContent | Should -Match 'git push origin "HEAD:\$BRANCH_NAME"'
+    }
+
+    It 'Enforces blocking HIGH and CRITICAL severity exit-code on Trivy vulnerability scan in docker-build.yml' {
+        $script:content | Should -Match "(?s)-\s*name:\s*Scan Docker image for vulnerabilities.*?exit-code:\s*'1'.*?severity:\s*'HIGH,CRITICAL'"
+    }
 }

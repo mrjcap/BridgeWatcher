@@ -1,32 +1,13 @@
 ﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-
-
+InModuleScope BridgeWatcher {
 Describe 'Invoke-BridgeOCRRequest' {
 
     BeforeAll {
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         $script:Config = New-BridgeConfiguration
 
         Mock -CommandName Start-Sleep -MockWith {
-    }
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOCRRequest.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeNameFromUri.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeTimeRange.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeClosedDuration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusAdvice.ps1"
-
+        }
     }
 
 
@@ -163,261 +144,104 @@ Describe 'Invoke-BridgeOCRRequest' {
 
 
     It 'Καλύπτει Configuration.OCRApiUrl path' {
-
-
-
         Mock Invoke-RestMethod {
-
             return @{ responses = @(@{ textAnnotations = @(@{ description = 'test' }) }) }
-
         }
-
         Mock Write-BridgeLog {}
-
-
 
         $config = New-BridgeConfiguration
-
-        $config = [PSCustomObject]@{
-
-            Urls             = [PSCustomObject]@{
-
-                OCRApi      = 'https://custom-ocr-api.com/annotate'
-
-                PushoverApi = $config.Urls.PushoverApi
-
-            }
-
-            OCRMessages      = $config.OCRMessages
-
-            LoggingConfig    = $config.LoggingConfig
-
-            PushoverMessages = $config.PushoverMessages
-
-        }
-
-
+        $config.Urls.OCRApi = 'https://custom-ocr-api.com/annotate'
 
         $result = Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{"test": "data"}' -Configuration $config
 
-
-
         $result | Should -Not -BeNullOrEmpty
-
         $result.responses[0].textAnnotations[0].description | Should -Be 'test'
-
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
-
     }
-
-
 
     It 'Καλύπτει Configuration.OCRMessages.StartOCR path' {
-
-
-
         Mock Invoke-RestMethod {
-
             return @{ responses = @(@{ textAnnotations = @(@{ description = 'test' }) }) }
-
         }
-
         Mock Write-BridgeLog {}
 
-
-
-        $baseConfig = New-BridgeConfiguration
-
-        $config = [PSCustomObject]@{
-
-            Urls          = [PSCustomObject]@{
-
-                OCRApi = $baseConfig.Urls.OCRApi
-
-            }
-
-            OCRMessages   = @{
-
-                StartOCR  = 'Custom start OCR message'
-
-                OCRFailed = $baseConfig.OCRMessages.OCRFailed
-
-            }
-
-            LoggingConfig = $baseConfig.LoggingConfig
-
-        }
-
-
+        $config = New-BridgeConfiguration
+        $config.OCRMessages.StartOCR = 'Custom start OCR message'
 
         Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{}' -Configuration $config
 
-
-
         Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
-
             $Message -eq 'Custom start OCR message'
-
         } -Times 1
-
     }
-
-
 
     It 'Καλύπτει Configuration.OCRMessages.OCRFailed και error logging paths' {
-
-
-
         Mock Invoke-RestMethod { throw 'Test API failure' }
-
         Mock Write-BridgeLog {}
 
-        $config = [PSCustomObject]@{
-
-            OCRMessages   = @{
-
-                OCRFailed = 'Custom OCR failed message'
-
-            }
-
-            LoggingConfig = @{
-
-                ErrorStage   = 'Σφάλμα'
-
-                WarningLevel = 'Warning'
-
-            }
-
-        }
-
-
+        $config = New-BridgeConfiguration
+        $config.OCRMessages.OCRFailed = 'Custom OCR failed message'
+        $config.LoggingConfig.ErrorStage = 'Σφάλμα'
+        $config.LoggingConfig.WarningLevel = 'Warning'
 
         { Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{}' -Configuration $config } | Should -Throw
-
         Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
-
             $Message -like 'Custom OCR failed message*' -and
-
             $Stage -eq 'Σφάλμα' -and
-
             $Level -eq 'Warning'
-
         } -Times 1
-
     }
 
-
-
     It 'Καλύπτει Configuration.LoggingConfig.InfoStage path για επιτυχή κλήση' {
-
-
-
         Mock Invoke-RestMethod {
-
             return @{ responses = @(@{ textAnnotations = @(@{ description = 'test' }) }) }
-
         }
-
         Mock Write-BridgeLog {}
 
-
-
-        $baseConfig = New-BridgeConfiguration
-
-        $config = [PSCustomObject]@{
-
-            Urls          = [PSCustomObject]@{
-
-                OCRApi = $baseConfig.Urls.OCRApi
-
-            }
-
-            OCRMessages   = $baseConfig.OCRMessages
-
-            LoggingConfig = @{
-
-                InfoStage    = 'Ανάλυση'
-
-                ErrorStage   = $baseConfig.LoggingConfig.ErrorStage
-
-                WarningLevel = $baseConfig.LoggingConfig.WarningLevel
-
-            }
-
-        }
-
-
+        $config = New-BridgeConfiguration
+        $config.LoggingConfig.InfoStage = 'Ανάλυση'
 
         Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{}' -Configuration $config
 
-
-
         Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
-
             $Stage -eq 'Ανάλυση'
-
         } -Times 1
-
     }
 
-
-
     It 'Καλύπτει όλες τις configuration paths μαζί σε επιτυχή σενάριο' {
-
-
-
         Mock Invoke-RestMethod {
-
             return @{ responses = @(@{ textAnnotations = @(@{ description = 'success' }) }) }
-
         }
-
         Mock Write-BridgeLog {}
 
-
-
-        $config = [PSCustomObject]@{
-
-            Urls          = [PSCustomObject]@{
-
-                OCRApi = 'https://custom-api.com/test'
-
-            }
-
-            OCRMessages   = @{
-
-                StartOCR = 'Custom start message'
-
-            }
-
-            LoggingConfig = @{
-
-                InfoStage = 'Ανάλυση'
-
-            }
-
-        }
-
-
+        $config = New-BridgeConfiguration
+        $config.Urls.OCRApi = 'https://custom-api.com/test'
+        $config.OCRMessages.StartOCR = 'Custom start message'
+        $config.LoggingConfig.InfoStage = 'Ανάλυση'
 
         $result = Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{"test": "data"}' -Configuration $config
 
-
-
         $result | Should -Not -BeNullOrEmpty
-
         $result.responses[0].textAnnotations[0].description | Should -Be 'success'
-
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
-
         Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
-
             $Message -eq 'Custom start message' -and $Stage -eq 'Ανάλυση'
-
         } -Times 1
-
     }
 
+    It 'Επαναλαμβάνει (retry) σε HttpRequestException χωρίς ιδιότητα Response υπό strict mode' {
+        Mock Invoke-RestMethod {
+            throw [System.Net.Http.HttpRequestException]::new('Name or service not known')
+        }
+        Mock Start-Sleep {}
+        Mock Write-BridgeLog {}
+
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw '*Name or service not known*'
+        Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
+        Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
+    }
+
+}
 }
 
 

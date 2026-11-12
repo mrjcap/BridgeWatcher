@@ -1,5 +1,34 @@
 ﻿<#
     .SYNOPSIS
+    Ανακτά με ασφάλεια προαιρετική ιδιότητα από hashtable ή PSCustomObject.
+
+    .DESCRIPTION
+    Επιστρέφει την τιμή μιας προαιρετικής ιδιότητας χωρίς σφάλμα σε strict mode.
+
+    .PARAMETER InputObject
+    Το αντικείμενο ή hashtable εισόδου.
+
+    .PARAMETER PropertyName
+    Το όνομα της ιδιότητας προς ανάγνωση.
+    #>
+function Get-BridgeOptionalProperty {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][object]$InputObject,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$PropertyName
+    )
+    if ($InputObject -is [System.Collections.IDictionary]) {
+        return $InputObject[$PropertyName]
+    }
+    $prop = $InputObject.PSObject.Properties[$PropertyName]
+    if ($null -ne $prop) {
+        return $prop.Value
+    }
+    return $null
+}
+
+<#
+    .SYNOPSIS
     Αντιγράφει ιδιότητες OCR από την προηγούμενη στην τρέχουσα εγγραφή γέφυρας.
 
     .DESCRIPTION
@@ -25,8 +54,14 @@ function Copy-BridgePreviousOcrProperty {
         return
     }
     foreach ($prop in $PropertyNames) {
-        if ($null -ne $PreviousBridge.$prop -and [string]::IsNullOrEmpty($CurrentBridge.$prop)) {
-            $CurrentBridge | Add-Member -MemberType NoteProperty -Name $prop -Value $PreviousBridge.$prop -Force
+        $prevVal = Get-BridgeOptionalProperty -InputObject $PreviousBridge -PropertyName $prop
+        $currVal = Get-BridgeOptionalProperty -InputObject $CurrentBridge -PropertyName $prop
+        if ($null -ne $prevVal -and [string]::IsNullOrEmpty([string]$currVal)) {
+            if ($CurrentBridge -is [System.Collections.IDictionary]) {
+                $CurrentBridge[$prop] = $prevVal
+            } else {
+                $CurrentBridge | Add-Member -MemberType NoteProperty -Name $prop -Value $prevVal -Force
+            }
         }
     }
 }
@@ -60,16 +95,20 @@ function Get-BridgeRawComparisonDiff {
             [PSCustomObject]@{
                 GefyraName    = $_.GefyraName
                 GefyraStatus  = $_.GefyraStatus
-                ImageUrl      = $_.ImageUrl
-                ImageHash     = $_.ImageHash
+                ImageUrl      = (Get-BridgeOptionalProperty -InputObject $_ -PropertyName 'ImageUrl')
+                ImageHash     = (Get-BridgeOptionalProperty -InputObject $_ -PropertyName 'ImageHash')
                 SideIndicator = '=>'
             }
         })
     }
 
     $scheduledStatus = $Configuration.Statuses.ClosedWithSchedule
-    $hasPreviousHash = $PreviousStateArray | Where-Object { $_.GefyraStatus -eq $scheduledStatus -and $null -ne $_.ImageHash }
-    $hasCurrentHash = $CurrentStateArray | Where-Object { $_.GefyraStatus -eq $scheduledStatus -and $null -ne $_.ImageHash }
+    $hasPreviousHash = $PreviousStateArray | Where-Object {
+        $_.GefyraStatus -eq $scheduledStatus -and $null -ne (Get-BridgeOptionalProperty -InputObject $_ -PropertyName 'ImageHash')
+    }
+    $hasCurrentHash = $CurrentStateArray | Where-Object {
+        $_.GefyraStatus -eq $scheduledStatus -and $null -ne (Get-BridgeOptionalProperty -InputObject $_ -PropertyName 'ImageHash')
+    }
 
     $imageProperty = if ($hasPreviousHash -and $hasCurrentHash) { 'ImageHash' } else { 'ImageUrl' }
     $compareSplat = @{
@@ -116,11 +155,11 @@ function Test-BridgeChangeIsActionable {
     }
     $prevBridge = $PreviousStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
     $currentBridge = $CurrentStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
+    $ocrProps = @('ScheduleState', 'From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2', 'ImageHash')
 
     if ($Change.SideIndicator -eq '==') {
         $logSplat.Message = "Καμία ουσιαστική αλλαγή στην $($Change.GefyraName)."
         Write-BridgeLog @logSplat -Configuration $Configuration
-        $ocrProps = @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2', 'ImageHash')
         Copy-BridgePreviousOcrProperty -PreviousBridge $prevBridge -CurrentBridge $currentBridge -PropertyNames $ocrProps
         return $false
     }
@@ -139,11 +178,9 @@ function Test-BridgeChangeIsActionable {
         return $false
     }
 
-    if ($currentBridge -and [string]::IsNullOrEmpty($currentBridge.ImageHash) -and -not [string]::IsNullOrEmpty($prevBridge.ImageHash)) {
+    if ($currentBridge -and [string]::IsNullOrEmpty([string](Get-BridgeOptionalProperty -InputObject $currentBridge -PropertyName 'ImageHash')) -and -not [string]::IsNullOrEmpty([string](Get-BridgeOptionalProperty -InputObject $prevBridge -PropertyName 'ImageHash'))) {
         $logSplat.Message = "Αποτυχία λήψης νέου hash. Επαναχρησιμοποίηση προηγούμενου hash για την $($Change.GefyraName)."
         Write-BridgeLog @logSplat -Configuration $Configuration
-        $currentBridge.ImageHash = $prevBridge.ImageHash
-        $ocrProps = @('From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')
         Copy-BridgePreviousOcrProperty -PreviousBridge $prevBridge -CurrentBridge $currentBridge -PropertyNames $ocrProps
         return $false
     }

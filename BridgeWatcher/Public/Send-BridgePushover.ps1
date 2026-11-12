@@ -30,6 +30,12 @@
     .PARAMETER Priority
     Η προτεραιότητα ειδοποίησης (προαιρετικό).
 
+    .PARAMETER Retry
+    Διάστημα επανάληψης σε δευτερόλεπτα (30-10800), υποχρεωτικό όταν Priority είναι 2.
+
+    .PARAMETER Expire
+    Διάρκεια λήξης σε δευτερόλεπτα (1-10800), υποχρεωτικό όταν Priority είναι 2.
+
     .PARAMETER Sound
     Ο ήχος ειδοποίησης (προαιρετικό).
 
@@ -62,22 +68,37 @@ function Send-BridgePushover {
         [string]$Url,
         [ValidateNotNullOrEmpty()][string]$UrlTitle,
         [ValidateRange(0, 2)][int]$Priority,
+        [ValidateRange(30, 10800)][int]$Retry,
+        [ValidateRange(1, 10800)][int]$Expire,
         [ValidateSet('pushover', 'bike', 'bugle', 'cashregister', 'classical', 'cosmic', 'falling', 'gamelan', 'incoming', 'intermission', 'magic', 'mechanical', 'pianobar', 'siren', 'spacealarm', 'tugboat', 'alien', 'climb', 'persistent', 'echo', 'updown', 'none')]
         [string]$Sound,
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
     try {
+        if ($PSBoundParameters.ContainsKey('Priority') -and $Priority -eq 2 -and (-not $PSBoundParameters.ContainsKey('Retry') -or -not $PSBoundParameters.ContainsKey('Expire'))) {
+            throw [System.ArgumentException]::new('Οι παράμετροι Retry και Expire είναι υποχρεωτικές όταν το Priority είναι 2 (Emergency).')
+        }
+
         $payload = @{
             token   = $PoApiKey
             user    = $PoUserKey
             message = $Message
         }
-        if ($PSBoundParameters.ContainsKey('Device') -and $Device) { $payload.device = $Device }
-        if ($PSBoundParameters.ContainsKey('Title') -and $Title) { $payload.title = $Title }
-        if ($PSBoundParameters.ContainsKey('Url') -and $Url) { $payload.url = $Url }
-        if ($PSBoundParameters.ContainsKey('UrlTitle') -and $UrlTitle) { $payload.url_title = $UrlTitle }
-        if ($PSBoundParameters.ContainsKey('Priority')) { $payload.priority = $Priority }
-        if ($PSBoundParameters.ContainsKey('Sound') -and $Sound) { $payload.sound = $Sound }
+        $optionalMap = @{
+            Device   = 'device'
+            Title    = 'title'
+            Url      = 'url'
+            UrlTitle = 'url_title'
+            Priority = 'priority'
+            Retry    = 'retry'
+            Expire   = 'expire'
+            Sound    = 'sound'
+        }
+        foreach ($paramName in $optionalMap.Keys) {
+            if ($PSBoundParameters.ContainsKey($paramName)) {
+                $payload[$optionalMap[$paramName]] = $PSBoundParameters[$paramName]
+            }
+        }
 
         $sendPushoverRequestSplat = @{
             Payload       = $payload

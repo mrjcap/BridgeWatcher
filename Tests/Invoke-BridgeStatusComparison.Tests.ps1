@@ -1,24 +1,9 @@
 ﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-
-
+InModuleScope BridgeWatcher {
 Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     BeforeAll {
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Public/Invoke-BridgeStatusComparison.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStateForChange.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeClosedNotification.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
-        . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
         $script:Config = New-BridgeConfiguration
     }
 
@@ -708,30 +693,14 @@ Describe 'Invoke-BridgeStatusComparison' {
 
 
     BeforeAll {
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Public/Invoke-BridgeStatusComparison.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStateForChange.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeClosedNotification.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
-        . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-
-
+        $script:Config = New-BridgeConfiguration
 
         Mock -CommandName Write-BridgeLog -MockWith {
 
             param([string]$Stage, [string]$Message, [string]$Level)
 
             "$Stage|$Level|$Message" | Out-File -Append "$TestDrive\log.txt"
-    }
+        }
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith {
             param($CurrentState)
@@ -952,6 +921,47 @@ Describe 'Invoke-BridgeStatusComparison' {
         $null = Invoke-BridgeStatusComparison @params
         $curr.From | Should -Be '10:00'
     }
+
+    It 'Δεν αποτυγχάνει σε strict mode όταν μια αμετάβλητη γέφυρα δεν έχει ιδιότητες OCR και μια άλλη αλλάζει κατάσταση' {
+        $prev = @(
+            [PSCustomObject]@{
+                GefyraName   = 'Ποσειδωνία'
+                GefyraStatus = 'Ανοιχτή'
+                Timestamp    = '2026-04-01T10:00:00'
+                ImageUrl     = 'https://example.com/pos.png'
+                ImageHash    = $null
+            },
+            [PSCustomObject]@{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Ανοιχτή'
+                Timestamp    = '2026-04-01T10:00:00'
+                ImageUrl     = 'https://example.com/ist.png'
+                ImageHash    = $null
+            }
+        )
+        $curr = @(
+            [PSCustomObject]@{
+                GefyraName   = 'Ποσειδωνία'
+                GefyraStatus = 'Ανοιχτή'
+                Timestamp    = '2026-04-01T10:05:00'
+                ImageUrl     = 'https://example.com/pos.png'
+                ImageHash    = $null
+            },
+            [PSCustomObject]@{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                Timestamp    = '2026-04-01T10:05:00'
+                ImageUrl     = 'https://example.com/ist-closed.png'
+                ImageHash    = 'hash123'
+            }
+        )
+
+        $events = Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $script:Config
+        $events.Count | Should -Be 1
+        $events[0].BridgeName | Should -Be 'Ισθμία'
+        $events[0].Type | Should -Be 'Closed'
+    }
+}
 }
 
 
