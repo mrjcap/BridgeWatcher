@@ -69,7 +69,9 @@ function Update-BridgeStatus {
                 Configuration = $Configuration
             }
             $diffEvents = Invoke-BridgeStatusComparison @invokeSplat
-            # Dispatch notifications based on diff events
+            # Checkpoint successful deliveries independently, keeping failed bridges pending.
+            $checkpointState = @($previousState)
+            $notificationFailures = @()
             foreach ($diffEvent in $diffEvents) {
                 $notificationSplat = @{
                     CurrentState  = $diffEvent.StateInfo
@@ -77,12 +79,35 @@ function Update-BridgeStatus {
                     PoApiKey      = $PoApiKey
                     Configuration = $Configuration
                 }
-                if ($diffEvent.Type -eq 'Closed') {
-                    $notificationSplat.ApiKey = $ApiKey
-                    Invoke-BridgeClosedNotification @notificationSplat
-                } else {
-                    Invoke-BridgeOpenedNotification @notificationSplat
+                try {
+                    if ($diffEvent.Type -eq 'Closed') {
+                        $notificationSplat.ApiKey = $ApiKey
+                        Invoke-BridgeClosedNotification @notificationSplat
+                    } else {
+                        Invoke-BridgeOpenedNotification @notificationSplat
+                    }
+                } catch {
+                    $notificationFailures += $_
+                    continue
                 }
+
+                $notifiedBridgeNames = @($diffEvent.StateInfo.GefyraName)
+                $checkpointState = @($checkpointState | Where-Object {
+                    $_.GefyraName -notin $notifiedBridgeNames
+                }) + @($diffEvent.StateInfo)
+                $checkpointResult = Export-BridgeStatusJson -Data $checkpointState -Path $OutputFile -Configuration $Configuration
+                if (-not $checkpointResult.Success) {
+                    # Do not send more notifications if their progress cannot be saved.
+                    $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
+                        [System.Exception]::new($checkpointResult.ErrorMessage),
+                        $checkpointResult.ErrorCode,
+                        [System.Management.Automation.ErrorCategory]::WriteError,
+                        $OutputFile
+                    ))
+                }
+            }
+            if ($notificationFailures.Count -gt 0) {
+                $PSCmdlet.ThrowTerminatingError($notificationFailures[0])
             }
 
             $exportBridgeStatusJsonSplat = @{
