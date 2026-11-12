@@ -46,7 +46,8 @@
     None.
 
     .EXAMPLE
-    Send-BridgePushover -PoUserKey 'user123' -PoApiKey 'token123' -Message 'Η γέφυρα είναι ανοιχτή.'
+    $config = New-BridgeConfiguration
+    Send-BridgePushover -Configuration $config -PoUserKey 'user123' -PoApiKey 'token123' -Message 'Η γέφυρα είναι ανοιχτή.'
 
     .NOTES
     Χρησιμοποιεί εσωτερικές helper συναρτήσεις για payload και αποστολή.

@@ -171,14 +171,16 @@ Import-Module ./BridgeWatcher.psd1 -Force
 ### Παράδειγμα 1: εκκίνηση συνεχούς παρακολούθησης
 
 ```powershell
-# Παράμετροι συνεχούς ελέγχου
+# Δημιουργία ρυθμίσεων και παράμετροι συνεχούς ελέγχου
+$config = New-BridgeConfiguration
 $params = @{
-    MaxIterations      = 0           # 0 για απεριόριστες επαναλήψεις
-    IntervalSeconds    = 600         # Έλεγχος κάθε 10 λεπτά (600 δευτερόλεπτα)
-    PoApiKey           = 'your-pushover-api-key'
-    PoUserKey          = 'your-pushover-user-key'
-    ApiKey             = 'your-google-vision-api-key'
-    OutputFile         = './BridgeStatusSnapshot.json'
+    Configuration   = $config
+    MaxIterations   = 0           # 0 για απεριόριστες επαναλήψεις
+    IntervalSeconds = 600         # Έλεγχος κάθε 10 λεπτά (600 δευτερόλεπτα)
+    PoApiKey        = 'your-pushover-api-key'
+    PoUserKey       = 'your-pushover-user-key'
+    ApiKey          = 'your-google-vision-api-key'
+    OutputFile      = './BridgeStatusSnapshot.json'
 }
 
 # Εκκίνηση παρακολούθησης
@@ -188,14 +190,17 @@ Get-BridgeStatusMonitor @params
 ### Παράδειγμα 2: άμεση ανάκτηση κατάστασης
 
 ```powershell
+# Δημιουργία ρυθμίσεων
+$config = New-BridgeConfiguration
+
 # Απλή εκτέλεση
-Get-BridgeStatus
+Get-BridgeStatus -Configuration $config
 
 # Αναλυτική καταγραφή
-Get-BridgeStatus -Verbose
+Get-BridgeStatus -Configuration $config -Verbose
 
 # Αποθήκευση σε μεταβλητή και προβολή πίνακα
-$status = Get-BridgeStatus
+$status = Get-BridgeStatus -Configuration $config
 $status | Format-Table -AutoSize
 ```
 
@@ -203,13 +208,15 @@ $status | Format-Table -AutoSize
 
 ```powershell
 # Παρακολούθηση για 24 ώρες με έλεγχο κάθε 30 λεπτά (48 επαναλήψεις)
+$config = New-BridgeConfiguration
 $params = @{
-    MaxIterations      = 48
-    IntervalSeconds    = 1800
-    PoApiKey           = $env:PUSHOVER_API_KEY
-    PoUserKey          = $env:PUSHOVER_USER_KEY
-    ApiKey             = $env:GOOGLE_VISION_API_KEY
-    OutputFile         = ".\logs\BridgeStatus_$(Get-Date -Format 'yyyyMMdd').json"
+    Configuration   = $config
+    MaxIterations   = 48
+    IntervalSeconds = 1800
+    PoApiKey        = $env:PUSHOVER_API_KEY
+    PoUserKey       = $env:PUSHOVER_USER_KEY
+    ApiKey          = $env:GOOGLE_VISION_API_KEY
+    OutputFile      = ".\logs\BridgeStatus_$(Get-Date -Format 'yyyyMMdd').json"
 }
 
 Get-BridgeStatusMonitor @params
@@ -235,12 +242,13 @@ Get-BridgeStatusMonitor @params
 
 | Παράμετρος | Τύπος | Περιγραφή | Προεπιλογή |
 | ---------- | ----- | --------- | ---------- |
-| `MaxIterations` | int | Αριθμός επαναλήψεων, 0 για απεριόριστες | 0 |
-| `IntervalSeconds` | int | Δευτερόλεπτα αναμονής μεταξύ ελέγχων | 600 |
+| `Configuration` | PSCustomObject | Αντικείμενο ρυθμίσεων από τη `New-BridgeConfiguration` | - |
+| `MaxIterations` | int | Αριθμός επαναλήψεων, 0 για απεριόριστες | 100 |
+| `IntervalSeconds` | int | Δευτερόλεπτα αναμονής μεταξύ ελέγχων | 300 |
 | `PoApiKey` | string | Pushover API Token | - |
 | `PoUserKey` | string | Pushover User Key | - |
 | `ApiKey` | string | Google Vision API Key | - |
-| `OutputFile` | string | Διαδρομή αρχείου εξαγωγής JSON | ./BridgeStatusSnapshot.json |
+| `OutputFile` | string | Διαδρομή αρχείου εξαγωγής JSON | - |
 
 ## Δομή δεδομένων
 
@@ -285,7 +293,8 @@ Test-NetConnection -ComputerName "www.topvision.gr" -Port 443
 
 ```powershell
 # Δοκιμαστική αποστολή ειδοποίησης Pushover
-Send-BridgePushover -Token $PoApiKey -User $PoUserKey -Message "Test" -Verbose
+$config = New-BridgeConfiguration
+Send-BridgePushover -Configuration $config -PoApiKey $PoApiKey -PoUserKey $PoUserKey -Message "Test" -Verbose
 ```
 
 ### Λειτουργία αποσφαλμάτωσης

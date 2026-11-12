@@ -13,7 +13,7 @@ Reads the previously saved bridge status from a JSON file.
 
 ## SYNTAX
 
-```
+```powershell
 Get-BridgePreviousStatus [-InputFile] <String> [[-JsonDepth] <Int32>] [-Configuration] <PSObject>
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
@@ -27,8 +27,9 @@ Filters out any records that do not match the expected schema.
 
 ### EXAMPLE 1
 
-```
-Get-BridgePreviousStatus -InputFile 'C:\temp\status.json' -Configuration $Config
+```powershell
+$config = New-BridgeConfiguration
+Get-BridgePreviousStatus -InputFile 'C:\temp\status.json' -Configuration $config
 ```
 
 ## PARAMETERS
@@ -100,7 +101,9 @@ Accept wildcard characters: False
 
 ### CommonParameters
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

@@ -8,12 +8,16 @@ BridgeWatcher is stateless. Recovery is a fresh container deploy from the publis
 
 ```bash
 # 1. Pull the latest image
-docker pull bridgewatcher:latest
+docker pull mrjcap/bridgewatcher:latest
 
 # 2. Create secrets directory
 mkdir -p /opt/bridgewatcher/secrets
 echo "YOUR_API_KEY" > /opt/bridgewatcher/secrets/api_key
-chmod 600 /opt/bridgewatcher/secrets/api_key
+echo "YOUR_PUSHOVER_TOKEN" > /opt/bridgewatcher/secrets/pushover_token
+echo "YOUR_PUSHOVER_USER" > /opt/bridgewatcher/secrets/pushover_user
+chmod 600 /opt/bridgewatcher/secrets/api_key \
+  /opt/bridgewatcher/secrets/pushover_token \
+  /opt/bridgewatcher/secrets/pushover_user
 
 # 3. Deploy
 docker run -d \
@@ -25,8 +29,8 @@ docker run -d \
   --cpus=0.5 \
   --restart=unless-stopped \
   -v /opt/bridgewatcher/secrets:/run/secrets:ro \
-  -p 8080:8080 \
-  bridgewatcher:latest
+  -v log-data:/app/logs \
+  mrjcap/bridgewatcher:latest
 ```
 
 ### Recovery objectives
@@ -51,7 +55,8 @@ docker run \
   --cpus=0.5 \
   --restart=unless-stopped \
   -v /path/to/secrets:/run/secrets:ro \
-  bridgewatcher:latest
+  -v log-data:/app/logs \
+  mrjcap/bridgewatcher:latest
 ```
 
 ### Flag explanations
@@ -65,6 +70,7 @@ docker run \
 | `--cpus=0.5` | Limits CPU to half a core |
 | `--restart=unless-stopped` | Auto-restart on crash |
 | `-v ...:/run/secrets:ro` | Mount secrets read-only |
+| `-v log-data:/app/logs` | Writable volume for logs and state snapshots |
 
 ### Additional hardening (optional)
 
@@ -91,7 +97,7 @@ docker run \
   --log-driver=syslog \
   --log-opt syslog-address=tcp://loghost:514 \
   --log-opt tag=bridgewatcher \
-  bridgewatcher:latest
+  mrjcap/bridgewatcher:latest
 ```
 
 ### Alternative: bind-mount and shipper
@@ -101,7 +107,7 @@ Mount the log directory and use Filebeat or Promtail:
 ```bash
 docker run \
   -v /var/log/bridgewatcher:/app/logs \
-  bridgewatcher:latest
+  mrjcap/bridgewatcher:latest
 ```
 
 Then configure a log shipper:

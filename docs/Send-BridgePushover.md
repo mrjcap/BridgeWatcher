@@ -30,7 +30,8 @@ Send-BridgePushover [-PoUserKey] <String> [-PoApiKey] <String> [-Message] <Strin
 ### EXAMPLE 1
 
 ```powershell
-Send-BridgePushover -PoUserKey 'user123' -PoApiKey 'token123' -Message 'Η γέφυρα είναι ανοιχτή.'
+$config = New-BridgeConfiguration
+Send-BridgePushover -Configuration $config -PoUserKey 'user123' -PoApiKey 'token123' -Message 'Η γέφυρα είναι ανοιχτή.'
 ```
 
 ## PARAMETERS
