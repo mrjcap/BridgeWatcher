@@ -1,4 +1,39 @@
-﻿function Export-BridgeStatusJson {
+﻿function Get-BridgeExportJsonDepth {
+    <#
+    .SYNOPSIS
+    Υπολογίζει το ενεργό βάθος σειριοποίησης JSON από τις παραμέτρους και τις ρυθμίσεις.
+    #>
+    param (
+        [Parameter()][int]$JsonDepth,
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
+    )
+    $configJsonDepthProp = $Configuration.Defaults.PSObject.Properties['JsonDepth']
+    $configJsonDepth = if ($null -ne $configJsonDepthProp) { $configJsonDepthProp.Value } else { 0 }
+    return (@($JsonDepth, $configJsonDepth, 10) | Where-Object { $_ -gt 0 } | Select-Object -First 1)
+}
+
+function Write-BridgeAtomicJson {
+    <#
+    .SYNOPSIS
+    Εγγράφει περιεχόμενο JSON ατομικά μέσω προσωρινού αρχείου.
+    #>
+    param (
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Path,
+        [Parameter()][AllowNull()][object]$JsonContent
+    )
+    $tmpPath = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
+    try {
+        Set-Content -Path $tmpPath -Value $JsonContent -Encoding UTF8 -Force -ErrorAction Stop
+        Move-Item -Path $tmpPath -Destination $Path -Force -ErrorAction Stop
+    }
+    finally {
+        if (Test-Path -Path $tmpPath) {
+            Remove-Item -Path $tmpPath -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Export-BridgeStatusJson {
     <#
     .SYNOPSIS
     Εξάγει την κατάσταση γέφυρας σε αρχείο JSON.
@@ -40,9 +75,7 @@
 
     begin {
         $items = [System.Collections.Generic.List[object]]::new()
-        $configJsonDepthProp = $Configuration.Defaults.PSObject.Properties['JsonDepth']
-        $configJsonDepth = if ($null -ne $configJsonDepthProp) { $configJsonDepthProp.Value } else { $null }
-        $resolvedDepth = @($JsonDepth, $configJsonDepth, 10) | Where-Object { $_ -gt 0 } | Select-Object -First 1
+        $resolvedDepth = Get-BridgeExportJsonDepth -JsonDepth $JsonDepth -Configuration $Configuration
 
         $successMessage = $Configuration.ExportMessages.Success
         $failedMessage = $Configuration.ExportMessages.Failed
@@ -87,16 +120,7 @@
                 }
 
                 $json = ConvertTo-Json -InputObject $dataToExport -Depth $resolvedDepth -Compress
-                $tmpPath = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
-                try {
-                    Set-Content -Path $tmpPath -Value $json -Encoding UTF8 -Force -ErrorAction Stop
-                    Move-Item -Path $tmpPath -Destination $Path -Force -ErrorAction Stop
-                }
-                finally {
-                    if (Test-Path -Path $tmpPath) {
-                        Remove-Item -Path $tmpPath -Force -ErrorAction SilentlyContinue
-                    }
-                }
+                Write-BridgeAtomicJson -Path $Path -JsonContent $json
 
                 $writeBridgeLogSplat = @{
                     Stage   = $analysisStage

@@ -84,14 +84,21 @@ function Send-BridgePushover {
             user    = $PoUserKey
             message = $Message
         }
-        if ($PSBoundParameters.ContainsKey('Device') -and $Device) { $payload.device = $Device }
-        if ($PSBoundParameters.ContainsKey('Title') -and $Title) { $payload.title = $Title }
-        if ($PSBoundParameters.ContainsKey('Url') -and $Url) { $payload.url = $Url }
-        if ($PSBoundParameters.ContainsKey('UrlTitle') -and $UrlTitle) { $payload.url_title = $UrlTitle }
-        if ($PSBoundParameters.ContainsKey('Priority')) { $payload.priority = $Priority }
-        if ($PSBoundParameters.ContainsKey('Retry')) { $payload.retry = $Retry }
-        if ($PSBoundParameters.ContainsKey('Expire')) { $payload.expire = $Expire }
-        if ($PSBoundParameters.ContainsKey('Sound') -and $Sound) { $payload.sound = $Sound }
+        $optionalMap = @{
+            Device   = 'device'
+            Title    = 'title'
+            Url      = 'url'
+            UrlTitle = 'url_title'
+            Priority = 'priority'
+            Retry    = 'retry'
+            Expire   = 'expire'
+            Sound    = 'sound'
+        }
+        foreach ($paramName in $optionalMap.Keys) {
+            if ($PSBoundParameters.ContainsKey($paramName)) {
+                $payload[$optionalMap[$paramName]] = $PSBoundParameters[$paramName]
+            }
+        }
 
         $sendPushoverRequestSplat = @{
             Payload       = $payload
