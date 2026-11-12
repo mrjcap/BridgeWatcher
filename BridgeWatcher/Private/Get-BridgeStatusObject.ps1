@@ -108,12 +108,9 @@ function Get-BridgeStatusObject {
                 Level   = 'Warning'
             }
             Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-            $PSCmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new(
-                [System.Exception]::new("Image download/hashing failed: $($_.Exception.Message)", $_.Exception),
-                'IMAGE_DOWNLOAD_FAILED',
-                [System.Management.Automation.ErrorCategory]::InvalidResult,
-                $ImageUrl
-            ))
+            # A missing fingerprint must not suppress valid status changes for the other bridge.
+            # Comparison retains the previous schedule/hash until the image can be downloaded.
+            $ImageHash = $null
         }
     }
 

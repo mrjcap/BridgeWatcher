@@ -78,14 +78,14 @@ Describe 'Get-BridgeStatusObject' {
             }
         }
 
-        It 'Πετάει σφάλμα και καταγράφει προειδοποίηση όταν η λήψη αποτυγχάνει' {
+        It 'Returns the known status without a hash and warns when the image download fails' {
             $config = New-BridgeConfiguration
             Mock Get-BridgeImageBuffer { throw "Connection timeout" }
             Mock Write-BridgeLog { }
-            {
-                Get-BridgeStatusObject -Location 'isthmia' -Status $config.Statuses.ClosedWithSchedule `
-                    -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'schedule.php' -Configuration $config
-            } | Should -Throw -ErrorId '*IMAGE_DOWNLOAD_FAILED*'
+            $obj = Get-BridgeStatusObject -Location 'isthmia' -Status $config.Statuses.ClosedWithSchedule `
+                -Timestamp '2025-04-10T13:00:00Z' -ImageSrc 'schedule.php' -Configuration $config
+            $obj.GefyraStatus | Should -Be $config.Statuses.ClosedWithSchedule
+            $obj.ImageHash | Should -BeNullOrEmpty
             Should -Invoke -CommandName Write-BridgeLog -Times 1 -ParameterFilter { $Stage -eq 'Σφάλμα' -and $Level -eq 'Warning' }
         }
     }
