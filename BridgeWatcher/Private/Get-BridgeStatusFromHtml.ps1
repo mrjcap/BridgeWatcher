@@ -1,4 +1,52 @@
-﻿function Get-BridgeStatusFromHtml {
+﻿function Resolve-BridgeLocationStatus {
+    <#
+    .SYNOPSIS
+    Αντιστοιχίζει τις εικόνες μιας τοποθεσίας με την ενεργή κατάσταση γέφυρας.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Location,
+        [Parameter(Mandatory)][ValidateNotNull()][object[]]$BridgeImages,
+        [Parameter(Mandatory)][ValidateNotNull()][System.Collections.IDictionary]$StatusPatterns,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Timestamp,
+        [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$BaseUrl,
+        [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
+    )
+    $hasInfoImage = [bool]($BridgeImages | Where-Object { $_.src -match 'info\.php\?\d+' })
+    foreach ($statusEntry in $StatusPatterns.GetEnumerator()) {
+        $status = $statusEntry.Key
+        $pattern = $statusEntry.Value
+        $image = $BridgeImages | Where-Object { $_.src -match $pattern } | Select-Object -First 1
+        if ($image) {
+            if ($status -eq $Configuration.Statuses.Open -and -not $hasInfoImage) {
+                $writeBridgeLogSplat = @{
+                    Stage   = 'Ανάλυση'
+                    Message = "Λείπει η εικόνα info.php για $Location ($status). Η γέφυρα θα θεωρηθεί Ανοιχτή, αλλά ενδέχεται να υπάρχει σφάλμα."
+                    Level   = 'Warning'
+                }
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+            }
+            $writeBridgeLogSplat = @{
+                Stage   = 'Ανάλυση'
+                Message = "✅ Εντοπίστηκε: Γέφυρα: $Location Κατάσταση: $status"
+                Level   = 'Debug'
+            }
+            Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+            $newBridgeStatusObjectSplat = @{
+                Location      = $Location
+                Status        = $status
+                Timestamp     = $Timestamp
+                ImageSrc      = $image.src
+                BaseUrl       = $BaseUrl
+                Configuration = $Configuration
+            }
+            return (Get-BridgeStatusObject @newBridgeStatusObjectSplat)
+        }
+    }
+    return $null
+}
+
+function Get-BridgeStatusFromHtml {
     <#
     .SYNOPSIS
     Αναλύει HTML και επιστρέφει καταστάσεις γέφυρας.
@@ -87,43 +135,18 @@
             Level   = 'Debug'
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-        $matched = $false
-        foreach ($statusEntry in $patterns[$location].GetEnumerator()) {
-            $status = $statusEntry.Key
-            $pattern = $statusEntry.Value
-            # Inline Resolve-BridgeStatus
-            $image = $bridgeImages | Where-Object { $_.src -match $pattern } | Select-Object -First 1
-            $hasInfoImage = $bridgeImages | Where-Object { $_.src -match 'info\.php\?\d+' }
-            if ($status -eq $Configuration.Statuses.Open -and -not $hasInfoImage) {
-                $writeBridgeLogSplat = @{
-                    Stage   = 'Ανάλυση'
-                    Message = "Λείπει η εικόνα info.php για $location ($status). Η γέφυρα θα θεωρηθεί Ανοιχτή, αλλά ενδέχεται να υπάρχει σφάλμα."
-                    Level   = 'Warning'
-                }
-                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-            }
-            if ($image) {
-                $matched = $true
-                $writeBridgeLogSplat = @{
-                    Stage   = 'Ανάλυση'
-                    Message = "✅ Εντοπίστηκε: Γέφυρα: $location Κατάσταση: $status"
-                    Level   = 'Debug'
-                }
-                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                $newBridgeStatusObjectSplat = @{
-                    Location  = $location
-                    Status    = $status
-                    Timestamp = $Timestamp
-                    ImageSrc  = $image.src
-                    BaseUrl   = $baseUrl
-                }
-                $newBridgeStatusObjectSplat.Configuration = $Configuration
-                $object = Get-BridgeStatusObject @newBridgeStatusObjectSplat
-                $result.Add($object)
-                break
-            }
+        $resolveLocationSplat = @{
+            Location       = $location
+            BridgeImages   = @($bridgeImages)
+            StatusPatterns = $patterns[$location]
+            Timestamp      = $Timestamp
+            BaseUrl        = $baseUrl
+            Configuration  = $Configuration
         }
-        if (-not $matched) {
+        $statusObject = Resolve-BridgeLocationStatus @resolveLocationSplat
+        if ($null -ne $statusObject) {
+            $result.Add($statusObject)
+        } else {
             $writeBridgeLogSplat = @{
                 Stage   = 'Σφάλμα'
                 Message = "❌ Δεν βρέθηκε έγκυρη εικόνα κατάστασης για $location"
