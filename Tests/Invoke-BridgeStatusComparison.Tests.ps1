@@ -922,6 +922,37 @@ Describe 'Invoke-BridgeStatusComparison' {
         $curr.From | Should -Be '10:00'
     }
 
+    It 'Keeps legacy URL fallback independent of the other bridge hash (dictionary: <AsDictionary>)' -TestCases @(
+        @{ AsDictionary = $true }
+        @{ AsDictionary = $false }
+    ) {
+        param([bool]$AsDictionary)
+        $prev = @(
+            @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule; ImageUrl = 'old.jpg' }
+            @{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule; ImageUrl = 'schedule.jpg'; ImageHash = 'verified' }
+        )
+        $curr = @($prev | ForEach-Object { $_.Clone() })
+        $curr[0].ImageUrl = 'new.jpg'
+        if (-not $AsDictionary) {
+            $prev = @($prev | ForEach-Object { [pscustomobject]$_ })
+            $curr = @($curr | ForEach-Object { [pscustomobject]$_ })
+        }
+        $events = @(Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $script:Config)
+        $events.Count | Should -Be 1
+        $events[0].BridgeName | Should -Be 'Ποσειδωνία'
+    }
+
+    It 'Treats absent verified fingerprints as unchanged despite URL cache busting (<MissingHash>)' -TestCases @(
+        @{ MissingHash = $null }
+        @{ MissingHash = '' }
+    ) {
+        param($MissingHash)
+        $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule; ImageUrl = 'schedule.php?1'; ImageHash = $null }
+        $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule; ImageUrl = 'schedule.php?2'; ImageHash = $MissingHash }
+        $events = @(Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $script:Config)
+        $events.Count | Should -Be 0
+    }
+
     It 'Δεν αποτυγχάνει σε strict mode όταν μια αμετάβλητη γέφυρα δεν έχει ιδιότητες OCR και μια άλλη αλλάζει κατάσταση' {
         $prev = @(
             [PSCustomObject]@{
