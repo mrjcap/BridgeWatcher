@@ -1,21 +1,4 @@
-﻿function Get-BridgeOcrExceptionInfo {
-    <#
-    .SYNOPSIS
-    Εξάγει την απόκριση HTTP και αν το σφάλμα OCR είναι μη ανακτήσιμο.
-    #>
-    param (
-        [Parameter(Mandatory)][ValidateNotNull()][System.Exception]$Exception
-    )
-    $responseProp = $Exception.PSObject.Properties['Response']
-    $response = if ($null -ne $responseProp) { $responseProp.Value } else { $null }
-    $isFatal = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 413, 422))
-    return [PSCustomObject]@{
-        Response = $response
-        IsFatal  = $isFatal
-    }
-}
-
-function Invoke-BridgeOCRRequest {
+﻿function Invoke-BridgeOCRRequest {
     <#
     .SYNOPSIS
     Αποστέλλει OCR αίτημα σε υπηρεσία.
@@ -82,7 +65,7 @@ function Invoke-BridgeOCRRequest {
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 return $result
             } catch {
-                $errInfo = Get-BridgeOcrExceptionInfo -Exception $_.Exception
+                $errInfo = Get-BridgeHttpExceptionInfo -Exception $_.Exception -FatalStatusCodes @(400, 401, 413, 422)
                 $response = $errInfo.Response
                 try {
                     # Do not abort on 403 (Quota) or 429 (Rate Limit). Abort on 400, 401, 413, 422.

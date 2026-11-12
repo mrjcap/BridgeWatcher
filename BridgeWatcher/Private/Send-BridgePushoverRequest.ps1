@@ -1,21 +1,4 @@
-﻿function Get-BridgePushoverExceptionInfo {
-    <#
-    .SYNOPSIS
-    Εξάγει την απόκριση HTTP και αν το σφάλμα Pushover είναι μη ανακτήσιμο.
-    #>
-    param (
-        [Parameter(Mandatory)][ValidateNotNull()][System.Exception]$Exception
-    )
-    $responseProp = $Exception.PSObject.Properties['Response']
-    $response = if ($null -ne $responseProp) { $responseProp.Value } else { $null }
-    $isFatal = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 403))
-    return [PSCustomObject]@{
-        Response = $response
-        IsFatal  = $isFatal
-    }
-}
-
-function Send-BridgePushoverRequest {
+﻿function Send-BridgePushoverRequest {
     <#
     .SYNOPSIS
     Αποστέλλει αίτημα ειδοποίησης στο API του Pushover.
@@ -75,7 +58,7 @@ function Send-BridgePushoverRequest {
                 $result = Invoke-RestMethod @invokeRestMethodSplat
                 break
             } catch {
-                $errInfo = Get-BridgePushoverExceptionInfo -Exception $_.Exception
+                $errInfo = Get-BridgeHttpExceptionInfo -Exception $_.Exception -FatalStatusCodes @(400, 401, 403)
                 $response = $errInfo.Response
                 try {
                     if ($errInfo.IsFatal -or $i -eq $maxRetries) { throw }

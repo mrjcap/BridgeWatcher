@@ -10,8 +10,10 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
 
+        . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgeNotification.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOpenedNotification.ps1"
 
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeHttpExceptionInfo.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
         $script:Config = New-BridgeConfiguration

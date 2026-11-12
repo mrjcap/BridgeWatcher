@@ -2,6 +2,8 @@
     $script:ModuleRoot = Join-Path $PSScriptRoot '../BridgeWatcher'
     foreach ($relativePath in @(
         'Private/New-BridgeConfiguration.ps1'
+        'Private/Get-BridgeOptionalProperty.ps1'
+        'Private/Send-BridgeNotification.ps1'
         'Private/Write-BridgeLog.ps1'
         'Private/Get-BridgeImage.ps1'
         'Private/Get-BridgeStatusObject.ps1'

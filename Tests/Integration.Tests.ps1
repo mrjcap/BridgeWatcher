@@ -23,6 +23,7 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
 
+        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeHttpExceptionInfo.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOCRRequest.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"

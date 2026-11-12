@@ -61,57 +61,6 @@
     begin {
         $ocrFailed = $false
 
-        function Send-Notification {
-            <#
-            .SYNOPSIS
-            Στέλνει την ειδοποίηση κλεισίματος.
-            .DESCRIPTION
-            Βοηθητική συνάρτηση για την αποστολή μέσω Pushover ή CustomProvider.
-            #>
-            param(
-                [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Config,
-                [string]$Title,
-                [string]$Message,
-                [string]$Type,
-                [string]$PoUser,
-                [string]$PoApi,
-                [scriptblock]$Provider
-            )
-
-            if ($null -ne $Provider) {
-                & $Provider -Title $Title -Message $Message -Type $Type
-            } else {
-                $pushoverSplat = @{
-                    PoUserKey     = $PoUser
-                    PoApiKey      = $PoApi
-                    Title         = $Title
-                    Message       = $Message
-                    ErrorAction   = 'Stop'
-                    Configuration = $Config
-                }
-                Send-BridgePushover @pushoverSplat
-            }
-        }
-
-        function Get-BridgeEntryValue {
-            <#
-            .SYNOPSIS
-            Ανακτά προαιρετική τιμή ιδιότητας από εγγραφή γέφυρας ή αποτέλεσμα OCR.
-            #>
-            param(
-                [Parameter(Mandatory)][object]$InputObject,
-                [Parameter(Mandatory)][string]$Name
-            )
-            if ($InputObject -is [System.Collections.IDictionary]) {
-                return $InputObject[$Name]
-            }
-            $prop = $InputObject.PSObject.Properties[$Name]
-            if ($null -ne $prop) {
-                return $prop.Value
-            }
-            return $null
-        }
-
         function Get-BridgeScheduledNotificationContent {
             <#
             .SYNOPSIS
@@ -122,7 +71,7 @@
                 [Parameter()][AllowNull()][object]$OcrResult
             )
 
-            $entryImageUrl = Get-BridgeEntryValue -InputObject $Entry -Name 'ImageUrl'
+            $entryImageUrl = Get-BridgeOptionalProperty -InputObject $Entry -PropertyName 'ImageUrl'
             if (-not $OcrResult) {
                 return @{
                     Title   = "🚧 Η γέφυρα $($Entry.GefyraName) έκλεισε με πρόγραμμα"
@@ -130,13 +79,13 @@
                 }
             }
 
-            $fromVal = Get-BridgeEntryValue -InputObject $OcrResult -Name 'From'
-            $toVal = Get-BridgeEntryValue -InputObject $OcrResult -Name 'To'
-            $closedForVal = Get-BridgeEntryValue -InputObject $OcrResult -Name 'ClosedFor'
-            $opensInVal = Get-BridgeEntryValue -InputObject $OcrResult -Name 'OpensIn'
-            $note1Val = Get-BridgeEntryValue -InputObject $OcrResult -Name 'Note1'
-            $note2Val = Get-BridgeEntryValue -InputObject $OcrResult -Name 'Note2'
-            $scheduleState = Get-BridgeEntryValue -InputObject $OcrResult -Name 'ScheduleState'
+            $fromVal = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName 'From'
+            $toVal = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName 'To'
+            $closedForVal = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName 'ClosedFor'
+            $opensInVal = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName 'OpensIn'
+            $note1Val = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName 'Note1'
+            $note2Val = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName 'Note2'
+            $scheduleState = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName 'ScheduleState'
 
             $isExpired = ($scheduleState -eq 'Expired') -or ($closedForVal -eq 'Ολοκληρώθηκε')
             $isFuture = (-not $isExpired) -and (($scheduleState -eq 'Future') -or ($note2Val -match 'θα κλείσει'))
@@ -166,8 +115,8 @@
         foreach ($entry in $CurrentState) {
             if ($null -eq $entry) { continue }
 
-            $entryTimestamp = Get-BridgeEntryValue -InputObject $entry -Name 'Timestamp'
-            $entryImageUrl = Get-BridgeEntryValue -InputObject $entry -Name 'ImageUrl'
+            $entryTimestamp = Get-BridgeOptionalProperty -InputObject $entry -PropertyName 'Timestamp'
+            $entryImageUrl = Get-BridgeOptionalProperty -InputObject $entry -PropertyName 'ImageUrl'
 
             switch ($entry.GefyraStatus) {
                 { $_ -in @($Configuration.Statuses.ClosedForMaintenance, $Configuration.Statuses.PermanentlyClosed) } {
@@ -188,7 +137,7 @@
                     Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                     $title   = "🚧 Η γέφυρα $($entry.GefyraName) είναι $statusText"
                     $message = "Η γέφυρα $($entry.GefyraName) είναι $statusText. Επιλέξτε άλλη διαδρομή."
-                    Send-Notification -Config $Configuration -Title $title -Message $message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
+                    Send-BridgeNotification -Configuration $Configuration -Title $title -Message $message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
                 }
                 ($Configuration.Statuses.ClosedWithSchedule) {
                     $logDetails = @"
@@ -212,7 +161,7 @@
                     try {
                         $ocrResult = Invoke-BridgeOCRGoogleCloud @ocrSplat
                         $content = Get-BridgeScheduledNotificationContent -Entry $entry -OcrResult $ocrResult
-                        Send-Notification -Config $Configuration -Title $content.Title -Message $content.Message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
+                        Send-BridgeNotification -Configuration $Configuration -Title $content.Title -Message $content.Message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
                     } catch {
                         $ocrFailed = $true
                         $writeBridgeLogSplat = @{
@@ -224,7 +173,7 @@
                         Write-Warning "OCR failed for $($entryImageUrl): $($_.Exception.Message)"
                         $title   = "🚧 Η γέφυρα $($entry.GefyraName) έκλεισε με πρόγραμμα"
                         $message = "Απέτυχε η υπηρεσία OCR. Δείτε την εικόνα εδώ: $entryImageUrl"
-                        Send-Notification -Config $Configuration -Title $title -Message $message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
+                        Send-BridgeNotification -Configuration $Configuration -Title $title -Message $message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
                     }
                 }
                 default {
