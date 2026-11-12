@@ -1,12 +1,10 @@
 ﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'Send-BridgePushoverRequest' {
-    BeforeAll {
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
-        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-        . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
-        $script:Config = New-BridgeConfiguration
-    }
+InModuleScope BridgeWatcher {
+    Describe 'Send-BridgePushoverRequest' {
+        BeforeAll {
+            $script:Config = New-BridgeConfiguration
+        }
 
     It 'Επιστρέφει το αποτέλεσμα όταν το API απαντάει επιτυχώς' {
         Mock -CommandName Invoke-RestMethod -MockWith {
@@ -95,4 +93,18 @@ Describe 'Send-BridgePushoverRequest' {
         # MemoryStream.Dispose() doesn't have an easily observable side effect unless we mock it,
         # but since we hit the finally block, coverage should increase.
     }
+
+    It 'Επαναλαμβάνει σε HttpRequestException χωρίς ιδιότητα Response υπό strict mode και δεν αποτυγχάνει όταν λείπει το title' {
+        Mock -CommandName Invoke-RestMethod -MockWith {
+            throw [System.Net.Http.HttpRequestException]::new('Connection reset by peer')
+        }
+        Mock -CommandName Write-BridgeLog -MockWith { }
+        Mock -CommandName Start-Sleep -MockWith { }
+
+        $payload = @{ message = 'transport error alert' }
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config -Verbose } | Should -Throw '*Connection reset by peer*'
+        Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
+        Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
+    }
+}
 }

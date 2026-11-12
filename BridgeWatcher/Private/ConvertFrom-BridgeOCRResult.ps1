@@ -123,37 +123,48 @@
 
     if ($minutesLeft -le 0) {
         return [PSCustomObject]@{
-            'Bridge'      = $bridgeName
-            'From'        = $from.ToString('dd/MM/yyyy HH:mm')
-            'To'          = $to.ToString('dd/MM/yyyy HH:mm')
-            'ClosedFor'   = 'Ολοκληρώθηκε'
-            'OpensIn'     = 'Τώρα'
-            'Note1'       = 'Η γέφυρα έχει ανοίξει ή το χρονικό διάστημα έχει παρέλθει.'
-            'Note2'       = 'Η γέφυρα είναι ανοιχτή.'
+            'Bridge'        = $bridgeName
+            'ScheduleState' = 'Expired'
+            'From'          = $from.ToString('dd/MM/yyyy HH:mm')
+            'To'            = $to.ToString('dd/MM/yyyy HH:mm')
+            'ClosedFor'     = 'Ολοκληρώθηκε'
+            'OpensIn'       = 'Τώρα'
+            'Note1'         = 'Η γέφυρα έχει ανοίξει ή το χρονικό διάστημα έχει παρέλθει.'
+            'Note2'         = 'Η γέφυρα είναι ανοιχτή.'
         }
     }
 
     $formatBridgeClosedDurationSplat = @{
         Duration = $duration
     }
+    $closedForText = ConvertTo-BridgeClosedDuration @formatBridgeClosedDurationSplat
+
+    if ($from -gt $athensNow) {
+        return [PSCustomObject]@{
+            'Bridge'        = $bridgeName
+            'ScheduleState' = 'Future'
+            'From'          = $from.ToString('dd/MM/yyyy HH:mm')
+            'To'            = $to.ToString('dd/MM/yyyy HH:mm')
+            'ClosedFor'     = $closedForText
+            'OpensIn'       = ''
+            'Note1'         = ''
+            'Note2'         = "Η γέφυρα θα κλείσει στις $($from.ToString('HH:mm')) για $closedForText."
+        }
+    }
+
     $getBridgeStatusAdviceSplat = @{
         MinutesUntilOpen = $minutesLeft
     }
-    $closedForText = ConvertTo-BridgeClosedDuration @formatBridgeClosedDurationSplat
     $advice = Get-BridgeStatusAdvice @getBridgeStatusAdviceSplat -Configuration $Configuration
-    $advice2 = if ($from -gt $athensNow) {
-        "Η γέφυρα θα κλείσει στις $($from.ToString('HH:mm')) για $closedForText."
-    } else {
-        "Η γέφυρα είναι ήδη κλειστή από τις $($from.ToString('HH:mm'))."
-    }
     return [PSCustomObject]@{
-        'Bridge'      = $bridgeName
-        'From'        = $from.ToString('dd/MM/yyyy HH:mm')
-        'To'          = $to.ToString('dd/MM/yyyy HH:mm')
-        'ClosedFor'   = $closedForText
-        'OpensIn'     = "$minutesLeft λεπτά"
-        'Note1'       = $advice
-        'Note2'       = $advice2
+        'Bridge'        = $bridgeName
+        'ScheduleState' = 'Active'
+        'From'          = $from.ToString('dd/MM/yyyy HH:mm')
+        'To'            = $to.ToString('dd/MM/yyyy HH:mm')
+        'ClosedFor'     = $closedForText
+        'OpensIn'       = "$minutesLeft λεπτά"
+        'Note1'         = $advice
+        'Note2'         = "Η γέφυρα είναι ήδη κλειστή από τις $($from.ToString('HH:mm'))."
     }
 }
 

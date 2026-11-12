@@ -172,8 +172,9 @@
         $rawJson = Get-Content -Path $ConfigurationPath -Raw -Encoding utf8
         $fileConfig = ConvertFrom-Json -InputObject $rawJson
         foreach ($section in @('Urls', 'Defaults')) {
-            if ($fileConfig.$section) {
-                foreach ($prop in $fileConfig.$section.psobject.Properties) {
+            $sectionProp = $fileConfig.PSObject.Properties[$section]
+            if ($null -ne $sectionProp -and $null -ne $sectionProp.Value) {
+                foreach ($prop in $sectionProp.Value.PSObject.Properties) {
                     $config.$section | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value -Force
                 }
             }

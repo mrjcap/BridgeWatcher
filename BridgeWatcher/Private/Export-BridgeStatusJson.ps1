@@ -40,7 +40,9 @@
 
     begin {
         $items = [System.Collections.Generic.List[object]]::new()
-        $resolvedDepth = @($JsonDepth, $Configuration.Defaults.JsonDepth, 10) | Where-Object { $_ -gt 0 } | Select-Object -First 1
+        $configJsonDepthProp = $Configuration.Defaults.PSObject.Properties['JsonDepth']
+        $configJsonDepth = if ($null -ne $configJsonDepthProp) { $configJsonDepthProp.Value } else { $null }
+        $resolvedDepth = @($JsonDepth, $configJsonDepth, 10) | Where-Object { $_ -gt 0 } | Select-Object -First 1
 
         $successMessage = $Configuration.ExportMessages.Success
         $failedMessage = $Configuration.ExportMessages.Failed
@@ -87,7 +89,7 @@
                 $json = ConvertTo-Json -InputObject $dataToExport -Depth $resolvedDepth -Compress
                 $tmpPath = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
                 try {
-                    Set-Content -Path $tmpPath -Value $json -Encoding UTF8 -Force
+                    Set-Content -Path $tmpPath -Value $json -Encoding UTF8 -Force -ErrorAction Stop
                     Move-Item -Path $tmpPath -Destination $Path -Force -ErrorAction Stop
                 }
                 finally {

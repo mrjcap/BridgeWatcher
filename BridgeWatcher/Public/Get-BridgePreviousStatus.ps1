@@ -40,21 +40,25 @@ function Get-BridgePreviousStatus {
             }
             Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
             return @()
-        }        try {
+        }
+        try {
+            $isLegacy = $null -ne $env:IsLegacyPowerShell
+            $isLegacyPowerShell = if ($isLegacy) { $env:IsLegacyPowerShell -eq 'true' } else { $PSVersionTable.PSVersion.Major -lt 6 }
             $getContentSplat = @{
                 Path     = $InputFile
                 Raw      = $true
-                Encoding = 'utf8BOM'
+                Encoding = if ($isLegacyPowerShell) { 'utf8' } else { 'utf8BOM' }
             }
-            $convertFromJsonSplat = @{
-                Depth = $JsonDepth
+            $convertFromJsonSplat = @{}
+            if (-not $isLegacyPowerShell) {
+                $convertFromJsonSplat['Depth'] = $JsonDepth
             }
             $results = Get-Content @getContentSplat | ConvertFrom-Json @convertFromJsonSplat
 
             # Φιλτράρισμα άκυρων εγγραφών (π.χ. αν αποθηκεύτηκε BridgeResult αντί για Array)
-            $validResults = @($results) | Where-Object {
+            $validResults = @(@($results) | Where-Object {
                 $null -ne $_ -and $_.psobject.properties.match('GefyraName').Count -gt 0
-            }
+            })
 
             if ($validResults.Count -eq 0) {
                 return @()

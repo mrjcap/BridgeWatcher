@@ -1,21 +1,9 @@
 ﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-
-
+InModuleScope BridgeWatcher {
 Describe 'Invoke-BridgeClosedNotification' {
 
     BeforeAll {
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeClosedNotification.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Invoke-BridgeOCRGoogleCloud.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Send-BridgePushoverRequest.ps1"
-        . "$PSScriptRoot/../BridgeWatcher/Public/Send-BridgePushover.ps1"
         $script:Config = New-BridgeConfiguration
     }
 
@@ -208,7 +196,124 @@ Describe 'Invoke-BridgeClosedNotification' {
             $script:providerTitle | Should -BeLike '*κλειστή για συντήρηση*'
         }
 
+        It 'Ξεχωρίζει μελλοντικό πρόγραμμα κλεισίματος χωρίς να δηλώνει ότι η γέφυρα έκλεισε ήδη' {
+            Mock Invoke-BridgeOCRGoogleCloud {
+                return [pscustomobject]@{
+                    Bridge        = 'Ισθμία'
+                    ScheduleState = 'Future'
+                    From          = '25/04/2025 10:00'
+                    To            = '25/04/2025 11:00'
+                    ClosedFor     = '1 ώρα'
+                    OpensIn       = ''
+                    Note1         = ''
+                    Note2         = 'Η γέφυρα θα κλείσει στις 10:00 για 1 ώρα.'
+                }
+            }
+            Mock Write-BridgeLog { }
+
+            $script:futureTitle = ''
+            $script:futureMessage = ''
+            $provider = {
+                param([string]$Title, [string]$Message, [string]$Type)
+                $null = $Type
+                $script:futureTitle = $Title
+                $script:futureMessage = $Message
+            }
+
+            $entry = [pscustomobject]@{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                Timestamp    = '2025-04-25T09:00:00'
+                ImageUrl     = 'https://example.com/future.jpg'
+            }
+
+            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -NotificationProvider $provider
+
+            $script:futureTitle | Should -Match 'θα κλείσει'
+            $script:futureTitle | Should -Not -Match 'έκλεισε$'
+            $script:futureMessage | Should -Match 'Η γέφυρα θα κλείσει στις 10:00'
+            $script:futureMessage | Should -Not -Match 'Ανοίγει σε:'
+        }
+
+        It 'Συμπεριλαμβάνει το Note2 και το Ανοίγει σε για ενεργό κλείσιμο' {
+            Mock Invoke-BridgeOCRGoogleCloud {
+                return [pscustomobject]@{
+                    Bridge        = 'Ισθμία'
+                    ScheduleState = 'Active'
+                    From          = '25/04/2025 10:00'
+                    To            = '25/04/2025 11:00'
+                    ClosedFor     = '1 ώρα'
+                    OpensIn       = '45 λεπτά'
+                    Note1         = 'Είναι προτιμότερο να μην περιμένεις'
+                    Note2         = 'Η γέφυρα είναι ήδη κλειστή από τις 10:00.'
+                }
+            }
+            Mock Write-BridgeLog { }
+
+            $script:activeTitle = ''
+            $script:activeMessage = ''
+            $provider = {
+                param([string]$Title, [string]$Message, [string]$Type)
+                $null = $Type
+                $script:activeTitle = $Title
+                $script:activeMessage = $Message
+            }
+
+            $entry = [pscustomobject]@{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                Timestamp    = '2025-04-25T10:15:00'
+                ImageUrl     = 'https://example.com/active.jpg'
+            }
+
+            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -NotificationProvider $provider
+
+            $script:activeTitle | Should -Be '🚧 Η γέφυρα Ισθμία έκλεισε'
+            $script:activeMessage | Should -Match 'Ανοίγει σε: 45 λεπτά'
+            $script:activeMessage | Should -Match 'Σημείωση: Είναι προτιμότερο να μην περιμένεις'
+            $script:activeMessage | Should -Match 'Η γέφυρα είναι ήδη κλειστή από τις 10:00\.'
+        }
+
+        It 'Ξεχωρίζει ληγμένο πρόγραμμα κλεισίματος χωρίς να δηλώνει ότι η γέφυρα έκλεισε' {
+            Mock Invoke-BridgeOCRGoogleCloud {
+                return [pscustomobject]@{
+                    Bridge        = 'Ισθμία'
+                    ScheduleState = 'Expired'
+                    From          = '25/04/2025 10:00'
+                    To            = '25/04/2025 11:00'
+                    ClosedFor     = 'Ολοκληρώθηκε'
+                    OpensIn       = 'Τώρα'
+                    Note1         = 'Η γέφυρα έχει ανοίξει ή το χρονικό διάστημα έχει παρέλθει.'
+                    Note2         = 'Η γέφυρα είναι ανοιχτή.'
+                }
+            }
+            Mock Write-BridgeLog { }
+
+            $script:expiredTitle = ''
+            $script:expiredMessage = ''
+            $provider = {
+                param([string]$Title, [string]$Message, [string]$Type)
+                $null = $Type
+                $script:expiredTitle = $Title
+                $script:expiredMessage = $Message
+            }
+
+            $entry = [pscustomobject]@{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                Timestamp    = '2025-04-25T11:15:00'
+                ImageUrl     = 'https://example.com/expired.jpg'
+            }
+
+            Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -NotificationProvider $provider
+
+            $script:expiredTitle | Should -Match 'ολοκληρώθηκε'
+            $script:expiredTitle | Should -Not -Match 'έκλεισε$'
+            $script:expiredMessage | Should -Match 'Η γέφυρα είναι ανοιχτή\.'
+        }
+
     }
 
+}
 }
 

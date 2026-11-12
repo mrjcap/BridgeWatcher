@@ -42,7 +42,7 @@
     $warningLevel = $Configuration.LoggingConfig.WarningLevel
 
     try {
-        Write-Verbose "📲 Αποστολή ειδοποίησης Pushover (Τίτλος: $($Payload.title))..."
+        Write-Verbose "📲 Αποστολή ειδοποίησης Pushover (Τίτλος: $($Payload['title']))..."
 
         $invokeRestMethodSplat = @{
             Method      = 'Post'
@@ -58,7 +58,8 @@
                 $result = Invoke-RestMethod @invokeRestMethodSplat
                 break
             } catch {
-                $response = $_.Exception.Response
+                $responseProp = $_.Exception.PSObject.Properties['Response']
+                $response = if ($null -ne $responseProp) { $responseProp.Value } else { $null }
                 try {
                     $isFatalStatus = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 403))
                     if ($isFatalStatus -or $i -eq $maxRetries) { throw }

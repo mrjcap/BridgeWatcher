@@ -2,24 +2,10 @@
 
 Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-
-
+InModuleScope BridgeWatcher {
 Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
     BeforeAll {
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeNameFromUri.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeTimeRange.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeClosedDuration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusAdvice.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
         $script:Config = New-BridgeConfiguration
     }
 
@@ -155,6 +141,8 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
         $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
 
         $result.Note2 | Should -Match 'θα κλείσει στις'
+        $result.ScheduleState | Should -Be 'Future'
+        $result.OpensIn | Should -BeNullOrEmpty
 
     }
 
@@ -195,6 +183,8 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
         $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockResponse -ImageUri 'https://example.com/bridge.jpg'
 
         $result.Note2 | Should -Match 'ήδη κλειστή από τις'
+        $result.ScheduleState | Should -Be 'Active'
+        $result.OpensIn | Should -Match 'λεπτά'
 
     }
 
@@ -259,20 +249,7 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος ανάλυσης κειμένου' {
 
     BeforeAll {
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeNameFromUri.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeTimeRange.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertTo-BridgeClosedDuration.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusAdvice.ps1"
-
-        . "$PSScriptRoot/../BridgeWatcher/Private/ConvertFrom-BridgeOCRResult.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
     It 'Πρέπει να καλει το Write-BridgeLog και να επιστρέφει $null όταν αποτυγχάνει η ανάλυση OCR' {
@@ -291,5 +268,6 @@ Describe 'ConvertFrom-BridgeOCRResult - Καταγραφή σφάλματος α
         Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Stage -eq 'Σφάλμα' } -Times 1 -Exactly -Scope It
     }
 
+}
 }
 

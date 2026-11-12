@@ -65,7 +65,8 @@
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                 return $result
             } catch {
-                $response = $_.Exception.Response
+                $responseProp = $_.Exception.PSObject.Properties['Response']
+                $response = if ($null -ne $responseProp) { $responseProp.Value } else { $null }
                 try {
                     # Do not abort on 403 (Quota) or 429 (Rate Limit). Abort on 400, 401, 413, 422.
                     $isFatalStatus = ($null -ne $response) -and (([int]$response.StatusCode) -in @(400, 401, 413, 422))

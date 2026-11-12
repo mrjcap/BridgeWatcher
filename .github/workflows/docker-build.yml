@@ -181,6 +181,8 @@ jobs:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ inputs.version || 'pr-test' }}
           format: 'sarif'
           output: 'trivy-results.sarif'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
           version: 'v${{ env.TRIVY_VERSION }}'
 
       - name: Check Trivy SARIF exists

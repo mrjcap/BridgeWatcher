@@ -30,6 +30,12 @@
     .PARAMETER Priority
     Η προτεραιότητα ειδοποίησης (προαιρετικό).
 
+    .PARAMETER Retry
+    Διάστημα επανάληψης σε δευτερόλεπτα (30-10800), υποχρεωτικό όταν Priority είναι 2.
+
+    .PARAMETER Expire
+    Διάρκεια λήξης σε δευτερόλεπτα (1-10800), υποχρεωτικό όταν Priority είναι 2.
+
     .PARAMETER Sound
     Ο ήχος ειδοποίησης (προαιρετικό).
 
@@ -62,11 +68,17 @@ function Send-BridgePushover {
         [string]$Url,
         [ValidateNotNullOrEmpty()][string]$UrlTitle,
         [ValidateRange(0, 2)][int]$Priority,
+        [ValidateRange(30, 10800)][int]$Retry,
+        [ValidateRange(1, 10800)][int]$Expire,
         [ValidateSet('pushover', 'bike', 'bugle', 'cashregister', 'classical', 'cosmic', 'falling', 'gamelan', 'incoming', 'intermission', 'magic', 'mechanical', 'pianobar', 'siren', 'spacealarm', 'tugboat', 'alien', 'climb', 'persistent', 'echo', 'updown', 'none')]
         [string]$Sound,
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
     try {
+        if ($PSBoundParameters.ContainsKey('Priority') -and $Priority -eq 2 -and (-not $PSBoundParameters.ContainsKey('Retry') -or -not $PSBoundParameters.ContainsKey('Expire'))) {
+            throw [System.ArgumentException]::new('Οι παράμετροι Retry και Expire είναι υποχρεωτικές όταν το Priority είναι 2 (Emergency).')
+        }
+
         $payload = @{
             token   = $PoApiKey
             user    = $PoUserKey
@@ -77,6 +89,8 @@ function Send-BridgePushover {
         if ($PSBoundParameters.ContainsKey('Url') -and $Url) { $payload.url = $Url }
         if ($PSBoundParameters.ContainsKey('UrlTitle') -and $UrlTitle) { $payload.url_title = $UrlTitle }
         if ($PSBoundParameters.ContainsKey('Priority')) { $payload.priority = $Priority }
+        if ($PSBoundParameters.ContainsKey('Retry')) { $payload.retry = $Retry }
+        if ($PSBoundParameters.ContainsKey('Expire')) { $payload.expire = $Expire }
         if ($PSBoundParameters.ContainsKey('Sound') -and $Sound) { $payload.sound = $Sound }
 
         $sendPushoverRequestSplat = @{

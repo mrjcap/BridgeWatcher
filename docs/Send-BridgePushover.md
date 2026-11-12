@@ -13,10 +13,11 @@ schema: 2.0.0
 
 ## SYNTAX
 
-```
+```powershell
 Send-BridgePushover [-PoUserKey] <String> [-PoApiKey] <String> [-Message] <String> [[-Device] <String>]
- [[-Title] <String>] [[-Url] <String>] [[-UrlTitle] <String>] [[-Priority] <Int32>] [[-Sound] <String>]
- [-Configuration] <PSObject> [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [[-Title] <String>] [[-Url] <String>] [[-UrlTitle] <String>] [[-Priority] <Int32>] [[-Retry] <Int32>]
+ [[-Expire] <Int32>] [[-Sound] <String>] [-Configuration] <PSObject> [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -28,7 +29,7 @@ Send-BridgePushover [-PoUserKey] <String> [-PoApiKey] <String> [-Message] <Strin
 
 ### EXAMPLE 1
 
-```
+```powershell
 Send-BridgePushover -PoUserKey 'user123' -PoApiKey 'token123' -Message 'Η γέφυρα είναι ανοιχτή.'
 ```
 
@@ -162,6 +163,38 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Retry
+
+Διάστημα επανάληψης σε δευτερόλεπτα (30-10800), υποχρεωτικό όταν Priority είναι 2.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 9
+Default value: 0
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Expire
+
+Διάρκεια λήξης σε δευτερόλεπτα (1-10800), υποχρεωτικό όταν Priority είναι 2.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 10
+Default value: 0
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Sound
 
 Ο ήχος ειδοποίησης (προαιρετικό).
@@ -172,7 +205,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 9
+Position: 11
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -188,7 +221,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 10
+Position: 12
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -196,7 +229,7 @@ Accept wildcard characters: False
 
 ### -ProgressAction
 
-{{ Fill ProgressAction Description }}
+Καθορίζει τον τρόπο χειρισμού ενημερώσεων προόδου από το PowerShell.
 
 ```yaml
 Type: ActionPreference
@@ -212,7 +245,9 @@ Accept wildcard characters: False
 
 ### CommonParameters
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
