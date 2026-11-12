@@ -101,6 +101,44 @@ Describe 'Get-BridgeStatusMonitor' {
             $tracker.Called | Should -Be $true
             Should -Invoke -CommandName Update-BridgeStatus -Times 0 -Exactly
         }
+
+        It 'Executes custom Action without ApiKey, PoUserKey, or PoApiKey and omits unbound keys from splat' {
+            Mock -CommandName Update-BridgeStatus -MockWith { }
+            Mock -CommandName Start-Sleep
+            Mock -CommandName Write-BridgeLog
+
+            $script:capturedSplat = $null
+            $customAction = {
+                param($splat)
+                $script:capturedSplat = $splat
+            }
+
+            { Get-BridgeStatusMonitor -Configuration $script:Config -OutputFile 'test.json' -MaxIterations 1 -IntervalSeconds 1 -Action $customAction } | Should -Not -Throw
+            $script:capturedSplat | Should -Not -BeNullOrEmpty
+            $script:capturedSplat.OutputFile | Should -Be 'test.json'
+            $script:capturedSplat.ContainsKey('ApiKey') | Should -BeFalse
+            $script:capturedSplat.ContainsKey('PoUserKey') | Should -BeFalse
+            $script:capturedSplat.ContainsKey('PoApiKey') | Should -BeFalse
+            Should -Invoke -CommandName Update-BridgeStatus -Times 0 -Exactly
+        }
+
+        It 'Enforces DefaultAction mandatory keys and CustomAction optional keys via ParameterSets' {
+            $cmdInfo = Get-Command Get-BridgeStatusMonitor
+            $cmdInfo.DefaultParameterSet | Should -Be 'DefaultAction'
+
+            $defaultSet = $cmdInfo.ParameterSets | Where-Object { $_.Name -eq 'DefaultAction' }
+            ($defaultSet.Parameters | Where-Object { $_.Name -eq 'ApiKey' }).IsMandatory | Should -BeTrue
+            ($defaultSet.Parameters | Where-Object { $_.Name -eq 'PoUserKey' }).IsMandatory | Should -BeTrue
+            ($defaultSet.Parameters | Where-Object { $_.Name -eq 'PoApiKey' }).IsMandatory | Should -BeTrue
+
+            $customSet = $cmdInfo.ParameterSets | Where-Object { $_.Name -eq 'CustomAction' }
+            ($customSet.Parameters | Where-Object { $_.Name -eq 'Action' }).IsMandatory | Should -BeTrue
+            ($customSet.Parameters | Where-Object { $_.Name -eq 'ApiKey' }).IsMandatory | Should -BeFalse
+            ($customSet.Parameters | Where-Object { $_.Name -eq 'PoUserKey' }).IsMandatory | Should -BeFalse
+            ($customSet.Parameters | Where-Object { $_.Name -eq 'PoApiKey' }).IsMandatory | Should -BeFalse
+
+            { Get-BridgeStatusMonitor -Configuration $script:Config -OutputFile 'test.json' -ApiKey '' -PoUserKey 'u' -PoApiKey 'p' } | Should -Throw
+        }
     }
 
     Context 'Exception Handling' {
@@ -166,6 +204,21 @@ Describe 'Get-BridgeStatusMonitor' {
 
             { Get-BridgeStatusMonitor @monitorParams -MaxIterations 10 -IntervalSeconds 1 -Configuration $script:Config } | Should -Throw "Monitoring failed 5 consecutive times. Halting."
             Should -Invoke -CommandName Update-BridgeStatus -Times 5 -Exactly
+        }
+
+        It 'Terminates immediately on iteration 1 with zero Start-Sleep calls on ParameterBindingException' {
+            Mock -CommandName Start-Sleep
+            Mock -CommandName Write-BridgeLog
+
+            $script:bindingAttemptCount = 0
+            $failingAction = {
+                $script:bindingAttemptCount++
+                Update-BridgeStatus -Configuration $script:Config -OutputFile '' -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'p'
+            }
+
+            { Get-BridgeStatusMonitor -Configuration $script:Config -OutputFile 'test.json' -MaxIterations 5 -IntervalSeconds 10 -Action $failingAction } | Should -Throw
+            $script:bindingAttemptCount | Should -Be 1
+            Should -Invoke -CommandName Start-Sleep -Times 0 -Exactly
         }
     }
 }
