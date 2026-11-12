@@ -94,7 +94,6 @@ Describe 'Get-BridgeStatus Integration' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusFromHtml.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeImage.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusObject.ps1"
-        . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeNameFromUri.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStateForChange.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
     }
