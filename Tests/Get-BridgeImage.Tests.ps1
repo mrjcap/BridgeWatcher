@@ -50,5 +50,24 @@ Describe 'Get-BridgeImage' {
             $result.Count | Should -Be 1
             $result[0].src | Should -Be 'image-bridge-open-no-schedule.php?123456'
         }
+
+        It 'Διατηρεί την εικόνα info.php?12345 από πραγματικό HTML ανοιχτής γέφυρας' {
+            $html = @'
+<div class="panel panel-primary">
+<div class="panel-heading">
+    <h4><b>ΙΣΘΜΊΑ</b></h4>
+</div>
+<div class="panel-body">
+    <img src="image-bridge-open-no-schedule.php?12345">
+    <img src="info.php?12345">
+    <img src="logo.png">
+</div>
+</div>
+'@
+            $result = Get-BridgeImage -Configuration $script:Config -HtmlContent $html -Location 'isthmia'
+            $result.Count | Should -Be 2
+            $result[0].src | Should -Be 'image-bridge-open-no-schedule.php?12345'
+            $result[1].src | Should -Be 'info.php?12345'
+        }
     }
 }
