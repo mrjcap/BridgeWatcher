@@ -19,7 +19,7 @@ env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   # renovate: datasource=github-releases depName=PowerShell/PowerShell
-  POWERSHELL_VERSION: '7.6.10'
+  POWERSHELL_VERSION: '7.7.0'
 
 jobs:
   generate-docs:
