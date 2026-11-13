@@ -188,7 +188,6 @@ function Invoke-BridgeClosedNotification {
                         $ocrResult = Invoke-BridgeOCRGoogleCloud @ocrSplat
                         Set-BridgeEntryOcrMetadata -Entry $entry -OcrResult $ocrResult
                         $content = Get-BridgeScheduledNotificationContent -Entry $entry -OcrResult $ocrResult
-                        Send-BridgeNotification -Configuration $Configuration -Title $content.Title -Message $content.Message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
                     } catch {
                         $ocrFailed = $true
                         $writeBridgeLogSplat = @{
@@ -198,10 +197,12 @@ function Invoke-BridgeClosedNotification {
                         }
                         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                         Write-Warning "OCR failed for $($entryImageUrl): $($_.Exception.Message)"
-                        $title   = "🚧 Η γέφυρα $($entry.GefyraName) έκλεισε με πρόγραμμα"
-                        $message = "Απέτυχε η υπηρεσία OCR. Δείτε την εικόνα εδώ: $entryImageUrl"
-                        Send-BridgeNotification -Configuration $Configuration -Title $title -Message $message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
+                        $content = @{
+                            Title   = "🚧 Η γέφυρα $($entry.GefyraName) έκλεισε με πρόγραμμα"
+                            Message = "Απέτυχε η υπηρεσία OCR. Δείτε την εικόνα εδώ: $entryImageUrl"
+                        }
                     }
+                    Send-BridgeNotification -Configuration $Configuration -Title $content.Title -Message $content.Message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
                 }
                 default {
                     $writeBridgeLogSplat = @{
