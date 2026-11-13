@@ -98,6 +98,41 @@ Describe 'Invoke-BridgeClosedNotification' {
 
         }
 
+        It 'Propagates delivery failures without sending an OCR-failure fallback' {
+            Mock Write-BridgeLog { }
+            Mock Invoke-BridgeOCRGoogleCloud {
+                [pscustomobject]@{
+                    ScheduleState = 'Future'
+                    From          = '25/12/2099 10:00'
+                    To            = '25/12/2099 11:00'
+                    ClosedFor     = '1 ώρα'
+                }
+            }
+            $attempts = [System.Collections.Generic.List[string]]::new()
+            Mock Send-BridgePushover {
+                $attempts.Add($Title)
+                if ($attempts.Count -eq 1) { throw 'Notification transport failed' }
+            }
+            $entry = [pscustomobject]@{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = $script:Config.Statuses.ClosedWithSchedule
+                ImageUrl     = 'https://example.com/schedule.png'
+            }
+            $parameters = @{
+                Configuration = $script:Config
+                CurrentState  = @($entry)
+                ApiKey        = 'dummy'
+                PoUserKey     = 'dummy'
+                PoApiKey      = 'dummy'
+            }
+
+            { Invoke-BridgeClosedNotification @parameters } | Should -Throw '*Notification transport failed*'
+            $attempts.Count | Should -Be 1
+            $attempts[0] | Should -Match 'θα κλείσει'
+            $entry.ScheduleState | Should -Be 'Future'
+            Should -Invoke Invoke-BridgeOCRGoogleCloud -Times 1 -Exactly
+        }
+
         It 'Γράφει warning όταν αποτυγχάνει η OCR' {
 
             Mock Invoke-BridgeOCRGoogleCloud { throw 'Fake OCR failure' }
