@@ -40,7 +40,7 @@
       "automergeStrategy": "squash"
     },
     {
-      "description": "Update .NET 10 patches and Alpine versions; preserve amd64",
+      "description": "Update .NET 10/11 patches and Alpine versions; preserve amd64",
       "matchDatasources": [
         "docker"
       ],
@@ -48,7 +48,7 @@
         "mcr.microsoft.com/dotnet/runtime"
       ],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-alpine(?<build>\\d+)\\.(?<revision>\\d+)-(?<compatibility>amd64)$",
-      "allowedVersions": "/^10\\.0\\.\\d+-alpine\\d+\\.\\d+-amd64$/"
+      "allowedVersions": "/^(10|11)\\.0\\.\\d+-alpine\\d+\\.\\d+-amd64$/"
     },
     {
       "description": "Update PowerShell 7.7 patches",
