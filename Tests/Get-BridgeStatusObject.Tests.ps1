@@ -78,6 +78,33 @@ Describe 'Get-BridgeStatusObject' {
             }
         }
 
+        It 'Invalidates only the failed image so OCR cannot reuse an earlier closure schedule' {
+            $parameters = @{
+                Configuration = $script:Config
+                Location      = 'isthmia'
+                Status        = $script:Config.Statuses.ClosedWithSchedule
+                Timestamp     = '2025-04-10T13:00:00Z'
+                ImageSrc      = 'stale-schedule.php'
+            }
+            Mock Write-BridgeLog { }
+            Mock Get-BridgeImageBuffer { return [byte[]]@(1, 2, 3) }
+            $previous = Get-BridgeStatusObject @parameters
+            $otherUrl = "$($script:Config.Urls.BaseImage)/other-schedule.php"
+            $script:BridgeImageBytesByUrl[$otherUrl] = [byte[]]@(9)
+
+            $openParameters = $parameters.Clone()
+            $openParameters.Status = $script:Config.Statuses.Open
+            $openParameters.ImageSrc = 'image-bridge-open-no-schedule.php?1'
+            $null = Get-BridgeStatusObject @openParameters
+
+            Mock Get-BridgeImageBuffer { throw 'Connection timeout' }
+            $current = Get-BridgeStatusObject @parameters
+            $current.ImageHash | Should -BeNullOrEmpty
+            { Get-BridgeCachedImageBytes -Url $current.ImageUrl } | Should -Throw '*Connection timeout*'
+            $script:BridgeImageBytesByUrl.ContainsKey($previous.ImageUrl) | Should -BeFalse
+            $script:BridgeImageBytesByUrl[$otherUrl][0] | Should -Be 9
+        }
+
         It 'Returns the known status without a hash and warns when the image download fails' {
             $config = New-BridgeConfiguration
             Mock Get-BridgeImageBuffer { throw "Connection timeout" }
