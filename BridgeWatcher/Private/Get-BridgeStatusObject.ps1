@@ -143,6 +143,7 @@ function Get-BridgeStatusObject {
             }
             $script:BridgeImageBytesByUrl[$ImageUrl] = [byte[]]$bytes
         } catch {
+            $script:BridgeImageBytesByUrl.Remove($ImageUrl)
             $writeBridgeLogSplat = @{
                 Stage   = 'Σφάλμα'
                 Message = "❌ Αποτυχία λήψης/hashing εικόνας για $ImageUrl`: $($_.Exception.Message)"
