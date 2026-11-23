@@ -1,19 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root=$PWD
+repo_root=$(git rev-parse --show-toplevel)
 snapshot=$(mktemp -d)
-trap 'rm -r -- "$snapshot"' EXIT
+trap 'rm -rf -- "$snapshot"' EXIT
 
-git diff --cached --name-only --diff-filter=ACMRT -z -- \
+git -C "$repo_root" diff --cached --name-only --diff-filter=ACMRT -z -- \
     ':(icase)*.ps1' ':(icase)*.psm1' ':(icase)*.psd1' > "$snapshot/paths"
 [[ -s "$snapshot/paths" ]] || exit 0
 
-# Read from the index so partially staged files are checked as committed.
-git cat-file blob :PSScriptAnalyzerSettings.psd1 > "$snapshot/PSScriptAnalyzerSettings.psd1"
+if ! command -v pwsh >/dev/null 2>&1; then
+    echo "PRE-COMMIT FAILED: pwsh was not found on PATH." >&2
+    exit 1
+fi
+
+# Read exclusively from the git index so partially staged files are checked as committed.
+git -C "$repo_root" cat-file blob :PSScriptAnalyzerSettings.psd1 > "$snapshot/PSScriptAnalyzerSettings.psd1"
 while IFS= read -r -d '' path; do
     mkdir -p -- "$snapshot/staged/$(dirname -- "$path")"
-    git cat-file blob ":$path" > "$snapshot/staged/$path"
+    git -C "$repo_root" cat-file blob ":$path" > "$snapshot/staged/$path"
 done < "$snapshot/paths"
 
 cd "$snapshot"
