@@ -222,21 +222,33 @@ jobs:
           JOB_START: ${{ steps.timing.outputs.job_start }}
           SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
           SETUP_BUDGET_S: ${{ env.SETUP_BUDGET_S }}
-          JOB_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          COLD_SETUP_BUDGET_S: '25'
+          WARM_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          COLD_BUDGET_S: '45'
+          CACHE_HIT: ${{ steps.cache_main.outputs.cache-hit || steps.cache_ro.outputs.cache-hit || 'false' }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           now=$(date +%s)
           elapsed=$((now - JOB_START))
-          echo "Static checks setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s)"
-          echo "Static checks execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
+          if [ "$CACHE_HIT" = "true" ]; then
+            effective_setup_budget="$SETUP_BUDGET_S"
+            effective_job_budget="$WARM_BUDGET_S"
+            budget_label="warm"
+          else
+            effective_setup_budget="$COLD_SETUP_BUDGET_S"
+            effective_job_budget="$COLD_BUDGET_S"
+            budget_label="cold-cache (warm budgets: setup=${SETUP_BUDGET_S}s, job=${WARM_BUDGET_S}s)"
+          fi
+          echo "Static checks setup: ${SETUP_S}s (budget: ${effective_setup_budget}s [${budget_label}], cache_hit=${CACHE_HIT})"
+          echo "Static checks execution: ${elapsed}s (budget: ${effective_job_budget}s [${budget_label}])"
           failed=0
-          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
-            echo "::error::Static checks setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
+          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$effective_setup_budget" ]; then
+            echo "::error::Static checks setup exceeded ${budget_label} budget: ${SETUP_S}s > ${effective_setup_budget}s"
             failed=1
           fi
-          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
-            echo "::error::Static checks job exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$effective_job_budget" ]; then
+            echo "::error::Static checks job exceeded ${budget_label} budget: ${elapsed}s > ${effective_job_budget}s"
             failed=1
           fi
           exit "$failed"
@@ -375,6 +387,7 @@ jobs:
           JOB_START: ${{ steps.timing.outputs.job_start }}
           SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
           SETUP_BUDGET_S: ${{ env.SETUP_BUDGET_S }}
+          COLD_SETUP_BUDGET_S: '25'
           WARM_BUDGET_S: ${{ env.JOB_BUDGET_S }}
           COLD_BUDGET_S: '45'
           CACHE_HIT: ${{ steps.cache_ro.outputs.cache-hit || 'false' }}
@@ -385,17 +398,19 @@ jobs:
           now=$(date +%s)
           elapsed=$((now - JOB_START))
           if [ "$CACHE_HIT" = "true" ]; then
+            effective_setup_budget="$SETUP_BUDGET_S"
             effective_budget="$WARM_BUDGET_S"
             budget_label="warm"
           else
+            effective_setup_budget="$COLD_SETUP_BUDGET_S"
             effective_budget="$COLD_BUDGET_S"
-            budget_label="cold-cache (warm budget: ${WARM_BUDGET_S}s)"
+            budget_label="cold-cache (warm budgets: setup=${SETUP_BUDGET_S}s, job=${WARM_BUDGET_S}s)"
           fi
-          echo "Unit shard ${SHARD_INDEX} setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s, cache_hit=${CACHE_HIT})"
+          echo "Unit shard ${SHARD_INDEX} setup: ${SETUP_S}s (budget: ${effective_setup_budget}s [${budget_label}], cache_hit=${CACHE_HIT})"
           echo "Unit shard ${SHARD_INDEX} execution: ${elapsed}s (budget: ${effective_budget}s [${budget_label}])"
           failed=0
-          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
-            echo "::error::Unit shard ${SHARD_INDEX} setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
+          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$effective_setup_budget" ]; then
+            echo "::error::Unit shard ${SHARD_INDEX} setup exceeded ${budget_label} budget: ${SETUP_S}s > ${effective_setup_budget}s"
             failed=1
           fi
           if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$effective_budget" ]; then
@@ -470,17 +485,26 @@ jobs:
           JOB_START: ${{ steps.timing.outputs.job_start }}
           SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
           SETUP_BUDGET_S: ${{ env.SETUP_BUDGET_S }}
+          COLD_SETUP_BUDGET_S: '25'
           JOB_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          CACHE_HIT: ${{ steps.cache_ro.outputs.cache-hit || 'false' }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           now=$(date +%s)
           elapsed=$((now - JOB_START))
-          echo "Integration tests setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s)"
+          if [ "$CACHE_HIT" = "true" ]; then
+            effective_setup_budget="$SETUP_BUDGET_S"
+            budget_label="warm"
+          else
+            effective_setup_budget="$COLD_SETUP_BUDGET_S"
+            budget_label="cold-cache (warm budget: ${SETUP_BUDGET_S}s)"
+          fi
+          echo "Integration tests setup: ${SETUP_S}s (budget: ${effective_setup_budget}s [${budget_label}], cache_hit=${CACHE_HIT})"
           echo "Integration tests execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
           failed=0
-          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
-            echo "::error::Integration tests setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
+          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$effective_setup_budget" ]; then
+            echo "::error::Integration tests setup exceeded ${budget_label} budget: ${SETUP_S}s > ${effective_setup_budget}s"
             failed=1
           fi
           if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
