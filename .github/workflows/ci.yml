@@ -354,10 +354,12 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $null = New-Item -Path '/tmp/bridgewatcher-timings' -ItemType Directory -Force
-          $timingsIn = '/tmp/bridgewatcher-timings/test-timings.json'
+          $cachedTimings = '/tmp/bridgewatcher-timings/test-timings.json'
+          $seedTimings = './Tests/test-timings.seed.json'
+          $timingsIn = if (Test-Path -LiteralPath $cachedTimings) { $cachedTimings } elseif (Test-Path -LiteralPath $seedTimings) { $seedTimings } else { '' }
           $timingsOut = '/tmp/bridgewatcher-timings/test-timings.json'
           $cores = [Environment]::ProcessorCount
-          Write-Output "Detected $cores CPU core(s); running $cores process-isolated shards with deterministic shuffle."
+          Write-Output "Detected $cores CPU core(s); running $cores process-isolated shards with deterministic shuffle (timings source: $timingsIn)."
           & ./scripts/Invoke-TestSuite.ps1 `
             -ShardCount $cores `
             -Workers $cores `
