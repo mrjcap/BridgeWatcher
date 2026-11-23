@@ -168,6 +168,23 @@ function Test-BridgeChangeIsActionable {
     return $true
 }
 
+<#
+    .SYNOPSIS
+    Checks whether a scheduled bridge closure has ended.
+
+    .DESCRIPTION
+    Confirms that the schedule image was replaced by the open placeholder and
+    that the saved schedule's end time has passed in the bridge's time zone.
+
+    .PARAMETER PreviousBridge
+    The saved bridge state that contains the closure schedule.
+
+    .PARAMETER CurrentBridge
+    The latest bridge state and image.
+
+    .PARAMETER Configuration
+    The configuration containing the bridge time zone IDs.
+#>
 function Test-BridgeScheduledOpening {
     param($PreviousBridge, $CurrentBridge, $Configuration)
 
@@ -311,7 +328,7 @@ function Invoke-BridgeStatusComparison {
                     if ($type -eq 'Opened') {
                         $saved = $previousStateArray | Where-Object GefyraName -EQ $change.GefyraName | Select-Object -First 1
                         if ($saved -and $saved.GefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and
-                            -not (Test-BridgeScheduledOpening $saved $changedBridgeState[0] $Configuration)) {
+                            -not (Test-BridgeScheduledOpening -PreviousBridge $saved -CurrentBridge $changedBridgeState[0] -Configuration $Configuration)) {
                             $DeferredOpenings[$change.GefyraName] = $saved
                             continue
                         }
