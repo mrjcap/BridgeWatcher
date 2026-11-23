@@ -358,11 +358,13 @@ jobs:
           $seedTimings = './Tests/test-timings.seed.json'
           $timingsIn = if (Test-Path -LiteralPath $cachedTimings) { $cachedTimings } elseif (Test-Path -LiteralPath $seedTimings) { $seedTimings } else { '' }
           $timingsOut = '/tmp/bridgewatcher-timings/test-timings.json'
-          $cores = [Environment]::ProcessorCount
-          Write-Output "Detected $cores CPU core(s); running $cores process-isolated shards with deterministic shuffle (timings source: $timingsIn)."
+          $logicalCores = [Environment]::ProcessorCount
+          # Match workers to physical cores (logical / 2 on SMT runners) to avoid .NET JIT/Tracer contention.
+          $workers = [Math]::Max(1, [int][Math]::Floor($logicalCores / 2))
+          Write-Output "Detected $logicalCores logical vCPU(s); running $workers process-isolated shard worker(s) with deterministic shuffle (timings source: $timingsIn)."
           & ./scripts/Invoke-TestSuite.ps1 `
-            -ShardCount $cores `
-            -Workers $cores `
+            -ShardCount $workers `
+            -Workers $workers `
             -RunAllShardsInParallel `
             -Shuffle `
             -TimingsPath $timingsIn `
@@ -433,21 +435,30 @@ jobs:
           JOB_START: ${{ steps.timing.outputs.job_start }}
           SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
           SETUP_BUDGET_S: ${{ env.SETUP_BUDGET_S }}
-          JOB_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          WARM_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          COLD_BUDGET_S: '45'
+          CACHE_HIT: ${{ steps.cache_main.outputs.cache-hit || steps.cache_ro.outputs.cache-hit || 'false' }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           now=$(date +%s)
           elapsed=$((now - JOB_START))
-          echo "Unit tests setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s)"
-          echo "Unit tests job execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
+          if [ "$CACHE_HIT" = "true" ]; then
+            effective_budget="$WARM_BUDGET_S"
+            budget_label="warm"
+          else
+            effective_budget="$COLD_BUDGET_S"
+            budget_label="cold-cache (warm budget: ${WARM_BUDGET_S}s)"
+          fi
+          echo "Unit tests setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s, cache_hit=${CACHE_HIT})"
+          echo "Unit tests job execution: ${elapsed}s (budget: ${effective_budget}s [${budget_label}])"
           failed=0
           if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
             echo "::error::Unit tests setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
             failed=1
           fi
-          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
-            echo "::error::Unit tests job exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$effective_budget" ]; then
+            echo "::error::Unit tests job exceeded ${budget_label} budget: ${elapsed}s > ${effective_budget}s"
             failed=1
           fi
           exit "$failed"
