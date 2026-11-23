@@ -5,6 +5,20 @@
         }
     }
 
+    It 'Has no findings under the CI PSScriptAnalyzer settings' {
+        $repoRoot = Split-Path -Path $PSScriptRoot -Parent
+        $settings = Join-Path -Path $repoRoot -ChildPath 'PSScriptAnalyzerSettings.psd1'
+        $lint = @(
+            Invoke-ScriptAnalyzer -Path (Join-Path -Path $repoRoot -ChildPath 'BridgeWatcher') -Recurse -Settings $settings -ErrorAction Stop
+            Invoke-ScriptAnalyzer -Path $PSScriptRoot -Recurse -Settings $settings -ErrorAction Stop
+            Invoke-ScriptAnalyzer -Path (Join-Path -Path $repoRoot -ChildPath 'run.ps1') -Settings $settings -ErrorAction Stop
+            Invoke-ScriptAnalyzer -Path (Join-Path -Path $repoRoot -ChildPath 'scripts') -Recurse -Settings $settings -Severity Error,Warning -ErrorAction Stop
+        )
+        if ($lint) {
+            throw ($lint | Format-Table -Property ScriptName, Line, Severity, RuleName, Message -Wrap | Out-String)
+        }
+    }
+
     It 'Should pass PSUseBOMForUnicodeEncodedFile checks' {
         $modulePath = Join-Path (Join-Path $PSScriptRoot '..') 'BridgeWatcher'
         $lint = @($modulePath, $PSScriptRoot) |

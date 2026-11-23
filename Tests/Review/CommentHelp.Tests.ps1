@@ -1,16 +1,16 @@
-﻿$script:PublicPath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher\Public")
-$script:Files = Get-ChildItem -Path $script:PublicPath -Filter *.ps1 | ForEach-Object { $_.Name }
-
-BeforeAll {
-    # Pester setup
+﻿$moduleRoot = Join-Path -Path $PSScriptRoot -ChildPath '../../BridgeWatcher'
+$publicPath = Join-Path -Path $moduleRoot -ChildPath 'Public'
+$privatePath = Join-Path -Path $moduleRoot -ChildPath 'Private'
+$publicFiles = Get-ChildItem -Path $publicPath -Recurse -Filter '*.ps1' -File | ForEach-Object {
+    @{ FileName = $_.Name; FullName = $_.FullName }
+}
+$privateFiles = Get-ChildItem -Path $privatePath -Recurse -Filter '*.ps1' -File | ForEach-Object {
+    @{ FileName = $_.Name; FullName = $_.FullName }
 }
 
 Describe "PowerShell Comment-Based Help Completeness Review" {
-    Context "Public Functions Comment-Based Help Location" {
-        It "Should have contiguous comment-based help located immediately before the function Name { keyword in <_>" -ForEach $script:Files {
-            $fileName = $_
-            $publicPath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher\Public")
-            $fullName = Join-Path $publicPath $fileName
+    Context "Public function help" {
+        It "Should have contiguous comment-based help located immediately before the function Name { keyword in <FileName>" -ForEach $publicFiles {
             $errors = $null
             $tokens = $null
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($fullName, [ref]$tokens, [ref]$errors)
@@ -102,10 +102,7 @@ Describe "PowerShell Comment-Based Help Completeness Review" {
             }
         }
 
-        It "Should have a matching .PARAMETER entry in the help block for every declared parameter in <_>" -ForEach $script:Files {
-            $fileName = $_
-            $publicPath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher\Public")
-            $fullName = Join-Path $publicPath $fileName
+        It "Should have a matching .PARAMETER entry in the help block for every declared parameter in <FileName>" -ForEach $publicFiles {
             $errors = $null
             $tokens = $null
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($fullName, [ref]$tokens, [ref]$errors)
@@ -191,6 +188,24 @@ Describe "PowerShell Comment-Based Help Completeness Review" {
                     $missingStr = $missingInHelp -join ', '
                     throw "Function '$($func.Name)' in file '$fileName' has declared parameters missing in the comment-based help block: $missingStr"
                 }
+            }
+        }
+    }
+
+    Context 'Private function help' {
+        It 'Should have parseable comment-based help for every function in <FileName>' -ForEach $privateFiles {
+            $tokens = $null
+            $errors = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile($fullName, [ref]$tokens, [ref]$errors)
+            $functions = $ast.FindAll({
+                param($node)
+                $node -is [System.Management.Automation.Language.FunctionDefinitionAst]
+            }, $true)
+
+            foreach ($function in $functions) {
+                # Existing private functions may place help at the start of the body.
+                $help = $function.GetHelpContent()
+                $help.Synopsis | Should -Not -BeNullOrEmpty -Because "$($function.Name) in $fileName needs a .SYNOPSIS"
             }
         }
     }

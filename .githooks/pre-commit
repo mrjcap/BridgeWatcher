@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root=$PWD
+snapshot=$(mktemp -d)
+trap 'rm -r -- "$snapshot"' EXIT
+
+git diff --cached --name-only --diff-filter=ACMRT -z -- \
+    ':(icase)*.ps1' ':(icase)*.psm1' ':(icase)*.psd1' > "$snapshot/paths"
+[[ -s "$snapshot/paths" ]] || exit 0
+
+# Read from the index so partially staged files are checked as committed.
+git cat-file blob :PSScriptAnalyzerSettings.psd1 > "$snapshot/PSScriptAnalyzerSettings.psd1"
+while IFS= read -r -d '' path; do
+    mkdir -p -- "$snapshot/staged/$(dirname -- "$path")"
+    git cat-file blob ":$path" > "$snapshot/staged/$path"
+done < "$snapshot/paths"
+
+cd "$snapshot"
+pwsh -NoProfile -NonInteractive -File "$repo_root/.githooks/Invoke-StagedScriptAnalyzer.ps1"
