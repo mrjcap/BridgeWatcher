@@ -18,6 +18,10 @@ on:
       RELEASE_TOKEN:
         required: false
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.event_name, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -49,32 +53,48 @@ jobs:
         with:
           tag: 'v${{ env.POWERSHELL_VERSION }}'
 
-      - name: Cache PowerShell modules
+      - name: Cache PowerShell modules (trusted runs)
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.local/share/powershell/Modules
-          key: ${{ runner.os }}-docs-v${{ env.POWERSHELL_VERSION }}-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
-          restore-keys: |
-            ${{ runner.os }}-docs-v${{ env.POWERSHELL_VERSION }}-pwshmodules-
+          key: ${{ runner.os }}-${{ runner.arch }}-docs-v${{ env.POWERSHELL_VERSION }}-platyps-0.14.2-pssa-1.23.0-v1
+
+      - name: Restore PowerShell modules (read-only PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-${{ runner.arch }}-docs-v${{ env.POWERSHELL_VERSION }}-platyps-0.14.2-pssa-1.23.0-v1
 
       - name: Install PowerShell modules
         shell: pwsh
         run: |
-          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-
-          Write-Verbose "Installing required modules..."
+          $ErrorActionPreference = 'Stop'
           $modules = @(
             @{ Name = 'platyPS'; RequiredVersion = '0.14.2' }
             @{ Name = 'PSScriptAnalyzer'; RequiredVersion = '1.23.0' }
           )
 
+          $missing = @()
           foreach ($module in $modules) {
-            Write-Verbose "Installing $($module.Name) v$($module.RequiredVersion)..."
-            Install-Module -Name $module.Name -RequiredVersion $module.RequiredVersion -Force -Scope CurrentUser -AllowClobber
+            $found = Get-Module -ListAvailable -Name $module.Name | Where-Object { $_.Version -eq [version]$module.RequiredVersion }
+            if (-not $found) {
+              $missing += $module
+            }
           }
 
-          Write-Verbose " All modules installed successfully"
+          if ($missing.Count -gt 0) {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            foreach ($module in $missing) {
+              Write-Output "Installing $($module.Name) v$($module.RequiredVersion)..."
+              Install-Module -Name $module.Name -RequiredVersion $module.RequiredVersion -Force -Scope CurrentUser -AllowClobber -ErrorAction Stop
+            }
+          } else {
+            Write-Output 'Verified cached documentation PowerShell modules.'
+          }
 
       - name: Run PSScriptAnalyzer for documentation
         shell: pwsh
@@ -201,14 +221,10 @@ jobs:
         with:
           node-version: '26'
 
-      - name: Install markdownlint-cli2 with retries
+      - name: Install markdownlint-cli2
         run: |
-          echo "Installing markdownlint-cli2 with retries..."
-          for attempt in 1 2 3; do
-            npm install --no-save --ignore-scripts markdownlint-cli2@0.24.0 && break
-            echo "npm install failed, retrying (attempt $attempt)..."
-            sleep 5
-          done
+          set -euo pipefail
+          npm install --no-save --ignore-scripts markdownlint-cli2@0.24.0
       # Show npm debug logs on failure
       - name: Show npm debug log
         if: failure()

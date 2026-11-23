@@ -175,7 +175,7 @@ Describe 'Get-BridgeStatus Integration' {
 
 Describe 'Get-BridgeStatus Configuration Fallbacks' {
     BeforeAll {
-
+        . "$PSScriptRoot/TestHelper.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"
