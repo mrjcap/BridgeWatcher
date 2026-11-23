@@ -95,14 +95,14 @@ jobs:
 
           $toInstall = @()
           foreach ($m in $required) {
-            $userPath = Join-Path -Path $userModulesDir -ChildPath (Join-Path -Path $m.Name -ChildPath $m.RequiredVersion)
-            $available = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
+            $manifestFile = Join-Path -Path $userModulesDir -ChildPath (Join-Path -Path $m.Name -ChildPath (Join-Path -Path $m.RequiredVersion -ChildPath "$($m.Name).psd1"))
+            if (Test-Path -LiteralPath $manifestFile) {
+              continue
+            }
             if ($env:IS_MAIN_PUSH -eq 'true') {
               # Ensure both pinned modules live in ~/.local/share/powershell/Modules for main cache seeding.
-              if (-not (Test-Path -LiteralPath $userPath)) {
-                $toInstall += $m
-              }
-            } elseif (-not $available) {
+              $toInstall += $m
+            } elseif (-not (Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion })) {
               $toInstall += $m
             }
           }
@@ -116,11 +116,16 @@ jobs:
           }
 
           foreach ($m in $required) {
-            $verified = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
-            if (-not $verified) {
-              throw "Required PowerShell module $($m.Name) $($m.RequiredVersion) is missing after restore/install."
+            $manifestFile = Join-Path -Path $userModulesDir -ChildPath (Join-Path -Path $m.Name -ChildPath (Join-Path -Path $m.RequiredVersion -ChildPath "$($m.Name).psd1"))
+            if (Test-Path -LiteralPath $manifestFile) {
+              Write-Output "Verified $($m.Name) $($m.RequiredVersion) at $manifestFile"
+            } else {
+              $verified = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
+              if (-not $verified) {
+                throw "Required PowerShell module $($m.Name) $($m.RequiredVersion) is missing after restore/install."
+              }
+              Write-Output "Verified $($m.Name) $($m.RequiredVersion) at $($verified[0].ModuleBase)"
             }
-            Write-Output "Verified $($m.Name) $($m.RequiredVersion) at $($verified[0].ModuleBase)"
           }
 
       - name: Record setup elapsed time
@@ -254,14 +259,14 @@ jobs:
           exit "$failed"
 
   unit-tests:
-    name: Unit Tests (Shard ${{ matrix.shard }}/3)
+    name: Unit Tests (Shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-26.04
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2]
+        shard: [0, 1, 2, 3]
     steps:
       - name: Record job start time
         id: timing
@@ -310,6 +315,7 @@ jobs:
           $restoreSeconds = [long]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - [long]$env:CACHE_START)
           Write-Output "Module cache hit=$($env:CACHE_HIT) (restore=${restoreSeconds}s)"
 
+          $userModulesDir = Join-Path -Path $HOME -ChildPath '.local/share/powershell/Modules'
           $required = @(
             @{ Name = 'Pester'; RequiredVersion = $env:PESTER_VERSION }
             @{ Name = 'PSScriptAnalyzer'; RequiredVersion = $env:PSSA_VERSION }
@@ -317,8 +323,11 @@ jobs:
 
           $toInstall = @()
           foreach ($m in $required) {
-            $available = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
-            if (-not $available) {
+            $manifestFile = Join-Path -Path $userModulesDir -ChildPath (Join-Path -Path $m.Name -ChildPath (Join-Path -Path $m.RequiredVersion -ChildPath "$($m.Name).psd1"))
+            if (Test-Path -LiteralPath $manifestFile) {
+              continue
+            }
+            if (-not (Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion })) {
               $toInstall += $m
             }
           }
@@ -332,9 +341,12 @@ jobs:
           }
 
           foreach ($m in $required) {
-            $verified = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
-            if (-not $verified) {
-              throw "Required PowerShell module $($m.Name) $($m.RequiredVersion) is missing after restore/install."
+            $manifestFile = Join-Path -Path $userModulesDir -ChildPath (Join-Path -Path $m.Name -ChildPath (Join-Path -Path $m.RequiredVersion -ChildPath "$($m.Name).psd1"))
+            if (-not (Test-Path -LiteralPath $manifestFile)) {
+              $verified = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
+              if (-not $verified) {
+                throw "Required PowerShell module $($m.Name) $($m.RequiredVersion) is missing after restore/install."
+              }
             }
           }
 
@@ -352,7 +364,7 @@ jobs:
         shell: pwsh
         env:
           SHARD_INDEX: ${{ matrix.shard }}
-          SHARD_COUNT: '3'
+          SHARD_COUNT: '4'
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
@@ -453,10 +465,13 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $found = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -eq [version]$env:PESTER_VERSION }
-          if (-not $found) {
-            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-            Install-Module -Name Pester -RequiredVersion $env:PESTER_VERSION -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
+          $manifestFile = Join-Path -Path $HOME -ChildPath ".local/share/powershell/Modules/Pester/$($env:PESTER_VERSION)/Pester.psd1"
+          if (-not (Test-Path -LiteralPath $manifestFile)) {
+            $found = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -eq [version]$env:PESTER_VERSION }
+            if (-not $found) {
+              Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+              Install-Module -Name Pester -RequiredVersion $env:PESTER_VERSION -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
+            }
           }
 
       - name: Record setup elapsed time
@@ -571,7 +586,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           & ./scripts/Invoke-TestSuite.ps1 `
             -MergeShardArtifactsDirectory './shard-artifacts' `
-            -ShardCount 3 `
+            -ShardCount 4 `
             -CoverageOutputPath './coverage.xml' `
             -TestResultOutputPath './testResults.xml' `
             -RecordTimingsPath '/tmp/bridgewatcher-timings/test-timings.json' `
