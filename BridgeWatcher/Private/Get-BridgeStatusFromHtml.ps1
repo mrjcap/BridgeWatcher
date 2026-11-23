@@ -40,7 +40,11 @@
                 BaseUrl       = $BaseUrl
                 Configuration = $Configuration
             }
-            return (Get-BridgeStatusObject @newBridgeStatusObjectSplat)
+            $entry = Get-BridgeStatusObject @newBridgeStatusObjectSplat
+            if ($status -eq $Configuration.Statuses.Open -and ($BridgeImages.src -match '(?:^|/)image-bridge-open-with-schedule[^/?#]*\.php(?:[?#]|$)')) {
+                $entry | Add-Member -NotePropertyName HasScheduleImage -NotePropertyValue $true
+            }
+            return $entry
         }
     }
     return $null
