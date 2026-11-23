@@ -72,9 +72,11 @@ jobs:
 
       - name: Record setup elapsed time
         id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
         run: |
           now=$(date +%s)
-          setup_s=$((now - ${{ steps.timing.outputs.job_start }}))
+          setup_s=$((now - JOB_START))
           echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
           echo "Filebeat setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s)"
 
@@ -182,11 +184,14 @@ jobs:
 
       - name: Record setup elapsed time
         id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          BUILDKIT_SEEDED: ${{ steps.buildkit_cache.outputs.cache-hit || 'false' }}
         run: |
           now=$(date +%s)
-          setup_s=$((now - ${{ steps.timing.outputs.job_start }}))
+          setup_s=$((now - JOB_START))
           echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
-          echo "Docker setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s, buildkit_seeded=${{ steps.buildkit_cache.outputs.cache-hit || 'false' }})"
+          echo "Docker setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s, buildkit_seeded=${BUILDKIT_SEEDED})"
 
       - name: Build Docker image
         id: build
@@ -241,8 +246,9 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ inputs.version || 'pr-test' }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: 'json'
+          output: 'trivy-results.json'
+          list-all-pkgs: 'true'
           exit-code: '1'
           severity: 'HIGH,CRITICAL'
           version: 'v${{ env.TRIVY_VERSION }}'
@@ -252,10 +258,25 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}
           VERSION: ${{ inputs.version || 'pr-test' }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
           DOCKER_CONTENT_TRUST: 0
         run: |
           set -euo pipefail
-          echo "Testing Docker image functionality and generating SBOM in parallel..."
+          echo "Converting Trivy JSON report to SARIF/CycloneDX and testing Docker container..."
+
+          # 1. Convert the single Trivy JSON scan report to SARIF and CycloneDX SBOM offline (no image rescan or Docker daemon lock).
+          CONVERT_RC=0
+          if [ -s trivy-results.json ]; then
+            (
+              trivy convert --format sarif --output trivy-results.sarif trivy-results.json
+              trivy convert --format cyclonedx --output sbom.json trivy-results.json
+            ) > /tmp/trivy-convert.log 2>&1 &
+            CONVERT_PID=$!
+          else
+            echo "trivy-results.json missing or empty; cannot generate SARIF or CycloneDX SBOM" > /tmp/trivy-convert.log
+            CONVERT_PID=""
+            CONVERT_RC=1
+          fi
 
           # Create test secrets directory with lowercase names matching docker-compose.yml
           mkdir -p test-secrets test-logs
@@ -266,14 +287,7 @@ jobs:
           echo "test-po-user-key" > test-secrets/pushover_user
 
           # Get the built image tag
-          IMAGE_TAG="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}:$VERSION"
-
-          # 1. Generate CycloneDX SBOM in background using the Trivy CLI already installed by trivy-action.
-          echo "Starting CycloneDX SBOM generation..."
-          (
-            trivy image --format cyclonedx --output sbom.json "$IMAGE_TAG"
-          ) > /tmp/sbom-gen.log 2>&1 &
-          SBOM_PID=$!
+          IMAGE_TAG="$DOCKERHUB_USERNAME/$IMAGE_NAME:$VERSION"
 
           # 2. Test container startup on a read-only filesystem matching docker-compose.yml.
           CONTAINER_RC=0
@@ -292,6 +306,7 @@ jobs:
           if [ "$CONTAINER_RC" -eq 0 ]; then
             echo "Container started: $CONTAINER_ID"
             MODULE_READY=0
+            MODULE_OUT=""
             for _ in $(seq 1 40); do
               if [ -z "$(docker ps -q -f id="$CONTAINER_ID")" ]; then
                 echo "Container exited unexpectedly. Dumping logs and status:"
@@ -300,7 +315,7 @@ jobs:
                 CONTAINER_RC=1
                 break
               fi
-              if docker exec "$CONTAINER_ID" pwsh -NoLogo -NoProfile -Command "Import-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -Force; if (-not (Get-Module BridgeWatcher)) { exit 1 }" >/dev/null 2>&1; then
+              if MODULE_OUT=$(docker exec "$CONTAINER_ID" pwsh -NoLogo -NoProfile -Command "Import-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -Force; if (-not (Get-Module BridgeWatcher)) { exit 1 }; Get-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -ListAvailable" 2>&1); then
                 MODULE_READY=1
                 break
               fi
@@ -319,7 +334,7 @@ jobs:
                 docker logs "$CONTAINER_ID" 2>&1 || true
                 CONTAINER_RC=1
               else
-                docker exec "$CONTAINER_ID" pwsh -NoLogo -NoProfile -Command "Get-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -ListAvailable"
+                echo "$MODULE_OUT"
                 HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
                 echo "Container health status: $HEALTH_STATUS"
               fi
@@ -328,24 +343,25 @@ jobs:
             echo "Failed to start container"
           fi
 
-          SBOM_RC=0
-          wait "$SBOM_PID" || SBOM_RC=$?
-          cat /tmp/sbom-gen.log
+          if [ -n "$CONVERT_PID" ]; then
+            wait "$CONVERT_PID" || CONVERT_RC=$?
+          fi
+          cat /tmp/trivy-convert.log
 
           FAILED=0
           if [ "$CONTAINER_RC" -ne 0 ]; then
             echo "::error::Docker container functionality test failed (exit $CONTAINER_RC)"
             FAILED=1
           fi
-          if [ "$SBOM_RC" -ne 0 ] || [ ! -s sbom.json ]; then
-            echo "::error::CycloneDX SBOM generation failed (exit $SBOM_RC)"
+          if [ "$CONVERT_RC" -ne 0 ] || [ ! -s trivy-results.sarif ] || [ ! -s sbom.json ]; then
+            echo "::error::Trivy report conversion (SARIF/CycloneDX SBOM) failed (exit $CONVERT_RC)"
             FAILED=1
           fi
           if [ "$FAILED" -ne 0 ]; then
             exit 1
           fi
 
-          echo "Container functionality and SBOM generation passed"
+          echo "Container functionality, SARIF conversion, and SBOM generation passed"
 
       - name: Check Trivy SARIF exists
         id: trivy_sarif_check
