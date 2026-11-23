@@ -168,6 +168,48 @@ function Test-BridgeChangeIsActionable {
     return $true
 }
 
+function Test-BridgeScheduledOpening {
+    param($PreviousBridge, $CurrentBridge, $Configuration)
+
+    # Ignore cache-busting queries when comparing the saved and current images.
+    $previousPath = (Get-BridgeOptionalProperty -InputObject $PreviousBridge -PropertyName 'ImageUrl') -replace '[?#].*$', ''
+    $currentPath = (Get-BridgeOptionalProperty -InputObject $CurrentBridge -PropertyName 'ImageUrl') -replace '[?#].*$', ''
+    if (-not $previousPath -or $currentPath -eq $previousPath -or
+        $currentPath -notmatch '(?:^|/)image-bridge-open-no-schedule\.php$' -or
+        (Get-BridgeOptionalProperty -InputObject $CurrentBridge -PropertyName 'HasScheduleImage')) {
+        return $false
+    }
+
+    $savedTo = Get-BridgeOptionalProperty -InputObject $PreviousBridge -PropertyName 'To'
+    $end = [datetime]::MinValue
+    if ($savedTo -isnot [string] -or -not [datetime]::TryParseExact($savedTo, 'dd/MM/yyyy HH:mm',
+            [cultureinfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$end)) {
+        return $false
+    }
+    $timezoneIds = $Configuration.Defaults.TimezoneIds
+    if (-not $timezoneIds) { $timezoneIds = @('GTB Standard Time', 'Europe/Athens') }
+    foreach ($id in $timezoneIds) {
+        try {
+            $zone = [TimeZoneInfo]::FindSystemTimeZoneById($id)
+        } catch {
+            Write-Verbose "Cannot resolve configured time zone '$id': $_"
+            continue
+        }
+        if ($zone.IsInvalidTime($end)) {
+            return $false
+        }
+        $endUtc = if ($zone.IsAmbiguousTime($end)) {
+            # The smaller UTC offset gives the later occurrence of the wall time.
+            $offset = $zone.GetAmbiguousTimeOffsets($end) | Sort-Object | Select-Object -First 1
+            [datetimeoffset]::new($end, $offset).UtcDateTime
+        } else {
+            [TimeZoneInfo]::ConvertTimeToUtc($end, $zone)
+        }
+        return ($endUtc -lt (Get-Date).ToUniversalTime())
+    }
+    return $false
+}
+
 <#
     .SYNOPSIS
     Συγκρίνει τις λίστες καταστάσεων γεφυρών και επιστρέφει γεγονότα διαφορών.
@@ -186,6 +228,9 @@ function Test-BridgeChangeIsActionable {
     .PARAMETER Configuration
     Αντικείμενο διαμόρφωσης με ρυθμίσεις, statuses και URLs.
 
+    .PARAMETER DeferredOpenings
+    Optional table populated with previous records for deferred openings, keyed by bridge name.
+
     .OUTPUTS
     [PSCustomObject[]]
 
@@ -193,7 +238,7 @@ function Test-BridgeChangeIsActionable {
     Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $config
 
     .NOTES
-    Λειτουργεί ως pure transformation pipeline χωρίς εξωτερικές παρενέργειες.
+    Reads the clock for scheduled openings and does not write a snapshot or send notifications.
     #>
 function Invoke-BridgeStatusComparison {
     [CmdletBinding()]
@@ -210,7 +255,11 @@ function Invoke-BridgeStatusComparison {
 
         [Parameter(Mandatory)]
         [ValidateNotNull()]
-        [PSCustomObject]$Configuration
+        [PSCustomObject]$Configuration,
+
+        [Parameter()]
+        [ValidateNotNull()]
+        [hashtable]$DeferredOpenings = @{}
     )
     try {
         $previousStateArray = @($PreviousState | Where-Object { $null -ne $_ })
@@ -259,6 +308,14 @@ function Invoke-BridgeStatusComparison {
                 }
                 $changedBridgeState = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
                 if ($changedBridgeState.Count -gt 0) {
+                    if ($type -eq 'Opened') {
+                        $saved = $previousStateArray | Where-Object GefyraName -EQ $change.GefyraName | Select-Object -First 1
+                        if ($saved -and $saved.GefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and
+                            -not (Test-BridgeScheduledOpening $saved $changedBridgeState[0] $Configuration)) {
+                            $DeferredOpenings[$change.GefyraName] = $saved
+                            continue
+                        }
+                    }
                     $diffEvents += [PSCustomObject]@{
                         BridgeName = $change.GefyraName
                         Status     = $change.GefyraStatus
