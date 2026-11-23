@@ -27,7 +27,7 @@ on:
         required: false
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.event_name, github.run_id) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -37,6 +37,8 @@ env:
   REGISTRY: docker.io
   IMAGE_NAME: bridgewatcher
   DOCKER_CONTENT_TRUST: 0
+  DOCKER_BUILD_SUMMARY: 'false'
+  DOCKER_BUILD_RECORD_UPLOAD: 'false'
   # renovate: datasource=github-releases depName=aquasecurity/trivy
   TRIVY_VERSION: '0.76.2'
   DOCKER_SETUP_BUDGET_S: '15'
@@ -121,6 +123,8 @@ jobs:
           platforms: linux/amd64
           load: true
           push: false
+          provenance: false
+          sbom: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -147,14 +151,25 @@ jobs:
         run: |
           docker load --input /tmp/bridgewatcher.tar
 
-      - name: Test Docker image
+      - name: Scan Docker image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ inputs.version || 'pr-test' }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+          version: 'v${{ env.TRIVY_VERSION }}'
+
+      - name: Test Docker image and generate SBOM
+        if: always() && (steps.build.outcome == 'success' || steps.build_release.outcome == 'success')
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}
           VERSION: ${{ inputs.version || 'pr-test' }}
           DOCKER_CONTENT_TRUST: 0
         run: |
           set -euo pipefail
-          echo "Testing Docker image functionality..."
+          echo "Testing Docker image functionality, validating Filebeat config, and generating SBOM in parallel..."
 
           # Create test secrets directory with lowercase names matching docker-compose.yml
           mkdir -p test-secrets test-logs
@@ -164,20 +179,28 @@ jobs:
           echo "test-po-api-key" > test-secrets/pushover_token
           echo "test-po-user-key" > test-secrets/pushover_user
 
-          # Validate Filebeat configuration in parallel with container startup.
+          # Get the built image tag
+          IMAGE_TAG="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}:$VERSION"
+
+          # 1. Validate Filebeat configuration in background.
           FILEBEAT_IMAGE=$(grep -E 'image:\s*docker\.elastic\.co/beats/filebeat:' docker-compose.yml | awk '{print $2}')
-          echo "Validating Filebeat configuration with $FILEBEAT_IMAGE..."
+          echo "Starting Filebeat config validation ($FILEBEAT_IMAGE)..."
           (
             docker run --rm --entrypoint filebeat \
               -v "$(pwd)/Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
               "$FILEBEAT_IMAGE" test config -c /usr/share/filebeat/filebeat.yml --strict.perms=false
-          ) &
+          ) > /tmp/filebeat-test.log 2>&1 &
           FILEBEAT_PID=$!
 
-          # Get the built image tag
-          IMAGE_TAG="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}:$VERSION"
+          # 2. Generate CycloneDX SBOM in background using the Trivy CLI already installed by trivy-action.
+          echo "Starting CycloneDX SBOM generation..."
+          (
+            trivy image --format cyclonedx --output sbom.json "$IMAGE_TAG"
+          ) > /tmp/sbom-gen.log 2>&1 &
+          SBOM_PID=$!
 
-          # Test container startup on a read-only filesystem matching docker-compose.yml
+          # 3. Test container startup on a read-only filesystem matching docker-compose.yml.
+          CONTAINER_RC=0
           echo "Starting container for testing..."
           CONTAINER_ID=$(docker run -d \
             --name bridgewatcher-test \
@@ -188,59 +211,74 @@ jobs:
             --health-retries=3 \
             -v "$(pwd)/test-secrets:/run/secrets:ro" \
             -v "$(pwd)/test-logs:/app/logs" \
-            "$IMAGE_TAG") || {
-            echo "Failed to start container"
-            exit 1
-          }
-          echo "Container started: $CONTAINER_ID"
+            "$IMAGE_TAG") || CONTAINER_RC=$?
 
-          # Poll readiness instead of sleeping blindly for 10 seconds.
-          MODULE_READY=0
-          for _ in $(seq 1 40); do
-            if [ -z "$(docker ps -q -f id="$CONTAINER_ID")" ]; then
-              echo "Container not running. Dumping logs and status:"
+          if [ "$CONTAINER_RC" -eq 0 ]; then
+            echo "Container started: $CONTAINER_ID"
+            MODULE_READY=0
+            for _ in $(seq 1 40); do
+              if [ -z "$(docker ps -q -f id="$CONTAINER_ID")" ]; then
+                echo "Container exited unexpectedly. Dumping logs and status:"
+                docker logs "$CONTAINER_ID" 2>&1 || true
+                docker ps -a --filter "id=$CONTAINER_ID" --format '{{.ID}} {{.Status}} {{.Names}}' || true
+                CONTAINER_RC=1
+                break
+              fi
+              if docker exec "$CONTAINER_ID" pwsh -NoLogo -NoProfile -Command "Import-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -Force; if (-not (Get-Module BridgeWatcher)) { exit 1 }" >/dev/null 2>&1; then
+                MODULE_READY=1
+                break
+              fi
+              sleep 0.25
+            done
+
+            if [ "$CONTAINER_RC" -eq 0 ] && [ "$MODULE_READY" -ne 1 ]; then
+              echo "BridgeWatcher module did not import within readiness window. Container logs:"
               docker logs "$CONTAINER_ID" 2>&1 || true
-              docker ps -a --filter "id=$CONTAINER_ID" --format '{{.ID}} {{.Status}} {{.Names}}' || true
-              exit 1
+              CONTAINER_RC=1
             fi
-            if docker exec "$CONTAINER_ID" pwsh -NoLogo -NoProfile -Command "if (-not (Get-Module BridgeWatcher -ListAvailable)) { exit 1 }" >/dev/null 2>&1; then
-              MODULE_READY=1
-              break
-            fi
-            sleep 0.25
-          done
 
-          if [ "$MODULE_READY" -ne 1 ]; then
-            echo "BridgeWatcher module did not become available within readiness window. Container logs:"
-            docker logs "$CONTAINER_ID" 2>&1 || true
+            if [ "$CONTAINER_RC" -eq 0 ]; then
+              if [ -z "$(docker ps -q -f id="$CONTAINER_ID")" ]; then
+                echo "Container exited unexpectedly after readiness check. Dumping logs:"
+                docker logs "$CONTAINER_ID" 2>&1 || true
+                CONTAINER_RC=1
+              else
+                docker exec "$CONTAINER_ID" pwsh -NoLogo -NoProfile -Command "Get-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -ListAvailable"
+                HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
+                echo "Container health status: $HEALTH_STATUS"
+              fi
+            fi
+          else
+            echo "Failed to start container"
+          fi
+
+          # Collect all parallel check outcomes before failing so every defect is reported.
+          FILEBEAT_RC=0
+          wait "$FILEBEAT_PID" || FILEBEAT_RC=$?
+          cat /tmp/filebeat-test.log
+
+          SBOM_RC=0
+          wait "$SBOM_PID" || SBOM_RC=$?
+          cat /tmp/sbom-gen.log
+
+          FAILED=0
+          if [ "$CONTAINER_RC" -ne 0 ]; then
+            echo "::error::Docker container functionality test failed (exit $CONTAINER_RC)"
+            FAILED=1
+          fi
+          if [ "$FILEBEAT_RC" -ne 0 ]; then
+            echo "::error::Filebeat configuration validation failed (exit $FILEBEAT_RC)"
+            FAILED=1
+          fi
+          if [ "$SBOM_RC" -ne 0 ] || [ ! -s sbom.json ]; then
+            echo "::error::CycloneDX SBOM generation failed (exit $SBOM_RC)"
+            FAILED=1
+          fi
+          if [ "$FAILED" -ne 0 ]; then
             exit 1
           fi
 
-          # Confirm container remains running and print module info
-          if [ -z "$(docker ps -q -f id="$CONTAINER_ID")" ]; then
-            echo "Container exited unexpectedly. Dumping logs:"
-            docker logs "$CONTAINER_ID" 2>&1 || true
-            exit 1
-          fi
-          docker exec "$CONTAINER_ID" pwsh -NoLogo -NoProfile -Command "Get-Module BridgeWatcher -ListAvailable"
-
-          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
-          echo "Container health status: $HEALTH_STATUS"
-
-          # Wait for Filebeat validation and propagate any non-zero exit code.
-          wait "$FILEBEAT_PID"
-
-          echo "Basic functionality test passed"
-
-      - name: Scan Docker image for vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ inputs.version || 'pr-test' }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          exit-code: '1'
-          severity: 'HIGH,CRITICAL'
-          version: 'v${{ env.TRIVY_VERSION }}'
+          echo "Container functionality, Filebeat validation, and SBOM generation passed"
 
       - name: Check Trivy SARIF exists
         id: trivy_sarif_check
@@ -259,16 +297,8 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
-      - name: Generate SBOM for Docker image
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}
-          VERSION: ${{ inputs.version || 'pr-test' }}
-        run: |
-          set -euo pipefail
-          IMAGE_TAG="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}:$VERSION"
-          trivy image --format cyclonedx --output sbom.json "$IMAGE_TAG"
-
       - name: Upload SBOM artifact
+        if: ${{ steps.build.outcome == 'success' || steps.build_release.outcome == 'success' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom
