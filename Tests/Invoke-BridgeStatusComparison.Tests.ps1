@@ -117,9 +117,10 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $timestamp = Get-Date
 
-        $previous = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
+        Mock Get-Date { [datetime]::new(2030, 1, 15, 10, 1, 0, [DateTimeKind]::Utc) }
+        $previous = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; To = '15/01/2030 12:00'; ImageUrl = 'image-bridge-open-with-schedule-isthmia.php?1' }
 
-        $current = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = $timestamp; imageUrl = 'img3.jpg' }
+        $current = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = $timestamp; ImageUrl = 'image-bridge-open-no-schedule.php?2' }
 
         $params = @{
 
@@ -415,11 +416,12 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
+        Mock Get-Date { [datetime]::new(2030, 1, 15, 10, 1, 0, [DateTimeKind]::Utc) }
         $previousState = @(
 
             @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
-            @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
+            @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; To = '15/01/2030 12:00'; ImageUrl = 'image-bridge-open-with-schedule-posidonia.php?1' }
 
         )
 
@@ -427,7 +429,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
             @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); imageUrl = 'img1.jpg' }
 
-            @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); imageUrl = 'img2.jpg' }
+            @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή'; timestamp = (Get-Date); ImageUrl = 'image-bridge-open-no-schedule.php?2' }
 
         )
 
@@ -768,9 +770,10 @@ Describe 'Invoke-BridgeStatusComparison' {
 
         It 'πρέπει να στείλει ειδοποίηση τύπου Opened' {
 
-            $prev = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
+            Mock Get-Date { [datetime]::new(2030, 1, 15, 10, 1, 0, [DateTimeKind]::Utc) }
+            $prev = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; To = '15/01/2030 12:00'; ImageUrl = 'image-bridge-open-with-schedule-posidonia.php?1'; ScheduleState = 'Active' }
 
-            $curr = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' }
+            $curr = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή'; ImageUrl = 'image-bridge-open-no-schedule.php?2' }
 
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
 
