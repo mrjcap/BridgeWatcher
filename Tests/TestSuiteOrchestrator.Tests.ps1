@@ -156,5 +156,64 @@ Describe 'Invoke-TestSuite Orchestrator' {
             $doc.DocumentElement.GetAttribute('disabled') | Should -Be '1'
             $doc.DocumentElement.GetAttribute('time') | Should -Be '2.000'
         }
+
+        It 'Merges matrix shard artifact bundles verifying complete inventory, 100% coverage, JUnit, and timings' {
+            $fakeRoot = Join-Path -Path $TestDrive -ChildPath 'matrix-proj'
+            $srcFile = Join-Path -Path $fakeRoot -ChildPath 'BridgeWatcher/Public/Test-Demo.ps1'
+            $t1 = Join-Path -Path $fakeRoot -ChildPath 'Tests/One.Tests.ps1'
+            $t2 = Join-Path -Path $fakeRoot -ChildPath 'Tests/Two.Tests.ps1'
+            $artifactsRoot = Join-Path -Path $TestDrive -ChildPath 'matrix-artifacts'
+            $src0 = Join-Path -Path $TestDrive -ChildPath 'raw-0'
+            $src1 = Join-Path -Path $TestDrive -ChildPath 'raw-1'
+            $null = New-Item -Path $src0, $src1 -ItemType Directory -Force
+
+            @{ Result = 'Passed'; PassedCount = 2; FailedCount = 0; SkippedCount = 0; NotRunCount = 0; TotalCount = 2; DurationMs = 1200; FilesExecuted = 1 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $src0 'summary.json') -Encoding utf8
+            @{ Result = 'Passed'; PassedCount = 3; FailedCount = 0; SkippedCount = 0; NotRunCount = 0; TotalCount = 3; DurationMs = 1500; FilesExecuted = 1 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $src1 'summary.json') -Encoding utf8
+            '<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="S0" tests="2" errors="0" failures="0" disabled="0" time="1.200"><testcase name="a" /></testsuite></testsuites>' | Set-Content -LiteralPath (Join-Path $src0 'junit.xml') -Encoding utf8
+            '<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="S1" tests="3" errors="0" failures="0" disabled="0" time="1.500"><testcase name="b" /></testsuite></testsuites>' | Set-Content -LiteralPath (Join-Path $src1 'junit.xml') -Encoding utf8
+            '{"Tests/One.Tests.ps1": 1.2}' | Set-Content -LiteralPath (Join-Path $src0 'timings.json') -Encoding utf8
+            '{"Tests/Two.Tests.ps1": 1.5}' | Set-Content -LiteralPath (Join-Path $src1 'timings.json') -Encoding utf8
+            @{ CommandsAnalyzed = 2; Commands = @(
+                @{ File = $srcFile; StartLine = 1; EndLine = 1; StartColumn = 1; EndColumn = 5; Function = 'Test-Demo'; Command = 'c1'; HitCount = 1 },
+                @{ File = $srcFile; StartLine = 2; EndLine = 2; StartColumn = 1; EndColumn = 5; Function = 'Test-Demo'; Command = 'c2'; HitCount = 0 }
+            ) } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $src0 'coverage-commands.json') -Encoding utf8
+            @{ CommandsAnalyzed = 2; Commands = @(
+                @{ File = $srcFile; StartLine = 1; EndLine = 1; StartColumn = 1; EndColumn = 5; Function = 'Test-Demo'; Command = 'c1'; HitCount = 0 },
+                @{ File = $srcFile; StartLine = 2; EndLine = 2; StartColumn = 1; EndColumn = 5; Function = 'Test-Demo'; Command = 'c2'; HitCount = 1 }
+            ) } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $src1 'coverage-commands.json') -Encoding utf8
+
+            Write-ShardArtifactBundle -SourceDir $src0 -DestinationDir (Join-Path $artifactsRoot 'shard-0') -ShardIndex 0 -ShardCount 2 -AssignedFiles @($t1) -Root $fakeRoot
+            Write-ShardArtifactBundle -SourceDir $src1 -DestinationDir (Join-Path $artifactsRoot 'shard-1') -ShardIndex 1 -ShardCount 2 -AssignedFiles @($t2) -Root $fakeRoot
+
+            $outCov = Join-Path -Path $TestDrive -ChildPath 'matrix-cov.xml'
+            $outJunit = Join-Path -Path $TestDrive -ChildPath 'matrix-junit.xml'
+            $outTimings = Join-Path -Path $TestDrive -ChildPath 'matrix-timings.json'
+            $res = Invoke-ShardArtifactMerge `
+                -ArtifactsRoot $artifactsRoot `
+                -ExpectedShardCount 2 `
+                -ExpectedFiles @($t1, $t2) `
+                -Root $fakeRoot `
+                -CoverageOutputPath $outCov `
+                -TestResultOutputPath $outJunit `
+                -RecordTimingsPath $outTimings `
+                -CoverageThreshold 100
+
+            $res.PassedCount | Should -Be 5
+            $res.CoveragePercent | Should -Be 100
+            (Get-Content -LiteralPath $outTimings -Raw | ConvertFrom-Json).'Tests/Two.Tests.ps1' | Should -Be 1.5
+
+            # Missing an expected file must fail loudly
+            $t3 = Join-Path -Path $fakeRoot -ChildPath 'Tests/Omitted.Tests.ps1'
+            {
+                Invoke-ShardArtifactMerge `
+                    -ArtifactsRoot $artifactsRoot `
+                    -ExpectedShardCount 2 `
+                    -ExpectedFiles @($t1, $t2, $t3) `
+                    -Root $fakeRoot `
+                    -CoverageOutputPath $outCov `
+                    -TestResultOutputPath $outJunit `
+                    -CoverageThreshold 100
+            } | Should -Throw -ExpectedMessage '*Shard inventory verification failed*'
+        }
     }
 }

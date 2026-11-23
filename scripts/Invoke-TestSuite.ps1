@@ -65,6 +65,12 @@ Internal parameter used by child worker processes to write per-shard coverage, J
 
 .PARAMETER WorkerManifestPath
 Internal parameter used by child worker processes pointing to a JSON file listing test paths assigned to that worker.
+
+.PARAMETER EmitShardArtifactsDirectory
+Optional directory path to export per-shard manifest, summary, JUnit XML, coverage JSON, and timings JSON for matrix CI aggregation.
+
+.PARAMETER MergeShardArtifactsDirectory
+Optional directory containing shard-* subdirectories exported by matrix CI jobs to verify inventory completeness and merge JUnit, coverage, and timings.
 #>
 [CmdletBinding()]
 param(
@@ -128,7 +134,13 @@ param(
     [string]$WorkerOutputDirectory = '',
 
     [Parameter()]
-    [string]$WorkerManifestPath = ''
+    [string]$WorkerManifestPath = '',
+
+    [Parameter()]
+    [string]$EmitShardArtifactsDirectory = '',
+
+    [Parameter()]
+    [string]$MergeShardArtifactsDirectory = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -1153,9 +1165,319 @@ function Invoke-LocalShardWorker {
         FilesExecuted = @($AssignedFiles).Count
     }
     ConvertTo-Json -InputObject $summary -Depth 3 | Set-Content -LiteralPath (Join-Path -Path $OutputDir -ChildPath 'summary.json') -Encoding utf8
+    return $summary
+}
 
-    if ($result.Result -ne 'Passed' -or $result.FailedCount -gt 0) {
-        exit 1
+<#
+.SYNOPSIS
+Exports per-shard summary, JUnit XML, coverage JSON, timings JSON, and manifest JSON into a target directory.
+.PARAMETER SourceDir
+Temporary directory containing shard worker outputs.
+.PARAMETER DestinationDir
+Destination directory to receive the shard artifact bundle.
+.PARAMETER ShardIndex
+Zero-based index of the executed shard.
+.PARAMETER ShardCount
+Total number of shards in the run.
+.PARAMETER AssignedFiles
+Array of absolute test file paths assigned to this shard.
+.PARAMETER Root
+Resolved repository root path.
+#>
+function Write-ShardArtifactBundle {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$SourceDir,
+
+        [Parameter(Mandatory)]
+        [string]$DestinationDir,
+
+        [Parameter(Mandatory)]
+        [int]$ShardIndex,
+
+        [Parameter(Mandatory)]
+        [int]$ShardCount,
+
+        [Parameter(Mandatory)]
+        [string[]]$AssignedFiles,
+
+        [Parameter(Mandatory)]
+        [string]$Root
+    )
+
+    $null = New-Item -Path $DestinationDir -ItemType Directory -Force
+    foreach ($name in @('summary.json', 'junit.xml', 'coverage-commands.json', 'timings.json')) {
+        $src = Join-Path -Path $SourceDir -ChildPath $name
+        if (Test-Path -LiteralPath $src) {
+            Copy-Item -LiteralPath $src -Destination (Join-Path -Path $DestinationDir -ChildPath $name) -Force
+        }
+    }
+
+    $relFiles = @($AssignedFiles | ForEach-Object { ConvertTo-RepoRelativePath -Path $_ -Root $Root })
+    $manifest = [pscustomobject]@{
+        ShardIndex = $ShardIndex
+        ShardCount = $ShardCount
+        Files      = $relFiles
+    }
+    ConvertTo-Json -InputObject $manifest -Depth 3 | Set-Content -LiteralPath (Join-Path -Path $DestinationDir -ChildPath 'manifest.json') -Encoding utf8
+}
+
+<#
+.SYNOPSIS
+Loads shard artifact bundles from disk and confirms complete non-overlapping test inventory coverage.
+.PARAMETER ArtifactsRoot
+Directory containing shard-0, shard-1, ... subdirectories.
+.PARAMETER ExpectedShardCount
+Expected total number of shards.
+.PARAMETER ExpectedFiles
+Expected list of tracked test files (absolute or repo-relative paths).
+.PARAMETER Root
+Resolved repository root path.
+#>
+function Read-ShardArtifactBundle {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ArtifactsRoot,
+
+        [Parameter(Mandatory)]
+        [int]$ExpectedShardCount,
+
+        [Parameter(Mandatory)]
+        [string[]]$ExpectedFiles,
+
+        [Parameter(Mandatory)]
+        [string]$Root
+    )
+
+    $bundles = [System.Collections.Generic.List[object]]::new()
+    for ($i = 0; $i -lt $ExpectedShardCount; $i++) {
+        $sDir = Join-Path -Path $ArtifactsRoot -ChildPath "shard-$i"
+        $manifestPath = Join-Path -Path $sDir -ChildPath 'manifest.json'
+        $summaryPath = Join-Path -Path $sDir -ChildPath 'summary.json'
+        if (-not (Test-Path -LiteralPath $manifestPath) -or -not (Test-Path -LiteralPath $summaryPath)) {
+            throw "Missing shard artifact files in '$sDir' (expected manifest.json and summary.json for shard $i of $ExpectedShardCount)."
+        }
+
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        $summary = Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json
+        $bundles.Add([pscustomobject]@{
+            Index    = $i
+            Dir      = $sDir
+            Manifest = $manifest
+            Summary  = $summary
+            Files    = @($manifest.Files)
+        })
+    }
+
+    $expectedRel = @($ExpectedFiles | ForEach-Object { ConvertTo-RepoRelativePath -Path $_ -Root $Root })
+    Confirm-ShardInventory -Shards @($bundles) -ExpectedFiles $expectedRel
+    return @($bundles)
+}
+
+<#
+.SYNOPSIS
+Merges per-file test timings JSON files from multiple shards into a single sorted JSON file.
+.PARAMETER InputFiles
+Paths to per-shard timings.json files.
+.PARAMETER OutputPath
+Destination path for the merged timings JSON file.
+#>
+function Merge-ShardTimingFile {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$InputFiles,
+
+        [Parameter(Mandatory)]
+        [string]$OutputPath
+    )
+
+    $merged = @{}
+    foreach ($file in $InputFiles) {
+        if (-not (Test-Path -LiteralPath $file)) {
+            continue
+        }
+        $data = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
+        foreach ($prop in $data.PSObject.Properties) {
+            $merged[$prop.Name] = $prop.Value
+        }
+    }
+
+    $sorted = [ordered]@{}
+    foreach ($k in ($merged.Keys | Sort-Object)) {
+        $sorted[$k] = $merged[$k]
+    }
+    $outParent = Split-Path -Path $OutputPath -Parent
+    if (-not [string]::IsNullOrWhiteSpace($outParent)) {
+        $null = New-Item -Path $outParent -ItemType Directory -Force
+    }
+    ConvertTo-Json -InputObject $sorted -Depth 3 | Set-Content -LiteralPath $OutputPath -Encoding utf8
+}
+
+<#
+.SYNOPSIS
+Validates merged coverage against the required threshold and writes JaCoCo XML.
+.PARAMETER CoverageFiles
+Paths to per-shard coverage-commands.json files.
+.PARAMETER Root
+Resolved repository root path.
+.PARAMETER CoverageOutputPath
+Destination path for merged coverage.xml.
+.PARAMETER CoverageThreshold
+Minimum required command coverage percentage.
+.PARAMETER ElapsedMilliseconds
+Total wall-clock elapsed duration in milliseconds for JaCoCo metadata.
+#>
+function Export-ValidatedMergedCoverage {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$CoverageFiles,
+
+        [Parameter(Mandatory)]
+        [string]$Root,
+
+        [Parameter(Mandatory)]
+        [string]$CoverageOutputPath,
+
+        [Parameter(Mandatory)]
+        [double]$CoverageThreshold,
+
+        [Parameter(Mandatory)]
+        [long]$ElapsedMilliseconds
+    )
+
+    $cov = Merge-ShardCoverageData -InputFiles $CoverageFiles
+    Export-MergedJaCoCoXml `
+        -MergedCommands $cov.Commands `
+        -ReportRoot $Root `
+        -OutputPath $CoverageOutputPath `
+        -ElapsedMilliseconds $ElapsedMilliseconds
+
+    Write-Information -MessageData ("Merged coverage: {0:N2}% ({1}/{2} analyzed commands)" -f $cov.CoveragePercent, $cov.CommandsExecuted, $cov.CommandsAnalyzed) -InformationAction Continue
+    if ($cov.CoveragePercent -lt $CoverageThreshold) {
+        foreach ($mc in ($cov.MissedCommands | Select-Object -First 20)) {
+            Write-Information -MessageData "  MISSED: $($mc.File):$($mc.StartLine) ($($mc.Function)) $($mc.Command)" -InformationAction Continue
+        }
+        throw ("Merged coverage {0:N2}% is below required {1:N2}% ({2} missed commands)." -f $cov.CoveragePercent, $CoverageThreshold, $cov.CommandsMissed)
+    }
+    return $cov
+}
+
+<#
+.SYNOPSIS
+Merges matrix CI shard artifact bundles, verifying complete inventory, test pass status, and coverage threshold.
+.PARAMETER ArtifactsRoot
+Directory containing shard-0, shard-1, ... subdirectories.
+.PARAMETER ExpectedShardCount
+Expected total number of shards.
+.PARAMETER ExpectedFiles
+Expected list of tracked test files to verify against shard manifests.
+.PARAMETER Root
+Resolved repository root path.
+.PARAMETER CoverageOutputPath
+Destination path for merged JaCoCo coverage.xml.
+.PARAMETER TestResultOutputPath
+Destination path for merged JUnit XML.
+.PARAMETER RecordTimingsPath
+Optional path to write merged per-file test timings JSON.
+.PARAMETER CoverageThreshold
+Minimum required code coverage percentage.
+.PARAMETER SkipCoverage
+Skips command-level coverage aggregation and threshold enforcement when set.
+#>
+function Invoke-ShardArtifactMerge {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ArtifactsRoot,
+
+        [Parameter(Mandatory)]
+        [int]$ExpectedShardCount,
+
+        [Parameter(Mandatory)]
+        [string[]]$ExpectedFiles,
+
+        [Parameter(Mandatory)]
+        [string]$Root,
+
+        [Parameter(Mandatory)]
+        [string]$CoverageOutputPath,
+
+        [Parameter(Mandatory)]
+        [string]$TestResultOutputPath,
+
+        [Parameter()]
+        [string]$RecordTimingsPath = '',
+
+        [Parameter()]
+        [double]$CoverageThreshold = 100,
+
+        [Parameter()]
+        [switch]$SkipCoverage
+    )
+
+    $bundles = Read-ShardArtifactBundle `
+        -ArtifactsRoot $ArtifactsRoot `
+        -ExpectedShardCount $ExpectedShardCount `
+        -ExpectedFiles $ExpectedFiles `
+        -Root $Root
+
+    $totalPassed = 0; $totalFailed = 0; $totalSkipped = 0; $totalNotRun = 0
+    $maxDurationMs = [long]0
+    $failedShards = [System.Collections.Generic.List[string]]::new()
+    $junitFiles = [System.Collections.Generic.List[string]]::new()
+    $covFiles = [System.Collections.Generic.List[string]]::new()
+    $timingFiles = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($b in $bundles) {
+        $s = $b.Summary
+        $totalPassed += [int]$s.PassedCount
+        $totalFailed += [int]$s.FailedCount
+        $totalSkipped += [int]$s.SkippedCount
+        $totalNotRun += [int]$s.NotRunCount
+        $maxDurationMs = [Math]::Max($maxDurationMs, [long]$s.DurationMs)
+        Write-Information -MessageData ("Shard {0}: Result={1} Passed={2} Failed={3} Skipped={4} Files={5} Duration={6:N2}s" -f $b.Index, $s.Result, $s.PassedCount, $s.FailedCount, $s.SkippedCount, $s.FilesExecuted, ($s.DurationMs / 1000.0)) -InformationAction Continue
+
+        if ($s.Result -ne 'Passed' -or [int]$s.FailedCount -gt 0) {
+            $failedShards.Add("Shard $($b.Index) failed ($($s.FailedCount) failed tests).")
+        }
+        $junitFiles.Add((Join-Path -Path $b.Dir -ChildPath 'junit.xml'))
+        $covFiles.Add((Join-Path -Path $b.Dir -ChildPath 'coverage-commands.json'))
+        $timingFiles.Add((Join-Path -Path $b.Dir -ChildPath 'timings.json'))
+    }
+
+    Write-Information -MessageData "Merged tests: Passed=$totalPassed Failed=$totalFailed Skipped=$totalSkipped NotRun=$totalNotRun" -InformationAction Continue
+    Merge-ShardJUnitXml -InputFiles @($junitFiles) -OutputPath $TestResultOutputPath
+
+    if (-not [string]::IsNullOrWhiteSpace($RecordTimingsPath)) {
+        Merge-ShardTimingFile -InputFiles @($timingFiles) -OutputPath $RecordTimingsPath
+    }
+
+    $covResult = $null
+    if (-not $SkipCoverage) {
+        $covResult = Export-ValidatedMergedCoverage `
+            -CoverageFiles @($covFiles) `
+            -Root $Root `
+            -CoverageOutputPath $CoverageOutputPath `
+            -CoverageThreshold $CoverageThreshold `
+            -ElapsedMilliseconds $maxDurationMs
+    }
+
+    if ($failedShards.Count -gt 0) {
+        throw ("One or more shards failed: " + ($failedShards -join '; '))
+    }
+
+    return [pscustomobject]@{
+        PassedCount      = $totalPassed
+        FailedCount      = $totalFailed
+        SkippedCount     = $totalSkipped
+        NotRunCount      = $totalNotRun
+        CoveragePercent  = if ($covResult) { $covResult.CoveragePercent } else { $null }
+        CommandsAnalyzed = if ($covResult) { $covResult.CommandsAnalyzed } else { 0 }
+        CommandsExecuted = if ($covResult) { $covResult.CommandsExecuted } else { 0 }
     }
 }
 
@@ -1176,7 +1498,7 @@ if ([string]::IsNullOrWhiteSpace($TestResultOutputPath)) {
 if (-not [string]::IsNullOrWhiteSpace($WorkerManifestPath)) {
     $manifest = Get-Content -LiteralPath $WorkerManifestPath -Raw | ConvertFrom-Json
     $assignedFiles = @($manifest.Files)
-    Invoke-LocalShardWorker `
+    $workerSummary = Invoke-LocalShardWorker `
         -AssignedFiles $assignedFiles `
         -Root $resolvedRoot `
         -OutputDir $WorkerOutputDirectory `
@@ -1184,15 +1506,13 @@ if (-not [string]::IsNullOrWhiteSpace($WorkerManifestPath)) {
         -IncludeIntegrationTag ([bool]($IncludeIntegration -or $IntegrationOnly)) `
         -EnableShuffle ([bool]$Shuffle) `
         -ShuffleSeed $Seed
+    if ($workerSummary.Result -ne 'Passed' -or $workerSummary.FailedCount -gt 0) {
+        exit 1
+    }
     return
 }
 
 $overallSw = [System.Diagnostics.Stopwatch]::StartNew()
-
-$effectiveSeed = $Seed
-if ($Shuffle -and $effectiveSeed -eq 0) {
-    $effectiveSeed = Get-Random -Minimum 1 -Maximum 2147483647
-}
 
 $inventory = Get-TrackedTestInventory -Root $resolvedRoot
 $targetFiles = if ($TestFiles.Count -gt 0) {
@@ -1209,6 +1529,29 @@ if ($targetFiles.Count -eq 0) {
     throw 'Test inventory is empty; refusing to report an empty successful run.'
 }
 
+# Matrix CI shard artifact merge mode
+if (-not [string]::IsNullOrWhiteSpace($MergeShardArtifactsDirectory)) {
+    Write-Output "Merging $ShardCount shard artifact bundle(s) from '$MergeShardArtifactsDirectory' (expected files=$($targetFiles.Count))..."
+    $null = Invoke-ShardArtifactMerge `
+        -ArtifactsRoot $MergeShardArtifactsDirectory `
+        -ExpectedShardCount $ShardCount `
+        -ExpectedFiles $targetFiles `
+        -Root $resolvedRoot `
+        -CoverageOutputPath $CoverageOutputPath `
+        -TestResultOutputPath $TestResultOutputPath `
+        -RecordTimingsPath $RecordTimingsPath `
+        -CoverageThreshold $CoverageThreshold `
+        -SkipCoverage:$SkipCoverage
+    $overallSw.Stop()
+    Write-Output ("Shard artifact merge completed in {0:N2}s" -f $overallSw.Elapsed.TotalSeconds)
+    return
+}
+
+$effectiveSeed = $Seed
+if ($Shuffle -and $effectiveSeed -eq 0) {
+    $effectiveSeed = Get-Random -Minimum 1 -Maximum 2147483647
+}
+
 $timingsMap = Get-HistoricalTestTiming -Path $TimingsPath
 $shards = Split-TestFilesIntoShard -Files $targetFiles -Count $ShardCount -Root $resolvedRoot -TimingsMap $timingsMap
 
@@ -1217,6 +1560,9 @@ if ($Shuffle) {
     $reproCmd = "pwsh -NoProfile -File ./scripts/Invoke-TestSuite.ps1 -Shuffle -Seed $effectiveSeed"
     if ($ShardCount -gt 1) {
         $reproCmd += " -ShardCount $ShardCount"
+        if (-not $RunAllShardsInParallel) {
+            $reproCmd += " -ShardIndex $ShardIndex"
+        }
     }
     if ($RunAllShardsInParallel) {
         $reproCmd += ' -RunAllShardsInParallel'
@@ -1244,17 +1590,27 @@ try {
 
         $singleFailed = $false
         try {
-            Invoke-LocalShardWorker `
+            $null = Invoke-LocalShardWorker `
                 -AssignedFiles @($shard.Files) `
                 -Root $resolvedRoot `
                 -OutputDir $shardDir `
                 -EnableCoverage $shouldEnforceCoverage `
                 -IncludeIntegrationTag ([bool]($IncludeIntegration -or $IntegrationOnly)) `
                 -EnableShuffle ([bool]$Shuffle) `
-                -ShuffleSeed $effectiveSeed
+                -ShuffleSeed ($effectiveSeed + $ShardIndex)
         } catch {
             $singleFailed = $true
             $failureReasons.Add($_.Exception.Message)
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($EmitShardArtifactsDirectory)) {
+            Write-ShardArtifactBundle `
+                -SourceDir $shardDir `
+                -DestinationDir $EmitShardArtifactsDirectory `
+                -ShardIndex $ShardIndex `
+                -ShardCount $shards.Count `
+                -AssignedFiles @($shard.Files) `
+                -Root $resolvedRoot
         }
 
         if (Test-Path -LiteralPath (Join-Path -Path $shardDir -ChildPath 'junit.xml')) {
@@ -1271,6 +1627,7 @@ try {
             $correctnessFailed = $true
         } else {
             $summary = Get-Content -LiteralPath (Join-Path -Path $shardDir -ChildPath 'summary.json') -Raw | ConvertFrom-Json
+            Write-Output ("Shard {0}: Result={1} Passed={2} Failed={3} Skipped={4} Files={5} Duration={6:N2}s" -f $ShardIndex, $summary.Result, $summary.PassedCount, $summary.FailedCount, $summary.SkippedCount, $summary.FilesExecuted, ($summary.DurationMs / 1000.0))
             if ($summary.Result -ne 'Passed' -or $summary.FailedCount -gt 0) {
                 $correctnessFailed = $true
                 $failureReasons.Add("Shard $ShardIndex failed ($($summary.FailedCount) failed tests).")
