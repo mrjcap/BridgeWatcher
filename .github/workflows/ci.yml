@@ -242,14 +242,14 @@ jobs:
           exit "$failed"
 
   unit-tests:
-    name: Unit Tests (Sharded, 100% Coverage)
+    name: Unit Tests (Shard ${{ matrix.shard }}/2)
     runs-on: ubuntu-26.04
     permissions:
       contents: read
-      pull-requests: read
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1]
     steps:
       - name: Record job start time
         id: timing
@@ -270,25 +270,12 @@ jobs:
         id: cache_start
         run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - name: Cache PowerShell modules and tools (main seed)
-        id: cache_main
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/.local/share/powershell/Modules
-            ~/.cache/bridgewatcher/tools
-          key: ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-codacy-${{ env.CODACY_REPORTER_VERSION }}-v1
-
-      - name: Restore PowerShell modules and tools (read-only)
+      - name: Restore PowerShell modules (read-only)
         id: cache_ro
-        if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: |
-            ~/.local/share/powershell/Modules
-            ~/.cache/bridgewatcher/tools
-          key: ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-codacy-${{ env.CODACY_REPORTER_VERSION }}-v1
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-v1
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-
 
@@ -304,15 +291,13 @@ jobs:
       - name: Verify or install pinned PowerShell modules
         shell: pwsh
         env:
-          CACHE_HIT: ${{ steps.cache_main.outputs.cache-hit || steps.cache_ro.outputs.cache-hit || 'false' }}
+          CACHE_HIT: ${{ steps.cache_ro.outputs.cache-hit || 'false' }}
           CACHE_START: ${{ steps.cache_start.outputs.ts }}
-          IS_MAIN_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
           $ErrorActionPreference = 'Stop'
           $restoreSeconds = [long]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - [long]$env:CACHE_START)
-          Write-Output "Module/tool cache hit=$($env:CACHE_HIT) (restore=${restoreSeconds}s)"
+          Write-Output "Module cache hit=$($env:CACHE_HIT) (restore=${restoreSeconds}s)"
 
-          $userModulesDir = Join-Path -Path $HOME -ChildPath '.local/share/powershell/Modules'
           $required = @(
             @{ Name = 'Pester'; RequiredVersion = $env:PESTER_VERSION }
             @{ Name = 'PSScriptAnalyzer'; RequiredVersion = $env:PSSA_VERSION }
@@ -320,13 +305,8 @@ jobs:
 
           $toInstall = @()
           foreach ($m in $required) {
-            $userPath = Join-Path -Path $userModulesDir -ChildPath (Join-Path -Path $m.Name -ChildPath $m.RequiredVersion)
             $available = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
-            if ($env:IS_MAIN_PUSH -eq 'true') {
-              if (-not (Test-Path -LiteralPath $userPath)) {
-                $toInstall += $m
-              }
-            } elseif (-not $available) {
+            if (-not $available) {
               $toInstall += $m
             }
           }
@@ -354,87 +334,40 @@ jobs:
           now=$(date +%s)
           setup_s=$((now - JOB_START))
           echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
-          echo "Unit tests setup: ${setup_s}s (budget: ${SETUP_BUDGET_S}s)"
+          echo "Unit tests shard setup: ${setup_s}s (budget: ${SETUP_BUDGET_S}s)"
 
-      - name: Run process-isolated sharded Pester tests
+      - name: Run isolated Pester shard
         shell: pwsh
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: '2'
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $null = New-Item -Path '/tmp/bridgewatcher-timings' -ItemType Directory -Force
           $cachedTimings = '/tmp/bridgewatcher-timings/test-timings.json'
           $seedTimings = './Tests/test-timings.seed.json'
           $timingsIn = if (Test-Path -LiteralPath $cachedTimings) { $cachedTimings } elseif (Test-Path -LiteralPath $seedTimings) { $seedTimings } else { '' }
-          $timingsOut = '/tmp/bridgewatcher-timings/test-timings.json'
-          $logicalCores = [Environment]::ProcessorCount
-          # Match workers to physical cores (logical / 2 on SMT runners) to avoid .NET JIT/Tracer contention.
-          $workers = [Math]::Max(1, [int][Math]::Floor($logicalCores / 2))
-          Write-Output "Detected $logicalCores logical vCPU(s); running $workers process-isolated shard worker(s) with deterministic shuffle (timings source: $timingsIn)."
+          $sharedSeed = [int](([long]$env:RUN_ID % 2147483000) + [long]$env:RUN_ATTEMPT)
+          Write-Output "Running unit test shard $($env:SHARD_INDEX)/$($env:SHARD_COUNT) with shared seed=$sharedSeed (timings source: $timingsIn)."
           & ./scripts/Invoke-TestSuite.ps1 `
-            -ShardCount $workers `
-            -Workers $workers `
-            -RunAllShardsInParallel `
+            -ShardCount ([int]$env:SHARD_COUNT) `
+            -ShardIndex ([int]$env:SHARD_INDEX) `
             -Shuffle `
+            -Seed $sharedSeed `
             -TimingsPath $timingsIn `
-            -RecordTimingsPath $timingsOut `
-            -CoverageOutputPath './coverage.xml' `
-            -TestResultOutputPath './testResults.xml' `
+            -EmitShardArtifactsDirectory "./shard-output/shard-$($env:SHARD_INDEX)" `
             -CoverageThreshold 100 `
             -MaxDurationSeconds ([int]$env:SHARD_BUDGET_S)
 
-      - name: Save per-file test timings (main only)
-        if: ${{ success() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: /tmp/bridgewatcher-timings
-          key: timings-main-${{ github.sha }}
-
-      - name: Upload test results
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Upload shard test and coverage bundle
         if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: test-results-ubuntu-26.04-v${{ env.POWERSHELL_VERSION }}
-          path: |
-            testResults.xml
-            coverage.xml
-            /tmp/bridgewatcher-timings/test-timings.json
-          retention-days: 7
-
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: testResults.xml
-          report_type: test_results
-
-      - name: Upload coverage to Codecov
-        if: ${{ env.CODECOV_TOKEN != '' }}
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-          flags: unittests
-          name: codecov-ubuntu-26.04-v${{ env.POWERSHELL_VERSION }}
-          fail_ci_if_error: true
-
-      - name: Run Codacy Coverage Reporter
-        if: ${{ env.CODACY_API_TOKEN != '' }}
-        env:
-          CODACY_ORGANIZATION_PROVIDER: gh
-          CODACY_USERNAME: mrjcap
-          CODACY_PROJECT_NAME: BridgeWatcher
-        run: |
-          set -euo pipefail
-          TOOLS_DIR="$HOME/.cache/bridgewatcher/tools"
-          REPORTER="$TOOLS_DIR/codacy-coverage-reporter-${CODACY_REPORTER_VERSION}"
-          mkdir -p "$TOOLS_DIR"
-          if [ ! -x "$REPORTER" ] || ! echo "${CODACY_REPORTER_SHA256}  $REPORTER" | sha256sum -c - >/dev/null 2>&1; then
-            curl --proto '=https' --tlsv1.2 -fsSL -o "$REPORTER" "https://github.com/codacy/codacy-coverage-reporter/releases/download/${CODACY_REPORTER_VERSION}/codacy-coverage-reporter-linux"
-            echo "${CODACY_REPORTER_SHA256}  $REPORTER" | sha256sum -c -
-            chmod +x "$REPORTER"
-          fi
-          "$REPORTER" report -r coverage.xml
-          "$REPORTER" final
+          name: shard-${{ matrix.shard }}
+          path: ./shard-output/shard-${{ matrix.shard }}
+          retention-days: 1
+          compression-level: 0
 
       - name: Enforce performance budget
         if: always()
@@ -444,8 +377,9 @@ jobs:
           SETUP_BUDGET_S: ${{ env.SETUP_BUDGET_S }}
           WARM_BUDGET_S: ${{ env.JOB_BUDGET_S }}
           COLD_BUDGET_S: '45'
-          CACHE_HIT: ${{ steps.cache_main.outputs.cache-hit || steps.cache_ro.outputs.cache-hit || 'false' }}
+          CACHE_HIT: ${{ steps.cache_ro.outputs.cache-hit || 'false' }}
           EVENT_NAME: ${{ github.event_name }}
+          SHARD_INDEX: ${{ matrix.shard }}
         run: |
           set -euo pipefail
           now=$(date +%s)
@@ -457,15 +391,15 @@ jobs:
             effective_budget="$COLD_BUDGET_S"
             budget_label="cold-cache (warm budget: ${WARM_BUDGET_S}s)"
           fi
-          echo "Unit tests setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s, cache_hit=${CACHE_HIT})"
-          echo "Unit tests job execution: ${elapsed}s (budget: ${effective_budget}s [${budget_label}])"
+          echo "Unit shard ${SHARD_INDEX} setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s, cache_hit=${CACHE_HIT})"
+          echo "Unit shard ${SHARD_INDEX} execution: ${elapsed}s (budget: ${effective_budget}s [${budget_label}])"
           failed=0
           if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
-            echo "::error::Unit tests setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
+            echo "::error::Unit shard ${SHARD_INDEX} setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
             failed=1
           fi
           if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$effective_budget" ]; then
-            echo "::error::Unit tests job exceeded ${budget_label} budget: ${elapsed}s > ${effective_budget}s"
+            echo "::error::Unit shard ${SHARD_INDEX} exceeded ${budget_label} budget: ${elapsed}s > ${effective_budget}s"
             failed=1
           fi
           exit "$failed"
@@ -560,18 +494,146 @@ jobs:
     runs-on: ubuntu-26.04
     needs: [static-checks, unit-tests, integration-tests]
     if: always()
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
     steps:
+      - name: Record job start time
+        id: timing
+        run: echo "job_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        if: needs.unit-tests.result == 'success'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup PowerShell
+        if: needs.unit-tests.result == 'success'
+        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36 # v1
+        with:
+          tag: 'v${{ env.POWERSHELL_VERSION }}'
+
+      - name: Download unit shard bundles
+        if: needs.unit-tests.result == 'success'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: shard-*
+          path: ./shard-artifacts
+
+      - name: Cache Codacy coverage reporter (main seed)
+        if: ${{ needs.unit-tests.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/bridgewatcher/tools
+          key: ${{ runner.os }}-${{ runner.arch }}-codacy-reporter-${{ env.CODACY_REPORTER_VERSION }}-v1
+
+      - name: Restore Codacy coverage reporter (read-only)
+        if: ${{ needs.unit-tests.result == 'success' && !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/bridgewatcher/tools
+          key: ${{ runner.os }}-${{ runner.arch }}-codacy-reporter-${{ env.CODACY_REPORTER_VERSION }}-v1
+
+      - name: Merge shard results and enforce 100% coverage
+        id: merge_shards
+        if: needs.unit-tests.result == 'success'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./scripts/Invoke-TestSuite.ps1 `
+            -MergeShardArtifactsDirectory './shard-artifacts' `
+            -ShardCount 2 `
+            -CoverageOutputPath './coverage.xml' `
+            -TestResultOutputPath './testResults.xml' `
+            -RecordTimingsPath '/tmp/bridgewatcher-timings/test-timings.json' `
+            -CoverageThreshold 100
+
+      - name: Save per-file test timings (main only)
+        if: ${{ steps.merge_shards.outcome == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/bridgewatcher-timings
+          key: timings-main-${{ github.sha }}
+
+      - name: Upload merged test and coverage artifacts
+        if: steps.merge_shards.outcome == 'success'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-results-ubuntu-26.04-v${{ env.POWERSHELL_VERSION }}
+          path: |
+            testResults.xml
+            coverage.xml
+            /tmp/bridgewatcher-timings/test-timings.json
+          retention-days: 7
+
+      - name: Upload test results to Codecov
+        if: ${{ steps.merge_shards.outcome == 'success' && !cancelled() && env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: testResults.xml
+          report_type: test_results
+
+      - name: Upload coverage to Codecov
+        if: ${{ steps.merge_shards.outcome == 'success' && env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-ubuntu-26.04-v${{ env.POWERSHELL_VERSION }}
+          fail_ci_if_error: true
+
+      - name: Run Codacy Coverage Reporter
+        if: ${{ steps.merge_shards.outcome == 'success' && env.CODACY_API_TOKEN != '' }}
+        env:
+          CODACY_ORGANIZATION_PROVIDER: gh
+          CODACY_USERNAME: mrjcap
+          CODACY_PROJECT_NAME: BridgeWatcher
+        run: |
+          set -euo pipefail
+          TOOLS_DIR="$HOME/.cache/bridgewatcher/tools"
+          REPORTER="$TOOLS_DIR/codacy-coverage-reporter-${CODACY_REPORTER_VERSION}"
+          mkdir -p "$TOOLS_DIR"
+          if [ ! -x "$REPORTER" ] || ! echo "${CODACY_REPORTER_SHA256}  $REPORTER" | sha256sum -c - >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -fsSL -o "$REPORTER" "https://github.com/codacy/codacy-coverage-reporter/releases/download/${CODACY_REPORTER_VERSION}/codacy-coverage-reporter-linux"
+            echo "${CODACY_REPORTER_SHA256}  $REPORTER" | sha256sum -c -
+            chmod +x "$REPORTER"
+          fi
+          "$REPORTER" report -r coverage.xml
+          "$REPORTER" final
+
       - name: Verify all required PowerShell CI checks passed
+        if: always()
         env:
           STATIC_RESULT: ${{ needs.static-checks.result }}
           UNIT_RESULT: ${{ needs.unit-tests.result }}
           INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
+          MERGE_OUTCOME: ${{ steps.merge_shards.outcome }}
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          JOB_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
+          now=$(date +%s)
+          elapsed=$((now - JOB_START))
           echo "static-checks: ${STATIC_RESULT}"
           echo "unit-tests: ${UNIT_RESULT}"
           echo "integration-tests: ${INTEGRATION_RESULT}"
-          if [ "$STATIC_RESULT" != "success" ] || [ "$UNIT_RESULT" != "success" ] || [ "$INTEGRATION_RESULT" != "success" ]; then
-            echo "::error::One or more required PowerShell CI checks did not succeed (static=${STATIC_RESULT}, unit=${UNIT_RESULT}, integration=${INTEGRATION_RESULT})."
-            exit 1
+          echo "merge-shards: ${MERGE_OUTCOME}"
+          echo "Aggregator execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
+          failed=0
+          if [ "$STATIC_RESULT" != "success" ] || [ "$UNIT_RESULT" != "success" ] || [ "$INTEGRATION_RESULT" != "success" ] || [ "$MERGE_OUTCOME" != "success" ]; then
+            echo "::error::One or more required PowerShell CI checks did not succeed (static=${STATIC_RESULT}, unit=${UNIT_RESULT}, integration=${INTEGRATION_RESULT}, merge=${MERGE_OUTCOME})."
+            failed=1
           fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
+            echo "::error::PowerShell CI aggregator exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
+            failed=1
+          fi
+          exit "$failed"
