@@ -17,9 +17,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.event_name, github.run_id) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-  contents: read
-  pull-requests: read
+permissions: {}
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
@@ -40,6 +38,8 @@ jobs:
   static-checks:
     name: Static Checks (Gitleaks, Parse, Manifest, Lint)
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
     steps:
       - name: Record job start time
         id: timing
@@ -125,9 +125,11 @@ jobs:
 
       - name: Record setup elapsed time
         id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
         run: |
           now=$(date +%s)
-          setup_s=$((now - ${{ steps.timing.outputs.job_start }}))
+          setup_s=$((now - JOB_START))
           echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
           echo "Static checks setup: ${setup_s}s (budget: ${SETUP_BUDGET_S}s)"
 
@@ -242,6 +244,9 @@ jobs:
   unit-tests:
     name: Unit Tests (Sharded, 100% Coverage)
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      pull-requests: read
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
@@ -343,9 +348,11 @@ jobs:
 
       - name: Record setup elapsed time
         id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
         run: |
           now=$(date +%s)
-          setup_s=$((now - ${{ steps.timing.outputs.job_start }}))
+          setup_s=$((now - JOB_START))
           echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
           echo "Unit tests setup: ${setup_s}s (budget: ${SETUP_BUDGET_S}s)"
 
@@ -466,6 +473,8 @@ jobs:
   integration-tests:
     name: Integration Tests (Tracked Integration Suite)
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
     steps:
       - name: Record job start time
         id: timing
@@ -503,9 +512,11 @@ jobs:
 
       - name: Record setup elapsed time
         id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
         run: |
           now=$(date +%s)
-          setup_s=$((now - ${{ steps.timing.outputs.job_start }}))
+          setup_s=$((now - JOB_START))
           echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
           echo "Integration tests setup: ${setup_s}s (budget: ${SETUP_BUDGET_S}s)"
 

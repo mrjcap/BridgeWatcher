@@ -161,6 +161,34 @@ function ConvertTo-RepoRelativePath {
 
 <#
 .SYNOPSIS
+Checks whether a Pester Describe, Context, or It CommandAst specifies the Integration tag.
+.PARAMETER CommandAst
+PowerShell CommandAst node to inspect for an Integration tag argument.
+#>
+function Test-CommandAstHasIntegrationTag {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory)]
+        [System.Management.Automation.Language.CommandAst]$CommandAst
+    )
+
+    $elements = $CommandAst.CommandElements
+    for ($i = 1; $i -lt ($elements.Count - 1); $i++) {
+        $el = $elements[$i]
+        $isTagParam = ($el -is [System.Management.Automation.Language.CommandParameterAst]) -and ($el.ParameterName -eq 'Tag')
+        if (-not $isTagParam) {
+            continue
+        }
+        if ($elements[$i + 1].Extent.Text -match "(?i)['""]?Integration['""]?") {
+            return $true
+        }
+    }
+    return $false
+}
+
+<#
+.SYNOPSIS
 Determines whether a Pester test file defines an Integration-tagged block.
 .PARAMETER FilePath
 Path to the .Tests.ps1 file to inspect via the PowerShell AST.
@@ -188,16 +216,8 @@ function Test-IsIntegrationTestFile {
     }, $true)
 
     foreach ($cmd in $commands) {
-        for ($i = 1; $i -lt $cmd.CommandElements.Count; $i++) {
-            $el = $cmd.CommandElements[$i]
-            if ($el -is [System.Management.Automation.Language.CommandParameterAst] -and $el.ParameterName -eq 'Tag') {
-                if (($i + 1) -lt $cmd.CommandElements.Count) {
-                    $argText = $cmd.CommandElements[$i + 1].Extent.Text
-                    if ($argText -match "(?i)['""]?Integration['""]?") {
-                        return $true
-                    }
-                }
-            }
+        if (Test-CommandAstHasIntegrationTag -CommandAst $cmd) {
+            return $true
         }
     }
     return $false
@@ -276,6 +296,59 @@ function Get-HistoricalTestTiming {
 
 <#
 .SYNOPSIS
+Returns the shard object with the lowest cumulative estimated weight.
+.PARAMETER Shards
+Collection of shard partition objects with TotalWeight properties.
+#>
+function Get-LightestTestShard {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [object[]]$Shards
+    )
+
+    $target = $Shards[0]
+    foreach ($candidate in $Shards) {
+        if ($candidate.TotalWeight -lt $target.TotalWeight) {
+            $target = $candidate
+        }
+    }
+    return $target
+}
+
+<#
+.SYNOPSIS
+Verifies that shard assignments cover every expected test file with zero omissions and zero duplicates.
+.PARAMETER Shards
+Collection of shard partition objects.
+.PARAMETER ExpectedFiles
+Expected list of test file paths.
+#>
+function Confirm-ShardInventory {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [object[]]$Shards,
+
+        [Parameter(Mandatory)]
+        [string[]]$ExpectedFiles
+    )
+
+    $assigned = @($Shards | ForEach-Object { $_.Files })
+    $uniqueAssigned = @($assigned | Select-Object -Unique)
+    if ($assigned.Count -ne $ExpectedFiles.Count -or $uniqueAssigned.Count -ne $ExpectedFiles.Count) {
+        throw "Shard inventory verification failed: expected $($ExpectedFiles.Count) unique files, assigned=$($assigned.Count), unique=$($uniqueAssigned.Count)."
+    }
+
+    foreach ($expected in $ExpectedFiles) {
+        if ($uniqueAssigned -notcontains $expected) {
+            throw "Shard inventory verification failed: missing test file '$expected'."
+        }
+    }
+}
+
+<#
+.SYNOPSIS
 Partitions test files across shards using longest-processing-time-first balancing and verifies complete coverage.
 .PARAMETER Files
 List of test file paths to partition.
@@ -328,36 +401,377 @@ function Split-TestFilesIntoShard {
     }
 
     foreach ($item in $sorted) {
-        $target = $shards[0]
-        foreach ($candidate in $shards) {
-            if ($candidate.TotalWeight -lt $target.TotalWeight) {
-                $target = $candidate
-            }
-        }
+        $target = Get-LightestTestShard -Shards @($shards)
         $target.Files.Add($item.File)
         $target.TotalWeight += $item.Weight
     }
 
-    # Verify shard inventory has zero omissions and zero duplicates.
-    $assigned = [System.Collections.Generic.List[string]]::new()
-    foreach ($shard in $shards) {
-        foreach ($f in $shard.Files) {
-            $assigned.Add($f)
-        }
-    }
-
-    $uniqueAssigned = @($assigned | Select-Object -Unique)
-    if ($assigned.Count -ne $Files.Count -or $uniqueAssigned.Count -ne $Files.Count) {
-        throw "Shard inventory verification failed: expected $($Files.Count) unique files, assigned=$($assigned.Count), unique=$($uniqueAssigned.Count)."
-    }
-
-    foreach ($expected in $Files) {
-        if ($uniqueAssigned -notcontains $expected) {
-            throw "Shard inventory verification failed: missing test file '$expected'."
-        }
-    }
-
+    Confirm-ShardInventory -Shards @($shards) -ExpectedFiles $Files
     return @($shards)
+}
+
+<#
+.SYNOPSIS
+Gets or initializes a file coverage record within the JaCoCo package map.
+.PARAMETER Packages
+Ordered dictionary mapping package names to file dictionaries.
+.PARAMETER RelativeFile
+Repository-relative path to the source file.
+#>
+function Get-JaCoCoFileRecord {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Collections.Specialized.OrderedDictionary]$Packages,
+
+        [Parameter(Mandatory)]
+        [string]$RelativeFile
+    )
+
+    $lastSlash = $RelativeFile.LastIndexOf('/')
+    $pkgName = if ($lastSlash -gt 0) { $RelativeFile.Substring(0, $lastSlash) } else { '.' }
+    $fileName = if ($lastSlash -ge 0) { $RelativeFile.Substring($lastSlash + 1) } else { $RelativeFile }
+    $className = if ($RelativeFile.LastIndexOf('.') -gt 0) { $RelativeFile.Substring(0, $RelativeFile.LastIndexOf('.')) } else { $RelativeFile }
+
+    if (-not $Packages.Contains($pkgName)) {
+        $Packages[$pkgName] = [ordered]@{}
+    }
+    if (-not $Packages[$pkgName].Contains($RelativeFile)) {
+        $Packages[$pkgName][$RelativeFile] = @{
+            ClassName  = $className
+            SourceFile = $fileName
+            Methods    = [ordered]@{}
+            Lines      = [ordered]@{}
+        }
+    }
+    return $Packages[$pkgName][$RelativeFile]
+}
+
+<#
+.SYNOPSIS
+Gets or initializes a method coverage record within a JaCoCo file record.
+.PARAMETER FileRecord
+Hashtable representing coverage metrics for a single source file.
+.PARAMETER FunctionName
+Name of the PowerShell function or script scope.
+.PARAMETER StartLine
+Starting line number for the command.
+#>
+function Get-JaCoCoMethodRecord {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileRecord,
+
+        [Parameter(Mandatory)]
+        [string]$FunctionName,
+
+        [Parameter(Mandatory)]
+        [int]$StartLine
+    )
+
+    if (-not $FileRecord.Methods.Contains($FunctionName)) {
+        $FileRecord.Methods[$FunctionName] = @{
+            FirstLine = $StartLine
+            Lines     = @{}
+            InstrCov  = 0
+            InstrMiss = 0
+        }
+    }
+    $methodRec = $FileRecord.Methods[$FunctionName]
+    if ($StartLine -lt $methodRec.FirstLine) {
+        $methodRec.FirstLine = $StartLine
+    }
+    return $methodRec
+}
+
+<#
+.SYNOPSIS
+Records a single merged command coverage entry into the JaCoCo package map.
+.PARAMETER Packages
+Ordered dictionary mapping package names to file dictionaries.
+.PARAMETER CommandRecord
+Merged command coverage object with File, StartLine, Function, and HitCount.
+.PARAMETER ReportRoot
+Repository root path stripped from file paths.
+#>
+function Add-JaCoCoCommandRecord {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Collections.Specialized.OrderedDictionary]$Packages,
+
+        [Parameter(Mandatory)]
+        [object]$CommandRecord,
+
+        [Parameter(Mandatory)]
+        [string]$ReportRoot
+    )
+
+    $relFile = ConvertTo-RepoRelativePath -Path $CommandRecord.File -Root $ReportRoot
+    $fileRec = Get-JaCoCoFileRecord -Packages $Packages -RelativeFile $relFile
+    $funcName = if ([string]::IsNullOrWhiteSpace($CommandRecord.Function)) { '<script>' } else { $CommandRecord.Function }
+    $startLine = [int]$CommandRecord.StartLine
+    $lineKey = [string]$startLine
+    $isHit = ([int]$CommandRecord.HitCount) -gt 0
+
+    $methodRec = Get-JaCoCoMethodRecord -FileRecord $fileRec -FunctionName $funcName -StartLine $startLine
+    if ($isHit) { $methodRec.InstrCov++ } else { $methodRec.InstrMiss++ }
+    if (-not $methodRec.Lines.ContainsKey($lineKey)) { $methodRec.Lines[$lineKey] = $false }
+    if ($isHit) { $methodRec.Lines[$lineKey] = $true }
+
+    if (-not $fileRec.Lines.Contains($lineKey)) {
+        $fileRec.Lines[$lineKey] = @{ Cov = 0; Miss = 0 }
+    }
+    if ($isHit) { $fileRec.Lines[$lineKey].Cov++ } else { $fileRec.Lines[$lineKey].Miss++ }
+}
+
+<#
+.SYNOPSIS
+Groups merged command coverage records by JaCoCo package and file.
+.PARAMETER MergedCommands
+List of merged command coverage records.
+.PARAMETER ReportRoot
+Repository root path stripped from file paths.
+#>
+function ConvertTo-JaCoCoPackageMap {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [object[]]$MergedCommands,
+
+        [Parameter(Mandatory)]
+        [string]$ReportRoot
+    )
+
+    $packages = [ordered]@{}
+    foreach ($cmd in $MergedCommands) {
+        Add-JaCoCoCommandRecord -Packages $packages -CommandRecord $cmd -ReportRoot $ReportRoot
+    }
+    return $packages
+}
+
+<#
+.SYNOPSIS
+Appends JaCoCo counter XML elements to a StringBuilder.
+.PARAMETER Builder
+StringBuilder accumulating XML text.
+.PARAMETER Indent
+Leading whitespace indentation string.
+.PARAMETER Metrics
+Hashtable containing InstrMiss, InstrCov, LineMiss, LineCov, MethMiss, MethCov, ClassMiss, and ClassCov counts.
+#>
+function Add-JaCoCoCounterXml {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Text.StringBuilder]$Builder,
+
+        [Parameter(Mandatory)]
+        [string]$Indent,
+
+        [Parameter(Mandatory)]
+        [hashtable]$Metrics
+    )
+
+    $null = $Builder.AppendLine("${Indent}<counter type=`"INSTRUCTION`" missed=`"$($Metrics.InstrMiss)`" covered=`"$($Metrics.InstrCov)`" />")
+    $null = $Builder.AppendLine("${Indent}<counter type=`"LINE`" missed=`"$($Metrics.LineMiss)`" covered=`"$($Metrics.LineCov)`" />")
+    $null = $Builder.AppendLine("${Indent}<counter type=`"METHOD`" missed=`"$($Metrics.MethMiss)`" covered=`"$($Metrics.MethCov)`" />")
+    $null = $Builder.AppendLine("${Indent}<counter type=`"CLASS`" missed=`"$($Metrics.ClassMiss)`" covered=`"$($Metrics.ClassCov)`" />")
+}
+
+<#
+.SYNOPSIS
+Appends a JaCoCo method XML element and returns whether the method was covered.
+.PARAMETER Builder
+StringBuilder accumulating XML text.
+.PARAMETER MethodName
+Function or script method name.
+.PARAMETER MethodRecord
+Method coverage hashtable.
+#>
+function Add-JaCoCoMethodXml {
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory)]
+        [System.Text.StringBuilder]$Builder,
+
+        [Parameter(Mandatory)]
+        [string]$MethodName,
+
+        [Parameter(Mandatory)]
+        [hashtable]$MethodRecord
+    )
+
+    $escMeth = [System.Security.SecurityElement]::Escape($MethodName)
+    $mLineCov = @($MethodRecord.Lines.Values | Where-Object { $_ }).Count
+    $mLineMiss = $MethodRecord.Lines.Count - $mLineCov
+    $mCovFlag = if ($MethodRecord.InstrCov -gt 0) { 1 } else { 0 }
+    $mMissFlag = 1 - $mCovFlag
+
+    $null = $Builder.AppendLine("      <method name=`"$escMeth`" desc=`"()`" line=`"$($MethodRecord.FirstLine)`">")
+    $null = $Builder.AppendLine("        <counter type=`"INSTRUCTION`" missed=`"$($MethodRecord.InstrMiss)`" covered=`"$($MethodRecord.InstrCov)`" />")
+    $null = $Builder.AppendLine("        <counter type=`"LINE`" missed=`"$mLineMiss`" covered=`"$mLineCov`" />")
+    $null = $Builder.AppendLine("        <counter type=`"METHOD`" missed=`"$mMissFlag`" covered=`"$mCovFlag`" />")
+    $null = $Builder.AppendLine('      </method>')
+    return $mCovFlag
+}
+
+<#
+.SYNOPSIS
+Appends a JaCoCo class XML element and returns its aggregated coverage counters.
+.PARAMETER Builder
+StringBuilder accumulating XML text.
+.PARAMETER FileRecord
+File coverage hashtable.
+#>
+function Add-JaCoCoClassXml {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Text.StringBuilder]$Builder,
+
+        [Parameter(Mandatory)]
+        [hashtable]$FileRecord
+    )
+
+    $escClass = [System.Security.SecurityElement]::Escape($FileRecord.ClassName)
+    $escSrc = [System.Security.SecurityElement]::Escape($FileRecord.SourceFile)
+    $null = $Builder.AppendLine("    <class name=`"$escClass`" sourcefilename=`"$escSrc`">")
+
+    $fMethCov = 0
+    $fMethMiss = 0
+    foreach ($mName in $FileRecord.Methods.Keys) {
+        $covFlag = Add-JaCoCoMethodXml -Builder $Builder -MethodName $mName -MethodRecord $FileRecord.Methods[$mName]
+        $fMethCov += $covFlag
+        $fMethMiss += (1 - $covFlag)
+    }
+
+    $fInstrCov = 0
+    $fInstrMiss = 0
+    $fLineCov = 0
+    $fLineMiss = 0
+    foreach ($lk in $FileRecord.Lines.Keys) {
+        $line = $FileRecord.Lines[$lk]
+        $fInstrCov += $line.Cov
+        $fInstrMiss += $line.Miss
+        if ($line.Cov -gt 0) { $fLineCov++ } else { $fLineMiss++ }
+    }
+
+    $fClassCov = if ($fInstrCov -gt 0) { 1 } else { 0 }
+    $metrics = @{
+        InstrCov  = $fInstrCov
+        InstrMiss = $fInstrMiss
+        LineCov   = $fLineCov
+        LineMiss  = $fLineMiss
+        MethCov   = $fMethCov
+        MethMiss  = $fMethMiss
+        ClassCov  = $fClassCov
+        ClassMiss = (1 - $fClassCov)
+    }
+    Add-JaCoCoCounterXml -Builder $Builder -Indent '      ' -Metrics $metrics
+    $null = $Builder.AppendLine('    </class>')
+    return $metrics
+}
+
+<#
+.SYNOPSIS
+Appends a JaCoCo sourcefile XML element for a file coverage record.
+.PARAMETER Builder
+StringBuilder accumulating XML text.
+.PARAMETER FileRecord
+File coverage hashtable.
+#>
+function Add-JaCoCoSourceFileXml {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Text.StringBuilder]$Builder,
+
+        [Parameter(Mandatory)]
+        [hashtable]$FileRecord
+    )
+
+    $escSrc = [System.Security.SecurityElement]::Escape($FileRecord.SourceFile)
+    $null = $Builder.AppendLine("    <sourcefile name=`"$escSrc`">")
+
+    $fInstrCov = 0
+    $fInstrMiss = 0
+    $fLineCov = 0
+    $fLineMiss = 0
+    foreach ($lk in ($FileRecord.Lines.Keys | Sort-Object -Property { [int]$_ })) {
+        $line = $FileRecord.Lines[$lk]
+        $fInstrCov += $line.Cov
+        $fInstrMiss += $line.Miss
+        if ($line.Cov -gt 0) { $fLineCov++ } else { $fLineMiss++ }
+        $null = $Builder.AppendLine("      <line nr=`"$lk`" mi=`"$($line.Miss)`" ci=`"$($line.Cov)`" mb=`"0`" cb=`"0`" />")
+    }
+
+    $fMethCov = @($FileRecord.Methods.Values | Where-Object { $_.InstrCov -gt 0 }).Count
+    $fClassCov = if ($fInstrCov -gt 0) { 1 } else { 0 }
+    $metrics = @{
+        InstrCov  = $fInstrCov
+        InstrMiss = $fInstrMiss
+        LineCov   = $fLineCov
+        LineMiss  = $fLineMiss
+        MethCov   = $fMethCov
+        MethMiss  = ($FileRecord.Methods.Count - $fMethCov)
+        ClassCov  = $fClassCov
+        ClassMiss = (1 - $fClassCov)
+    }
+    Add-JaCoCoCounterXml -Builder $Builder -Indent '      ' -Metrics $metrics
+    $null = $Builder.AppendLine('    </sourcefile>')
+}
+
+<#
+.SYNOPSIS
+Appends a JaCoCo package XML element and returns its aggregated coverage counters.
+.PARAMETER Builder
+StringBuilder accumulating XML text.
+.PARAMETER PackageName
+JaCoCo package name.
+.PARAMETER PackageFiles
+Ordered dictionary of file coverage records within the package.
+#>
+function Add-JaCoCoPackageXml {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Text.StringBuilder]$Builder,
+
+        [Parameter(Mandatory)]
+        [string]$PackageName,
+
+        [Parameter(Mandatory)]
+        [System.Collections.Specialized.OrderedDictionary]$PackageFiles
+    )
+
+    $escapedPkg = [System.Security.SecurityElement]::Escape($PackageName)
+    $null = $Builder.AppendLine("  <package name=`"$escapedPkg`">")
+
+    $pkgMetrics = @{
+        InstrCov  = 0; InstrMiss = 0
+        LineCov   = 0; LineMiss  = 0
+        MethCov   = 0; MethMiss  = 0
+        ClassCov  = 0; ClassMiss = 0
+    }
+
+    $sortedFiles = @($PackageFiles.Keys | Sort-Object)
+    foreach ($relFile in $sortedFiles) {
+        $classMetrics = Add-JaCoCoClassXml -Builder $Builder -FileRecord $PackageFiles[$relFile]
+        foreach ($key in @($pkgMetrics.Keys)) {
+            $pkgMetrics[$key] += $classMetrics[$key]
+        }
+    }
+
+    foreach ($relFile in $sortedFiles) {
+        Add-JaCoCoSourceFileXml -Builder $Builder -FileRecord $PackageFiles[$relFile]
+    }
+
+    Add-JaCoCoCounterXml -Builder $Builder -Indent '    ' -Metrics $pkgMetrics
+    $null = $Builder.AppendLine('  </package>')
+    return $pkgMetrics
 }
 
 <#
@@ -390,52 +804,7 @@ function Export-MergedJaCoCoXml {
 
     $endTime = [System.DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
     $startTime = [Math]::Max([long]0, ($endTime - $ElapsedMilliseconds))
-
-    $packages = [ordered]@{}
-    foreach ($cmd in $MergedCommands) {
-        $relFile = ConvertTo-RepoRelativePath -Path $cmd.File -Root $ReportRoot
-        $lastSlash = $relFile.LastIndexOf('/')
-        $pkgName = if ($lastSlash -gt 0) { $relFile.Substring(0, $lastSlash) } else { '.' }
-        $fileName = if ($lastSlash -ge 0) { $relFile.Substring($lastSlash + 1) } else { $relFile }
-        $className = if ($relFile.LastIndexOf('.') -gt 0) { $relFile.Substring(0, $relFile.LastIndexOf('.')) } else { $relFile }
-        $funcName = if ([string]::IsNullOrWhiteSpace($cmd.Function)) { '<script>' } else { $cmd.Function }
-        $lineKey = [string]$cmd.StartLine
-        $isHit = ([int]$cmd.HitCount) -gt 0
-
-        if (-not $packages.Contains($pkgName)) {
-            $packages[$pkgName] = [ordered]@{}
-        }
-        if (-not $packages[$pkgName].Contains($relFile)) {
-            $packages[$pkgName][$relFile] = @{
-                ClassName  = $className
-                SourceFile = $fileName
-                Methods    = [ordered]@{}
-                Lines      = [ordered]@{}
-            }
-        }
-
-        $fileRec = $packages[$pkgName][$relFile]
-        if (-not $fileRec.Methods.Contains($funcName)) {
-            $fileRec.Methods[$funcName] = @{
-                FirstLine = [int]$cmd.StartLine
-                Lines     = @{}
-                InstrCov  = 0
-                InstrMiss = 0
-            }
-        }
-        $methodRec = $fileRec.Methods[$funcName]
-        if ([int]$cmd.StartLine -lt $methodRec.FirstLine) {
-            $methodRec.FirstLine = [int]$cmd.StartLine
-        }
-        if ($isHit) { $methodRec.InstrCov++ } else { $methodRec.InstrMiss++ }
-        if (-not $methodRec.Lines.ContainsKey($lineKey)) { $methodRec.Lines[$lineKey] = $false }
-        if ($isHit) { $methodRec.Lines[$lineKey] = $true }
-
-        if (-not $fileRec.Lines.Contains($lineKey)) {
-            $fileRec.Lines[$lineKey] = @{ Cov = 0; Miss = 0 }
-        }
-        if ($isHit) { $fileRec.Lines[$lineKey].Cov++ } else { $fileRec.Lines[$lineKey].Miss++ }
-    }
+    $packages = ConvertTo-JaCoCoPackageMap -MergedCommands $MergedCommands -ReportRoot $ReportRoot
 
     $sb = [System.Text.StringBuilder]::new()
     $null = $sb.AppendLine('<?xml version="1.0" encoding="utf-8" standalone="no"?>')
@@ -443,108 +812,21 @@ function Export-MergedJaCoCoXml {
     $null = $sb.AppendLine('<report name="Pester ()">')
     $null = $sb.AppendLine("  <sessioninfo id=`"this`" start=`"$startTime`" dump=`"$endTime`" />")
 
-    $repInstrCov = 0; $repInstrMiss = 0
-    $repLineCov = 0; $repLineMiss = 0
-    $repMethCov = 0; $repMethMiss = 0
-    $repClassCov = 0; $repClassMiss = 0
-
-    foreach ($pkgName in ($packages.Keys | Sort-Object)) {
-        $escapedPkg = [System.Security.SecurityElement]::Escape($pkgName)
-        $null = $sb.AppendLine("  <package name=`"$escapedPkg`">")
-        $pkgInstrCov = 0; $pkgInstrMiss = 0
-        $pkgLineCov = 0; $pkgLineMiss = 0
-        $pkgMethCov = 0; $pkgMethMiss = 0
-        $pkgClassCov = 0; $pkgClassMiss = 0
-
-        $sortedFiles = @($packages[$pkgName].Keys | Sort-Object)
-        foreach ($relFile in $sortedFiles) {
-            $fileRec = $packages[$pkgName][$relFile]
-            $escClass = [System.Security.SecurityElement]::Escape($fileRec.ClassName)
-            $escSrc = [System.Security.SecurityElement]::Escape($fileRec.SourceFile)
-            $null = $sb.AppendLine("    <class name=`"$escClass`" sourcefilename=`"$escSrc`">")
-
-            $fInstrCov = 0; $fInstrMiss = 0
-            $fLineCov = 0; $fLineMiss = 0
-            $fMethCov = 0; $fMethMiss = 0
-
-            foreach ($mName in $fileRec.Methods.Keys) {
-                $m = $fileRec.Methods[$mName]
-                $escMeth = [System.Security.SecurityElement]::Escape($mName)
-                $mLineCov = @($m.Lines.Values | Where-Object { $_ }).Count
-                $mLineMiss = $m.Lines.Count - $mLineCov
-                $mCovFlag = if ($m.InstrCov -gt 0) { 1 } else { 0 }
-                $mMissFlag = 1 - $mCovFlag
-                $fMethCov += $mCovFlag
-                $fMethMiss += $mMissFlag
-
-                $null = $sb.AppendLine("      <method name=`"$escMeth`" desc=`"()`" line=`"$($m.FirstLine)`">")
-                $null = $sb.AppendLine("        <counter type=`"INSTRUCTION`" missed=`"$($m.InstrMiss)`" covered=`"$($m.InstrCov)`" />")
-                $null = $sb.AppendLine("        <counter type=`"LINE`" missed=`"$mLineMiss`" covered=`"$mLineCov`" />")
-                $null = $sb.AppendLine("        <counter type=`"METHOD`" missed=`"$mMissFlag`" covered=`"$mCovFlag`" />")
-                $null = $sb.AppendLine('      </method>')
-            }
-
-            foreach ($lk in $fileRec.Lines.Keys) {
-                $l = $fileRec.Lines[$lk]
-                $fInstrCov += $l.Cov
-                $fInstrMiss += $l.Miss
-                if ($l.Cov -gt 0) { $fLineCov++ } else { $fLineMiss++ }
-            }
-            $fClassCov = if ($fInstrCov -gt 0) { 1 } else { 0 }
-            $fClassMiss = 1 - $fClassCov
-
-            $null = $sb.AppendLine("      <counter type=`"INSTRUCTION`" missed=`"$fInstrMiss`" covered=`"$fInstrCov`" />")
-            $null = $sb.AppendLine("      <counter type=`"LINE`" missed=`"$fLineMiss`" covered=`"$fLineCov`" />")
-            $null = $sb.AppendLine("      <counter type=`"METHOD`" missed=`"$fMethMiss`" covered=`"$fMethCov`" />")
-            $null = $sb.AppendLine("      <counter type=`"CLASS`" missed=`"$fClassMiss`" covered=`"$fClassCov`" />")
-            $null = $sb.AppendLine('    </class>')
-
-            $pkgInstrCov += $fInstrCov; $pkgInstrMiss += $fInstrMiss
-            $pkgLineCov += $fLineCov; $pkgLineMiss += $fLineMiss
-            $pkgMethCov += $fMethCov; $pkgMethMiss += $fMethMiss
-            $pkgClassCov += $fClassCov; $pkgClassMiss += $fClassMiss
-        }
-
-        foreach ($relFile in $sortedFiles) {
-            $fileRec = $packages[$pkgName][$relFile]
-            $escSrc = [System.Security.SecurityElement]::Escape($fileRec.SourceFile)
-            $null = $sb.AppendLine("    <sourcefile name=`"$escSrc`">")
-            $fInstrCov = 0; $fInstrMiss = 0
-            $fLineCov = 0; $fLineMiss = 0
-            foreach ($lk in ($fileRec.Lines.Keys | Sort-Object -Property { [int]$_ })) {
-                $l = $fileRec.Lines[$lk]
-                $fInstrCov += $l.Cov
-                $fInstrMiss += $l.Miss
-                if ($l.Cov -gt 0) { $fLineCov++ } else { $fLineMiss++ }
-                $null = $sb.AppendLine("      <line nr=`"$lk`" mi=`"$($l.Miss)`" ci=`"$($l.Cov)`" mb=`"0`" cb=`"0`" />")
-            }
-            $fMethCov = @($fileRec.Methods.Values | Where-Object { $_.InstrCov -gt 0 }).Count
-            $fMethMiss = $fileRec.Methods.Count - $fMethCov
-            $fClassCov = if ($fInstrCov -gt 0) { 1 } else { 0 }
-            $fClassMiss = 1 - $fClassCov
-            $null = $sb.AppendLine("      <counter type=`"INSTRUCTION`" missed=`"$fInstrMiss`" covered=`"$fInstrCov`" />")
-            $null = $sb.AppendLine("      <counter type=`"LINE`" missed=`"$fLineMiss`" covered=`"$fLineCov`" />")
-            $null = $sb.AppendLine("      <counter type=`"METHOD`" missed=`"$fMethMiss`" covered=`"$fMethCov`" />")
-            $null = $sb.AppendLine("      <counter type=`"CLASS`" missed=`"$fClassMiss`" covered=`"$fClassCov`" />")
-            $null = $sb.AppendLine('    </sourcefile>')
-        }
-
-        $null = $sb.AppendLine("    <counter type=`"INSTRUCTION`" missed=`"$pkgInstrMiss`" covered=`"$pkgInstrCov`" />")
-        $null = $sb.AppendLine("    <counter type=`"LINE`" missed=`"$pkgLineMiss`" covered=`"$pkgLineCov`" />")
-        $null = $sb.AppendLine("    <counter type=`"METHOD`" missed=`"$pkgMethMiss`" covered=`"$pkgMethCov`" />")
-        $null = $sb.AppendLine("    <counter type=`"CLASS`" missed=`"$pkgClassMiss`" covered=`"$pkgClassCov`" />")
-        $null = $sb.AppendLine('  </package>')
-
-        $repInstrCov += $pkgInstrCov; $repInstrMiss += $pkgInstrMiss
-        $repLineCov += $pkgLineCov; $repLineMiss += $pkgLineMiss
-        $repMethCov += $pkgMethCov; $repMethMiss += $pkgMethMiss
-        $repClassCov += $pkgClassCov; $repClassMiss += $pkgClassMiss
+    $repMetrics = @{
+        InstrCov  = 0; InstrMiss = 0
+        LineCov   = 0; LineMiss  = 0
+        MethCov   = 0; MethMiss  = 0
+        ClassCov  = 0; ClassMiss = 0
     }
 
-    $null = $sb.AppendLine("  <counter type=`"INSTRUCTION`" missed=`"$repInstrMiss`" covered=`"$repInstrCov`" />")
-    $null = $sb.AppendLine("  <counter type=`"LINE`" missed=`"$repLineMiss`" covered=`"$repLineCov`" />")
-    $null = $sb.AppendLine("  <counter type=`"METHOD`" missed=`"$repMethMiss`" covered=`"$repMethCov`" />")
-    $null = $sb.AppendLine("  <counter type=`"CLASS`" missed=`"$repClassMiss`" covered=`"$repClassCov`" />")
+    foreach ($pkgName in ($packages.Keys | Sort-Object)) {
+        $pkgMetrics = Add-JaCoCoPackageXml -Builder $sb -PackageName $pkgName -PackageFiles $packages[$pkgName]
+        foreach ($key in @($repMetrics.Keys)) {
+            $repMetrics[$key] += $pkgMetrics[$key]
+        }
+    }
+
+    Add-JaCoCoCounterXml -Builder $sb -Indent '  ' -Metrics $repMetrics
     $null = $sb.AppendLine('</report>')
 
     $utf8Bom = [System.Text.UTF8Encoding]::new($true)
@@ -625,6 +907,66 @@ function Merge-ShardJUnitXml {
 
 <#
 .SYNOPSIS
+Reads and validates a single shard coverage JSON file.
+.PARAMETER FilePath
+Path to the shard coverage JSON file.
+#>
+function Read-ShardCoveragePayload {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$FilePath
+    )
+
+    if (-not (Test-Path -LiteralPath $FilePath)) {
+        throw "Expected shard coverage JSON file not found: $FilePath"
+    }
+    $data = Get-Content -LiteralPath $FilePath -Raw | ConvertFrom-Json
+    if ([int]$data.CommandsAnalyzed -le 0) {
+        throw "Shard coverage file '$FilePath' reported 0 analyzed commands."
+    }
+    return $data
+}
+
+<#
+.SYNOPSIS
+Merges shard command hit records into the shared ordered coverage dictionary.
+.PARAMETER Merged
+Ordered dictionary mapping command keys to merged coverage records.
+.PARAMETER Commands
+Array of command coverage entries from one shard.
+#>
+function Merge-ShardCommandCoverage {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Collections.Specialized.OrderedDictionary]$Merged,
+
+        [Parameter(Mandatory)]
+        [object[]]$Commands
+    )
+
+    foreach ($cmd in $Commands) {
+        $key = "$($cmd.File)|$($cmd.StartLine)|$($cmd.EndLine)|$($cmd.StartColumn)|$($cmd.EndColumn)|$($cmd.Function)"
+        if (-not $Merged.Contains($key)) {
+            $Merged[$key] = [pscustomobject]@{
+                File        = [string]$cmd.File
+                StartLine   = [int]$cmd.StartLine
+                EndLine     = [int]$cmd.EndLine
+                StartColumn = [int]$cmd.StartColumn
+                EndColumn   = [int]$cmd.EndColumn
+                Function    = [string]$cmd.Function
+                Command     = [string]$cmd.Command
+                HitCount    = [int]$cmd.HitCount
+            }
+        } else {
+            $Merged[$key].HitCount += [int]$cmd.HitCount
+        }
+    }
+}
+
+<#
+.SYNOPSIS
 Merges command-level coverage JSON files from multiple shards and verifies denominator integrity.
 .PARAMETER InputFiles
 Paths to shard coverage JSON files.
@@ -640,37 +982,14 @@ function Merge-ShardCoverageData {
     $expectedCount = $null
 
     foreach ($file in $InputFiles) {
-        if (-not (Test-Path -LiteralPath $file)) {
-            throw "Expected shard coverage JSON file not found: $file"
-        }
-        $data = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
+        $data = Read-ShardCoveragePayload -FilePath $file
         $shardCount = [int]$data.CommandsAnalyzed
-        if ($shardCount -le 0) {
-            throw "Shard coverage file '$file' reported 0 analyzed commands."
-        }
         if ($null -eq $expectedCount) {
             $expectedCount = $shardCount
         } elseif ($shardCount -ne $expectedCount) {
             throw "Shard coverage denominator mismatch in '$file': expected $expectedCount analyzed commands, got $shardCount."
         }
-
-        foreach ($cmd in @($data.Commands)) {
-            $key = "$($cmd.File)|$($cmd.StartLine)|$($cmd.EndLine)|$($cmd.StartColumn)|$($cmd.EndColumn)|$($cmd.Function)"
-            if (-not $merged.Contains($key)) {
-                $merged[$key] = [pscustomobject]@{
-                    File        = [string]$cmd.File
-                    StartLine   = [int]$cmd.StartLine
-                    EndLine     = [int]$cmd.EndLine
-                    StartColumn = [int]$cmd.StartColumn
-                    EndColumn   = [int]$cmd.EndColumn
-                    Function    = [string]$cmd.Function
-                    Command     = [string]$cmd.Command
-                    HitCount    = [int]$cmd.HitCount
-                }
-            } else {
-                $merged[$key].HitCount += [int]$cmd.HitCount
-            }
-        }
+        Merge-ShardCommandCoverage -Merged $merged -Commands @($data.Commands)
     }
 
     if ($merged.Count -ne $expectedCount) {
