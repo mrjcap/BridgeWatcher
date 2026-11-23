@@ -21,7 +21,8 @@ test-secrets/
 *.psm1~
 
 # Visual Studio Code
-.vscode/
+.vscode/*
+!.vscode/settings.json
 *.code-workspace
 
 # Windows
