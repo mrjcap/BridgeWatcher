@@ -52,7 +52,10 @@ Describe 'Test Get-BridgeStatus function' {
     Context 'Αποτυχία ανάκτησης HTML' {
         It 'Πρέπει να ρίχνει terminating error όταν το Invoke-WebRequest αποτυγχάνει' {
             Mock Invoke-WebRequest { throw 'Σφάλμα δικτύου' }
+            Mock Start-Sleep {}
             { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*Σφάλμα δικτύου*"
+            Should -Invoke -CommandName Invoke-WebRequest -Times 3 -Exactly -Scope It
+            Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
         }
         It 'Πρέπει να ρίχνει terminating error όταν το response είναι κενό' {
             Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $null } }
@@ -96,6 +99,7 @@ Describe 'Get-BridgeStatus Integration' {
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusObject.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Resolve-BridgeStateForChange.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
+        $script:Config = New-BridgeConfiguration
     }
 
     It 'Επιστρέφει σωστά αποτελέσματα για Ποσειδωνία και Ισθμία από mocked HTML' {
@@ -171,7 +175,7 @@ Describe 'Get-BridgeStatus Integration' {
 
 Describe 'Get-BridgeStatus Configuration Fallbacks' {
     BeforeAll {
-
+        . "$PSScriptRoot/TestHelper.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Export-BridgeStatusJson.ps1"

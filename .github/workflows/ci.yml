@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  merge_group:
   workflow_call:
     secrets:
       CODECOV_TOKEN:
@@ -12,135 +13,590 @@ on:
       CODACY_API_TOKEN:
         required: false
 
-permissions:
-  contents: read
-  pull-requests: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.event_name, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   # renovate: datasource=github-releases depName=PowerShell/PowerShell
   POWERSHELL_VERSION: '7.7.0'
+  PESTER_VERSION: '6.2.0'
+  PSSA_VERSION: '1.25.0'
   # renovate: datasource=github-releases depName=codacy/codacy-coverage-reporter
   CODACY_REPORTER_VERSION: '14.1.3'
   CODACY_REPORTER_SHA256: '15c5f052207d27b8501ab5d5910c68c206ea70b0157ee1725132780530580875'
+  SETUP_BUDGET_S: '15'
+  PARSE_BUDGET_S: '5'
+  SHARD_BUDGET_S: '30'
+  JOB_BUDGET_S: '35'
 
 jobs:
-  test:
-    strategy:
-      matrix:
-        os: [ubuntu-26.04]
-    name: Test on ${{ matrix.os }} with PowerShell
-    runs-on: ${{ matrix.os }}
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
-
+  static-checks:
+    name: Static Checks (Gitleaks, Parse, Manifest, Lint)
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
     steps:
+      - name: Record job start time
+        id: timing
+        run: echo "job_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Setup PowerShell
+        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36 # v1
+        with:
+          tag: 'v${{ env.POWERSHELL_VERSION }}'
+
+      - name: Record cache restore start
+        id: cache_start
+        run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache PowerShell modules (main seed)
+        id: cache_main
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-v1
+
+      - name: Restore PowerShell modules (read-only)
+        id: cache_ro
+        if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-v1
+
+      - name: Verify or install pinned PowerShell modules
+        shell: pwsh
+        env:
+          CACHE_HIT: ${{ steps.cache_main.outputs.cache-hit || steps.cache_ro.outputs.cache-hit || 'false' }}
+          CACHE_START: ${{ steps.cache_start.outputs.ts }}
+          IS_MAIN_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $restoreSeconds = [long]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - [long]$env:CACHE_START)
+          Write-Output "Module cache hit=$($env:CACHE_HIT) (restore=${restoreSeconds}s)"
+
+          $userModulesDir = Join-Path -Path $HOME -ChildPath '.local/share/powershell/Modules'
+          $required = @(
+            @{ Name = 'Pester'; RequiredVersion = $env:PESTER_VERSION }
+            @{ Name = 'PSScriptAnalyzer'; RequiredVersion = $env:PSSA_VERSION }
+          )
+
+          $toInstall = @()
+          foreach ($m in $required) {
+            $userPath = Join-Path -Path $userModulesDir -ChildPath (Join-Path -Path $m.Name -ChildPath $m.RequiredVersion)
+            $available = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
+            if ($env:IS_MAIN_PUSH -eq 'true') {
+              # Ensure both pinned modules live in ~/.local/share/powershell/Modules for main cache seeding.
+              if (-not (Test-Path -LiteralPath $userPath)) {
+                $toInstall += $m
+              }
+            } elseif (-not $available) {
+              $toInstall += $m
+            }
+          }
+
+          if ($toInstall.Count -gt 0) {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            foreach ($m in $toInstall) {
+              Write-Output "Installing pinned $($m.Name) $($m.RequiredVersion)..."
+              Install-Module -Name $m.Name -RequiredVersion $m.RequiredVersion -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
+            }
+          }
+
+          foreach ($m in $required) {
+            $verified = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
+            if (-not $verified) {
+              throw "Required PowerShell module $($m.Name) $($m.RequiredVersion) is missing after restore/install."
+            }
+            Write-Output "Verified $($m.Name) $($m.RequiredVersion) at $($verified[0].ModuleBase)"
+          }
+
+      - name: Record setup elapsed time
+        id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+        run: |
+          now=$(date +%s)
+          setup_s=$((now - JOB_START))
+          echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
+          echo "Static checks setup: ${setup_s}s (budget: ${SETUP_BUDGET_S}s)"
+
       - name: Run Gitleaks secret scanning
+        id: gitleaks
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run PowerShell parse, manifest validation, and PSScriptAnalyzer
+        id: ps_static
+        if: always() && steps.setup_timing.outcome == 'success'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $failures = [System.Collections.Generic.List[string]]::new()
+
+          # 1. PowerShell AST parsing & module manifest validation (budget: <= 5s)
+          $parseSw = [System.Diagnostics.Stopwatch]::StartNew()
+          $parseErrors = [System.Collections.Generic.List[string]]::new()
+          $psFiles = @(
+            Get-ChildItem -Path './BridgeWatcher', './Tests', './scripts' -Recurse -File -Include '*.ps1', '*.psm1', '*.psd1'
+            Get-Item -LiteralPath './run.ps1', './gate.ps1', './PSScriptAnalyzerSettings.psd1'
+          )
+          foreach ($file in $psFiles) {
+            $tokens = $null
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors)
+            if ($errors -and $errors.Count -gt 0) {
+              foreach ($err in $errors) {
+                $parseErrors.Add("$($file.FullName):$($err.Extent.StartLineNumber): $($err.Message)")
+              }
+            }
+          }
+
+          $manifestPath = Get-ChildItem -Path . -Filter '*.psd1' -Recurse | Where-Object { $_.BaseName -eq $_.Directory.Name } | Select-Object -First 1
+          if (-not $manifestPath) {
+            $parseErrors.Add('Module manifest (.psd1) not found.')
+          } else {
+            try {
+              $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
+              Import-Module -Name $manifestPath.FullName -Force -ErrorAction Stop
+              Write-Output "Validated manifest $($manifest.Name) v$($manifest.Version) and parsed $($psFiles.Count) PowerShell files."
+            } catch {
+              $parseErrors.Add("Module manifest/import validation failed: $($_.Exception.Message)")
+            }
+          }
+          $parseSw.Stop()
+          $parseSec = [Math]::Round($parseSw.Elapsed.TotalSeconds, 2)
+          Write-Output "PowerShell parse & manifest validation: ${parseSec}s (budget: $($env:PARSE_BUDGET_S)s)"
+
+          if ($parseErrors.Count -gt 0) {
+            foreach ($pe in $parseErrors) { Write-Output "::error::$pe" }
+            $failures.Add("PowerShell parse/manifest validation failed with $($parseErrors.Count) error(s).")
+          }
+
+          # 2. PSScriptAnalyzer full repository lint + UTF-8 BOM compliance
+          $lintSw = [System.Diagnostics.Stopwatch]::StartNew()
+          Import-Module -Name PSScriptAnalyzer -RequiredVersion $env:PSSA_VERSION -Force -ErrorAction Stop
+          $analysisResults = @(
+            Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+            Invoke-ScriptAnalyzer -Path ./Tests -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+            Invoke-ScriptAnalyzer -Path ./run.ps1 -Settings ./PSScriptAnalyzerSettings.psd1
+            Invoke-ScriptAnalyzer -Path ./scripts -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 -Severity Error,Warning
+            Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -IncludeRule PSUseBOMForUnicodeEncodedFile
+            Invoke-ScriptAnalyzer -Path ./Tests -Recurse -IncludeRule PSUseBOMForUnicodeEncodedFile
+          )
+          $lintSw.Stop()
+          $lintSec = [Math]::Round($lintSw.Elapsed.TotalSeconds, 2)
+          Write-Output "PSScriptAnalyzer full scan ($($psFiles.Count) files): ${lintSec}s"
+
+          if ($analysisResults.Count -gt 0) {
+            $analysisResults | Format-Table -Property ScriptName, Line, Severity, RuleName, Message -Wrap
+            $failures.Add("PSScriptAnalyzer found $($analysisResults.Count) issue(s).")
+          }
+
+          if ($failures.Count -gt 0) {
+            foreach ($msg in $failures) { Write-Output "::error::$msg" }
+            exit 1
+          }
+
+          if ($parseSw.Elapsed.TotalSeconds -gt [double]$env:PARSE_BUDGET_S) {
+            Write-Output "::error::PowerShell parse & manifest validation exceeded budget: ${parseSec}s > $($env:PARSE_BUDGET_S)s"
+            exit 1
+          }
+
+      - name: Enforce performance budget
+        if: always()
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
+          SETUP_BUDGET_S: ${{ env.SETUP_BUDGET_S }}
+          COLD_SETUP_BUDGET_S: '25'
+          WARM_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          COLD_BUDGET_S: '45'
+          CACHE_HIT: ${{ steps.cache_main.outputs.cache-hit || steps.cache_ro.outputs.cache-hit || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          now=$(date +%s)
+          elapsed=$((now - JOB_START))
+          if [ "$CACHE_HIT" = "true" ]; then
+            effective_setup_budget="$SETUP_BUDGET_S"
+            effective_job_budget="$WARM_BUDGET_S"
+            budget_label="warm"
+          else
+            effective_setup_budget="$COLD_SETUP_BUDGET_S"
+            effective_job_budget="$COLD_BUDGET_S"
+            budget_label="cold-cache (warm budgets: setup=${SETUP_BUDGET_S}s, job=${WARM_BUDGET_S}s)"
+          fi
+          echo "Static checks setup: ${SETUP_S}s (budget: ${effective_setup_budget}s [${budget_label}], cache_hit=${CACHE_HIT})"
+          echo "Static checks execution: ${elapsed}s (budget: ${effective_job_budget}s [${budget_label}])"
+          failed=0
+          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$effective_setup_budget" ]; then
+            echo "::error::Static checks setup exceeded ${budget_label} budget: ${SETUP_S}s > ${effective_setup_budget}s"
+            failed=1
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$effective_job_budget" ]; then
+            echo "::error::Static checks job exceeded ${budget_label} budget: ${elapsed}s > ${effective_job_budget}s"
+            failed=1
+          fi
+          exit "$failed"
+
+  unit-tests:
+    name: Unit Tests (Shard ${{ matrix.shard }}/3)
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    steps:
+      - name: Record job start time
+        id: timing
+        run: echo "job_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: Setup PowerShell
         uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36 # v1
         with:
           tag: 'v${{ env.POWERSHELL_VERSION }}'
 
-      - name: Cache PowerShell modules
+      - name: Record cache restore start
+        id: cache_start
+        run: echo "ts=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore PowerShell modules (read-only)
+        id: cache_ro
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-v1
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-
+
+      - name: Restore historical test timings (main)
+        id: timings_cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/bridgewatcher-timings
+          key: timings-main-${{ github.sha }}
+          restore-keys: |
+            timings-main-
+
+      - name: Verify or install pinned PowerShell modules
+        shell: pwsh
+        env:
+          CACHE_HIT: ${{ steps.cache_ro.outputs.cache-hit || 'false' }}
+          CACHE_START: ${{ steps.cache_start.outputs.ts }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $restoreSeconds = [long]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - [long]$env:CACHE_START)
+          Write-Output "Module cache hit=$($env:CACHE_HIT) (restore=${restoreSeconds}s)"
+
+          $required = @(
+            @{ Name = 'Pester'; RequiredVersion = $env:PESTER_VERSION }
+            @{ Name = 'PSScriptAnalyzer'; RequiredVersion = $env:PSSA_VERSION }
+          )
+
+          $toInstall = @()
+          foreach ($m in $required) {
+            $available = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
+            if (-not $available) {
+              $toInstall += $m
+            }
+          }
+
+          if ($toInstall.Count -gt 0) {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            foreach ($m in $toInstall) {
+              Write-Output "Installing pinned $($m.Name) $($m.RequiredVersion)..."
+              Install-Module -Name $m.Name -RequiredVersion $m.RequiredVersion -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
+            }
+          }
+
+          foreach ($m in $required) {
+            $verified = Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion }
+            if (-not $verified) {
+              throw "Required PowerShell module $($m.Name) $($m.RequiredVersion) is missing after restore/install."
+            }
+          }
+
+      - name: Record setup elapsed time
+        id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+        run: |
+          now=$(date +%s)
+          setup_s=$((now - JOB_START))
+          echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
+          echo "Unit tests shard setup: ${setup_s}s (budget: ${SETUP_BUDGET_S}s)"
+
+      - name: Run isolated Pester shard
+        shell: pwsh
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: '3'
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cachedTimings = '/tmp/bridgewatcher-timings/test-timings.json'
+          $seedTimings = './Tests/test-timings.seed.json'
+          $timingsIn = if (Test-Path -LiteralPath $cachedTimings) { $cachedTimings } elseif (Test-Path -LiteralPath $seedTimings) { $seedTimings } else { '' }
+          $sharedSeed = [int](([long]$env:RUN_ID % 2147483000) + [long]$env:RUN_ATTEMPT)
+          Write-Output "Running unit test shard $($env:SHARD_INDEX)/$($env:SHARD_COUNT) with shared seed=$sharedSeed (timings source: $timingsIn)."
+          & ./scripts/Invoke-TestSuite.ps1 `
+            -ShardCount ([int]$env:SHARD_COUNT) `
+            -ShardIndex ([int]$env:SHARD_INDEX) `
+            -Shuffle `
+            -Seed $sharedSeed `
+            -TimingsPath $timingsIn `
+            -EmitShardArtifactsDirectory "./shard-output/shard-$($env:SHARD_INDEX)" `
+            -CoverageThreshold 100 `
+            -MaxDurationSeconds ([int]$env:SHARD_BUDGET_S)
+
+      - name: Upload shard test and coverage bundle
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shard-${{ matrix.shard }}
+          path: ./shard-output/shard-${{ matrix.shard }}
+          retention-days: 1
+          compression-level: 0
+
+      - name: Enforce performance budget
+        if: always()
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
+          SETUP_BUDGET_S: ${{ env.SETUP_BUDGET_S }}
+          COLD_SETUP_BUDGET_S: '25'
+          WARM_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          COLD_BUDGET_S: '45'
+          CACHE_HIT: ${{ steps.cache_ro.outputs.cache-hit || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+          SHARD_INDEX: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          now=$(date +%s)
+          elapsed=$((now - JOB_START))
+          if [ "$CACHE_HIT" = "true" ]; then
+            effective_setup_budget="$SETUP_BUDGET_S"
+            effective_budget="$WARM_BUDGET_S"
+            budget_label="warm"
+          else
+            effective_setup_budget="$COLD_SETUP_BUDGET_S"
+            effective_budget="$COLD_BUDGET_S"
+            budget_label="cold-cache (warm budgets: setup=${SETUP_BUDGET_S}s, job=${WARM_BUDGET_S}s)"
+          fi
+          echo "Unit shard ${SHARD_INDEX} setup: ${SETUP_S}s (budget: ${effective_setup_budget}s [${budget_label}], cache_hit=${CACHE_HIT})"
+          echo "Unit shard ${SHARD_INDEX} execution: ${elapsed}s (budget: ${effective_budget}s [${budget_label}])"
+          failed=0
+          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$effective_setup_budget" ]; then
+            echo "::error::Unit shard ${SHARD_INDEX} setup exceeded ${budget_label} budget: ${SETUP_S}s > ${effective_setup_budget}s"
+            failed=1
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$effective_budget" ]; then
+            echo "::error::Unit shard ${SHARD_INDEX} exceeded ${budget_label} budget: ${elapsed}s > ${effective_budget}s"
+            failed=1
+          fi
+          exit "$failed"
+
+  integration-tests:
+    name: Integration Tests (Tracked Integration Suite)
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - name: Record job start time
+        id: timing
+        run: echo "job_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup PowerShell
+        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36 # v1
+        with:
+          tag: 'v${{ env.POWERSHELL_VERSION }}'
+
+      - name: Restore PowerShell modules (read-only)
+        id: cache_ro
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-v1
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-pwsh-${{ env.POWERSHELL_VERSION }}-pester-${{ env.PESTER_VERSION }}-pssa-${{ env.PSSA_VERSION }}-
+
+      - name: Verify or install pinned Pester
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $found = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -eq [version]$env:PESTER_VERSION }
+          if (-not $found) {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            Install-Module -Name Pester -RequiredVersion $env:PESTER_VERSION -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop
+          }
+
+      - name: Record setup elapsed time
+        id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+        run: |
+          now=$(date +%s)
+          setup_s=$((now - JOB_START))
+          echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
+          echo "Integration tests setup: ${setup_s}s (budget: ${SETUP_BUDGET_S}s)"
+
+      - name: Run Integration-tagged Pester tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./scripts/Invoke-TestSuite.ps1 `
+            -IntegrationOnly `
+            -SkipCoverage `
+            -TestResultOutputPath './integrationTestResults.xml' `
+            -MaxDurationSeconds ([int]$env:SHARD_BUDGET_S)
+
+      - name: Enforce performance budget
+        if: always()
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
+          SETUP_BUDGET_S: ${{ env.SETUP_BUDGET_S }}
+          COLD_SETUP_BUDGET_S: '25'
+          JOB_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          CACHE_HIT: ${{ steps.cache_ro.outputs.cache-hit || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          now=$(date +%s)
+          elapsed=$((now - JOB_START))
+          if [ "$CACHE_HIT" = "true" ]; then
+            effective_setup_budget="$SETUP_BUDGET_S"
+            budget_label="warm"
+          else
+            effective_setup_budget="$COLD_SETUP_BUDGET_S"
+            budget_label="cold-cache (warm budget: ${SETUP_BUDGET_S}s)"
+          fi
+          echo "Integration tests setup: ${SETUP_S}s (budget: ${effective_setup_budget}s [${budget_label}], cache_hit=${CACHE_HIT})"
+          echo "Integration tests execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
+          failed=0
+          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$effective_setup_budget" ]; then
+            echo "::error::Integration tests setup exceeded ${budget_label} budget: ${SETUP_S}s > ${effective_setup_budget}s"
+            failed=1
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
+            echo "::error::Integration tests job exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
+            failed=1
+          fi
+          exit "$failed"
+
+  test:
+    name: Test on ubuntu-26.04 with PowerShell
+    runs-on: ubuntu-26.04
+    needs: [static-checks, unit-tests, integration-tests]
+    if: always()
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
+    steps:
+      - name: Record job start time
+        id: timing
+        run: echo "job_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        if: needs.unit-tests.result == 'success'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup PowerShell
+        if: needs.unit-tests.result == 'success'
+        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36 # v1
+        with:
+          tag: 'v${{ env.POWERSHELL_VERSION }}'
+
+      - name: Download unit shard bundles
+        if: needs.unit-tests.result == 'success'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: shard-*
+          path: ./shard-artifacts
+
+      - name: Cache Codacy coverage reporter (main seed)
+        if: ${{ needs.unit-tests.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: |
-            ~/.local/share/powershell/Modules
-            ~/Documents/PowerShell/Modules
-            ~/Library/PowerShell/Modules
-          key: ${{ matrix.os }}-v${{ env.POWERSHELL_VERSION }}-pwshmodules-${{ hashFiles('**/BridgeWatcher.psd1') }}
-          restore-keys: |
-            ${{ matrix.os }}-v${{ env.POWERSHELL_VERSION }}-pwshmodules-
+          path: ~/.cache/bridgewatcher/tools
+          key: ${{ runner.os }}-${{ runner.arch }}-codacy-reporter-${{ env.CODACY_REPORTER_VERSION }}-v1
 
-      - name: Install required PowerShell modules
-        shell: pwsh
-        run: |
-          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          $modules = @('Pester', 'PSScriptAnalyzer')
-          foreach ($module in $modules) {
-            Write-Verbose "Installing $module..."
-            Install-Module -Name $module -Force -Scope CurrentUser -ErrorAction Stop
-          }
-
-      - name: Run PSScriptAnalyzer
-        shell: pwsh
-        run: |
-          Write-Verbose "Running PSScriptAnalyzer..."
-          $analysisResults = @(
-            Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
-            Invoke-ScriptAnalyzer -Path ./Tests -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
-            Invoke-ScriptAnalyzer -Path ./run.ps1 -Settings ./PSScriptAnalyzerSettings.psd1
-            Invoke-ScriptAnalyzer -Path ./scripts -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 -Severity Error,Warning
-          )
-          if ($analysisResults.Count -gt 0) {
-            $analysisResults | Format-Table -AutoSize
-            Write-Error "PSScriptAnalyzer found $($analysisResults.Count) issues!"
-            exit 1
-          } else {
-            Write-Verbose "No PSScriptAnalyzer issues found"
-          }
-
-      - name: Validate module manifest
-        shell: pwsh
-        run: |
-          Write-Verbose "Validating module manifest..."
-          $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse | Where-Object { $_.BaseName -eq $_.Directory.Name } | Select-Object -First 1
-          if (-not $manifestPath) {
-            Write-Error "Module manifest (.psd1) not found!"
-            exit 1
-          }
-          try {
-            $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
-            Write-Verbose " Module manifest is valid"
-            Write-Verbose "Module: $($manifest.Name) v$($manifest.Version)"
-          } catch {
-            Write-Error "Module manifest validation failed: $($_.Exception.Message)"
-            exit 1
-          }
-
-      - name: Run Pester tests
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Continue'
-          Write-Verbose "Running Pester tests..."
-          if (Test-Path ./Tests/PesterConfiguration.psd1) {
-            $config = New-PesterConfiguration -Hashtable (Import-PowerShellDataFile ./Tests/PesterConfiguration.psd1)
-            $result = Invoke-Pester -Configuration $config
-            if ($result.Result -ne 'Passed') {
-              Write-Error " Tests failed! $($result.FailedCount) of $($result.TotalCount) tests failed"
-              exit 1
-            } else {
-              Write-Verbose " All $($result.TotalCount) tests passed"
-            }
-          } else {
-            Write-Error "PesterConfiguration.psd1 not found!"
-            exit 1
-          }
-
-      - name: Upload test results
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
+      - name: Restore Codacy coverage reporter (read-only)
+        if: ${{ needs.unit-tests.result == 'success' && !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          name: test-results-${{ matrix.os }}-v${{ env.POWERSHELL_VERSION }}
+          path: ~/.cache/bridgewatcher/tools
+          key: ${{ runner.os }}-${{ runner.arch }}-codacy-reporter-${{ env.CODACY_REPORTER_VERSION }}-v1
+
+      - name: Merge shard results and enforce 100% coverage
+        id: merge_shards
+        if: needs.unit-tests.result == 'success'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./scripts/Invoke-TestSuite.ps1 `
+            -MergeShardArtifactsDirectory './shard-artifacts' `
+            -ShardCount 3 `
+            -CoverageOutputPath './coverage.xml' `
+            -TestResultOutputPath './testResults.xml' `
+            -RecordTimingsPath '/tmp/bridgewatcher-timings/test-timings.json' `
+            -CoverageThreshold 100
+
+      - name: Save per-file test timings (main only)
+        if: ${{ steps.merge_shards.outcome == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/bridgewatcher-timings
+          key: timings-main-${{ github.sha }}
+
+      - name: Upload merged test and coverage artifacts
+        if: steps.merge_shards.outcome == 'success'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-results-ubuntu-26.04-v${{ env.POWERSHELL_VERSION }}
           path: |
             testResults.xml
             coverage.xml
+            /tmp/bridgewatcher-timings/test-timings.json
           retention-days: 7
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() && env.CODECOV_TOKEN != '' }}
+        if: ${{ steps.merge_shards.outcome == 'success' && !cancelled() && env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -148,24 +604,60 @@ jobs:
           report_type: test_results
 
       - name: Upload coverage to Codecov
-        if: ${{ env.CODECOV_TOKEN != '' }}
+        if: ${{ steps.merge_shards.outcome == 'success' && env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: unittests
-          name: codecov-${{ matrix.os }}-v${{ env.POWERSHELL_VERSION }}
+          name: codecov-ubuntu-26.04-v${{ env.POWERSHELL_VERSION }}
           fail_ci_if_error: true
 
       - name: Run Codacy Coverage Reporter
-        if: ${{ env.CODACY_API_TOKEN != '' }}
+        if: ${{ steps.merge_shards.outcome == 'success' && env.CODACY_API_TOKEN != '' }}
         env:
           CODACY_ORGANIZATION_PROVIDER: gh
           CODACY_USERNAME: mrjcap
           CODACY_PROJECT_NAME: BridgeWatcher
         run: |
-          curl --proto '=https' --tlsv1.2 -fsSL -o /tmp/codacy-coverage-reporter "https://github.com/codacy/codacy-coverage-reporter/releases/download/${CODACY_REPORTER_VERSION}/codacy-coverage-reporter-linux"
-          echo "${CODACY_REPORTER_SHA256}  /tmp/codacy-coverage-reporter" | sha256sum -c -
-          chmod +x /tmp/codacy-coverage-reporter
-          /tmp/codacy-coverage-reporter report -r coverage.xml
-          /tmp/codacy-coverage-reporter final
+          set -euo pipefail
+          TOOLS_DIR="$HOME/.cache/bridgewatcher/tools"
+          REPORTER="$TOOLS_DIR/codacy-coverage-reporter-${CODACY_REPORTER_VERSION}"
+          mkdir -p "$TOOLS_DIR"
+          if [ ! -x "$REPORTER" ] || ! echo "${CODACY_REPORTER_SHA256}  $REPORTER" | sha256sum -c - >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -fsSL -o "$REPORTER" "https://github.com/codacy/codacy-coverage-reporter/releases/download/${CODACY_REPORTER_VERSION}/codacy-coverage-reporter-linux"
+            echo "${CODACY_REPORTER_SHA256}  $REPORTER" | sha256sum -c -
+            chmod +x "$REPORTER"
+          fi
+          "$REPORTER" report -r coverage.xml
+          "$REPORTER" final
+
+      - name: Verify all required PowerShell CI checks passed
+        if: always()
+        env:
+          STATIC_RESULT: ${{ needs.static-checks.result }}
+          UNIT_RESULT: ${{ needs.unit-tests.result }}
+          INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
+          MERGE_OUTCOME: ${{ steps.merge_shards.outcome }}
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          JOB_BUDGET_S: ${{ env.JOB_BUDGET_S }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          now=$(date +%s)
+          elapsed=$((now - JOB_START))
+          echo "static-checks: ${STATIC_RESULT}"
+          echo "unit-tests: ${UNIT_RESULT}"
+          echo "integration-tests: ${INTEGRATION_RESULT}"
+          echo "merge-shards: ${MERGE_OUTCOME}"
+          echo "Aggregator execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
+          failed=0
+          if [ "$STATIC_RESULT" != "success" ] || [ "$UNIT_RESULT" != "success" ] || [ "$INTEGRATION_RESULT" != "success" ] || [ "$MERGE_OUTCOME" != "success" ]; then
+            echo "::error::One or more required PowerShell CI checks did not succeed (static=${STATIC_RESULT}, unit=${UNIT_RESULT}, integration=${INTEGRATION_RESULT}, merge=${MERGE_OUTCOME})."
+            failed=1
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
+            echo "::error::PowerShell CI aggregator exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
+            failed=1
+          fi
+          exit "$failed"
