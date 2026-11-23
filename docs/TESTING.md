@@ -5,6 +5,7 @@ This guide documents BridgeWatcher's testing architecture, local verification en
 ## Verification Entry Points
 
 ### Full Local Pre-Commit Gate
+
 Run the standard gate before every commit:
 
 ```powershell
@@ -14,6 +15,7 @@ pwsh -NoProfile -File ./gate.ps1
 Confirm both exit code `0` and `GATE PASSED`.
 
 ### Explicit Integration Verification
+
 The default `Tests/PesterConfiguration.psd1` excludes `Integration`-tagged tests (`Tests/Integration.Tests.ps1`). Run the full suite including integration tests with:
 
 ```powershell
@@ -23,25 +25,27 @@ pwsh -NoProfile -File ./scripts/Invoke-TestSuite.ps1 -IntegrationOnly -SkipCover
 Or run both unit and integration tests together:
 
 ```powershell
-pwsh -NoProfile -File ./scripts/Invoke-TestSuite.ps1 -IncludeIntegration -ShardCount 4 -RunAllShardsInParallel
+pwsh -NoProfile -File ./scripts/Invoke-TestSuite.ps1 -IncludeIntegration -ShardCount 2 -RunAllShardsInParallel
 ```
 
 ### Process-Isolated Sharding & Randomized Order
-BridgeWatcher tests mutate process-wide environment variables (`$env:IsLegacyPowerShell`, `$env:API_KEY`, `$env:POAPI_KEY`, `$env:POUSER_KEY`, `$env:BRIDGEWATCHER_OUT`) and global helpers, so parallel execution uses **process-isolated shards** via `scripts/Invoke-TestSuite.ps1`:
+
+BridgeWatcher tests mutate process-wide environment variables (`$env:IsLegacyPowerShell`, `$env:API_KEY`, `$env:POAPI_KEY`, `$env:POUSER_KEY`, `$env:BRIDGEWATCHER_OUT`) and global helpers, so parallel execution uses **process-isolated shards** matched to physical CPU cores via `scripts/Invoke-TestSuite.ps1`:
 
 ```powershell
-pwsh -NoProfile -File ./scripts/Invoke-TestSuite.ps1 -ShardCount 4 -RunAllShardsInParallel -Shuffle
+pwsh -NoProfile -File ./scripts/Invoke-TestSuite.ps1 -ShardCount 2 -RunAllShardsInParallel -Shuffle
 ```
 
 Every CI run prints its deterministic shuffle seed and exact reproduction command:
 
 ```powershell
-pwsh -NoProfile -File ./scripts/Invoke-TestSuite.ps1 -ShardCount 4 -RunAllShardsInParallel -Shuffle -Seed <seed>
+pwsh -NoProfile -File ./scripts/Invoke-TestSuite.ps1 -ShardCount 2 -RunAllShardsInParallel -Shuffle -Seed <seed>
 ```
 
 Each shard runs in an isolated child `pwsh` process with dedicated `TMPDIR`/`TEMP`/`TMP` directories. Command-level code coverage is merged across all shards while asserting identical command denominators across the full module scope (`BridgeWatcher/Public/*.ps1`, `BridgeWatcher/Private/*.ps1`) and enforcing the 100% coverage requirement.
 
 ### Historical Per-File Timings
+
 Successful `main` CI runs record per-file durations (`test-timings.json`) to balance shards using longest-processing-time-first (LPT) scheduling. Unmeasured or newly added test files automatically fall back to a default weight (`0.5s`) and are verified by the shard inventory completeness check so no tracked test can be omitted or duplicated.
 
 ## CI Performance Budgets
@@ -66,6 +70,7 @@ Before proposing deletion or consolidation of any existing test, contributors mu
 3. **Test, environment, or infrastructure defect**: The failure was caused by test isolation bugs, external network/service issues, or runner/tooling infrastructure.
 
 ### Deletion & Replacement Rules
+
 - Never delete a test solely because it is slow or inconvenient.
 - Never delete authorization, privacy, security, migration, or concurrency tests.
 - Propose test removal or replacement only after the two-week evidence log demonstrates that the same meaningful behavior remains covered, and submit the proposed deletion for explicit maintainer review and approval.
