@@ -182,12 +182,25 @@ function Update-BridgeStatus {
         $currentState = Get-BridgeStatus -Configuration $Configuration
 
         if ($PSCmdlet.ShouldProcess("BridgeWatcher", "Update status and send notifications")) {
+            $deferredOpenings = @{}
             $invokeSplat = @{
-                PreviousState = $previousState
-                CurrentState  = $currentState
-                Configuration = $Configuration
+                PreviousState    = $previousState
+                CurrentState     = $currentState
+                Configuration    = $Configuration
+                DeferredOpenings = $deferredOpenings
             }
             $diffEvents = Invoke-BridgeStatusComparison @invokeSplat
+            # Keep the saved schedule as the comparison baseline on the next poll.
+            $snapshotCurrent = $currentState
+            if ($deferredOpenings.Count -gt 0) {
+                $snapshotCurrent = @(foreach ($entry in $currentState) {
+                    if ($deferredOpenings.ContainsKey($entry.GefyraName)) {
+                        $deferredOpenings[$entry.GefyraName]
+                    } else {
+                        $entry
+                    }
+                })
+            }
             # Checkpoint successful deliveries independently, keeping failed bridges pending.
             $notifiedBridgeNames = [System.Collections.Generic.List[string]]::new()
             $notificationFailures = @()
@@ -210,7 +223,7 @@ function Update-BridgeStatus {
                 $notifiedBridgeNames.AddRange($eventBridgeNames)
                 $snapshotSplat = @{
                     PreviousState       = $previousState
-                    CurrentState        = $currentState
+                    CurrentState        = $snapshotCurrent
                     DiffEvents          = @($diffEvents)
                     NotifiedBridgeNames = $notifiedBridgeNames.ToArray()
                 }
@@ -223,7 +236,7 @@ function Update-BridgeStatus {
             }
 
             $exportBridgeStatusJsonSplat = @{
-                Data          = $currentState
+                Data          = $snapshotCurrent
                 Path          = $OutputFile
                 Configuration = $Configuration
             }
