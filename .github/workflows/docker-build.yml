@@ -1,8 +1,14 @@
 name: Docker Build, Test and Push
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
+  merge_group:
+  schedule:
+    # Refresh main BuildKit and Trivy caches inside GitHub's 7-day retention window.
+    - cron: '0 4 */5 * *'
   workflow_call:
     inputs:
       version:
@@ -20,6 +26,10 @@ on:
       DOCKERHUB_TOKEN:
         required: false
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.event_name, github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -27,44 +37,121 @@ env:
   REGISTRY: docker.io
   IMAGE_NAME: bridgewatcher
   DOCKER_CONTENT_TRUST: 0
+  DOCKER_BUILD_SUMMARY: 'false'
+  DOCKER_BUILD_RECORD_UPLOAD: 'false'
   # renovate: datasource=github-releases depName=aquasecurity/trivy
   TRIVY_VERSION: '0.76.2'
+  DOCKER_SETUP_BUDGET_S: '15'
+  DOCKER_JOB_BUDGET_S: '35'
+  DOCKER_COLD_JOB_BUDGET_S: '55'
 
 jobs:
-  build-and-test:
-    name: Build and Test Docker Image
+  validate-filebeat:
+    name: Validate Filebeat Configuration
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Record job start time
+        id: timing
+        run: |
+          echo "job_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run && inputs.version != '' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: v${{ inputs.version }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout repository (dry run)
+        if: ${{ github.event_name == 'pull_request' || inputs.dry_run || inputs.version == '' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Record setup elapsed time
+        id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+        run: |
+          now=$(date +%s)
+          setup_s=$((now - JOB_START))
+          echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
+          echo "Filebeat setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s)"
+
+      - name: Validate Filebeat configuration
+        run: |
+          set -euo pipefail
+          FILEBEAT_IMAGE=$(grep -E 'image:\s*docker\.elastic\.co/beats/filebeat:' docker-compose.yml | awk '{print $2}')
+          echo "Validating Filebeat configuration with $FILEBEAT_IMAGE..."
+          docker run --rm --entrypoint filebeat \
+            -v "$(pwd)/Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
+            "$FILEBEAT_IMAGE" test config -c /usr/share/filebeat/filebeat.yml --strict.perms=false
+
+      - name: Enforce performance budget
+        if: always()
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
+          SETUP_BUDGET_S: ${{ env.DOCKER_SETUP_BUDGET_S }}
+          JOB_BUDGET_S: ${{ env.DOCKER_JOB_BUDGET_S }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          now=$(date +%s)
+          elapsed=$((now - JOB_START))
+          echo "Filebeat setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s)"
+          echo "Filebeat job execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
+          failed=0
+          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
+            echo "::error::Validate Filebeat setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
+            failed=1
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
+            echo "::error::Validate Filebeat Configuration exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
+            failed=1
+          fi
+          exit "$failed"
+
+  build-and-test-image:
+    name: Build, Test and Scan Docker Image
     runs-on: ubuntu-26.04
     permissions:
       contents: read
       security-events: write
     outputs:
       image_version: ${{ steps.meta.outputs.version }}
-      image_digest: ${{ steps.build.outputs.digest }}
+      image_digest: ${{ steps.build.outputs.digest || steps.build_release.outputs.digest }}
 
     steps:
+      - name: Record job start time
+        id: timing
+        run: |
+          echo "job_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - name: Checkout repository
-        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run }}
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run && inputs.version != '' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: v${{ inputs.version }}
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Checkout repository (dry run)
-        if: ${{ github.event_name == 'pull_request' || inputs.dry_run }}
+        if: ${{ github.event_name == 'pull_request' || inputs.dry_run || inputs.version == '' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:
-          version: latest
-          driver-opts: network=host
+          driver: docker
 
       - name: Log in to Docker Hub
-        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run }}
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run && inputs.version != '' }}
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ${{ env.REGISTRY }}
@@ -87,8 +174,56 @@ jobs:
             org.opencontainers.image.documentation=${{ github.server_url }}/${{ github.repository }}/blob/main/README.md
             org.opencontainers.image.licenses=MIT
 
+      - name: Check BuildKit main cache marker
+        id: buildkit_cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/docker-buildkit-seeded.flag
+          key: docker-buildkit-seeded-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Docker/Dockerfile') }}
+          lookup-only: true
+
+      - name: Record setup elapsed time
+        id: setup_timing
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          BUILDKIT_SEEDED: ${{ steps.buildkit_cache.outputs.cache-hit || 'false' }}
+        run: |
+          now=$(date +%s)
+          setup_s=$((now - JOB_START))
+          echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
+          echo "Docker setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s, buildkit_seeded=${BUILDKIT_SEEDED})"
+
       - name: Build Docker image
         id: build
+        if: ${{ github.event_name == 'pull_request' || inputs.dry_run || inputs.version == '' }}
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ./Docker/Dockerfile
+          platforms: linux/amd64
+          load: true
+          push: false
+          provenance: false
+          sbom: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: ${{ (github.event_name == 'push' || github.event_name == 'schedule') && 'type=gha,mode=max' || '' }}
+
+      - name: Write BuildKit main cache marker
+        if: ${{ (github.event_name == 'push' || github.event_name == 'schedule') && steps.buildkit_cache.outputs.cache-hit != 'true' && steps.build.outcome == 'success' }}
+        run: echo "seeded" > /tmp/docker-buildkit-seeded.flag
+
+      - name: Save BuildKit main cache marker
+        if: ${{ (github.event_name == 'push' || github.event_name == 'schedule') && steps.buildkit_cache.outputs.cache-hit != 'true' && steps.build.outcome == 'success' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/docker-buildkit-seeded.flag
+          key: docker-buildkit-seeded-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Docker/Dockerfile') }}
+
+      - name: Build Docker image (release export)
+        id: build_release
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run && inputs.version != '' }}
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
@@ -103,14 +238,20 @@ jobs:
           outputs: type=docker,dest=/tmp/bridgewatcher.tar
 
       - name: Load Docker image for testing
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run && inputs.version != '' }}
         run: |
           docker load --input /tmp/bridgewatcher.tar
+
       - name: Test Docker image
+        if: steps.build.outcome == 'success' || steps.build_release.outcome == 'success'
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}
           VERSION: ${{ inputs.version || 'pr-test' }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
           DOCKER_CONTENT_TRUST: 0
         run: |
+          set -euo pipefail
+          trap 'docker rm -f bridgewatcher-test 2>/dev/null || true' EXIT
           echo "Testing Docker image functionality..."
 
           # Create test secrets directory with lowercase names matching docker-compose.yml
@@ -122,108 +263,118 @@ jobs:
           echo "test-po-user-key" > test-secrets/pushover_user
 
           # Get the built image tag
-          IMAGE_TAG="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}:$VERSION"
+          IMAGE_TAG="$DOCKERHUB_USERNAME/$IMAGE_NAME:$VERSION"
 
-          # Test container startup on a read-only filesystem matching docker-compose.yml
-          echo "Starting container for testing..."
-          CONTAINER_ID=$(docker run -d \
+          # Test container startup on a read-only filesystem matching docker-compose.yml.
+          echo "Creating container for testing..."
+          t0=$(date +%s%3N)
+          CONTAINER_ID=$(docker create \
+            --pull=never \
             --name bridgewatcher-test \
             --read-only \
             --tmpfs /tmp:rw,noexec,nosuid \
             --health-interval=30s \
             --health-timeout=10s \
             --health-retries=3 \
-            -v $(pwd)/test-secrets:/run/secrets:ro \
-            -v $(pwd)/test-logs:/app/logs \
-            "$IMAGE_TAG") || {
-            echo "Failed to start container"
-            exit 1
-          }
-          echo "Container started: $CONTAINER_ID"
+            -v "$(pwd)/test-secrets:/run/secrets:ro" \
+            -v "$(pwd)/test-logs:/app/logs" \
+            "$IMAGE_TAG")
+          t1=$(date +%s%3N)
+          docker start "$CONTAINER_ID" >/dev/null
+          t2=$(date +%s%3N)
+          echo "Container started: $CONTAINER_ID (create=$((t1 - t0))ms, start=$((t2 - t1))ms)"
 
-          # Wait for container to start
-          sleep 10
+          MODULE_READY=0
+          MODULE_OUT=""
+          for _ in $(seq 1 40); do
+            if [ -z "$(docker ps -q -f id="$CONTAINER_ID")" ]; then
+              echo "Container exited unexpectedly. Dumping logs and status:"
+              docker logs "$CONTAINER_ID" 2>&1 || true
+              docker ps -a --filter "id=$CONTAINER_ID" --format '{{.ID}} {{.Status}} {{.Names}}' || true
+              exit 1
+            fi
+            if MODULE_OUT=$(docker exec "$CONTAINER_ID" pwsh -NoLogo -NoProfile -Command "Import-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -Force; if (-not (Get-Module BridgeWatcher)) { exit 1 }; Get-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -ListAvailable" 2>&1); then
+              MODULE_READY=1
+              break
+            fi
+            sleep 0.25
+          done
 
-          # Check if container is running (use ID, not name)
-          if [ -z "$(docker ps -q -f id=$CONTAINER_ID)" ]; then
-            echo "Container not running. Dumping logs and status:"
+          if [ "$MODULE_READY" -ne 1 ]; then
+            echo "BridgeWatcher module did not import within readiness window. Container logs:"
             docker logs "$CONTAINER_ID" 2>&1 || true
-            docker ps -a --filter "id=$CONTAINER_ID" --format '{{.ID}} {{.Status}} {{.Names}}' || true
             exit 1
           fi
 
-          echo "Container started successfully"
-
-          # Check container health (if healthcheck is defined)
-          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
-          echo "Container health status: $HEALTH_STATUS"
-
-          # Test basic functionality
-          echo "Testing basic module functionality..."
-          docker exec "$CONTAINER_ID" pwsh -Command "Get-Module BridgeWatcher -ListAvailable" || {
-            echo "BridgeWatcher module not found. Container logs:"
+          if [ -z "$(docker ps -q -f id="$CONTAINER_ID")" ]; then
+            echo "Container exited unexpectedly after readiness check. Dumping logs:"
             docker logs "$CONTAINER_ID" 2>&1 || true
             exit 1
-          }
+          fi
 
-          # Validate Filebeat configuration against the Filebeat image in docker-compose.yml
-          FILEBEAT_IMAGE=$(grep -E 'image:\s*docker\.elastic\.co/beats/filebeat:' docker-compose.yml | awk '{print $2}')
-          echo "Validating Filebeat configuration with $FILEBEAT_IMAGE..."
-          docker run --rm --entrypoint filebeat \
-            -v "$(pwd)/Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
-            "$FILEBEAT_IMAGE" test config -c /usr/share/filebeat/filebeat.yml --strict.perms=false
-
-          echo "Basic functionality test passed"
+          echo "$MODULE_OUT"
+          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
+          echo "Container health status: $HEALTH_STATUS"
+          echo "Container functionality test passed"
 
       - name: Scan Docker image for vulnerabilities
+        if: always() && (steps.build.outcome == 'success' || steps.build_release.outcome == 'success')
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ inputs.version || 'pr-test' }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: 'json'
+          output: 'trivy-results.json'
+          list-all-pkgs: 'true'
           exit-code: '1'
           severity: 'HIGH,CRITICAL'
           version: 'v${{ env.TRIVY_VERSION }}'
 
-      - name: Check Trivy SARIF exists
-        id: trivy_sarif_check
-        if: always()
+      - name: Convert Trivy report to SARIF and CycloneDX SBOM
+        id: trivy_convert
+        if: always() && (steps.build.outcome == 'success' || steps.build_release.outcome == 'success')
         run: |
-          if [ -f trivy-results.sarif ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "trivy-results.sarif not found; skipping SARIF upload"
+          set -euo pipefail
+          if [ ! -s trivy-results.json ]; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "sbom_exists=false" >> "$GITHUB_OUTPUT"
+            echo "::error::trivy-results.json missing or empty; cannot generate SARIF or CycloneDX SBOM"
+            exit 1
           fi
+          trivy convert --format sarif --output trivy-results.sarif trivy-results.json
+          trivy convert --format cyclonedx --output sbom.json trivy-results.json
+          if [ -s trivy-results.sarif ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -s sbom.json ]; then
+            echo "sbom_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "sbom_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ ! -s trivy-results.sarif ] || [ ! -s sbom.json ]; then
+            echo "::error::Converted Trivy SARIF or CycloneDX SBOM is empty"
+            exit 1
+          fi
+          echo "Generated trivy-results.sarif and CycloneDX sbom.json from single Trivy scan"
 
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
-        if: always() && steps.trivy_sarif_check.outputs.exists == 'true'
+        if: always() && steps.trivy_convert.outputs.exists == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
-
-      - name: Generate SBOM for Docker image
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ inputs.version || 'pr-test' }}
-          format: 'cyclonedx'
-          output: 'sbom.json'
-          version: 'v${{ env.TRIVY_VERSION }}'
+          wait-for-processing: false
 
       - name: Upload SBOM artifact
+        if: always() && steps.trivy_convert.outputs.sbom_exists == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom
           path: sbom.json
           retention-days: 7
 
-      - name: Stop test container
-        if: always()
-        run: |
-          docker stop bridgewatcher-test 2>/dev/null || true
-          docker rm bridgewatcher-test 2>/dev/null || true
-
       - name: Upload Docker image artifact
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run && inputs.version != '' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docker-image
@@ -233,18 +384,81 @@ jobs:
       - name: Clean up
         if: always()
         run: |
+          docker rm -f bridgewatcher-test 2>/dev/null || true
           sudo rm -rf test-secrets test-logs
           docker system prune -f
+
+      - name: Enforce performance budget
+        if: always()
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
+          SETUP_BUDGET_S: ${{ env.DOCKER_SETUP_BUDGET_S }}
+          WARM_BUDGET_S: ${{ env.DOCKER_JOB_BUDGET_S }}
+          COLD_BUDGET_S: ${{ env.DOCKER_COLD_JOB_BUDGET_S }}
+          BUILDKIT_SEEDED: ${{ steps.buildkit_cache.outputs.cache-hit || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          now=$(date +%s)
+          elapsed=$((now - JOB_START))
+          if [ "$BUILDKIT_SEEDED" = "true" ]; then
+            effective_budget="$WARM_BUDGET_S"
+            budget_label="warm"
+          else
+            effective_budget="$COLD_BUDGET_S"
+            budget_label="cold-cache (warm budget: ${WARM_BUDGET_S}s)"
+          fi
+          {
+            echo "## Docker Build & Test Timing"
+            echo "- Event: \`${EVENT_NAME}\`"
+            echo "- BuildKit main cache seeded for Dockerfile: \`${BUILDKIT_SEEDED}\`"
+            echo "- Setup: \`${SETUP_S}s\` (budget: \`${SETUP_BUDGET_S}s\`)"
+            echo "- Job execution (excluding runner wait & post-steps): \`${elapsed}s\` (budget: \`${effective_budget}s\` [${budget_label}])"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Docker setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s)"
+          echo "Docker job execution: ${elapsed}s (budget: ${effective_budget}s [${budget_label}])"
+          failed=0
+          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
+            echo "::error::Docker setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
+            failed=1
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$effective_budget" ]; then
+            echo "::error::Build, Test and Scan Docker Image exceeded ${budget_label} budget: ${elapsed}s > ${effective_budget}s"
+            failed=1
+          fi
+          exit "$failed"
+
+  build-and-test:
+    name: Build and Test Docker Image
+    runs-on: ubuntu-26.04
+    needs: [build-and-test-image, validate-filebeat]
+    if: always()
+    steps:
+      - name: Verify all required Docker checks passed
+        env:
+          IMAGE_RESULT: ${{ needs.build-and-test-image.result }}
+          FILEBEAT_RESULT: ${{ needs.validate-filebeat.result }}
+        run: |
+          set -euo pipefail
+          echo "build-and-test-image: ${IMAGE_RESULT}"
+          echo "validate-filebeat: ${FILEBEAT_RESULT}"
+          if [ "$IMAGE_RESULT" != "success" ] || [ "$FILEBEAT_RESULT" != "success" ]; then
+            echo "::error::Required Docker check did not succeed (image=${IMAGE_RESULT}, filebeat=${FILEBEAT_RESULT})."
+            exit 1
+          fi
 
   push:
     name: Push Docker Image
     runs-on: ubuntu-26.04
-    needs: build-and-test
-    if: ${{ success() && github.event_name != 'pull_request' && !inputs.dry_run }}
+    needs: [build-and-test-image, build-and-test]
+    if: ${{ success() && github.event_name != 'pull_request' && !inputs.dry_run && inputs.version != '' }}
 
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          driver: docker
 
       - name: Log in to Docker Hub
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
@@ -258,6 +472,7 @@ jobs:
         with:
           name: docker-image
           path: /tmp
+
       - name: Load and push Docker image
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -282,7 +497,7 @@ jobs:
           docker push "$LATEST_TAG"
 
           echo " Successfully pushed Docker images"
-  
+
       - name: Clean up
         if: always()
         run: |
