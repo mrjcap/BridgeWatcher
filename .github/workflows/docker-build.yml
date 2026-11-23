@@ -43,6 +43,7 @@ env:
   TRIVY_VERSION: '0.76.2'
   DOCKER_SETUP_BUDGET_S: '15'
   DOCKER_JOB_BUDGET_S: '35'
+  DOCKER_COLD_JOB_BUDGET_S: '55'
 
 jobs:
   validate-filebeat:
@@ -171,13 +172,21 @@ jobs:
             org.opencontainers.image.documentation=${{ github.server_url }}/${{ github.repository }}/blob/main/README.md
             org.opencontainers.image.licenses=MIT
 
+      - name: Check BuildKit main cache marker
+        id: buildkit_cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/docker-buildkit-seeded.flag
+          key: docker-buildkit-seeded-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Docker/Dockerfile') }}
+          lookup-only: true
+
       - name: Record setup elapsed time
         id: setup_timing
         run: |
           now=$(date +%s)
           setup_s=$((now - ${{ steps.timing.outputs.job_start }}))
           echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
-          echo "Docker setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s)"
+          echo "Docker setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s, buildkit_seeded=${{ steps.buildkit_cache.outputs.cache-hit || 'false' }})"
 
       - name: Build Docker image
         id: build
@@ -195,6 +204,17 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: ${{ (github.event_name == 'push' || github.event_name == 'schedule') && 'type=gha,mode=max' || '' }}
+
+      - name: Write BuildKit main cache marker
+        if: ${{ (github.event_name == 'push' || github.event_name == 'schedule') && steps.buildkit_cache.outputs.cache-hit != 'true' && steps.build.outcome == 'success' }}
+        run: echo "seeded" > /tmp/docker-buildkit-seeded.flag
+
+      - name: Save BuildKit main cache marker
+        if: ${{ (github.event_name == 'push' || github.event_name == 'schedule') && steps.buildkit_cache.outputs.cache-hit != 'true' && steps.build.outcome == 'success' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/docker-buildkit-seeded.flag
+          key: docker-buildkit-seeded-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Docker/Dockerfile') }}
 
       - name: Build Docker image (release export)
         id: build_release
@@ -378,27 +398,37 @@ jobs:
           JOB_START: ${{ steps.timing.outputs.job_start }}
           SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
           SETUP_BUDGET_S: ${{ env.DOCKER_SETUP_BUDGET_S }}
-          JOB_BUDGET_S: ${{ env.DOCKER_JOB_BUDGET_S }}
+          WARM_BUDGET_S: ${{ env.DOCKER_JOB_BUDGET_S }}
+          COLD_BUDGET_S: ${{ env.DOCKER_COLD_JOB_BUDGET_S }}
+          BUILDKIT_SEEDED: ${{ steps.buildkit_cache.outputs.cache-hit || 'false' }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           now=$(date +%s)
           elapsed=$((now - JOB_START))
+          if [ "$BUILDKIT_SEEDED" = "true" ]; then
+            effective_budget="$WARM_BUDGET_S"
+            budget_label="warm"
+          else
+            effective_budget="$COLD_BUDGET_S"
+            budget_label="cold-cache (warm budget: ${WARM_BUDGET_S}s)"
+          fi
           {
             echo "## Docker Build & Test Timing"
             echo "- Event: \`${EVENT_NAME}\`"
+            echo "- BuildKit main cache seeded for Dockerfile: \`${BUILDKIT_SEEDED}\`"
             echo "- Setup: \`${SETUP_S}s\` (budget: \`${SETUP_BUDGET_S}s\`)"
-            echo "- Job execution (excluding runner wait & post-steps): \`${elapsed}s\` (budget: \`${JOB_BUDGET_S}s\`)"
+            echo "- Job execution (excluding runner wait & post-steps): \`${elapsed}s\` (budget: \`${effective_budget}s\` [${budget_label}])"
           } >> "$GITHUB_STEP_SUMMARY"
           echo "Docker setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s)"
-          echo "Docker job execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
+          echo "Docker job execution: ${elapsed}s (budget: ${effective_budget}s [${budget_label}])"
           failed=0
           if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
             echo "::error::Docker setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
             failed=1
           fi
-          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
-            echo "::error::Build, Test and Scan Docker Image exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$effective_budget" ]; then
+            echo "::error::Build, Test and Scan Docker Image exceeded ${budget_label} budget: ${elapsed}s > ${effective_budget}s"
             failed=1
           fi
           exit "$failed"
