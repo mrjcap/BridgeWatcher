@@ -67,7 +67,7 @@ InModuleScope BridgeWatcher {
         It 'Πρέπει να καλούνται Get-BridgePreviousStatus και Get-BridgeStatus με τα σωστά parameters όταν το αρχείο υπάρχει' {
             $jsonFile = 'TestDrive:\bridge_status_test_exists.json'
 
-            Mock Test-Path { return $true }
+            Set-Content -Path $jsonFile -Value '[]'
 
             Mock Get-BridgePreviousStatus {
                 return @(
@@ -110,7 +110,7 @@ InModuleScope BridgeWatcher {
         It 'Εκτελείται σωστά με -WhatIf και δεν καλεί Invoke/Export' {
             $jsonFile = 'TestDrive:\bridge_status_whatif.json'
 
-            Mock Test-Path { return $true }
+            Set-Content -Path $jsonFile -Value '[]'
             Mock Get-BridgePreviousStatus { return @() }
             Mock Get-BridgeStatus { return @() }
             Mock Invoke-BridgeStatusComparison {}
@@ -127,7 +127,7 @@ InModuleScope BridgeWatcher {
         It 'Ρίχνει terminating error όταν η Export-BridgeStatusJson επιστρέφει Success = $false' {
             $jsonFile = 'TestDrive:\bridge_status_export_fail.json'
 
-            Mock Test-Path { return $false }
+            if (Test-Path -Path $jsonFile) { Remove-Item -Path $jsonFile -Force }
             Mock Get-BridgeStatus { return @([PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' }) }
             Mock Invoke-BridgeStatusComparison { return @() }
             Mock Export-BridgeStatusJson {

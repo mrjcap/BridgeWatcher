@@ -1,6 +1,6 @@
 ﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-$sut = (Split-Path -Parent $here) + "\BridgeWatcher\BridgeWatcher.psd1"
+$sut = Join-Path -Path (Split-Path -Parent $here) -ChildPath 'BridgeWatcher/BridgeWatcher.psd1'
 
 Import-Module $sut -Force
 
