@@ -389,11 +389,13 @@ function Split-TestFilesIntoShard {
     )
 
     $defaultWeight = 0.5
+    $perFileOverheadSeconds = 0.25
     $effectiveCount = [Math]::Min($Count, [Math]::Max(1, $Files.Count))
 
     $weighted = foreach ($file in $Files) {
         $rel = ConvertTo-RepoRelativePath -Path $file -Root $Root
-        $weight = if ($TimingsMap.ContainsKey($rel)) { [double]$TimingsMap[$rel] } else { $defaultWeight }
+        $baseDuration = if ($TimingsMap.ContainsKey($rel)) { [double]$TimingsMap[$rel] } else { $defaultWeight }
+        $weight = $baseDuration + $perFileOverheadSeconds
         [pscustomobject]@{
             File   = $file
             Rel    = $rel
