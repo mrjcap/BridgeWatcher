@@ -1237,6 +1237,7 @@ Resolved repository root path.
 #>
 function Read-ShardArtifactBundle {
     [CmdletBinding()]
+    [OutputType([object[]])]
     param(
         [Parameter(Mandatory)]
         [string]$ArtifactsRoot,
