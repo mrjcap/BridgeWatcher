@@ -242,14 +242,14 @@ jobs:
           exit "$failed"
 
   unit-tests:
-    name: Unit Tests (Shard ${{ matrix.shard }}/2)
+    name: Unit Tests (Shard ${{ matrix.shard }}/3)
     runs-on: ubuntu-26.04
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1]
+        shard: [0, 1, 2]
     steps:
       - name: Record job start time
         id: timing
@@ -340,7 +340,7 @@ jobs:
         shell: pwsh
         env:
           SHARD_INDEX: ${{ matrix.shard }}
-          SHARD_COUNT: '2'
+          SHARD_COUNT: '3'
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
@@ -547,7 +547,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           & ./scripts/Invoke-TestSuite.ps1 `
             -MergeShardArtifactsDirectory './shard-artifacts' `
-            -ShardCount 2 `
+            -ShardCount 3 `
             -CoverageOutputPath './coverage.xml' `
             -TestResultOutputPath './testResults.xml' `
             -RecordTimingsPath '/tmp/bridgewatcher-timings/test-timings.json' `
