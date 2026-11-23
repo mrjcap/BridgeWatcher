@@ -45,8 +45,74 @@ env:
   DOCKER_JOB_BUDGET_S: '35'
 
 jobs:
-  build-and-test:
-    name: Build and Test Docker Image
+  validate-filebeat:
+    name: Validate Filebeat Configuration
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Record job start time
+        id: timing
+        run: |
+          echo "job_start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        if: ${{ github.event_name != 'pull_request' && !inputs.dry_run && inputs.version != '' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: v${{ inputs.version }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout repository (dry run)
+        if: ${{ github.event_name == 'pull_request' || inputs.dry_run || inputs.version == '' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Record setup elapsed time
+        id: setup_timing
+        run: |
+          now=$(date +%s)
+          setup_s=$((now - ${{ steps.timing.outputs.job_start }}))
+          echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
+          echo "Filebeat setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s)"
+
+      - name: Validate Filebeat configuration
+        run: |
+          set -euo pipefail
+          FILEBEAT_IMAGE=$(grep -E 'image:\s*docker\.elastic\.co/beats/filebeat:' docker-compose.yml | awk '{print $2}')
+          echo "Validating Filebeat configuration with $FILEBEAT_IMAGE..."
+          docker run --rm --entrypoint filebeat \
+            -v "$(pwd)/Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
+            "$FILEBEAT_IMAGE" test config -c /usr/share/filebeat/filebeat.yml --strict.perms=false
+
+      - name: Enforce performance budget
+        if: always()
+        env:
+          JOB_START: ${{ steps.timing.outputs.job_start }}
+          SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
+          SETUP_BUDGET_S: ${{ env.DOCKER_SETUP_BUDGET_S }}
+          JOB_BUDGET_S: ${{ env.DOCKER_JOB_BUDGET_S }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          now=$(date +%s)
+          elapsed=$((now - JOB_START))
+          echo "Filebeat setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s)"
+          echo "Filebeat job execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
+          failed=0
+          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
+            echo "::error::Validate Filebeat setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
+            failed=1
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
+            echo "::error::Validate Filebeat Configuration exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
+            failed=1
+          fi
+          exit "$failed"
+
+  build-and-test-image:
+    name: Build, Test and Scan Docker Image
     runs-on: ubuntu-26.04
     permissions:
       contents: read
@@ -169,7 +235,7 @@ jobs:
           DOCKER_CONTENT_TRUST: 0
         run: |
           set -euo pipefail
-          echo "Testing Docker image functionality, validating Filebeat config, and generating SBOM in parallel..."
+          echo "Testing Docker image functionality and generating SBOM in parallel..."
 
           # Create test secrets directory with lowercase names matching docker-compose.yml
           mkdir -p test-secrets test-logs
@@ -182,24 +248,14 @@ jobs:
           # Get the built image tag
           IMAGE_TAG="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}:$VERSION"
 
-          # 1. Validate Filebeat configuration in background.
-          FILEBEAT_IMAGE=$(grep -E 'image:\s*docker\.elastic\.co/beats/filebeat:' docker-compose.yml | awk '{print $2}')
-          echo "Starting Filebeat config validation ($FILEBEAT_IMAGE)..."
-          (
-            docker run --rm --entrypoint filebeat \
-              -v "$(pwd)/Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
-              "$FILEBEAT_IMAGE" test config -c /usr/share/filebeat/filebeat.yml --strict.perms=false
-          ) > /tmp/filebeat-test.log 2>&1 &
-          FILEBEAT_PID=$!
-
-          # 2. Generate CycloneDX SBOM in background using the Trivy CLI already installed by trivy-action.
+          # 1. Generate CycloneDX SBOM in background using the Trivy CLI already installed by trivy-action.
           echo "Starting CycloneDX SBOM generation..."
           (
             trivy image --format cyclonedx --output sbom.json "$IMAGE_TAG"
           ) > /tmp/sbom-gen.log 2>&1 &
           SBOM_PID=$!
 
-          # 3. Test container startup on a read-only filesystem matching docker-compose.yml.
+          # 2. Test container startup on a read-only filesystem matching docker-compose.yml.
           CONTAINER_RC=0
           echo "Starting container for testing..."
           CONTAINER_ID=$(docker run -d \
@@ -252,11 +308,6 @@ jobs:
             echo "Failed to start container"
           fi
 
-          # Collect all parallel check outcomes before failing so every defect is reported.
-          FILEBEAT_RC=0
-          wait "$FILEBEAT_PID" || FILEBEAT_RC=$?
-          cat /tmp/filebeat-test.log
-
           SBOM_RC=0
           wait "$SBOM_PID" || SBOM_RC=$?
           cat /tmp/sbom-gen.log
@@ -264,10 +315,6 @@ jobs:
           FAILED=0
           if [ "$CONTAINER_RC" -ne 0 ]; then
             echo "::error::Docker container functionality test failed (exit $CONTAINER_RC)"
-            FAILED=1
-          fi
-          if [ "$FILEBEAT_RC" -ne 0 ]; then
-            echo "::error::Filebeat configuration validation failed (exit $FILEBEAT_RC)"
             FAILED=1
           fi
           if [ "$SBOM_RC" -ne 0 ] || [ ! -s sbom.json ]; then
@@ -278,7 +325,7 @@ jobs:
             exit 1
           fi
 
-          echo "Container functionality, Filebeat validation, and SBOM generation passed"
+          echo "Container functionality and SBOM generation passed"
 
       - name: Check Trivy SARIF exists
         id: trivy_sarif_check
@@ -296,6 +343,7 @@ jobs:
         if: always() && steps.trivy_sarif_check.outputs.exists == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
+          wait-for-processing: false
 
       - name: Upload SBOM artifact
         if: ${{ steps.build.outcome == 'success' || steps.build_release.outcome == 'success' }}
@@ -350,15 +398,34 @@ jobs:
             failed=1
           fi
           if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
-            echo "::error::Build and Test Docker Image exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
+            echo "::error::Build, Test and Scan Docker Image exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
             failed=1
           fi
           exit "$failed"
 
+  build-and-test:
+    name: Build and Test Docker Image
+    runs-on: ubuntu-26.04
+    needs: [build-and-test-image, validate-filebeat]
+    if: always()
+    steps:
+      - name: Verify all required Docker checks passed
+        env:
+          IMAGE_RESULT: ${{ needs.build-and-test-image.result }}
+          FILEBEAT_RESULT: ${{ needs.validate-filebeat.result }}
+        run: |
+          set -euo pipefail
+          echo "build-and-test-image: ${IMAGE_RESULT}"
+          echo "validate-filebeat: ${FILEBEAT_RESULT}"
+          if [ "$IMAGE_RESULT" != "success" ] || [ "$FILEBEAT_RESULT" != "success" ]; then
+            echo "::error::Required Docker check did not succeed (image=${IMAGE_RESULT}, filebeat=${FILEBEAT_RESULT})."
+            exit 1
+          fi
+
   push:
     name: Push Docker Image
     runs-on: ubuntu-26.04
-    needs: build-and-test
+    needs: [build-and-test-image, build-and-test]
     if: ${{ success() && github.event_name != 'pull_request' && !inputs.dry_run && inputs.version != '' }}
 
     steps:
