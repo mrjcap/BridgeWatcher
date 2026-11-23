@@ -41,6 +41,7 @@ env:
   DOCKER_BUILD_RECORD_UPLOAD: 'false'
   # renovate: datasource=github-releases depName=aquasecurity/trivy
   TRIVY_VERSION: '0.76.2'
+  TRIVY_SHA256: 'bc0fc726e017b8927a62b2d3531d7a84ee01769daf5c99ed866dced54089fdbf'
   DOCKER_SETUP_BUDGET_S: '15'
   DOCKER_JOB_BUDGET_S: '35'
   DOCKER_COLD_JOB_BUDGET_S: '55'
@@ -313,6 +314,19 @@ jobs:
           echo "Container health status: $HEALTH_STATUS"
           echo "Container functionality test passed"
 
+      - name: Install verified Trivy binary
+        if: always() && (steps.build.outcome == 'success' || steps.build_release.outcome == 'success')
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          TARBALL="/tmp/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl --proto '=https' --tlsv1.2 -fsSL -o "$TARBALL" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  ${TARBALL}" | sha256sum -c -
+          tar -xzf "$TARBALL" -C "$HOME/.local/bin" trivy
+          rm -f "$TARBALL"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
       - name: Scan Docker image for vulnerabilities
         if: always() && (steps.build.outcome == 'success' || steps.build_release.outcome == 'success')
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -323,7 +337,7 @@ jobs:
           list-all-pkgs: 'true'
           exit-code: '1'
           severity: 'HIGH,CRITICAL'
-          version: 'v${{ env.TRIVY_VERSION }}'
+          skip-setup-trivy: 'true'
 
       - name: Convert Trivy report to SARIF and CycloneDX SBOM
         id: trivy_convert
