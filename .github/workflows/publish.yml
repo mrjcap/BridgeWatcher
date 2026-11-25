@@ -145,6 +145,29 @@ jobs:
           token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Download gatekeeper changelog
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-changelog-${{ inputs.next_version }}
+          path: .release-inputs/changelog
+
+      - name: Extract release notes
+        id: release_notes
+        shell: pwsh
+        env:
+          NEXT_VERSION: ${{ inputs.next_version }}
+        run: |
+          $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v$env:NEXT_VERSION" `
+            -Path './.release-inputs/changelog/CHANGELOG.md' -WarningAction Stop -ErrorAction Stop
+          $heading, $body = $notes -split '\r?\n', 2
+          $version = [regex]::Escape($env:NEXT_VERSION)
+          if ($heading -cnotmatch "^## \[$version\](?:\s.*)?$" -or [string]::IsNullOrWhiteSpace($body)) {
+            throw "Gatekeeper changelog has no release notes for v$env:NEXT_VERSION."
+          }
+          $delimiter = 'EOF_' + (New-Guid).ToString('N')
+          Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value @("notes<<$delimiter", $notes, $delimiter)
+          Write-Output "Validated gatekeeper release notes for v$env:NEXT_VERSION."
+
       - name: Set final module version
         shell: pwsh
         env:
@@ -179,35 +202,6 @@ jobs:
         run: |
           git pull --rebase origin "$REF_NAME"
           git push origin "HEAD:$REF_NAME"
-
-      - name: Extract release notes
-        id: release_notes
-        shell: pwsh
-        env:
-          NEXT_VERSION: ${{ inputs.next_version }}
-        run: |
-          Write-Verbose "Extracting release notes for version $env:NEXT_VERSION"
-
-          if (Test-Path "./scripts/Get-ReleaseNotes.ps1") {
-            try {
-              $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v$env:NEXT_VERSION" -ErrorAction Stop
-              if ($notes) {
-                $guid = (New-Guid).ToString('N')
-                $delimiter = "EOF_$guid"
-                Add-Content -Path $env:GITHUB_OUTPUT -Value @("notes<<$delimiter", $notes, $delimiter)
-                Write-Verbose " Release notes extracted successfully"
-              } else {
-                echo "notes=Release $env:NEXT_VERSION" >> $env:GITHUB_OUTPUT
-                Write-Verbose " No release notes found, using default"
-              }
-            } catch {
-              Write-Verbose " Failed to extract release notes: $($_.Exception.Message)"
-              echo "notes=Release $env:NEXT_VERSION" >> $env:GITHUB_OUTPUT
-            }
-          } else {
-            Write-Verbose " Get-ReleaseNotes.ps1 not found, using default notes"
-            echo "notes=Release $env:NEXT_VERSION" >> $env:GITHUB_OUTPUT
-          }
 
       - name: Create GitHub Release
         id: create_release
