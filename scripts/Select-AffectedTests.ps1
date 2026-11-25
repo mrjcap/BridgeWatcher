@@ -122,6 +122,36 @@ function Get-FullSuiteForceRule {
 
 <#
 .SYNOPSIS
+Indexes the callers of each source file.
+.DESCRIPTION
+Maps a command to its defining file and records callers in other files only.
+.PARAMETER Files
+All source file paths, including files without callers.
+.PARAMETER FileCalls
+Command names referenced by each file.
+.PARAMETER FunctionToFile
+Source file defining each known command.
+#>
+function Get-ReverseFileDependency {
+    param([string[]]$Files, [hashtable]$FileCalls, [hashtable]$FunctionToFile)
+
+    $reverseDeps = @{}
+    foreach ($file in $Files) {
+        $reverseDeps[$file] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    }
+    foreach ($caller in $FileCalls.Keys) {
+        foreach ($command in $FileCalls[$caller]) {
+            $callee = $FunctionToFile[$command]
+            if ($callee -and $callee -ne $caller) {
+                $null = $reverseDeps[$callee].Add($caller)
+            }
+        }
+    }
+    return $reverseDeps
+}
+
+<#
+.SYNOPSIS
 Parses BridgeWatcher source files via the PowerShell AST to build a reverse call dependency graph.
 .PARAMETER Root
 Repository root directory.
@@ -172,22 +202,7 @@ function Get-SourceDependencyGraph {
         $fileCalls[$rel] = @($called | Select-Object -Unique)
     }
 
-    # Build reverse edges: dependencyFile -> list of files that call functions defined in dependencyFile.
-    $reverseDeps = @{}
-    foreach ($file in $fileToFunctions.Keys) {
-        $reverseDeps[$file] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    }
-
-    foreach ($callerFile in $fileCalls.Keys) {
-        foreach ($cmdName in $fileCalls[$callerFile]) {
-            if ($functionToFile.ContainsKey($cmdName)) {
-                $calleeFile = $functionToFile[$cmdName]
-                if ($calleeFile -ne $callerFile) {
-                    $null = $reverseDeps[$calleeFile].Add($callerFile)
-                }
-            }
-        }
-    }
+    $reverseDeps = Get-ReverseFileDependency -Files @($fileToFunctions.Keys) -FileCalls $fileCalls -FunctionToFile $functionToFile
 
     return [pscustomobject]@{
         SourceFiles     = @($fileToFunctions.Keys | Sort-Object)
@@ -227,27 +242,128 @@ function Get-TransitiveAffectedSource {
 
     while ($queue.Count -gt 0) {
         $current = $queue.Dequeue()
-        if ($Graph.ReverseDeps.ContainsKey($current)) {
-            foreach ($dependent in $Graph.ReverseDeps[$current]) {
-                if ($visited.Add($dependent)) {
-                    $queue.Enqueue($dependent)
-                }
+        foreach ($dependent in $Graph.ReverseDeps[$current]) {
+            if ($visited.Add($dependent)) {
+                $queue.Enqueue($dependent)
             }
         }
     }
 
     $affectedFunctions = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($src in $visited) {
-        if ($Graph.FileToFunctions.ContainsKey($src)) {
-            foreach ($fn in $Graph.FileToFunctions[$src]) {
-                $null = $affectedFunctions.Add($fn)
-            }
+        foreach ($fn in $Graph.FileToFunctions[$src]) {
+            $null = $affectedFunctions.Add($fn)
         }
     }
 
     return [pscustomobject]@{
         AffectedSourceFiles = @($visited | Sort-Object)
         AffectedFunctions   = @($affectedFunctions | Sort-Object)
+    }
+}
+
+<#
+.SYNOPSIS
+Lists reasons changed paths require the full suite.
+.DESCRIPTION
+Includes every matching rule in path and rule order.
+.PARAMETER Paths
+Normalized changed paths.
+#>
+function Get-FullSuiteReason {
+    param([string[]]$Paths)
+
+    $rules = Get-FullSuiteForceRule
+    foreach ($path in $Paths) {
+        foreach ($rule in $rules) {
+            if ($path -match $rule.Pattern) { "$($rule.Reason): $path" }
+        }
+    }
+}
+
+<#
+.SYNOPSIS
+Classifies changed files before expanding source dependencies.
+.DESCRIPTION
+Collects directly changed sources, test files to run, and paths with unknown impact.
+.PARAMETER Paths
+Normalized changed paths.
+.PARAMETER Graph
+The source dependency graph.
+.PARAMETER AllTests
+Existing test paths, used to distinguish modified tests from deleted ones.
+#>
+function Get-ChangedPathImpact {
+    param([string[]]$Paths, [pscustomobject]$Graph, [string[]]$AllTests)
+
+    $selectedSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $directSources = [System.Collections.Generic.List[string]]::new()
+    $unknownFiles = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($file in $Paths) {
+        switch -Regex ($file) {
+            '^BridgeWatcher/(Public|Private)/.+\.ps1$' {
+                if ($Graph.FileToFunctions.ContainsKey($file)) { $directSources.Add($file) }
+                else { $unknownFiles.Add($file) }
+                break
+            }
+            '^run\.ps1$' {
+                $null = $selectedSet.Add('Tests/RunScript.Tests.ps1')
+                $null = $selectedSet.Add('Tests/LinterCompliance.Tests.ps1')
+                break
+            }
+            '^Tests/.+\.Tests\.ps1$' {
+                if ($AllTests -notcontains $file) { $unknownFiles.Add($file); break }
+                $null = $selectedSet.Add($file)
+                $null = $selectedSet.Add('Tests/LinterCompliance.Tests.ps1')
+                $null = $selectedSet.Add('Tests/Review/PesterScope.Tests.ps1')
+                break
+            }
+            '^scripts/Get-GitCommitsSinceLastRelease\.ps1$' {
+                $null = $selectedSet.Add('Tests/Get-GitCommitsSinceLastRelease.Tests.ps1')
+                $null = $selectedSet.Add('Tests/LinterCompliance.Tests.ps1')
+                break
+            }
+            '^(README\.md|CHANGELOG\.md|LICENSE|docs/)' {
+                $null = $selectedSet.Add('Tests/DockerBuildWorkflow.Tests.ps1')
+                break
+            }
+            default { $unknownFiles.Add($file) }
+        }
+    }
+
+    return [pscustomobject]@{ Sources = $directSources; Tests = $selectedSet; Unknown = $unknownFiles }
+}
+
+<#
+.SYNOPSIS
+Finds test files that cover the affected module sources.
+.DESCRIPTION
+Includes mandatory module checks and tests that mention an affected function or source basename.
+.PARAMETER Root
+Repository root directory.
+.PARAMETER AllTests
+Available repository-relative test paths.
+.PARAMETER Closure
+Affected sources and functions, including their transitive callers.
+#>
+function Get-SourceImpactTest {
+    param([string]$Root, [string[]]$AllTests, [pscustomobject]$Closure)
+
+    $required = @('Tests/ArchitectureConstraints.Tests.ps1', 'Tests/LinterCompliance.Tests.ps1',
+        'Tests/ModuleExports.Tests.ps1', 'Tests/VulnerabilityReproduction.Tests.ps1')
+    $baseNames = @($Closure.AffectedSourceFiles | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
+    $tokens = @($Closure.AffectedFunctions) + $baseNames | Select-Object -Unique
+    $patterns = foreach ($token in $tokens) { [regex]::Escape($token) }
+    $pattern = "(?<![A-Za-z0-9_-])(?:$($patterns -join '|'))(?![A-Za-z0-9_-])"
+
+    foreach ($test in $AllTests) {
+        if ($test -match '^Tests/Review/' -or $test -in $required) {
+            $test
+            continue
+        }
+        $content = Get-Content -LiteralPath (Join-Path -Path $Root -ChildPath $test) -Raw
+        if ($content -match $pattern) { $test }
     }
 }
 
@@ -295,16 +411,7 @@ function Select-AffectedTestFile {
         }
     }
 
-    $forceRules = Get-FullSuiteForceRule
-    $forceReasons = [System.Collections.Generic.List[string]]::new()
-
-    foreach ($file in $normalizedChanged) {
-        foreach ($rule in $forceRules) {
-            if ($file -match $rule.Pattern) {
-                $forceReasons.Add("$($rule.Reason): $file")
-            }
-        }
-    }
+    $forceReasons = @(Get-FullSuiteReason -Paths $normalizedChanged)
 
     if ($forceReasons.Count -gt 0) {
         return [pscustomobject]@{
@@ -319,39 +426,10 @@ function Select-AffectedTestFile {
     }
 
     $graph = Get-SourceDependencyGraph -Root $Root
-    $selectedSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $directSources = [System.Collections.Generic.List[string]]::new()
-    $unknownFiles = [System.Collections.Generic.List[string]]::new()
-
-    foreach ($file in $normalizedChanged) {
-        if ($file -match '^BridgeWatcher/(Public|Private)/.+\.ps1$') {
-            if ($graph.FileToFunctions.ContainsKey($file)) {
-                $directSources.Add($file)
-            } else {
-                # Deleted or unknown module source file: force full suite.
-                $unknownFiles.Add($file)
-            }
-        } elseif ($file -eq 'run.ps1') {
-            $null = $selectedSet.Add('Tests/RunScript.Tests.ps1')
-            $null = $selectedSet.Add('Tests/LinterCompliance.Tests.ps1')
-        } elseif ($file -match '^Tests/.+\.Tests\.ps1$') {
-            if ($allTests -contains $file) {
-                $null = $selectedSet.Add($file)
-                $null = $selectedSet.Add('Tests/LinterCompliance.Tests.ps1')
-                $null = $selectedSet.Add('Tests/Review/PesterScope.Tests.ps1')
-            } else {
-                $unknownFiles.Add($file)
-            }
-        } elseif ($file -match '^scripts/Get-GitCommitsSinceLastRelease\.ps1$') {
-            $null = $selectedSet.Add('Tests/Get-GitCommitsSinceLastRelease.Tests.ps1')
-            $null = $selectedSet.Add('Tests/LinterCompliance.Tests.ps1')
-        } elseif ($file -match '^(README\.md|CHANGELOG\.md|LICENSE|docs/)') {
-            # Pure documentation changes still run workflow/lint verification if any; never return empty.
-            $null = $selectedSet.Add('Tests/DockerBuildWorkflow.Tests.ps1')
-        } else {
-            $unknownFiles.Add($file)
-        }
-    }
+    $impact = Get-ChangedPathImpact -Paths $normalizedChanged -Graph $graph -AllTests $allTests
+    $selectedSet = $impact.Tests
+    $directSources = $impact.Sources
+    $unknownFiles = $impact.Unknown
 
     if ($unknownFiles.Count -gt 0) {
         return [pscustomobject]@{
@@ -370,32 +448,8 @@ function Select-AffectedTestFile {
         $closure = Get-TransitiveAffectedSource -DirectlyChangedSources @($directSources) -Graph $graph
         $affectedSources = $closure.AffectedSourceFiles
 
-        # Always include repo-wide structural/security/lint checks whenever module code changes.
-        foreach ($reviewTest in $allTests) {
-            if ($reviewTest -match '^Tests/Review/' -or $reviewTest -in @(
-                    'Tests/ArchitectureConstraints.Tests.ps1',
-                    'Tests/LinterCompliance.Tests.ps1',
-                    'Tests/ModuleExports.Tests.ps1',
-                    'Tests/VulnerabilityReproduction.Tests.ps1'
-                )) {
-                $null = $selectedSet.Add($reviewTest)
-            }
-        }
-
-        # Select any test file that references an affected function name or source file basename.
-        $baseNames = @($affectedSources | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
-        $matchTokens = @($closure.AffectedFunctions) + $baseNames | Select-Object -Unique
-
-        foreach ($testRel in $allTests) {
-            $fullTestPath = Join-Path -Path $Root -ChildPath $testRel
-            $content = Get-Content -LiteralPath $fullTestPath -Raw
-            foreach ($tok in $matchTokens) {
-                $escaped = [regex]::Escape($tok)
-                if ($content -match "(?<![A-Za-z0-9_-])$escaped(?![A-Za-z0-9_-])") {
-                    $null = $selectedSet.Add($testRel)
-                    break
-                }
-            }
+        foreach ($test in (Get-SourceImpactTest -Root $Root -AllTests $allTests -Closure $closure)) {
+            $null = $selectedSet.Add($test)
         }
     }
 

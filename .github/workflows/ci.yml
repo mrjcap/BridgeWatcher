@@ -341,14 +341,16 @@ jobs:
           $timingsIn = if (Test-Path -LiteralPath $cachedTimings) { $cachedTimings } elseif (Test-Path -LiteralPath $seedTimings) { $seedTimings } else { '' }
           $sharedSeed = [int](([long]$env:RUN_ID % 2147483000) + [long]$env:RUN_ATTEMPT)
           Write-Output "Running unit test shard $($env:SHARD_INDEX)/$($env:SHARD_COUNT) with shared seed=$sharedSeed (timings source: $timingsIn)."
-          & ./scripts/Invoke-TestSuite.ps1 `
-            -ShardCount ([int]$env:SHARD_COUNT) `
-            -ShardIndex ([int]$env:SHARD_INDEX) `
-            -Shuffle `
-            -Seed $sharedSeed `
-            -TimingsPath $timingsIn `
-            -EmitShardArtifactsDirectory "./shard-output/shard-$($env:SHARD_INDEX)" `
-            -CoverageThreshold 100
+          $shardParams = @{
+            ShardCount = [int]$env:SHARD_COUNT
+            ShardIndex = [int]$env:SHARD_INDEX
+            Shuffle = $true
+            Seed = $sharedSeed
+            TimingsPath = $timingsIn
+            EmitShardArtifactsDirectory = "./shard-output/shard-$($env:SHARD_INDEX)"
+            CoverageThreshold = 100
+          }
+          & ./scripts/Invoke-TestSuite.ps1 @shardParams
 
       - name: Upload shard test and coverage bundle
         if: always()
