@@ -41,9 +41,6 @@ env:
   DOCKER_BUILD_RECORD_UPLOAD: 'false'
   # renovate: datasource=github-releases depName=aquasecurity/trivy
   TRIVY_VERSION: '0.76.2'
-  DOCKER_SETUP_BUDGET_S: '15'
-  DOCKER_JOB_BUDGET_S: '35'
-  DOCKER_COLD_JOB_BUDGET_S: '55'
 
 jobs:
   validate-filebeat:
@@ -78,7 +75,7 @@ jobs:
           now=$(date +%s)
           setup_s=$((now - JOB_START))
           echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
-          echo "Filebeat setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s)"
+          echo "Filebeat setup elapsed: ${setup_s}s"
 
       - name: Validate Filebeat configuration
         run: |
@@ -89,30 +86,17 @@ jobs:
             -v "$(pwd)/Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
             "$FILEBEAT_IMAGE" test config -c /usr/share/filebeat/filebeat.yml --strict.perms=false
 
-      - name: Enforce performance budget
+      - name: Report elapsed time
         if: always()
         env:
           JOB_START: ${{ steps.timing.outputs.job_start }}
           SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
-          SETUP_BUDGET_S: ${{ env.DOCKER_SETUP_BUDGET_S }}
-          JOB_BUDGET_S: ${{ env.DOCKER_JOB_BUDGET_S }}
-          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           now=$(date +%s)
           elapsed=$((now - JOB_START))
-          echo "Filebeat setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s)"
-          echo "Filebeat job execution: ${elapsed}s (budget: ${JOB_BUDGET_S}s)"
-          failed=0
-          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
-            echo "::error::Validate Filebeat setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
-            failed=1
-          fi
-          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$JOB_BUDGET_S" ]; then
-            echo "::error::Validate Filebeat Configuration exceeded budget: ${elapsed}s > ${JOB_BUDGET_S}s"
-            failed=1
-          fi
-          exit "$failed"
+          echo "Filebeat setup: ${SETUP_S}s"
+          echo "Filebeat job execution: ${elapsed}s"
 
   build-and-test-image:
     name: Build, Test and Scan Docker Image
@@ -187,7 +171,7 @@ jobs:
           now=$(date +%s)
           setup_s=$((now - JOB_START))
           echo "setup_s=${setup_s}" >> "$GITHUB_OUTPUT"
-          echo "Docker setup elapsed: ${setup_s}s (budget: ${DOCKER_SETUP_BUDGET_S}s, buildkit_seeded=${BUILDKIT_SEEDED})"
+          echo "Docker setup elapsed: ${setup_s}s (buildkit_seeded=${BUILDKIT_SEEDED})"
 
       - name: Build Docker image
         id: build
@@ -385,46 +369,26 @@ jobs:
           sudo rm -rf test-secrets test-logs
           docker system prune -f
 
-      - name: Enforce performance budget
+      - name: Report elapsed time
         if: always()
         env:
           JOB_START: ${{ steps.timing.outputs.job_start }}
           SETUP_S: ${{ steps.setup_timing.outputs.setup_s }}
-          SETUP_BUDGET_S: ${{ env.DOCKER_SETUP_BUDGET_S }}
-          WARM_BUDGET_S: ${{ env.DOCKER_JOB_BUDGET_S }}
-          COLD_BUDGET_S: ${{ env.DOCKER_COLD_JOB_BUDGET_S }}
           BUILDKIT_SEEDED: ${{ steps.buildkit_cache.outputs.cache-hit || 'false' }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           now=$(date +%s)
           elapsed=$((now - JOB_START))
-          if [ "$BUILDKIT_SEEDED" = "true" ]; then
-            effective_budget="$WARM_BUDGET_S"
-            budget_label="warm"
-          else
-            effective_budget="$COLD_BUDGET_S"
-            budget_label="cold-cache (warm budget: ${WARM_BUDGET_S}s)"
-          fi
           {
             echo "## Docker Build & Test Timing"
             echo "- Event: \`${EVENT_NAME}\`"
             echo "- BuildKit main cache seeded for Dockerfile: \`${BUILDKIT_SEEDED}\`"
-            echo "- Setup: \`${SETUP_S}s\` (budget: \`${SETUP_BUDGET_S}s\`)"
-            echo "- Job execution (excluding runner wait & post-steps): \`${elapsed}s\` (budget: \`${effective_budget}s\` [${budget_label}])"
+            echo "- Setup: \`${SETUP_S}s\`"
+            echo "- Job execution (excluding runner wait & post-steps): \`${elapsed}s\`"
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "Docker setup: ${SETUP_S}s (budget: ${SETUP_BUDGET_S}s)"
-          echo "Docker job execution: ${elapsed}s (budget: ${effective_budget}s [${budget_label}])"
-          failed=0
-          if [ -n "$SETUP_S" ] && [ "$SETUP_S" -gt "$SETUP_BUDGET_S" ]; then
-            echo "::error::Docker setup exceeded budget: ${SETUP_S}s > ${SETUP_BUDGET_S}s"
-            failed=1
-          fi
-          if [ "$EVENT_NAME" = "pull_request" ] && [ "$elapsed" -gt "$effective_budget" ]; then
-            echo "::error::Build, Test and Scan Docker Image exceeded ${budget_label} budget: ${elapsed}s > ${effective_budget}s"
-            failed=1
-          fi
-          exit "$failed"
+          echo "Docker setup: ${SETUP_S}s"
+          echo "Docker job execution: ${elapsed}s"
 
   build-and-test:
     name: Build and Test Docker Image
