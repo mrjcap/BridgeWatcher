@@ -4,7 +4,9 @@
     "config:recommended",
     "helpers:pinGitHubActionDigests"
   ],
-  "dependencyDashboardAutoclose": true,
+  "dependencyDashboard": {
+    "autoclose": true
+  },
   "minimumReleaseAge": "0 days",
   "customManagers": [
     {
