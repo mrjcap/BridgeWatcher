@@ -29,6 +29,20 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
 
 
+        It 'Warns and returns no result when <Shape> omits textAnnotations' -ForEach @(
+            @{ Shape = 'JSON'; Response = ('{"responses":[{}]}' | ConvertFrom-Json) }
+            @{ Shape = 'a hashtable'; Response = @{ responses = @(@{}) } }
+        ) {
+            Mock -CommandName Write-BridgeLog -MockWith {}
+
+            $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $Response -ErrorAction Stop
+
+            $result | Should -BeNullOrEmpty
+            Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -Scope It -ParameterFilter {
+                $Level -eq 'Warning' -and $Message -like '*textAnnotations*'
+            }
+        }
+
         It 'Πρέπει να επιστρέφει $null για κενό κείμενο OCR' {
             $mockApiResponse = @{
                 responses = @(
@@ -95,6 +109,19 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         $result | Should -Be @()
 
+    }
+
+    It 'Returns Expired exactly at the scheduled reopening time' {
+        $config = New-BridgeConfiguration
+        $config.Defaults.TimezoneIds = @('UTC')
+        Mock -CommandName Get-Date -MockWith { [datetime]::new(2030, 1, 15, 12, 0, 0, [DateTimeKind]::Utc) }
+        Mock -CommandName Write-BridgeLog -MockWith {}
+        $response = @{ responses = @(@{ textAnnotations = @(@{ description = '15/01/2030 11:30 έως 15/01/2030 12:00' }) }) }
+
+        $result = ConvertFrom-BridgeOCRResult -Configuration $config -ApiResponse $response
+
+        $result.ScheduleState | Should -BeExactly 'Expired'
+        $result.OpensIn | Should -BeExactly 'Τώρα'
     }
 
     It 'επιστρέφει προειδοποίηση με ώρα κλεισίματος' {

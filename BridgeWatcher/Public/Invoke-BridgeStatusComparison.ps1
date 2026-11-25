@@ -133,7 +133,7 @@ function Test-BridgeChangeIsActionable {
     }
     $prevBridge = $PreviousStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
     $currentBridge = $CurrentStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
-    $ocrProps = @('ScheduleState', 'From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2', 'ImageHash')
+    $ocrProps = @('ScheduleState', 'From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2', 'ImageHash', 'FallbackNotifiedImageHash')
 
     if ($Change.SideIndicator -eq '==') {
         $logSplat.Message = "Καμία ουσιαστική αλλαγή στην $($Change.GefyraName)."
@@ -161,6 +161,12 @@ function Test-BridgeChangeIsActionable {
         Write-BridgeLog @logSplat -Configuration $Configuration
         Copy-BridgePreviousOcrProperty -PreviousBridge $prevBridge -CurrentBridge $currentBridge -PropertyNames $ocrProps
         return $false
+    }
+
+    # The delivered fallback belongs to these image bytes, not to a changing URL.
+    $previousFallback = Get-BridgeOptionalProperty -InputObject $prevBridge -PropertyName 'FallbackNotifiedImageHash'
+    if ($previousFallback -and $previousFallback -eq (Get-BridgeOptionalProperty -InputObject $currentBridge -PropertyName 'ImageHash')) {
+        Copy-BridgePreviousOcrProperty -PreviousBridge $prevBridge -CurrentBridge $currentBridge -PropertyNames 'FallbackNotifiedImageHash'
     }
 
     $logSplat.Message = "Εντοπίστηκε ενημέρωση του προγράμματος κλεισίματος για την $($Change.GefyraName)."

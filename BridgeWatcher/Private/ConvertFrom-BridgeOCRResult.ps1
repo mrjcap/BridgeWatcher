@@ -29,7 +29,17 @@
         [PSCustomObject]$ApiResponse
     )
 
-    if ($null -eq $ApiResponse -or $null -eq $ApiResponse.responses -or $ApiResponse.responses.Count -eq 0 -or $null -eq $ApiResponse.responses[0].textAnnotations -or $ApiResponse.responses[0].textAnnotations.Count -eq 0) {
+    $textAnnotations = $null
+    if ($null -ne $ApiResponse -and $null -ne $ApiResponse.responses -and $ApiResponse.responses.Count -gt 0) {
+        $firstResponse = $ApiResponse.responses[0]
+        if ($firstResponse -is [System.Collections.IDictionary]) {
+            $textAnnotations = $firstResponse['textAnnotations']
+        } elseif ($null -ne $firstResponse -and $firstResponse.PSObject.Properties['textAnnotations']) {
+            $textAnnotations = $firstResponse.textAnnotations
+        }
+    }
+
+    if ($null -eq $textAnnotations -or $textAnnotations.Count -eq 0) {
         $writeBridgeLogSplat = @{
             Stage   = 'Σφάλμα'
             Message = 'Δεν βρέθηκαν αποτελέσματα (textAnnotations) στην απόκριση OCR.'
@@ -39,7 +49,6 @@
         return $null
     }
 
-    $textAnnotations = $ApiResponse.responses[0].textAnnotations
     $ocrText = $textAnnotations[0].description
 
     $writeBridgeLogSplat = @{

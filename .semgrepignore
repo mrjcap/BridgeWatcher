@@ -5,9 +5,7 @@
 .github/workflows/release.yml
 .github/workflows/docker-build.yml
 
-# Ignore PowerShell scripts that may trigger false positives
-*.ps1
-*.psm1
+# Ignore PowerShell data files, not module source.
 *.psd1
 
 # Ignore test files

@@ -193,6 +193,43 @@ InModuleScope BridgeWatcher {
             Should -Not -Invoke -CommandName Export-BridgeStatusJson -Scope It
         }
 
+        It 'Retries OCR but delivers the fallback only once per unchanged closure image' {
+            $params = @{
+                OutputFile = (Join-Path -Path $TestDrive -ChildPath 'retry.json'); Configuration = $script:Config
+                ApiKey = 'ocr'; PoUserKey = 'user'; PoApiKey = 'app'
+            }
+            $poll = @{ Hash = 'first'; FailPush = $true; Recovered = $false }
+            Mock -CommandName Get-BridgeStatus -MockWith {
+                [pscustomobject]@{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule
+                    ImageUrl = 'https://example.com/schedule'; ImageHash = $poll.Hash }
+            }
+            Mock -CommandName Write-BridgeLog -MockWith {}
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith {
+                if (-not $poll.Recovered) { throw 'OCR unavailable' }
+                [pscustomobject]@{ ScheduleState = 'Future'; From = '10:00'; To = '11:00' }
+            }
+            Mock -CommandName Send-BridgePushover -MockWith { if ($poll.FailPush) { throw 'Push unavailable' } }
+
+            { Update-BridgeStatus @params } | Should -Throw -ExpectedMessage '*Push unavailable*'
+            $poll.FailPush = $false
+            $null = Update-BridgeStatus @params
+            $null = Update-BridgeStatus @params
+            Should -Invoke -CommandName Invoke-BridgeOCRGoogleCloud -Times 3 -Exactly
+            Should -Invoke -CommandName Send-BridgePushover -Times 2 -Exactly
+
+            $poll.Hash = 'replacement'
+            $null = Update-BridgeStatus @params
+            Should -Invoke -CommandName Send-BridgePushover -Times 3 -Exactly
+            $poll.Recovered = $true
+            $null = Update-BridgeStatus @params
+            $null = Update-BridgeStatus @params
+            Should -Invoke -CommandName Invoke-BridgeOCRGoogleCloud -Times 5 -Exactly
+            Should -Invoke -CommandName Send-BridgePushover -Times 4 -Exactly
+            $saved = Get-BridgePreviousStatus -InputFile $params.OutputFile -Configuration $script:Config
+            $saved.ScheduleState | Should -Be 'Future'
+            $saved.ImageHash | Should -Be 'replacement'
+        }
+
         Context 'End-to-End Orchestration Pipeline (External HTTP Mocked Only)' {
             It 'Εκτελεί πλήρη ροή δύο διαδοχικών κύκλων χωρίς εσωτερικά mocks και αποφεύγει διπλές ειδοποιήσεις' {
                 $e2eLogDir = Join-Path $TestDrive 'e2e_logs'
