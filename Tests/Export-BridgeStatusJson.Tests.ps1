@@ -11,19 +11,16 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         It 'Επιστρέφει BridgeResult με σφάλμα και γράφει το κατάλληλο μήνυμα' {
 
-            # Mock το Test-Path να επιστρέφει true για να μην αποτύχει πρόωρα
 
             Mock Test-Path { $true }
 
             Mock New-Item { }
 
-            # Mock Set-Content για να προκαλέσουμε σφάλμα
 
             Mock ConvertTo-Json { throw 'Fake error during file write' }
 
             Mock Move-Item {}
 
-            # Mock του Write-BridgeLog
 
             Mock Write-BridgeLog {}
 
@@ -43,7 +40,6 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            # Επιβεβαιώνουμε ότι κάλεσε το Write-BridgeLog με σφάλμα
 
             Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -Scope It
 
@@ -116,7 +112,6 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            # Επιβεβαιώνουμε ότι δεν έγραψε Warning (μόνο Info)
 
             Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -Scope It
 
@@ -136,7 +131,6 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'valid/path/file.json'
 
-            # Επιβεβαιώνουμε ότι κάλεσε το Write-BridgeLog μία φορά
 
             Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -Scope It
 
@@ -351,7 +345,6 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             $config = New-BridgeConfiguration
 
-            # LoggingConfig.InfoStage already defaults to 'Ανάλυση'
 
 
 

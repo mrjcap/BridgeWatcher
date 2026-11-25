@@ -14,7 +14,7 @@ Describe 'Write-BridgeLog' {
         Mock Write-Warning
         Mock Add-Content
         Mock New-Item
-        Mock Test-Path { $false }  # simulate missing log dir
+        Mock Test-Path { $false }
     }
     It 'Γράφει log με Verbose level και δημιουργεί τον φάκελο' {
         Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'δοκιμή' -Level 'Verbose'
@@ -60,14 +60,11 @@ Describe 'Write-BridgeLog' {
 
     Context 'Error Handling για File Operations' {
         It 'Γράφει Write-Warning όταν αποτυγχάνει το Add-Content' {
-            # Mock το Add-Content για να προκαλέσουμε σφάλμα
             Mock Add-Content { throw [System.IO.IOException]::new('Access denied') }
             Mock Write-Warning {}
 
-            # Εκτέλεση - δεν πρέπει να ρίξει exception αλλά να καλέσει Write-Warning
             { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'Test message' } | Should -Throw
 
-            # Επιβεβαίωση ότι καλέστηκε το Write-Warning με το σωστό μήνυμα
             Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter {
                 $Message -like '*Failed to write to log file*Access denied*'
             }

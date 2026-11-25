@@ -33,7 +33,6 @@ Describe 'Send-Pushover' {
 
         { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Throw '*Αποτυχία αποστολής Pushover*'
 
-        # Επιβεβαίωση ότι καλέστηκε το error logging
         Should -Invoke -ModuleName BridgeWatcher -CommandName Write-BridgeLog -ParameterFilter {
             $Stage -eq 'Σφάλμα' -and $Message -like '*Αποτυχία αποστολής Pushover*'
         } -Times 1 -Exactly -Scope It

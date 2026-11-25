@@ -30,7 +30,6 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
 
         It 'Πρέπει να επιστρέφει $null για κενό κείμενο OCR' {
-            # Δημιουργία mock δεδομένων για την περίπτωση όπου δεν υπάρχουν annotations
             $mockApiResponse = @{
                 responses = @(
                     @{
@@ -40,10 +39,8 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
                     }
                 )
             }
-            # Mock για το Write-Verbose και Write-Warning
             Mock Write-Verbose {}
             Mock Write-Warning {}
-            # Εκτέλεση της συνάρτησης
             $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse
             $res | Should -BeNullOrEmpty
         }
@@ -70,7 +67,6 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
     It 'πρέπει να επιστρέφει κενό πίνακα όταν δεν βρίσκεται το εύρος χρόνου' {
 
-        # Δημιουργία mock δεδομένων όπου το ConvertTo-BridgeTimeRange επιστρέφει $null
 
         $mockApiResponse = @{
 
@@ -90,15 +86,12 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         }
 
-        # Mock για το ConvertTo-BridgeTimeRange που επιστρέφει $null
 
         Mock ConvertTo-BridgeTimeRange { return $null }
 
-        # Εκτέλεση της συνάρτησης
 
         $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $mockApiResponse
 
-        # Ελέγχουμε αν επιστρέφει το αναμενόμενο κενό array
 
         $result | Should -Be @()
 

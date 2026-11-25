@@ -160,7 +160,6 @@ Describe 'Invoke-BridgeClosedNotification' {
 
         It 'Γράφει debug και δεν καλεί Send-BridgePushover για άγνωστη κατάσταση' {
 
-            # Arrange
 
             $entry = [pscustomobject]@{
 
@@ -176,7 +175,6 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Mock Send-BridgePushover { throw 'Δεν έπρεπε να εκτελεστεί!' }
 
-            # Act
 
             { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug } | Should -Not -Throw
 

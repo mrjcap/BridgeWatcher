@@ -26,7 +26,6 @@ Describe 'Get-BridgeStatusFromHtml' {
 
         It 'Πετάει σφάλμα BridgeImagesNotFound όταν δεν επιστρέφονται εικόνες' {
 
-            # Mock το Get-BridgeImage να επιστρέφει $null
 
             Mock Get-BridgeImage { $null }
 
@@ -94,7 +93,6 @@ Describe 'Get-BridgeStatusFromHtml' {
         It 'Δημιουργεί προειδοποίηση για Open κατάσταση χωρίς info εικόνα' {
             $config = New-BridgeConfiguration
 
-            # Mock Get-BridgeImage to return images with Open pattern but no info.php
             Mock Get-BridgeImage {
                 param($HtmlContent, $Location)
                 $null = $HtmlContent
@@ -115,10 +113,8 @@ Describe 'Get-BridgeStatusFromHtml' {
 
             $result = Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp -Configuration $config
 
-            # Should return 2 because both poseidonia and isthmia have an open image and we no longer skip them
             $result.Count | Should -Be 2
 
-            # Verify the warning log message was written
             Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
                 $Message -like '*Λείπει η εικόνα info.php*'
             } -Times 2 -Scope It

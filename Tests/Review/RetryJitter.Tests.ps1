@@ -53,7 +53,6 @@ Describe 'Retry Jitter Requirement Review' {
             }, $true).Count -gt 0
         }
 
-        # AST analysis helper function to find retry jitter violations
         function Get-RetryJitterViolation {
             <#
             .SYNOPSIS

@@ -111,7 +111,6 @@ function Get-BridgeStatusObject {
     )
 
 
-    # Use configuration or fallback for BaseUrl
     if (-not $BaseUrl) {
         $BaseUrl = $Configuration.Urls.BaseImage
     }

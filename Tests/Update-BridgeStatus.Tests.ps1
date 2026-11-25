@@ -268,7 +268,6 @@ InModuleScope BridgeWatcher {
                     Configuration = $e2eConfig
                 }
 
-                # Poll 1: Cold start (no prior state file on disk)
                 $poll1State = @(Update-BridgeStatus @pollParams)
                 $poll1State.Count | Should -Be 2
                 Test-Path $e2eStatusFile | Should -BeTrue
@@ -297,11 +296,9 @@ InModuleScope BridgeWatcher {
                 $closedPushover.message | Should -Match '25/12/2099 11:00'
                 $openedPushover | Should -Not -BeNullOrEmpty
 
-                # Poll 2: Unchanged state & identical schedule image bytes
                 $poll2State = @(Update-BridgeStatus @pollParams)
                 $poll2State.Count | Should -Be 2
 
-                # Assert 0 new OCR or Pushover Invoke-RestMethod calls occurred in Poll 2
                 $ocrCalls.Count | Should -Be 1
                 $pushoverCalls.Count | Should -Be 2
                 Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It

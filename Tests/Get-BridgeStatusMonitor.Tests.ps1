@@ -173,12 +173,10 @@ Describe 'Get-BridgeStatusMonitor' {
         It 'Χρησιμοποιεί DefaultMaxIterations και DefaultIntervalSeconds αν δεν δοθούν' {
             Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
 
-            # Use real configuration object, which is available because we dot-source New-BridgeConfiguration
             $mockConfig = New-BridgeConfiguration
             $mockConfig.Defaults.MaxIterations = 1
             $mockConfig.Defaults.IntervalSeconds = 1
 
-            # Δεν περνάμε -MaxIterations και -IntervalSeconds, αλλά δίνουμε dummy παραμέτρους για το Update-BridgeStatus
             Get-BridgeStatusMonitor -Configuration $mockConfig -OutputFile 'test.json' -ApiKey 'dummy' -PoUserKey 'dummy' -PoApiKey 'dummy'
             Should -Invoke -CommandName Update-BridgeStatus -Times 1 -Exactly
         }

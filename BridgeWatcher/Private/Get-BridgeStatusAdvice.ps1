@@ -36,12 +36,10 @@
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
 
-    # Λήψη μέγιστου χρόνου αναμονής από την παράμετρο, τη διαμόρφωση, ή χρήση εναλλακτικής λύσης
     if (-not $MaxWaitTimeMinutes) {
         $MaxWaitTimeMinutes = $Configuration.Defaults.MaxWaitTimeMinutes
     }
 
-    # Λήψη μηνυμάτων συμβουλής από τη διαμόρφωση ή χρήση εναλλακτικής λύσης
     $doNotWaitMessage = $Configuration.AdviceMessages.DoNotWait
 
     $waitMessage = $Configuration.AdviceMessages.Wait

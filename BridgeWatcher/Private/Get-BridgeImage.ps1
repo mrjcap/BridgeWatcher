@@ -29,7 +29,6 @@
 
     $bridgePattern = if ($Location -eq 'poseidonia') { 'Ποσειδων[ιίΙΊ]α' } else { 'Ισθμ[ιίΙΊ]α' }
 
-    # Match div elements containing 'panel-primary' in their class attribute
     $blocks = [regex]::Split($HtmlContent, '(?i)<div[^>]+class=["''][^"'']*panel-primary[^"'']*["''][^>]*>')
 
     $block = $blocks | Where-Object { $_ -match "(?i)$bridgePattern" }

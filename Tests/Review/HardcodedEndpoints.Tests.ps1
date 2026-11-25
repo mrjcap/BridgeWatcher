@@ -18,7 +18,6 @@ Describe "Hardcoded Service Endpoints in Defaults Review" {
 
                 foreach ($p in $params) {
                     if ($p.DefaultValue) {
-                        # Find all string constants/expandable strings inside the DefaultValue AST
                         $stringNodes = $p.DefaultValue.FindAll({
                             $args[0] -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
                             $args[0] -is [System.Management.Automation.Language.ExpandableStringExpressionAst]

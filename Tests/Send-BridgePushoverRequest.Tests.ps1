@@ -89,9 +89,6 @@ InModuleScope BridgeWatcher {
         $payload = @{ message = 'test' }
         { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Service Unavailable*'
         Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
-        # It should have called Dispose() inside the finally block of the catch [WebException]
-        # MemoryStream.Dispose() doesn't have an easily observable side effect unless we mock it,
-        # but since we hit the finally block, coverage should increase.
     }
 
     It 'Επαναλαμβάνει σε HttpRequestException χωρίς ιδιότητα Response υπό strict mode και δεν αποτυγχάνει όταν λείπει το title' {

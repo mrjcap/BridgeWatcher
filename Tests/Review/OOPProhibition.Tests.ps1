@@ -7,7 +7,6 @@ $script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1, 
 }
 
 BeforeAll {
-    # Pester 5/6 scope setup
 }
 
 Describe "Object-Oriented Over-Engineering Prohibition Review" {
@@ -42,7 +41,6 @@ Describe "Object-Oriented Over-Engineering Prohibition Review" {
             $violatingCmds = @()
             foreach ($cmd in $addTypes) {
                 $hasTypeDefinition = $false
-                # Check elements
                 for ($i = 1; $i -lt $cmd.CommandElements.Count; $i++) {
                     $element = $cmd.CommandElements[$i]
                     if ($element -is [System.Management.Automation.Language.CommandParameterAst]) {
@@ -52,7 +50,6 @@ Describe "Object-Oriented Over-Engineering Prohibition Review" {
                         }
                     } elseif ($element -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
                               $element -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
-                        # Positional parameter: check if it looks like C# class/struct/enum/interface
                         $val = $element.Value
                         if ($val -match '\b(class|struct|enum|interface)\b') {
                             $hasTypeDefinition = $true
