@@ -535,7 +535,6 @@ jobs:
     if: always()
     permissions:
       contents: read
-      pull-requests: read
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       CODACY_API_TOKEN: ${{ secrets.CODACY_API_TOKEN }}
