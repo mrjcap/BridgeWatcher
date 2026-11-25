@@ -1,7 +1,9 @@
-FROM mcr.microsoft.com/dotnet/runtime:11.0.0-alpine3.24-amd64
+FROM mcr.microsoft.com/dotnet/runtime:11.0.0-alpine3.24-amd64@sha256:a0ac7a4038d29b72ac0d40039afecf22fe2f9872e077dd6d929db5d31d3ccd65
 
 # renovate: datasource=github-releases depName=PowerShell/PowerShell
 ARG POWERSHELL_VERSION=7.7.0
+# Update with the linux-musl-x64 tarball digest from the same PowerShell release.
+ARG POWERSHELL_SHA256=5a6408b1d196e9d6b6d1af71daa931834c5fea07d14a78cf369292c23944e78d
 ARG PUID=99
 ARG PGID=100
 
@@ -24,6 +26,7 @@ RUN apk update && \
     curl --fail --show-error --silent --location \
         "https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-musl-x64.tar.gz" \
         -o /tmp/powershell.tar.gz && \
+    printf '%s  %s\n' "${POWERSHELL_SHA256}" /tmp/powershell.tar.gz | sha256sum -c - && \
     mkdir -p /opt/microsoft/powershell/7 && \
     tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
     chmod +x /opt/microsoft/powershell/7/pwsh && \

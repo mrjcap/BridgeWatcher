@@ -184,12 +184,16 @@ function Invoke-BridgeClosedNotification {
                         ErrorAction   = 'Stop'
                         Configuration = $Configuration
                     }
+                    $notifiedHash = Get-BridgeOptionalProperty -InputObject $entry -PropertyName 'FallbackNotifiedImageHash'
                     try {
                         $ocrResult = Invoke-BridgeOCRGoogleCloud @ocrSplat
-                        Set-BridgeEntryOcrMetadata -Entry $entry -OcrResult $ocrResult
-                        $content = Get-BridgeScheduledNotificationContent -Entry $entry -OcrResult $ocrResult
                     } catch {
                         $ocrFailed = $true
+                        # Retry the same image on the next poll rather than saving it as processed.
+                        $failedHash = Get-BridgeOptionalProperty -InputObject $entry -PropertyName 'ImageHash'
+                        if ($failedHash) {
+                            $entry.ImageHash = $null
+                        }
                         $writeBridgeLogSplat = @{
                             Stage   = 'Σφάλμα'
                             Message = "❌ Απέτυχε η OCR για $($entryImageUrl): $($_.Exception.Message)"
@@ -197,12 +201,25 @@ function Invoke-BridgeClosedNotification {
                         }
                         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
                         Write-Warning "OCR failed for $($entryImageUrl): $($_.Exception.Message)"
-                        $content = @{
+                        if ($failedHash -and $failedHash -eq $notifiedHash) { continue }
+                        $fallback = @{
                             Title   = "🚧 Η γέφυρα $($entry.GefyraName) έκλεισε με πρόγραμμα"
                             Message = "Απέτυχε η υπηρεσία OCR. Δείτε την εικόνα εδώ: $entryImageUrl"
                         }
+                        Send-BridgeNotification -Configuration $Configuration @fallback -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
+                        if ($failedHash) {
+                            if ($entry -is [System.Collections.IDictionary]) {
+                                $entry['FallbackNotifiedImageHash'] = $failedHash
+                            } else {
+                                $entry | Add-Member -NotePropertyName FallbackNotifiedImageHash -NotePropertyValue $failedHash -Force
+                            }
+                        }
+                        continue
                     }
+                    Set-BridgeEntryOcrMetadata -Entry $entry -OcrResult $ocrResult
+                    $content = Get-BridgeScheduledNotificationContent -Entry $entry -OcrResult $ocrResult
                     Send-BridgeNotification -Configuration $Configuration -Title $content.Title -Message $content.Message -Type 'Closed' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
+                    if ($notifiedHash) { $entry.FallbackNotifiedImageHash = $null }
                 }
                 default {
                     $writeBridgeLogSplat = @{

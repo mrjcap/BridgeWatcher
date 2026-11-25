@@ -138,10 +138,12 @@ Describe 'Invoke-BridgeClosedNotification' {
             Mock Invoke-BridgeOCRGoogleCloud { throw 'Fake OCR failure' }
             Mock Send-BridgePushover -MockWith { }
 
-            $entry = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
+            $entry = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg'; ImageHash = 'first' }
 
             { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
 
+            $entry.ImageHash | Should -BeNullOrEmpty
+            $entry.FallbackNotifiedImageHash | Should -Be 'first'
             Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly
         }
 

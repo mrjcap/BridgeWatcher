@@ -50,21 +50,21 @@
     process {
         foreach ($entry in $CurrentState) {
             if ($null -ne $entry -and $Configuration.Statuses.Open -eq $entry.GefyraStatus) {
-                try {
-                    $logDetails = @"
+                $logDetails = @"
 Γέφυρα        : $($entry.GefyraName)
 Κατάσταση     : $($entry.GefyraStatus)
 Χρονική στιγμή: $($entry.Timestamp)
 Εικόνα        : $($entry.ImageUrl)
 "@
-                    $writeBridgeLogSplat = @{
-                        Stage   = 'Ανάλυση'
-                        Message = $logDetails
-                    }
-                    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+                $writeBridgeLogSplat = @{
+                    Stage   = 'Ανάλυση'
+                    Message = $logDetails
+                }
+                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
 
+                try {
                     Send-BridgeNotification -Configuration $Configuration -Title 'Γέφυρα Ανοιχτή!' -Message "Η γέφυρα $($entry.GefyraName) άνοιξε" -Type 'Opened' -PoUser $PoUserKey -PoApi $PoApiKey -Provider $NotificationProvider
-                } catch [System.Net.WebException], [System.Management.Automation.MethodInvocationException] {
+                } catch {
                     $err = $_
                     $writeBridgeLogSplat = @{
                         Stage   = 'Σφάλμα'
