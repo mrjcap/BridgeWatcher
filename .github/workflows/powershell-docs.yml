@@ -205,6 +205,37 @@ jobs:
               New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName "about_$($moduleName).md"
               Write-Verbose " Documentation generated successfully"
             }
+            # platyPS emits bare PowerShell fences and an unwrapped CommonParameters paragraph.
+            foreach ($cmdlet in $cmdlets) {
+              $docPath = Join-Path $docsPath "$cmdlet.md"
+              if (-not (Test-Path -LiteralPath $docPath -PathType Leaf)) { continue }
+
+              $content = Get-Content -LiteralPath $docPath -Raw -Encoding utf8
+              $newline = if ($content.Contains("`r`n")) { "`r`n" } else { "`n" }
+              $lines = $content -split '\r?\n'
+              $section = ''
+              $inFence = $false
+              for ($i = 0; $i -lt $lines.Count; $i++) {
+                $line = $lines[$i]
+                if ($line.StartsWith('```')) {
+                  if (-not $inFence -and $line -eq '```' -and $section -in @('## SYNTAX', '## EXAMPLES')) {
+                    $lines[$i] = '```powershell'
+                  }
+                  $inFence = -not $inFence
+                } elseif (-not $inFence) {
+                  if ($line.StartsWith('## ')) { $section = $line }
+                  if ($line.Length -gt 120 -and $line.StartsWith('This cmdlet supports the common parameters: ')) {
+                    $line = $line.Replace(', -InformationVariable', ",${newline}-InformationVariable")
+                    $lines[$i] = $line.Replace(', and -WarningVariable', ",${newline}and -WarningVariable")
+                  }
+                }
+              }
+              $formatted = $lines -join $newline
+              if ($formatted -cne $content) {
+                Set-Content -LiteralPath $docPath -Value $formatted -Encoding utf8 -NoNewline
+              }
+            }
+
             # List generated files
             $generatedFiles = Get-ChildItem $docsPath -Filter "*.md"
             Write-Verbose "Generated documentation files:"
