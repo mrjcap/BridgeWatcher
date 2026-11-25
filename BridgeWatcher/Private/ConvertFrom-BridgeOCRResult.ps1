@@ -1,27 +1,56 @@
-﻿function ConvertFrom-BridgeOCRResult {
-    <#
-    .SYNOPSIS
-    Μετατρέπει το αποτέλεσμα OCR ανάλυσης σε αντικείμενα γέφυρας.
+﻿<#
+.SYNOPSIS
+Returns the current time in the bridge's configured time zone.
+.DESCRIPTION
+Tries the configured zone IDs in order and falls back to local time with a warning.
+.PARAMETER TimezoneIds
+Platform-specific IDs for the bridge's time zone, in preference order.
+#>
+function Get-BridgeScheduleLocalTime {
+    [CmdletBinding()]
+    [OutputType([datetime])]
+    param([string[]]$TimezoneIds)
 
-    .DESCRIPTION
-    Η ConvertFrom-BridgeOCRResult λαμβάνει τα αποτελέσματα OCR και επιστρέφει αντικείμενα
-    που περιγράφουν αν η γέφυρα είναι κλειστή, ανοιχτή ή άγνωστη.
+    if ($null -eq $TimezoneIds -or $TimezoneIds.Count -eq 0) {
+        $TimezoneIds = @('GTB Standard Time', 'Europe/Athens')
+    }
+    foreach ($tzId in $TimezoneIds) {
+        try {
+            $zone = [System.TimeZoneInfo]::FindSystemTimeZoneById($tzId)
+        } catch {
+            Write-Verbose -Message "Timezone ID $tzId not supported on this platform: $($_.Exception.Message)"
+            continue
+        }
+        return [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $zone)
+    }
+    Write-Warning -Message "All $($TimezoneIds.Count) timezone IDs failed ($($TimezoneIds -join ', ')). Falling back to local time."
+    return Get-Date
+}
 
-    .PARAMETER Configuration
-    Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
+<#
+.SYNOPSIS
+Μετατρέπει το αποτέλεσμα OCR ανάλυσης σε αντικείμενα γέφυρας.
 
-    .PARAMETER ApiResponse
-    Το αντικείμενο απόκρισης από το Google Vision API.
+.DESCRIPTION
+Η ConvertFrom-BridgeOCRResult λαμβάνει τα αποτελέσματα OCR και επιστρέφει αντικείμενα
+που περιγράφουν αν η γέφυρα είναι κλειστή, ανοιχτή ή άγνωστη.
 
-    .OUTPUTS
-    [pscustomobject[]] - Αντικείμενα κατάστασης γέφυρας.
+.PARAMETER Configuration
+Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
 
-    .EXAMPLE
-    ConvertFrom-BridgeOCRResult -Configuration $config -ApiResponse $response
+.PARAMETER ApiResponse
+Το αντικείμενο απόκρισης από το Google Vision API.
 
-    .NOTES
-    Χρησιμοποιείται για την ανάλυση των αποκρίσεων OCR και την εξαγωγή της κατάστασης της γέφυρας.
-    #>
+.OUTPUTS
+[pscustomobject[]] - Αντικείμενα κατάστασης γέφυρας.
+
+.EXAMPLE
+ConvertFrom-BridgeOCRResult -Configuration $config -ApiResponse $response
+
+.NOTES
+Χρησιμοποιείται για την ανάλυση των αποκρίσεων OCR και την εξαγωγή της κατάστασης της γέφυρας.
+#>
+function ConvertFrom-BridgeOCRResult {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration,
@@ -94,29 +123,7 @@
     $to = $timeRange.To
     $duration = $timeRange.ClosedFor
 
-    $athensZone = $null
-    $timezoneIds = $Configuration.Defaults.TimezoneIds
-    if ($null -eq $timezoneIds -or $timezoneIds.Count -eq 0) {
-        $timezoneIds = @('GTB Standard Time', 'Europe/Athens')
-    }
-    $failedTimezoneCount = 0
-    foreach ($tzId in $timezoneIds) {
-        try {
-            $athensZone = [System.TimeZoneInfo]::FindSystemTimeZoneById($tzId)
-            break
-        } catch {
-            $failedTimezoneCount += 1
-            Write-Verbose "Timezone ID $tzId not supported on this platform: $($_.Exception.Message)"
-        }
-    }
-    if ($null -eq $athensZone) {
-        Write-Warning "All $failedTimezoneCount timezone IDs failed ($($timezoneIds -join ', ')). Falling back to local time."
-    }
-    $athensNow = if ($null -ne $athensZone) {
-        [System.TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $athensZone)
-    } else {
-        Get-Date
-    }
+    $athensNow = Get-BridgeScheduleLocalTime -TimezoneIds $Configuration.Defaults.TimezoneIds
 
     $minutesLeft = [int]($to - $athensNow).TotalMinutes
 
