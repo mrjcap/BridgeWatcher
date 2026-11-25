@@ -10,7 +10,6 @@ Describe 'Δοκιμές Get-BridgeStatusAdvice' {
     }
 
     It 'πρέπει να επιστρέφει "Είναι προτιμότερο να μην περιμένεις" when more than 12 minutes until open' {
-        # Καλέστε τη συνάρτηση με τιμή πάνω από 12 λεπτά
         $result = Get-BridgeStatusAdvice -Configuration $script:Config -MinutesUntilOpen 15
         $result | Should -Be 'Είναι προτιμότερο να μην περιμένεις'
     }
@@ -23,10 +22,8 @@ Describe 'Δοκιμές Get-BridgeStatusAdvice' {
         $result | Should -Be 'Είναι προτιμότερο να μην περιμένεις'
     }
     It 'πρέπει να επιστρέφει "Είναι προτιμότερο να περιμένεις" when 12 minutes or less until open' {
-        # Καλέστε τη συνάρτηση με τιμή 12 ή λιγότερο
         $result = Get-BridgeStatusAdvice -Configuration $script:Config -MinutesUntilOpen 12
         $result | Should -Be 'Είναι προτιμότερο να περιμένεις'
-        # Επιπλέον έλεγχος για τιμή 5 λεπτών
         $result = Get-BridgeStatusAdvice -Configuration $script:Config -MinutesUntilOpen 5
         $result | Should -Be 'Είναι προτιμότερο να περιμένεις'
     }
@@ -42,11 +39,9 @@ Describe 'Δοκιμές Get-BridgeStatusAdvice' {
                 LoggingConfig  = $baseConfig.LoggingConfig
             }
 
-            # Test with minutes above custom threshold
             $result = Get-BridgeStatusAdvice -MinutesUntilOpen 20 -Configuration $config
             $result | Should -Be 'Είναι προτιμότερο να μην περιμένεις'
 
-            # Test with minutes at custom threshold
             $result = Get-BridgeStatusAdvice -MinutesUntilOpen 15 -Configuration $config
             $result | Should -Be 'Είναι προτιμότερο να περιμένεις'
         }
@@ -94,11 +89,9 @@ Describe 'Δοκιμές Get-BridgeStatusAdvice' {
                 LoggingConfig  = $baseConfig.LoggingConfig
             }
 
-            # Test do not wait with custom threshold and message
             $result = Get-BridgeStatusAdvice -MinutesUntilOpen 10 -Configuration $config
             $result | Should -Be 'Custom do not wait'
 
-            # Test wait with custom threshold and message
             $result = Get-BridgeStatusAdvice -MinutesUntilOpen 6 -Configuration $config
             $result | Should -Be 'Custom wait'
         }

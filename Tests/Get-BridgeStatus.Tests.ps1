@@ -59,7 +59,6 @@ Describe 'Test Get-BridgeStatus function' {
         }
         It 'Πρέπει να ρίχνει terminating error όταν το response είναι κενό' {
             Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $null } }
-            # Get-BridgeStatusFromHtml parameter validation throws error
             { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*The argument is null or empty*"
         }
     }
@@ -129,7 +128,6 @@ Describe 'Get-BridgeStatus Integration' {
         $result = Get-BridgeStatus -Configuration $script:Config
         $result.Count | Should -Be 2
 
-        # Depending on naming in the current object
         if ($result[0].GefyraName -eq 'Ποσειδωνία') {
             $result[0].GefyraName | Should -Be 'Ποσειδωνία'
             $result[0].GefyraStatus | Should -Be 'Κλειστή με πρόγραμμα'

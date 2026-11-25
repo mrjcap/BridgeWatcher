@@ -161,8 +161,6 @@ function Update-BridgeStatus {
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
     begin {
-        # Initialize configuration. This is safe to run during -WhatIf as it only creates a memory object
-        # and does not modify any system state.
     }
     process {
         $writeBridgeLogSplat = @{

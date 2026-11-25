@@ -75,13 +75,11 @@ function Write-BridgeLog {
     $Message = $Message -replace "`r`n", " " -replace "`n", " " -replace "`r", " "
     $prefix = "[Bridge:$Stage]"
     $output = "$prefix $Message"
-    # Console logging
     switch ($Level) {
         'Verbose' { Write-Verbose $output }
         'Debug' { Write-Debug $output }
         'Warning' { Write-Warning $output }
     }
-    # File logging using configured log directory
     $logDir = $Configuration.Defaults.LogDirectory
     if (-not (Test-Path $logDir)) {
         $newItemSplat = @{

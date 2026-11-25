@@ -58,7 +58,6 @@
         return $null
     }
 
-    # Χρήση του ήδη εξαχθέντος ασφαλούς κειμένου
     $rawText = $ocrText
     $Lines = $rawText
 

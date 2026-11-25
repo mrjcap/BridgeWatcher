@@ -38,7 +38,6 @@ Describe "Loop Failure Contract Review" {
             }, $true).Count -gt 0
         }
 
-        # AST analysis helper to find retry/polling/monitoring loops that violate the contract
         function Get-LoopFailureContractViolation {
             <#
             .SYNOPSIS

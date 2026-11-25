@@ -17,7 +17,7 @@ Describe 'ConvertTo-BridgeTimeRange' {
     Context 'Όταν το OCR κείμενο δεν περιέχει έγκυρες ημερομηνίες' {
 
         It 'Πρέπει να επιστρέφει $null "Δεν βρέθηκαν επαρκείς ημερομηνίες"' {
-            $fakeLines = @('άκυρο κείμενο χωρίς ημερομηνίες')  # άδειο OCR αποτέλεσμα
+            $fakeLines = @('άκυρο κείμενο χωρίς ημερομηνίες')
             $res = ConvertTo-BridgeTimeRange -Lines $fakeLines
             $res | Should -BeNullOrEmpty
         }

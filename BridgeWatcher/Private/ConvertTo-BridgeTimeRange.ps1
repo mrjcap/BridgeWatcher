@@ -23,7 +23,6 @@
     )
     try {
         $text = $Lines -join ' '
-        # Regex that uses capture groups to ignore extraneous whitespace introduced by OCR
         $pattern = '(?<Date>\d{2}/\d{2}/\d{4})\s+(?<Time>\d{2}:\d{2})'
 
         $bmatches = [regex]::Matches($text, $pattern)

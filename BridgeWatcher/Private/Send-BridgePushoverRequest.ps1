@@ -30,13 +30,10 @@
     )
 
 
-    # Get Pushover API URL from configuration
     $pushoverApiUrl = $Configuration.Urls.PushoverApi
 
-    # Get error message from configuration
     $errorMessagePrefix = $Configuration.PushoverMessages.SendFailed
 
-    # Get logging stage from configuration
     $errorStage = $Configuration.LoggingConfig.ErrorStage
 
     $warningLevel = $Configuration.LoggingConfig.WarningLevel

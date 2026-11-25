@@ -25,7 +25,6 @@ Describe "PowerShell Comment-Based Help Completeness Review" {
             }
 
             foreach ($func in $functions) {
-                # Find function keyword token index
                 $funcTokenIdx = -1
                 for ($i = 0; $i -lt $tokens.Count; $i++) {
                     if ($tokens[$i].Extent.StartOffset -eq $func.Extent.StartOffset) {
@@ -38,7 +37,6 @@ Describe "PowerShell Comment-Based Help Completeness Review" {
                     throw "Could not locate AST start token for function $($func.Name)"
                 }
 
-                # Look backward to see if there is a comment-based help block immediately preceding the function
                 $idx = $funcTokenIdx - 1
                 $foundCommentOutside = $null
                 $separatedByTokens = @()
@@ -55,12 +53,10 @@ Describe "PowerShell Comment-Based Help Completeness Review" {
                         }
                         break
                     }
-                    # Track non-whitespace/newline tokens between help and function keyword
                     $separatedByTokens += $token.Text
                     $idx--
                 }
 
-                # Check inside body just to give a better error message if it's placed inside
                 $foundCommentInside = $null
                 $bodyStartOffset = $func.Body.Extent.StartOffset
                 $bodyTokenIdx = -1
@@ -86,7 +82,6 @@ Describe "PowerShell Comment-Based Help Completeness Review" {
                     }
                 }
 
-                # Checks
                 if (-not $foundCommentOutside -and -not $foundCommentInside) {
                     throw "Function '$($func.Name)' in file '$fileName' is missing comment-based help entirely."
                 }
@@ -113,7 +108,6 @@ Describe "PowerShell Comment-Based Help Completeness Review" {
             }, $true)
 
             foreach ($func in $functions) {
-                # Find the help comment (check outside first, then inside)
                 $funcTokenIdx = -1
                 for ($i = 0; $i -lt $tokens.Count; $i++) {
                     if ($tokens[$i].Extent.StartOffset -eq $func.Extent.StartOffset) {
@@ -139,7 +133,6 @@ Describe "PowerShell Comment-Based Help Completeness Review" {
                 }
 
                 if (-not $helpComment) {
-                    # Try looking inside the body
                     $bodyStartOffset = $func.Body.Extent.StartOffset
                     $bodyTokenIdx = -1
                     for ($i = 0; $i -lt $tokens.Count; $i++) {
@@ -203,7 +196,6 @@ Describe "PowerShell Comment-Based Help Completeness Review" {
             }, $true)
 
             foreach ($function in $functions) {
-                # Existing private functions may place help at the start of the body.
                 $help = $function.GetHelpContent()
                 $help.Synopsis | Should -Not -BeNullOrEmpty -Because "$($function.Name) in $fileName needs a .SYNOPSIS"
             }

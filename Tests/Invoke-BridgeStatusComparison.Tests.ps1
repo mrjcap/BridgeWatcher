@@ -107,9 +107,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     It 'Στέλνει ειδοποίηση ανοίγματος' {
 
-        # ΣΗΜΕΙΩΣΗ:ΔΕΝ βάζουμε -MockWith { } εδώ,
 
-        # για να εκτελεστεί το real Invoke-BridgeOpenedNotification.
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -148,7 +146,6 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $timestamp = Get-Date
 
-        # Ορίζει το ίδιο array για previous/current
 
         $same = @(
 
@@ -302,13 +299,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
         $evt_Closed.Count | Should -Be 1
 
-        # imageUrl δεν είναι κρίσιμο για την απόφαση αποστολής
 
     }
 
     It 'Επεξεργάζεται σωστά πολλαπλές αλλαγές' {
 
-        # Κάνουμε mock μόνο την Invoke-BridgeClosedNotification για να ελέγξουμε τις κλήσεις
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -342,7 +337,6 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        # ✅ Αναμένουμε 2 κλήσεις (μία για κάθε αλλαγή)
 
         $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
         $evt_Closed.Count | Should -Be 2
@@ -445,7 +439,6 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        # ✅ Περιμένουμε μία κλήση σε κάθε notification
 
         $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
         $evt_Closed.Count | Should -Be 1
@@ -603,7 +596,6 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         }
 
-        # Redefine Invoke-BridgeClosedNotification to write to notify.txt for this test
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith {
             param($CurrentState)
             "NOTIFY:Closed:$($CurrentState[0].GefyraName)" | Out-File -Append "$TestDrive\notify.txt"
@@ -649,7 +641,6 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
-    # Από Κλειστή για συντήρηση σε Ανοιχτή (πρέπει να καλείται μόνο Opened)
 
     It 'Στέλνει ειδοποίηση τύπου Opened όταν γίνεται αλλαγή από Κλειστή σε Ανοιχτή (=>)' {
 
@@ -858,7 +849,7 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $base = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
             $copy = $base.Clone()
-            $copy.imageUrl = 'img1_different_query.jpg' # URL changed (query) but hash did not
+            $copy.imageUrl = 'img1_different_query.jpg'
 
             $params = $script:defaultParams + @{
                 PreviousState = @($base)
@@ -876,7 +867,6 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $base = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageHash = 'hashA'; imageUrl = 'img1.jpg' }
 
-            # Current state failed to download/hash image, so ImageHash is null
             $copy = $base.Clone()
             $copy.ImageHash = $null
             $copy.imageUrl = 'img1_failed.jpg'
@@ -889,7 +879,7 @@ Describe 'Invoke-BridgeStatusComparison' {
             $result = Invoke-BridgeStatusComparison @params
 
             $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
-            $copy.ImageHash | Should -Be 'hashA' # check that previous hash was copied back
+            $copy.ImageHash | Should -Be 'hashA'
         }
     }
 

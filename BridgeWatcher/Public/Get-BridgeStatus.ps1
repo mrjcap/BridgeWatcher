@@ -33,7 +33,7 @@ function Get-BridgeStatus {
         [ValidateNotNull()]
         [PSCustomObject]$Configuration
     )
-    process { # Stage 1: Data Acquisition - Get HTML content
+    process {
         $Uri = $Configuration.Urls.Source
         Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.InfoStage -Message "🌐 Λήψη περιεχομένου από: $Uri"
         $maxRetries = 3
@@ -58,7 +58,6 @@ function Get-BridgeStatus {
             }
         }
         $htmlData = $response.Content
-        # Stage 2: Data Processing - Convert HTML to bridge status
         Write-BridgeLog -Configuration $Configuration -Stage $Configuration.LoggingConfig.InfoStage -Message '🔍 Ανάλυση HTML για εύρεση καταστάσεων γέφυρας'
         try {
             $bridgeStatuses = Get-BridgeStatusFromHtml -Configuration $Configuration -Html $htmlData -Timestamp (Get-Date -Format o) -ErrorAction Stop
@@ -76,7 +75,6 @@ function Get-BridgeStatus {
                 $null
             ))
         }
-        # Stage 3: Data Persistence (optional)
         if ($OutputFile) {
             $exportResult = Export-BridgeStatusJson -Configuration $Configuration -Data $bridgeStatuses -Path $OutputFile
             if (-not $exportResult.Success) {

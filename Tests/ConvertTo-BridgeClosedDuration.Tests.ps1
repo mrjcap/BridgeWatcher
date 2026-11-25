@@ -20,7 +20,6 @@ Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDurat
 
         $result = ConvertTo-BridgeClosedDuration -Duration $duration
 
-        # Ελέγχουμε αν περιέχει τη λέξη "ημέρα"
 
         $result | Should -Contain '1 ημέρα'
 
@@ -32,7 +31,6 @@ Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDurat
 
         $result = ConvertTo-BridgeClosedDuration -Duration $duration
 
-        # Ελέγχουμε αν περιέχει τη λέξη "ημέρες"
 
         $result | Should -Contain '2 ημέρες'
 
@@ -44,7 +42,6 @@ Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDurat
 
         $result = ConvertTo-BridgeClosedDuration -Duration $duration
 
-        # Ελέγχουμε αν περιέχει τη λέξη "ώρα"
 
         $result | Should -Contain '1 ώρα'
 
@@ -56,7 +53,6 @@ Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDurat
 
         $result = ConvertTo-BridgeClosedDuration -Duration $duration
 
-        # Ελέγχουμε αν περιέχει τη λέξη "ώρες"
 
         $result | Should -Contain '2 ώρες'
 
@@ -68,7 +64,6 @@ Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDurat
 
         $result = ConvertTo-BridgeClosedDuration -Duration $duration
 
-        # Ελέγχουμε αν περιέχει τη λέξη "λεπτό"
 
         $result | Should -Contain '1 λεπτό'
 
@@ -80,7 +75,6 @@ Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDurat
 
         $result = ConvertTo-BridgeClosedDuration -Duration $duration
 
-        # Ελέγχουμε αν περιέχει τη λέξη "λεπτά"
 
         $result | Should -Contain '2 λεπτά'
 
@@ -92,7 +86,6 @@ Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDurat
 
         $result = ConvertTo-BridgeClosedDuration -Duration $duration
 
-        # Ελέγχουμε αν περιέχει τις λέξεις "ημέρα" και "ώρα"
 
         $result | Should -Contain '1 ημέρα, 1 ώρα'
 
@@ -104,7 +97,6 @@ Describe 'Δοκιμές της συνάρτησης ConvertTo-BridgeClosedDurat
 
         $result = ConvertTo-BridgeClosedDuration -Duration $duration
 
-        # Ελέγχουμε αν περιέχει τις λέξεις "ημέρες", "ώρες", και "λεπτά"
 
         $result | Should -Contain '2 ημέρες, 3 ώρες, 5 λεπτά'
 

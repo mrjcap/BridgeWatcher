@@ -79,7 +79,6 @@ function Get-BridgeStatusFromHtml {
         [string]$Timestamp,
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
-    # Χρήση διαμόρφωσης ή εναλλακτικής λύσης
 
     $baseUrl = $Configuration.Urls.BaseImage
     $patterns = [ordered]@{

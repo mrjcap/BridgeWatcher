@@ -33,15 +33,12 @@
         Write-Warning "Η διάρκεια δεν μπορεί να είναι αρνητική."
         return "άγνωστη διάρκεια"
     }
-    # Αν η διάρκεια περιλαμβάνει ημέρες
     if ($Duration.Days -gt 0) {
         $components.Add("$($Duration.Days) $(if ($Duration.Days -eq 1) { 'ημέρα' } else { 'ημέρες' })")
     }
-    # Αν η διάρκεια περιλαμβάνει ώρες
     if ($Duration.Hours -gt 0) {
         $components.Add("$($Duration.Hours) $(if ($Duration.Hours -eq 1) { 'ώρα' } else { 'ώρες' })")
     }
-    # Αν η διάρκεια περιλαμβάνει λεπτά
     if ($Duration.Minutes -gt 0) {
         $components.Add("$($Duration.Minutes) $(if ($Duration.Minutes -eq 1) { 'λεπτό' } else { 'λεπτά' })")
     }
@@ -50,7 +47,6 @@
         return "λιγότερο από 1 λεπτό"
     }
 
-    # Επιστρέφουμε την ένωση των συνιστωσών
     return ($components -join ', ')
 }
 

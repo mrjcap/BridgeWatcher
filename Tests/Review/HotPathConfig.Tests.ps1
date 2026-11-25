@@ -7,21 +7,18 @@ $script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1, 
 }
 
 BeforeAll {
-    # Pester 5/6 scope setup
 }
 
 Describe "Hot Path Configuration Review" {
     Context "New-BridgeConfiguration Calls in Hot Paths" {
         It "Should not call New-BridgeConfiguration in <Name>" -ForEach $script:Files {
             $file = $_
-            # Skip New-BridgeConfiguration.ps1 itself, as that defines the configuration creator
             if ($file.Name -eq 'New-BridgeConfiguration.ps1') {
                 return
             }
 
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
 
-            # Find all calls to New-BridgeConfiguration
             $calls = $ast.FindAll({
                 param($node)
                 $node -is [System.Management.Automation.Language.CommandAst] -and
@@ -43,7 +40,6 @@ Describe "Hot Path Configuration Review" {
 
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
 
-            # Find all loop statements
             $loops = $ast.FindAll({
                 param($node)
                 $node -is [System.Management.Automation.Language.ForStatementAst] -or
@@ -76,9 +72,6 @@ Describe "Hot Path Configuration Review" {
 
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
 
-            # Find PSCustomObject creations:
-            # - ConvertExpressionAst casting to [pscustomobject]
-            # - CommandAst calling New-Object PSCustomObject
             $customObjects = $ast.FindAll({
                 param($node)
                 ($node -is [System.Management.Automation.Language.ConvertExpressionAst] -and
@@ -91,7 +84,6 @@ Describe "Hot Path Configuration Review" {
             $configKeys = @('Urls', 'Defaults', 'Statuses', 'BridgeNames', 'ErrorMessages', 'StatusMessages', 'LoggingConfig', 'ExportMessages', 'OCRMessages', 'PushoverMessages', 'AdviceMessages', 'LogDirectory')
 
             foreach ($obj in $customObjects) {
-                # Look for child hashtables
                 $hashtables = $obj.FindAll({ param($n) $n -is [System.Management.Automation.Language.HashtableAst] }, $true)
                 foreach ($ht in $hashtables) {
                     $keys = @()
@@ -101,9 +93,6 @@ Describe "Hot Path Configuration Review" {
                         }
                     }
 
-                    # Heuristic: If the PSCustomObject contains keys that explicitly represent configuration,
-                    # like 'Urls', 'Defaults', 'LoggingConfig', or contains 2 or more keys from our config list,
-                    # it represents an implicitly built configuration object.
                     $matchingKeys = $keys | Where-Object { $configKeys -contains $_ }
 
                     $matchingCount = 0
@@ -113,7 +102,6 @@ Describe "Hot Path Configuration Review" {
 
                     if (($keys -contains 'LoggingConfig') -or ($keys -contains 'Defaults') -or ($keys -contains 'Urls') -or ($matchingCount -ge 2)) {
 
-                        # Check if this PSCustomObject is inside a loop body
                         $node = $obj
                         $inLoop = $false
                         while ($null -ne $node) {
@@ -128,7 +116,6 @@ Describe "Hot Path Configuration Review" {
                             $node = $node.Parent
                         }
 
-                        # All helper functions in Public/ and Private/ are frequently called or part of hot paths.
                         if ($inLoop -or $file.FullName -match '[\\/](Private|Public)[\\/]') {
                             $matchedString = if ($null -ne $matchingKeys) { @($matchingKeys) -join ', ' } else { '' }
                             throw "File $($file.Name) builds configuration object implicitly via PSCustomObject (matching keys: $matchedString)."

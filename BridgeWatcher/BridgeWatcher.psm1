@@ -1,5 +1,4 @@
-﻿# BridgeWatcher.psm1
-Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version Latest
 
 #region Module Loading
 $publicFiles = Get-ChildItem -Path (Join-Path $PSScriptRoot 'Public') -Filter '*.ps1' -File

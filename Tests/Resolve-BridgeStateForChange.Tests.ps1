@@ -18,7 +18,6 @@ Describe 'Resolve-BridgeStateForChange' {
 
         It 'Επιστρέφει state από CurrentState για νέα κατάσταση' {
 
-            # Mock του test data
 
             $mockPreviousState = @(
 
@@ -66,7 +65,6 @@ Describe 'Resolve-BridgeStateForChange' {
 
         It 'Επιστρέφει κενό array όταν δεν βρίσκει την γέφυρα στο CurrentState' {
 
-            # Mock του test data
 
             $mockPreviousState = @(
 
@@ -108,7 +106,6 @@ Describe 'Resolve-BridgeStateForChange' {
 
             $result = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
 
-            # PowerShell unwraps single-item arrays, so we test the Count instead
 
             @($result).Count | Should -Be 0
 
@@ -122,7 +119,6 @@ Describe 'Resolve-BridgeStateForChange' {
 
         It 'Επιστρέφει state από CurrentState πρώτα για παλιά κατάσταση' {
 
-            # Mock του test data
 
             $mockPreviousState = @(
 
@@ -160,7 +156,7 @@ Describe 'Resolve-BridgeStateForChange' {
 
             $result[0].GefyraName | Should -Be 'Ποσειδωνία'
 
-            $result[0].GefyraStatus | Should -Be 'Ανοιχτή'  # Από CurrentState
+            $result[0].GefyraStatus | Should -Be 'Ανοιχτή'
 
             $result[0].Timestamp | Should -Be '2025-01-01T11:00:00'
 
@@ -170,7 +166,6 @@ Describe 'Resolve-BridgeStateForChange' {
 
         It 'Επιστρέφει state από PreviousState όταν δεν υπάρχει στο CurrentState (fallback)' {
 
-            # Mock του test data
 
             $mockPreviousState = @(
 
@@ -180,7 +175,6 @@ Describe 'Resolve-BridgeStateForChange' {
 
             )
 
-            # Δημιουργούμε CurrentState χωρίς την γέφυρα
 
             $mockCurrentStateWithoutBridge = @(
 
@@ -210,7 +204,7 @@ Describe 'Resolve-BridgeStateForChange' {
 
             $result[0].GefyraName | Should -Be 'Ποσειδωνία'
 
-            $result[0].GefyraStatus | Should -Be 'Κλειστή για συντήρηση'  # Από PreviousState
+            $result[0].GefyraStatus | Should -Be 'Κλειστή για συντήρηση'
 
             $result[0].Timestamp | Should -Be '2025-01-01T10:00:00'
 
@@ -224,7 +218,6 @@ Describe 'Resolve-BridgeStateForChange' {
 
         It 'Επιστρέφει πάντα array ακόμα και για single result' {
 
-            # Mock του test data
 
             $mockPreviousState = @(
 
@@ -268,7 +261,6 @@ Describe 'Resolve-BridgeStateForChange' {
 
 
 
-            # Test that we get exactly one result (PowerShell unwraps single-item arrays)
 
             @($result).Count | Should -Be 1
 
@@ -280,7 +272,6 @@ Describe 'Resolve-BridgeStateForChange' {
 
         It 'Χειρίζεται case-insensitive σύγκριση ονομάτων' {
 
-            # Mock του test data
 
             $mockPreviousState = @(
 
@@ -300,7 +291,7 @@ Describe 'Resolve-BridgeStateForChange' {
 
             $mockChange = [PSCustomObject]@{
 
-                GefyraName    = 'ισθμία'  # Lowercase
+                GefyraName    = 'ισθμία'
 
                 GefyraStatus  = 'Ανοιχτή'
 
@@ -324,11 +315,10 @@ Describe 'Resolve-BridgeStateForChange' {
 
 
 
-            # Test that case-insensitive matching works
 
-            @($result).Count | Should -Be 1  # Θα βρει match γιατί το PowerShell είναι case-insensitive
+            @($result).Count | Should -Be 1
 
-            $result.GefyraName | Should -Be 'Ισθμία'  # Original case from mock data
+            $result.GefyraName | Should -Be 'Ισθμία'
 
         }
 

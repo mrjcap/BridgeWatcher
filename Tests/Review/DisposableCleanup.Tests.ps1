@@ -4,7 +4,6 @@ $script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1 |
 }
 $Psm1Path = Resolve-Path (Join-Path $script:ModulePath "BridgeWatcher.psm1")
 
-# Helper function to find the variable name assigned to an expression
 function global:Find-AssignmentVariable($node) {
     <#
     .SYNOPSIS
@@ -20,7 +19,6 @@ function global:Find-AssignmentVariable($node) {
     return $null
 }
 
-# Helper function to assert disposal of a module-scoped resource variable
 function global:Assert-ModuleVariableIsDisposed($varName, $file) {
     <#
     .SYNOPSIS
@@ -54,7 +52,6 @@ function global:Assert-ModuleVariableIsDisposed($varName, $file) {
     throw "Module-scoped variable '$varName' is not cleaned up in OnRemove block in module script."
 }
 
-# Helper function to assert disposal of a local resource variable
 function global:Assert-LocalVariableIsDisposed($varName, $node) {
     <#
     .SYNOPSIS
@@ -90,7 +87,6 @@ function global:Assert-LocalVariableIsDisposed($varName, $node) {
     }
 }
 
-# Helper function to assert disposal of a resource variable
 function global:Assert-VariableIsDisposed($varName, $node, $file) {
     <#
     .SYNOPSIS
@@ -113,7 +109,6 @@ Describe "Disposable Resource Cleanup Review" {
             $file = $_
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
 
-            # Find New-Object calls of target types
             $newObjectNodes = $ast.FindAll({
                 param($node)
                 $node -is [System.Management.Automation.Language.CommandAst] -and
@@ -147,7 +142,6 @@ Describe "Disposable Resource Cleanup Review" {
                 }
             }
 
-            # Find type constructor calls
             $constructorNodes = $ast.FindAll({
                 param($node)
                 $node -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and
@@ -157,7 +151,6 @@ Describe "Disposable Resource Cleanup Review" {
             }, $true)
             $targetNodes += $constructorNodes
 
-            # Find type constraint/cast calls
             $typeNodes = $ast.FindAll({
                 param($node)
                 ($node -is [System.Management.Automation.Language.TypeExpressionAst] -or
@@ -167,7 +160,6 @@ Describe "Disposable Resource Cleanup Review" {
             }, $true)
             $targetNodes += $typeNodes
 
-            # Find GetResponse / GetResponseStream calls
             $methodNodes = $ast.FindAll({
                 param($node)
                 $node -is [System.Management.Automation.Language.MemberExpressionAst] -and
@@ -175,7 +167,6 @@ Describe "Disposable Resource Cleanup Review" {
             }, $true)
             $targetNodes += $methodNodes
 
-            # Run assertions on each found node
             foreach ($node in $targetNodes) {
                 $varName = Find-AssignmentVariable $node
                 Assert-VariableIsDisposed -varName $varName -node $node -file $file
