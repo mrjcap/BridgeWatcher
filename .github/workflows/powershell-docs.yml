@@ -30,6 +30,10 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   # renovate: datasource=github-releases depName=PowerShell/PowerShell
   POWERSHELL_VERSION: '7.7.0'
+  # renovate: datasource=nuget depName=platyPS registryUrl=https://www.powershellgallery.com/api/v2
+  PLATYPS_VERSION: '0.14.2'
+  # renovate: datasource=npm depName=markdownlint-cli2
+  MARKDOWNLINT_CLI2_VERSION: '0.24.0'
 
 jobs:
   generate-docs:
@@ -59,7 +63,7 @@ jobs:
         with:
           path: |
             ~/.local/share/powershell/Modules
-          key: ${{ runner.os }}-${{ runner.arch }}-docs-v${{ env.POWERSHELL_VERSION }}-platyps-0.14.2-pssa-1.23.0-v1
+          key: ${{ runner.os }}-${{ runner.arch }}-docs-v${{ env.POWERSHELL_VERSION }}-platyps-${{ env.PLATYPS_VERSION }}-pssa-1.23.0-v1
 
       - name: Restore PowerShell modules (read-only PR)
         if: ${{ github.event_name == 'pull_request' }}
@@ -67,14 +71,14 @@ jobs:
         with:
           path: |
             ~/.local/share/powershell/Modules
-          key: ${{ runner.os }}-${{ runner.arch }}-docs-v${{ env.POWERSHELL_VERSION }}-platyps-0.14.2-pssa-1.23.0-v1
+          key: ${{ runner.os }}-${{ runner.arch }}-docs-v${{ env.POWERSHELL_VERSION }}-platyps-${{ env.PLATYPS_VERSION }}-pssa-1.23.0-v1
 
       - name: Install PowerShell modules
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $modules = @(
-            @{ Name = 'platyPS'; RequiredVersion = '0.14.2' }
+            @{ Name = 'platyPS'; RequiredVersion = $env:PLATYPS_VERSION }
             @{ Name = 'PSScriptAnalyzer'; RequiredVersion = '1.23.0' }
           )
 
@@ -224,7 +228,7 @@ jobs:
       - name: Install markdownlint-cli2
         run: |
           set -euo pipefail
-          npm install --no-save --ignore-scripts markdownlint-cli2@0.24.0
+          npm install --no-save --ignore-scripts "markdownlint-cli2@${MARKDOWNLINT_CLI2_VERSION}"
       # Show npm debug logs on failure
       - name: Show npm debug log
         if: failure()
