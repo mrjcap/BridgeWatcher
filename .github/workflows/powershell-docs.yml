@@ -33,7 +33,7 @@ env:
   # renovate: datasource=nuget depName=platyPS registryUrl=https://www.powershellgallery.com/api/v2
   PLATYPS_VERSION: '0.14.2'
   # renovate: datasource=npm depName=markdownlint-cli2
-  MARKDOWNLINT_CLI2_VERSION: '0.24.0'
+  MARKDOWNLINT_CLI2_VERSION: '0.24.2'
 
 jobs:
   generate-docs:
