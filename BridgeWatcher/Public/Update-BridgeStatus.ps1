@@ -144,7 +144,15 @@ function Resolve-BridgeAlertSnapshot {
     [object[]]
 
     .EXAMPLE
-    Update-BridgeStatus -OutputFile 'C:\Logs\bridge-status.json' -ApiKey 'abc123' -PoUserKey 'user123' -PoApiKey 'token123' -Configuration $Config
+    $config = New-BridgeConfiguration
+    $updateParams = @{
+        OutputFile    = 'C:\Logs\bridge-status.json'
+        ApiKey        = 'abc123'
+        PoUserKey     = 'user123'
+        PoApiKey      = 'token123'
+        Configuration = $config
+    }
+    Update-BridgeStatus @updateParams
 
     .NOTES
     Χρησιμοποιεί OCR αν χρειάζεται, συγκρίνει states και αποστέλλει ειδοποιήσεις.
