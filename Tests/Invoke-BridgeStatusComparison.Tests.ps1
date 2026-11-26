@@ -7,6 +7,16 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         $script:Config = New-BridgeConfiguration
     }
 
+    It 'Omits a closure event when its bridge record cannot be resolved' {
+        Mock -CommandName Resolve-BridgeStateForChange -MockWith { return ,@() }
+        $entry = [pscustomobject]@{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.PermanentlyClosed }
+
+        $events = Invoke-BridgeStatusComparison -CurrentState @($entry) -Configuration $script:Config
+
+        Should -Invoke -CommandName Resolve-BridgeStateForChange -Times 1 -Exactly
+        $events | Should -BeNullOrEmpty
+    }
+
     It 'Δεν στέλνει ειδοποίηση όταν η κατάσταση δεν αλλάζει' {
 
         Mock -CommandName Invoke-BridgeClosedNotification { 'Closed notification sent' }

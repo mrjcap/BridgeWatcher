@@ -118,6 +118,28 @@ function Resolve-BridgeAlertSnapshot {
 }
 
 <#
+.SYNOPSIS
+Returns the records to persist when scheduled openings have been deferred.
+.DESCRIPTION
+Keeps each deferred bridge's saved record and emits all other current records in order.
+.PARAMETER CurrentState
+The records from the current poll.
+.PARAMETER DeferredOpenings
+Saved records keyed by bridge name.
+#>
+function Resolve-BridgeDeferredSnapshot {
+    param([object[]]$CurrentState, [hashtable]$DeferredOpenings)
+
+    foreach ($entry in $CurrentState) {
+        if ($DeferredOpenings.ContainsKey($entry.GefyraName)) {
+            $DeferredOpenings[$entry.GefyraName]
+        } else {
+            $entry
+        }
+    }
+}
+
+<#
     .SYNOPSIS
     Συγκρίνει προηγούμενη και τρέχουσα κατάσταση γεφυρών.
 
@@ -199,13 +221,7 @@ function Update-BridgeStatus {
             # Keep the saved schedule as the comparison baseline on the next poll.
             $snapshotCurrent = $currentState
             if ($deferredOpenings.Count -gt 0) {
-                $snapshotCurrent = @(foreach ($entry in $currentState) {
-                    if ($deferredOpenings.ContainsKey($entry.GefyraName)) {
-                        $deferredOpenings[$entry.GefyraName]
-                    } else {
-                        $entry
-                    }
-                })
+                $snapshotCurrent = @(Resolve-BridgeDeferredSnapshot -CurrentState $currentState -DeferredOpenings $deferredOpenings)
             }
             # Checkpoint successful deliveries independently, keeping failed bridges pending.
             $notifiedBridgeNames = [System.Collections.Generic.List[string]]::new()

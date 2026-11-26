@@ -322,37 +322,33 @@ function Invoke-BridgeStatusComparison {
             }
 
             $key = "$($change.GefyraStatus)|$($change.SideIndicator)"
-            if ($handlerMap.ContainsKey($key)) {
-                $type = $handlerMap[$key]
-                $resolveBridgeStateForChangeSplat = @{
-                    Change        = $change
-                    PreviousState = $previousStateArray
-                    CurrentState  = $currentStateArray
-                }
-                $changedBridgeState = Resolve-BridgeStateForChange @resolveBridgeStateForChangeSplat
-                if ($changedBridgeState.Count -gt 0) {
-                    if ($type -eq 'Opened') {
-                        $saved = $previousStateArray | Where-Object GefyraName -EQ $change.GefyraName | Select-Object -First 1
-                        if ($saved -and $saved.GefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and
-                            -not (Test-BridgeScheduledOpening -PreviousBridge $saved -CurrentBridge $changedBridgeState[0] -Configuration $Configuration)) {
-                            $DeferredOpenings[$change.GefyraName] = $saved
-                            continue
-                        }
-                    }
-                    $diffEvents += [PSCustomObject]@{
-                        BridgeName = $change.GefyraName
-                        Status     = $change.GefyraStatus
-                        Type       = $type
-                        StateInfo  = $changedBridgeState
-                    }
-                }
-            } else {
+            if (-not $handlerMap.ContainsKey($key)) {
                 $writeBridgeLogSplat = @{
                     Stage   = 'Σφάλμα'
                     Message = "❓ Άγνωστο combo: $key"
                     Level   = 'Warning'
                 }
                 Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
+                continue
+            }
+
+            $type = $handlerMap[$key]
+            $changedBridgeState = Resolve-BridgeStateForChange -Change $change -PreviousState $previousStateArray -CurrentState $currentStateArray
+            if ($changedBridgeState.Count -eq 0) { continue }
+
+            if ($type -eq 'Opened') {
+                $saved = $previousStateArray | Where-Object -Property GefyraName -EQ -Value $change.GefyraName | Select-Object -First 1
+                if ($saved -and $saved.GefyraStatus -eq $Configuration.Statuses.ClosedWithSchedule -and
+                    -not (Test-BridgeScheduledOpening -PreviousBridge $saved -CurrentBridge $changedBridgeState[0] -Configuration $Configuration)) {
+                    $DeferredOpenings[$change.GefyraName] = $saved
+                    continue
+                }
+            }
+            $diffEvents += [PSCustomObject]@{
+                BridgeName = $change.GefyraName
+                Status     = $change.GefyraStatus
+                Type       = $type
+                StateInfo  = $changedBridgeState
             }
         }
         return $diffEvents
