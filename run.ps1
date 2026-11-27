@@ -1,8 +1,10 @@
-﻿$ModulePath = "$PSScriptRoot/modules/BridgeWatcher/BridgeWatcher.psd1"
-if (-not (Test-Path $ModulePath)) {
-    $ModulePath = "$PSScriptRoot/BridgeWatcher/BridgeWatcher.psd1"
+﻿if (-not (Get-Module -Name 'BridgeWatcher')) {
+    $ModulePath = "$PSScriptRoot/modules/BridgeWatcher/BridgeWatcher.psd1"
+    if (-not (Test-Path $ModulePath)) {
+        $ModulePath = "$PSScriptRoot/BridgeWatcher/BridgeWatcher.psd1"
+    }
+    Import-Module $ModulePath -Force -Verbose
 }
-Import-Module $ModulePath -Force -Verbose
 
 $API_KEY = if ($Env:API_KEY) { $Env:API_KEY.Trim() } else { $null }
 $POAPI_KEY = if ($Env:POAPI_KEY) { $Env:POAPI_KEY.Trim() } else { $null }
