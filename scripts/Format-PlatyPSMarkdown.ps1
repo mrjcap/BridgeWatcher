@@ -46,16 +46,41 @@ function Format-PlatyPSCommonParameterLine {
     return $wrapped.Replace(', and -WarningVariable', ",${Newline}and -WarningVariable")
 }
 
+function Get-PlatyPSFenceMarker {
+    <#
+    .SYNOPSIS
+    Parses a Markdown code fence line.
+
+    .PARAMETER Line
+    One Markdown line.
+
+    .OUTPUTS
+    An object with the fence character, its length and any info string, or $null when the line is not a fence.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Line
+    )
+
+    if ($Line -notmatch '^ {0,3}(?<fence>`{3,}|~{3,})(?<info>.*)$') {
+        return $null
+    }
+
+    return [pscustomobject]@{
+        Char   = $Matches['fence'][0]
+        Length = $Matches['fence'].Length
+        Info   = $Matches['info'].Trim()
+    }
+}
+
 function Test-PlatyPSBareCodeFence {
     <#
     .SYNOPSIS
-    Reports whether a fence line opens an untagged code block in a section that holds PowerShell.
+    Reports whether a line is an untagged backtick fence in a section that holds PowerShell.
 
     .PARAMETER Line
-    One Markdown line that starts with a code fence marker.
-
-    .PARAMETER InFence
-    Whether the scanner is already inside a code block.
+    One Markdown line.
 
     .PARAMETER Section
     The most recent level-two heading.
@@ -63,12 +88,44 @@ function Test-PlatyPSBareCodeFence {
     [CmdletBinding()]
     [OutputType([bool])]
     param(
-        [Parameter(Mandatory)][string]$Line,
-        [Parameter(Mandatory)][bool]$InFence,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Line,
         [Parameter(Mandatory)][AllowEmptyString()][string]$Section
     )
 
-    return (-not $InFence) -and $Line -eq '```' -and $Section -in @('## SYNTAX', '## EXAMPLES')
+    return $Line -eq '```' -and $Section -in @('## SYNTAX', '## EXAMPLES')
+}
+
+function Step-PlatyPSFence {
+    <#
+    .SYNOPSIS
+    Returns the fence that is open after a line has been read.
+
+    .PARAMETER Marker
+    The marker parsed from the line, or $null when the line is not a fence.
+
+    .PARAMETER Open
+    The marker that opened the current fence, or $null outside a fence.
+
+    .OUTPUTS
+    The open fence marker, or $null when no fence is open.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param(
+        [Parameter()][AllowNull()][pscustomobject]$Marker,
+        [Parameter()][AllowNull()][pscustomobject]$Open
+    )
+
+    if (-not $Open) {
+        return $Marker
+    }
+
+    $closes = $Marker -and $Marker.Char -eq $Open.Char -and $Marker.Length -ge $Open.Length -and -not $Marker.Info
+    if ($closes) {
+        return $null
+    }
+
+    return $Open
 }
 
 function Format-PlatyPSMarkdownContent {
@@ -88,19 +145,21 @@ function Format-PlatyPSMarkdownContent {
     $newline = if ($Content.Contains("`r`n")) { "`r`n" } else { "`n" }
     $lines = $Content -split '\r?\n'
     $section = ''
-    $inFence = $false
+    $open = $null
 
     for ($i = 0; $i -lt $lines.Count; $i++) {
         $line = $lines[$i]
-        if ($line.StartsWith('```')) {
-            if (Test-PlatyPSBareCodeFence -Line $line -InFence $inFence -Section $section) {
-                $lines[$i] = '```powershell'
-            }
-            $inFence = -not $inFence
-        } elseif (-not $inFence) {
-            if ($line.StartsWith('## ')) { $section = $line }
-            $lines[$i] = Format-PlatyPSCommonParameterLine -Line $line -Newline $newline
+        $marker = Get-PlatyPSFenceMarker -Line $line
+        if (-not $open -and (Test-PlatyPSBareCodeFence -Line $line -Section $section)) {
+            $lines[$i] = '```powershell'
         }
+
+        $wasOpen = [bool]$open
+        $open = Step-PlatyPSFence -Marker $marker -Open $open
+        if ($wasOpen -or $marker) { continue }
+
+        if ($line.StartsWith('## ')) { $section = $line }
+        $lines[$i] = Format-PlatyPSCommonParameterLine -Line $line -Newline $newline
     }
 
     return $lines -join $newline

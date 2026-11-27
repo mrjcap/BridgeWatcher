@@ -21,7 +21,7 @@ Describe 'PowerShell documentation workflow' {
 
     It 'Lints and commits only the generated cmdlet documents' {
         $script:workflow | Should -Match 'markdownlint-cli2 "docs/\*\.md" "docs/cmdlets/\*\.md"'
-        $script:workflow | Should -Match 'git add docs/cmdlets/\*\.md'
+        $script:workflow | Should -Match 'git add docs/\*\.md docs/cmdlets/\*\.md'
     }
 
     It 'Keeps only generated documents in docs/cmdlets' {

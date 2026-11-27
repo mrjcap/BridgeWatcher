@@ -28,6 +28,22 @@ Describe 'Format-PlatyPSMarkdown' {
             ($result -split "`n")[3] | Should -BeExactly $script:LongLine
         }
 
+        It 'Does not rewrite the content of a tilde fence' {
+            $content = @('## DESCRIPTION', '~~~markdown', '## EXAMPLES', '```', 'Get-Thing', '```', $script:LongLine, '~~~', '## SYNTAX', '```', 'Get-Thing', '```') -join "`n"
+            $result = Format-PlatyPSMarkdownContent -Content $content
+            $lines = $result -split "`n"
+            $lines[3] | Should -BeExactly '```'
+            $lines[6] | Should -BeExactly $script:LongLine
+            $lines[9] | Should -BeExactly '```powershell'
+        }
+
+        It 'Closes a fence only with the same character and at least the same length' {
+            $content = @('## EXAMPLES', '````', '```', '## SYNTAX', '````', '```', 'Get-Thing', '```') -join "`n"
+            $result = Format-PlatyPSMarkdownContent -Content $content
+            ($result -split "`n")[2] | Should -BeExactly '```'
+            ($result -split "`n")[5] | Should -BeExactly '```powershell'
+        }
+
         It 'Wraps the long CommonParameters paragraph outside fences' {
             $result = Format-PlatyPSMarkdownContent -Content "## PARAMETERS`n$($script:LongLine)"
             $lines = $result -split "`n"
