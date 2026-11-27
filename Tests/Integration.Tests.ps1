@@ -39,15 +39,18 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
 
 
 
-        $response = Invoke-WebRequest -Uri $config.Urls.Source -UseBasicParsing -ErrorAction 'Stop'
+        $response = Invoke-WebRequest -Uri $config.Urls.Source -UseBasicParsing -SkipHttpErrorCheck -ErrorAction 'Stop'
         $htmlResultData = $response.Content
 
-        $htmlResultData | Should -Not -BeNullOrEmpty
-
-        if ($htmlResultData -notmatch 'panel-primary' -and $htmlResultData -match '<title>\s*One moment, please') {
-            Set-ItResult -Skipped -Because 'topvision.gr served its browser verification page instead of the bridge status'
+        $blocked = $response.StatusCode -in 403, 429, 503, 508 -or
+            ($htmlResultData -notmatch 'panel-primary' -and $htmlResultData -match '<title>\s*One moment, please')
+        if ($blocked) {
+            Set-ItResult -Skipped -Because "topvision.gr did not serve the bridge status (HTTP $($response.StatusCode), browser verification)"
             return
         }
+
+        $response.StatusCode | Should -BeLessThan 400
+        $htmlResultData | Should -Not -BeNullOrEmpty
 
 
 
