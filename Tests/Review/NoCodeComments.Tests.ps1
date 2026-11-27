@@ -187,6 +187,56 @@ Describe 'Code Comment Ban and Ratchet Review' {
             ($findings.Line -join ',') | Should -Be '1,4,5,6,7,10'
         }
 
+        It 'Does not treat comment openers inside JavaScript string literals as comments' {
+            $sample = @(
+                'const marker = "/*";',
+                "const other = '//';",
+                'const tpl = `a // b /* c`;',
+                'const escaped = "quote \" // still string";',
+                'const url = "https://example.com";'
+            ) -join "`n"
+
+            @(Get-MarkupCommentFindingsFromContent -Content $sample -RelativePath 'app.js') | Should -BeNullOrEmpty
+        }
+
+        It 'Detects compact trailing JavaScript comments and real block comments after string literals' {
+            $sample = @(
+                'const n = 1;//note',
+                'const marker = "/*"; /* real */',
+                'const keep = 2;'
+            ) -join "`n"
+
+            $findings = @(Get-MarkupCommentFindingsFromContent -Content $sample -RelativePath 'app.js')
+            ($findings.Line -join ',') | Should -Be '1,2'
+        }
+
+        It 'Does not treat comment openers inside CSS strings or HTML text as comments' {
+            $css = @('a::before { content: "/*"; }', 'b::after { content: ''//''; }') -join "`n"
+            @(Get-MarkupCommentFindingsFromContent -Content $css -RelativePath 'site.css') | Should -BeNullOrEmpty
+
+            $html = @('<p>glob /* and // are plain text here</p>', '<script>const a = 1;</script>') -join "`n"
+            @(Get-MarkupCommentFindingsFromContent -Content $html -RelativePath 'page.html') | Should -BeNullOrEmpty
+        }
+
+        It 'Returns to markup mode after a script or style element ends' {
+            $sample = @(
+                '<script src="a.js"></script>',
+                '<p>// not a comment</p>',
+                '<style>a { }</style>',
+                '<p>/* not a comment */</p>',
+                '<!-- real -->'
+            ) -join "`n"
+
+            $findings = @(Get-MarkupCommentFindingsFromContent -Content $sample -RelativePath 'page.html')
+            ($findings.Line -join ',') | Should -Be '5'
+        }
+
+        It 'Reports an unterminated block comment through the end of the file' {
+            $sample = @('a { }', '/* never closed', 'b { }') -join "`n"
+            $findings = @(Get-MarkupCommentFindingsFromContent -Content $sample -RelativePath 'site.css')
+            ($findings.Line -join ',') | Should -Be '2,3'
+        }
+
         It 'Does not treat double slashes in CSS or XML files as comments' {
             $css = 'a { background: url(//cdn.example.com/x.png); }'
             @(Get-MarkupCommentFindingsFromContent -Content $css -RelativePath 'site.css') | Should -BeNullOrEmpty

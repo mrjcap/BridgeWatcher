@@ -214,10 +214,103 @@ function Get-HashLineCommentFindingsFromContent {
     return $findings.ToArray()
 }
 
+function Get-MarkupInitialMode {
+    <#
+    .SYNOPSIS
+    Returns the language mode a markup-family file starts in: Script for JavaScript, Style for CSS, otherwise Markup.
+
+    .PARAMETER RelativePath
+    Forward-slash path relative to the repository root.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)][string]$RelativePath
+    )
+
+    if ($RelativePath -match '(?i)\.js$') { return 'Script' }
+    if ($RelativePath -match '(?i)\.css$') { return 'Style' }
+    return 'Markup'
+}
+
+function Get-MarkupTokenRegexMap {
+    <#
+    .SYNOPSIS
+    Builds one tokenizer regex per language mode. Each matches the next string literal, comment opener, or mode switch.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param()
+
+    $options = [System.Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [System.Text.RegularExpressions.RegexOptions]::CultureInvariant
+    $tag = '(?:[^>"'']|"[^"]*"|''[^'']*'')*>'
+    $doubleQuoted = '"(?:[^"\\\r\n]|\\[\s\S])*"'
+    $singleQuoted = '''(?:[^''\\\r\n]|\\[\s\S])*'''
+    $template = '`(?:[^`\\]|\\[\s\S])*`'
+
+    return @{
+        Markup = [regex]::new("<!--|<script\b$tag|<style\b$tag", $options)
+        Script = [regex]::new("$doubleQuoted|$singleQuoted|$template|//[^\r\n]*|/\*|</script\b", $options)
+        Style  = [regex]::new("$doubleQuoted|$singleQuoted|/\*|</style\b", $options)
+    }
+}
+
+function Resolve-MarkupToken {
+    <#
+    .SYNOPSIS
+    Interprets one tokenizer match and reports the next mode, where scanning resumes, and the comment span if any.
+
+    .PARAMETER Token
+    The regex match produced by the tokenizer for the current mode.
+
+    .PARAMETER Mode
+    The current language mode: Markup, Script, or Style.
+
+    .PARAMETER Content
+    The full file text.
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory)][System.Text.RegularExpressions.Match]$Token,
+        [Parameter(Mandatory)][string]$Mode,
+        [Parameter(Mandatory)][string]$Content
+    )
+
+    $text = $Token.Value
+    $tokenEnd = $Token.Index + $Token.Length
+    $result = [PSCustomObject]@{ Mode = $Mode; Resume = $tokenEnd; CommentEnd = -1 }
+
+    $closer = $null
+    if ($text.StartsWith('<!--')) { $closer = '-->' } elseif ($text.StartsWith('/*')) { $closer = '*/' }
+
+    if ($closer) {
+        $closeAt = $Content.IndexOf($closer, $tokenEnd, [System.StringComparison]::Ordinal)
+        $result.CommentEnd = if ($closeAt -lt 0) { $Content.Length } else { $closeAt + $closer.Length }
+        $result.Resume = $result.CommentEnd
+    } elseif ($text.StartsWith('//')) {
+        $result.CommentEnd = $tokenEnd
+    } elseif ($text -match '^</') {
+        $result.Mode = 'Markup'
+    } elseif ($text -match '^<script') {
+        $result.Mode = 'Script'
+    } elseif ($text -match '^<style') {
+        $result.Mode = 'Style'
+    }
+
+    return $result
+}
+
 function Get-MarkupCommentFindingsFromContent {
     <#
     .SYNOPSIS
     Finds disallowed comments in HTML, CSS, JavaScript, and XML text.
+
+    .DESCRIPTION
+    Tracks the language mode (markup, script, or style) and skips string literals, so comment openers inside strings
+    such as "/*" or "https://example.com" are not reported. HTML and XML comments are recognised in markup mode,
+    block comments in script and style modes, and line comments in script mode only. Regular expression literals in
+    JavaScript are not parsed.
 
     .PARAMETER Content
     File content text.
@@ -232,48 +325,66 @@ function Get-MarkupCommentFindingsFromContent {
         [Parameter(Mandatory)][string]$RelativePath
     )
 
-    $findings = [System.Collections.Generic.List[object]]::new()
     if ([string]::IsNullOrEmpty($Content)) {
-        return $findings.ToArray()
+        return @()
     }
 
-    $isXmlFamily = $RelativePath -match '(?i)\.(html?|ps1xml|xml|xsl|xslt)$'
-    $allowsLineComment = $RelativePath -match '(?i)\.(html?|js)$'
-    $openerPattern = if ($isXmlFamily) { '<!--|/\*' } else { '/\*' }
-    $inBlock = $false
-    $blockCloser = $null
-    $lines = $Content -split '\r?\n'
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        $line = $lines[$i]
-        $trimmed = $line.Trim()
-        $isFinding = $false
+    $regexByMode = Get-MarkupTokenRegexMap
+    $mode = Get-MarkupInitialMode -RelativePath $RelativePath
+    $lineStarts = [System.Collections.Generic.List[int]]::new()
+    $lineStarts.Add(0)
+    for ($at = $Content.IndexOf("`n"); $at -ge 0; $at = $Content.IndexOf("`n", $at + 1)) {
+        $lineStarts.Add($at + 1)
+    }
+    $startsArray = $lineStarts.ToArray()
 
-        if ($inBlock) {
-            $isFinding = $true
-            if ($line.Contains($blockCloser)) { $inBlock = $false }
-        } elseif (($openerMatch = [regex]::Match($line, $openerPattern)).Success) {
-            $opener = $openerMatch.Value
-            $isFinding = $true
-            $closer = if ($opener -eq '<!--') { '-->' } else { '*/' }
-            $afterOpen = $line.Substring($openerMatch.Index + $opener.Length)
-            if (-not $afterOpen.Contains($closer)) {
-                $inBlock = $true
-                $blockCloser = $closer
-            }
-        } elseif ($allowsLineComment -and $trimmed -match '^//|\s//\s') {
-            $isFinding = $true
-        }
+    $commentLines = [System.Collections.Generic.SortedSet[int]]::new()
+    $position = 0
+    while ($position -lt $Content.Length) {
+        $token = $regexByMode[$mode].Match($Content, $position)
+        if (-not $token.Success) { break }
 
-        if ($isFinding) {
-            $findings.Add([PSCustomObject]@{
-                File = $RelativePath
-                Line = ($i + 1)
-                Text = $trimmed
-            })
+        $resolved = Resolve-MarkupToken -Token $token -Mode $mode -Content $Content
+        if ($resolved.CommentEnd -ge 0) {
+            $first = Get-MarkupLineIndex -LineStarts $startsArray -Offset $token.Index
+            $last = Get-MarkupLineIndex -LineStarts $startsArray -Offset ([Math]::Max($token.Index, $resolved.CommentEnd - 1))
+            for ($line = $first; $line -le $last; $line++) { $null = $commentLines.Add($line) }
         }
+        $mode = $resolved.Mode
+        $position = [Math]::Max($resolved.Resume, $position + 1)
     }
 
-    return $findings.ToArray()
+    $textLines = $Content -split '\r?\n'
+    return @(foreach ($line in $commentLines) {
+        [PSCustomObject]@{
+            File = $RelativePath
+            Line = ($line + 1)
+            Text = $textLines[$line].Trim()
+        }
+    })
+}
+
+function Get-MarkupLineIndex {
+    <#
+    .SYNOPSIS
+    Returns the zero-based line number that contains a character offset.
+
+    .PARAMETER LineStarts
+    Ascending character offsets at which each line begins.
+
+    .PARAMETER Offset
+    The character offset to locate.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory)][int[]]$LineStarts,
+        [Parameter(Mandatory)][int]$Offset
+    )
+
+    $found = [System.Array]::BinarySearch($LineStarts, $Offset)
+    if ($found -ge 0) { return $found }
+    return (-bnot $found) - 1
 }
 
 function Get-RepoCommentFileKind {
@@ -319,12 +430,12 @@ function Get-RepoCandidatePath {
     if ($git -and (Test-Path -LiteralPath (Join-Path -Path $Root -ChildPath '.git'))) {
         $listed = & $git.Source -C $Root ls-files -z --cached --others --exclude-standard 2>$null
         if ($LASTEXITCODE -eq 0 -and $listed) {
-            return @(($listed -split "`0") | Where-Object { $_ })
+            return [string[]]@(($listed -split "`0") | Where-Object { $_ })
         }
     }
 
     $excludedPattern = '(^|/)(?:\.git|node_modules|shard-output|shard-artifacts)(/|$)'
-    return @(Get-ChildItem -Path $Root -Recurse -File -Force -ErrorAction SilentlyContinue |
+    return [string[]]@(Get-ChildItem -Path $Root -Recurse -File -Force -ErrorAction SilentlyContinue |
         ForEach-Object { ConvertTo-NormalizedRelativePath -FullPath $_.FullName -Root $Root } |
         Where-Object { $_ -notmatch $excludedPattern })
 }
