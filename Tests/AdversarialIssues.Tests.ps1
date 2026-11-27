@@ -283,7 +283,13 @@ Describe 'Adversarial Regression and Security Tests' {
             $root = Join-Path -Path $PSScriptRoot -ChildPath '..'
             $ignorePath = Join-Path -Path $root -ChildPath '.semgrepignore'
             $semgrepIgnore = if (Test-Path -LiteralPath $ignorePath) { Get-Content -LiteralPath $ignorePath -Raw } else { '' }
-            $protected = @('.github/workflows/publish.yml', '.github/workflows/release.yml', 'BridgeWatcher.psm1', 'Public/Get-Bridge.ps1', 'scripts/tool.ps1')
+            $rootFull = (Resolve-Path -LiteralPath $root).Path
+            $protected = @(Get-ChildItem -LiteralPath $rootFull -Recurse -File -Force -Include '*.ps1', '*.psm1', '*.psd1', '*.yml', '*.yaml' |
+                    ForEach-Object { $_.FullName.Substring($rootFull.Length).TrimStart('/', '\') -replace '\\', '/' } |
+                    Where-Object { $_ -notmatch '^(\.git|Pester_[^/]*|node_modules)/' })
+            $protected | Should -Contain '.github/workflows/publish.yml'
+            $protected | Should -Contain 'BridgeWatcher/BridgeWatcher.psd1'
+            $protected | Should -Contain 'Tests/AdversarialIssues.Tests.ps1'
             $patterns = @($semgrepIgnore -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('!') })
             foreach ($pattern in $patterns) {
                 $glob = '^(.*/)?' + (([regex]::Escape($pattern.Trim('/')) -replace '\\\*\\\*', '.*') -replace '\\\*', '[^/]*') + '(/.*)?$'
