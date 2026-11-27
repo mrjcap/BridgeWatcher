@@ -2,7 +2,6 @@ FROM mcr.microsoft.com/dotnet/runtime:11.0.0-alpine3.24-amd64@sha256:a0ac7a4038d
 
 # renovate: datasource=github-releases depName=PowerShell/PowerShell
 ARG POWERSHELL_VERSION=7.7.0
-ARG POWERSHELL_SHA256=5a6408b1d196e9d6b6d1af71daa931834c5fea07d14a78cf369292c23944e78d
 ARG PUID=99
 ARG PGID=100
 
@@ -23,15 +22,22 @@ RUN apk update && \
         libssl3 \
         libstdc++ \
         zlib && \
+    POWERSHELL_ASSET="powershell-${POWERSHELL_VERSION}-linux-musl-x64.tar.gz" && \
+    POWERSHELL_RELEASE_URL="https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}" && \
     curl --fail --show-error --silent --location \
-        "https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-musl-x64.tar.gz" \
+        "${POWERSHELL_RELEASE_URL}/${POWERSHELL_ASSET}" \
         -o /tmp/powershell.tar.gz && \
+    curl --fail --show-error --silent --location \
+        "${POWERSHELL_RELEASE_URL}/hashes.sha256" \
+        -o /tmp/hashes.sha256 && \
+    POWERSHELL_SHA256="$(iconv -f UTF-16 -t UTF-8 /tmp/hashes.sha256 | tr -d '\r' | awk -v asset="*${POWERSHELL_ASSET}" '$2 == asset { print $1 }')" && \
+    test -n "${POWERSHELL_SHA256}" && \
     printf '%s  %s\n' "${POWERSHELL_SHA256}" /tmp/powershell.tar.gz | sha256sum -c - && \
     mkdir -p /opt/microsoft/powershell/7 && \
     tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
     chmod +x /opt/microsoft/powershell/7/pwsh && \
     ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh && \
-    rm /tmp/powershell.tar.gz && \
+    rm /tmp/powershell.tar.gz /tmp/hashes.sha256 && \
     cp /usr/share/zoneinfo/Europe/Athens /etc/localtime && \
     echo "Europe/Athens" > /etc/timezone && \
     rm -rf /var/cache/apk/*
