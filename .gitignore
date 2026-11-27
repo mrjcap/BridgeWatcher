@@ -30,6 +30,7 @@ output/
 .agents/
 
 HANDOFF.md
+AGENTS.md
 LESSONS_LEARNT.md
 config.json
 graphify-out/
