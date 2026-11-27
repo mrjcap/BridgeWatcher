@@ -165,4 +165,63 @@ Describe 'Code Comment Ban and Ratchet Review' {
             { Update-CommentRatchetFile -RatchetFilePath $tmpRatchet -Inventory $increasedInventory } | Should -Throw '*Refusing to raise comment ratchet*'
         }
     }
+
+    Context 'Markup, ignore-file, and discovery coverage' {
+        It 'Flags HTML, CSS, and JavaScript comments but not URLs or exempt syntax' {
+            $sample = @(
+                '<!-- section label -->',
+                '<a href="https://example.com/x">link</a>',
+                '<style>',
+                '  /* block */',
+                '  .a { color: red; /* trailing */ }',
+                '  /* multi',
+                '     line */',
+                '</style>',
+                '<script>',
+                '  // line comment',
+                '  const url = "https://example.com";',
+                '</script>'
+            ) -join "`n"
+
+            $findings = @(Get-MarkupCommentFindingsFromContent -Content $sample -RelativePath 'page.html')
+            ($findings.Line -join ',') | Should -Be '1,4,5,6,7,10'
+        }
+
+        It 'Does not treat double slashes in CSS or XML files as comments' {
+            $css = 'a { background: url(//cdn.example.com/x.png); }'
+            @(Get-MarkupCommentFindingsFromContent -Content $css -RelativePath 'site.css') | Should -BeNullOrEmpty
+
+            $xml = '<Configuration><!-- note --></Configuration>'
+            @(Get-MarkupCommentFindingsFromContent -Content $xml -RelativePath 'view.ps1xml').Count | Should -Be 1
+        }
+
+        It 'Maps file names to comment syntax families and skips unsupported types' {
+            Get-RepoCommentFileKind -RelativePath 'a/b.ps1' | Should -Be 'PowerShell'
+            Get-RepoCommentFileKind -RelativePath '.github/workflows/ci.yml' | Should -Be 'HashLine'
+            Get-RepoCommentFileKind -RelativePath '.gitignore' | Should -Be 'HashLine'
+            Get-RepoCommentFileKind -RelativePath '.semgrepignore' | Should -Be 'HashLine'
+            Get-RepoCommentFileKind -RelativePath '.gitleaksignore' | Should -Be 'HashLine'
+            Get-RepoCommentFileKind -RelativePath 'Docker/Dockerfile' | Should -Be 'HashLine'
+            Get-RepoCommentFileKind -RelativePath '.githooks/pre-commit' | Should -Be 'HashLine'
+            Get-RepoCommentFileKind -RelativePath '.githooks/Invoke-StagedScriptAnalyzer.ps1' | Should -Be 'PowerShell'
+            Get-RepoCommentFileKind -RelativePath 'docs/compliance_dashboard.html' | Should -Be 'Markup'
+            Get-RepoCommentFileKind -RelativePath 'BridgeWatcher/Formats/BridgeStatus.format.ps1xml' | Should -Be 'Markup'
+            Get-RepoCommentFileKind -RelativePath 'README.md' | Should -BeNullOrEmpty
+            Get-RepoCommentFileKind -RelativePath 'renovate.json' | Should -BeNullOrEmpty
+        }
+
+        It 'Discovers files without git and reports ignore-file and HTML comments in the inventory' {
+            $root = Join-Path -Path $TestDrive -ChildPath 'discovery'
+            $null = New-Item -ItemType Directory -Path (Join-Path -Path $root -ChildPath 'docs') -Force
+            Set-Content -LiteralPath (Join-Path -Path $root -ChildPath '.gitignore') -Value @('# header', 'bin/')
+            Set-Content -LiteralPath (Join-Path -Path $root -ChildPath 'docs/page.html') -Value '<!-- label --><p>x</p>'
+            Set-Content -LiteralPath (Join-Path -Path $root -ChildPath 'notes.md') -Value '# heading'
+
+            $inventory = Get-RepoCommentInventory -Root $root
+            $inventory.TotalComments | Should -Be 2
+            $inventory.ScannedFileCount | Should -Be 2
+            $inventory.CountsByFile['.gitignore'] | Should -Be 1
+            $inventory.CountsByFile['docs/page.html'] | Should -Be 1
+        }
+    }
 }

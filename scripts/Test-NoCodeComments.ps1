@@ -3,9 +3,10 @@
 Enforces the repository-wide code comment ban using a ratchet baseline.
 
 .DESCRIPTION
-Scans PowerShell files via the PowerShell AST tokenizer and non-PowerShell
-code/config files (git hooks, Dockerfile, YAML workflows/configs) via a
-directive-aware scanner, then validates per-file comment counts against
+Scans PowerShell files via the PowerShell AST tokenizer, hash-comment files
+(YAML, Dockerfile, git hooks, ignore files) and markup files (HTML, CSS, JS,
+XML) via directive-aware scanners, discovering files through git so new files
+are covered automatically, then validates per-file comment counts against
 .comment-ratchet.json so comments can only decrease toward zero.
 
 .PARAMETER RepositoryRoot
@@ -213,6 +214,121 @@ function Get-HashLineCommentFindingsFromContent {
     return $findings.ToArray()
 }
 
+function Get-MarkupCommentFindingsFromContent {
+    <#
+    .SYNOPSIS
+    Finds disallowed comments in HTML, CSS, JavaScript, and XML text.
+
+    .PARAMETER Content
+    File content text.
+
+    .PARAMETER RelativePath
+    Relative path label to include on returned findings.
+    #>
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Content,
+        [Parameter(Mandatory)][string]$RelativePath
+    )
+
+    $findings = [System.Collections.Generic.List[object]]::new()
+    if ([string]::IsNullOrEmpty($Content)) {
+        return $findings.ToArray()
+    }
+
+    $isXmlFamily = $RelativePath -match '(?i)\.(html?|ps1xml|xml|xsl|xslt)$'
+    $allowsLineComment = $RelativePath -match '(?i)\.(html?|js)$'
+    $openerPattern = if ($isXmlFamily) { '<!--|/\*' } else { '/\*' }
+    $inBlock = $false
+    $blockCloser = $null
+    $lines = $Content -split '\r?\n'
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+        $trimmed = $line.Trim()
+        $isFinding = $false
+
+        if ($inBlock) {
+            $isFinding = $true
+            if ($line.Contains($blockCloser)) { $inBlock = $false }
+        } elseif (($openerMatch = [regex]::Match($line, $openerPattern)).Success) {
+            $opener = $openerMatch.Value
+            $isFinding = $true
+            $closer = if ($opener -eq '<!--') { '-->' } else { '*/' }
+            $afterOpen = $line.Substring($openerMatch.Index + $opener.Length)
+            if (-not $afterOpen.Contains($closer)) {
+                $inBlock = $true
+                $blockCloser = $closer
+            }
+        } elseif ($allowsLineComment -and $trimmed -match '^//|\s//\s') {
+            $isFinding = $true
+        }
+
+        if ($isFinding) {
+            $findings.Add([PSCustomObject]@{
+                File = $RelativePath
+                Line = ($i + 1)
+                Text = $trimmed
+            })
+        }
+    }
+
+    return $findings.ToArray()
+}
+
+function Get-RepoCommentFileKind {
+    <#
+    .SYNOPSIS
+    Maps a repository-relative path to the comment syntax family used to scan it, or $null when the file is out of scope.
+
+    .PARAMETER RelativePath
+    Forward-slash path relative to the repository root.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)][string]$RelativePath
+    )
+
+    $leaf = $RelativePath.Substring($RelativePath.LastIndexOf('/') + 1)
+
+    if ($leaf -match '(?i)\.(ps1|psm1|psd1)$') { return 'PowerShell' }
+    if ($leaf -match '(?i)\.(ya?ml)$') { return 'HashLine' }
+    if ($leaf -match '(?i)\.(html?|css|js|ps1xml|xml|xsl|xslt)$') { return 'Markup' }
+    if ($leaf -in @('Dockerfile', '.gitignore', '.gitattributes', '.dockerignore', '.semgrepignore', '.gitleaksignore', '.editorconfig')) { return 'HashLine' }
+    if ($RelativePath -match '^\.githooks/[^/]+$' -and $leaf -notmatch '\.') { return 'HashLine' }
+
+    return $null
+}
+
+function Get-RepoCandidatePath {
+    <#
+    .SYNOPSIS
+    Lists candidate repository-relative paths, preferring git (tracked plus untracked-but-not-ignored) and falling back to a directory walk.
+
+    .PARAMETER Root
+    The absolute repository root directory.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory)][string]$Root
+    )
+
+    $git = Get-Command -Name git -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($git -and (Test-Path -LiteralPath (Join-Path -Path $Root -ChildPath '.git'))) {
+        $listed = & $git.Source -C $Root ls-files -z --cached --others --exclude-standard 2>$null
+        if ($LASTEXITCODE -eq 0 -and $listed) {
+            return @(($listed -split "`0") | Where-Object { $_ })
+        }
+    }
+
+    $excludedPattern = '(^|/)(?:\.git|node_modules|shard-output|shard-artifacts)(/|$)'
+    return @(Get-ChildItem -Path $Root -Recurse -File -Force -ErrorAction SilentlyContinue |
+        ForEach-Object { ConvertTo-NormalizedRelativePath -FullPath $_.FullName -Root $Root } |
+        Where-Object { $_ -notmatch $excludedPattern })
+}
+
 function Get-RepoCommentAuditFile {
     <#
     .SYNOPSIS
@@ -230,39 +346,16 @@ function Get-RepoCommentAuditFile {
     $excludedPattern = '(^|/)(?:\.git|node_modules|shard-output|shard-artifacts)(/|$)'
     $results = [System.Collections.Generic.List[object]]::new()
 
-    $psFiles = Get-ChildItem -Path $Root -Recurse -File -Force -Include '*.ps1', '*.psm1', '*.psd1' -ErrorAction SilentlyContinue
-    foreach ($f in @($psFiles)) {
-        $rel = ConvertTo-NormalizedRelativePath -FullPath $f.FullName -Root $Root
+    foreach ($rel in (Get-RepoCandidatePath -Root $Root | Sort-Object -Unique)) {
         if ($rel -match $excludedPattern) { continue }
+        $kind = Get-RepoCommentFileKind -RelativePath $rel
+        if (-not $kind) { continue }
+        $full = Join-Path -Path $Root -ChildPath $rel
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
         $results.Add([PSCustomObject]@{
             RelativePath = $rel
-            FullName     = $f.FullName
-            Kind         = 'PowerShell'
-        })
-    }
-
-    $hashCandidates = [System.Collections.Generic.List[string]]::new()
-    foreach ($single in @('.githooks/pre-commit', '.githooks/pre-push', 'Docker/Dockerfile', 'Docker/filebeat.yml', 'docker-compose.yml', '.semgrep.yml')) {
-        $full = Join-Path -Path $Root -ChildPath $single
-        if (Test-Path -LiteralPath $full -PathType Leaf) {
-            $hashCandidates.Add($full)
-        }
-    }
-
-    $workflowsDir = Join-Path -Path $Root -ChildPath '.github/workflows'
-    if (Test-Path -LiteralPath $workflowsDir -PathType Container) {
-        $wfFiles = Get-ChildItem -Path $workflowsDir -File -Filter '*.yml' -ErrorAction SilentlyContinue
-        foreach ($wf in @($wfFiles)) {
-            $hashCandidates.Add($wf.FullName)
-        }
-    }
-
-    foreach ($fullPath in ($hashCandidates | Sort-Object -Unique)) {
-        $rel = ConvertTo-NormalizedRelativePath -FullPath $fullPath -Root $Root
-        $results.Add([PSCustomObject]@{
-            RelativePath = $rel
-            FullName     = $fullPath
-            Kind         = 'HashLine'
+            FullName     = $full
+            Kind         = $kind
         })
     }
 
@@ -290,10 +383,10 @@ function Get-RepoCommentInventory {
     foreach ($entry in $files) {
         $content = Get-Content -LiteralPath $entry.FullName -Raw -ErrorAction Stop
         if ($null -eq $content) { $content = '' }
-        $fileFindings = @(if ($entry.Kind -eq 'PowerShell') {
-            Get-PowerShellCommentFindingsFromContent -Content $content -RelativePath $entry.RelativePath
-        } else {
-            Get-HashLineCommentFindingsFromContent -Content $content -RelativePath $entry.RelativePath
+        $fileFindings = @(switch ($entry.Kind) {
+            'PowerShell' { Get-PowerShellCommentFindingsFromContent -Content $content -RelativePath $entry.RelativePath }
+            'Markup' { Get-MarkupCommentFindingsFromContent -Content $content -RelativePath $entry.RelativePath }
+            default { Get-HashLineCommentFindingsFromContent -Content $content -RelativePath $entry.RelativePath }
         })
 
         if ($fileFindings.Count -gt 0) {
