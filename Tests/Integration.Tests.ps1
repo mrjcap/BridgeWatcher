@@ -44,6 +44,11 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
 
         $htmlResultData | Should -Not -BeNullOrEmpty
 
+        if ($htmlResultData -notmatch 'panel-primary' -and $htmlResultData -match '<title>\s*One moment, please') {
+            Set-ItResult -Skipped -Because 'topvision.gr served its browser verification page instead of the bridge status'
+            return
+        }
+
 
 
         $getBridgeStatusFromHtmlSplat = @{
