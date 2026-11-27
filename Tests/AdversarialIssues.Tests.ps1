@@ -283,9 +283,14 @@ Describe 'Adversarial Regression and Security Tests' {
             $root = Join-Path -Path $PSScriptRoot -ChildPath '..'
             $ignorePath = Join-Path -Path $root -ChildPath '.semgrepignore'
             $semgrepIgnore = if (Test-Path -LiteralPath $ignorePath) { Get-Content -LiteralPath $ignorePath -Raw } else { '' }
-            $semgrepIgnore | Should -Not -Match '(?m)^\*\.ps1\s*$'
-            $semgrepIgnore | Should -Not -Match '(?m)^\*\.psm1\s*$'
-            $semgrepIgnore | Should -Not -Match '(?m)^\s*[!/]?\**/?\.github(/|\s*$|\*)'
+            $protected = @('.github/workflows/publish.yml', '.github/workflows/release.yml', 'BridgeWatcher.psm1', 'Public/Get-Bridge.ps1', 'scripts/tool.ps1')
+            $patterns = @($semgrepIgnore -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('!') })
+            foreach ($pattern in $patterns) {
+                $glob = '^(.*/)?' + (([regex]::Escape($pattern.Trim('/')) -replace '\\\*\\\*', '.*') -replace '\\\*', '[^/]*') + '(/.*)?$'
+                foreach ($path in $protected) {
+                    $path | Should -Not -Match $glob -Because "the ignore pattern '$pattern' must not exclude $path"
+                }
+            }
 
             $rulesPath = Join-Path -Path $root -ChildPath '.semgrep.yml'
             if (Test-Path -LiteralPath $rulesPath) {
