@@ -90,35 +90,49 @@ BridgeWatcher writes daily rotating `.log` files inside the container filesystem
 
 ### Recommended: syslog forwarding
 
-Use the Docker syslog driver to forward logs to a central collector:
+Layer the syslog override file on top of the base compose file. No tracked file needs editing:
 
 ```bash
-docker run \
-  --log-driver=syslog \
-  --log-opt syslog-address=tcp://loghost:514 \
-  --log-opt tag=bridgewatcher \
-  mrjcap/bridgewatcher:latest
+SYSLOG_ADDRESS=tcp://loghost:514 \
+  docker compose -f docker-compose.yml -f docker-compose.syslog.yml up -d
 ```
 
-### Alternative: bind-mount and shipper
+Compose refuses to start the override without `SYSLOG_ADDRESS`.
 
-Mount the log directory and use Filebeat or Promtail:
+### Alternative: Filebeat sidecar
+
+The `siem` profile runs Filebeat against the shared log volume. Settings come from environment variables
+(or an `.env` file), not from edits to the repository.
+
+Logstash output (default `Docker/filebeat.yml`):
+
+```bash
+LOGSTASH_HOST=siem.example.com LOGSTASH_PORT=5044 \
+  docker compose --profile siem up -d
+```
+
+Elasticsearch output, authenticated with an Elasticsearch API key (select `Docker/filebeat.elasticsearch.yml`):
+
+```bash
+FILEBEAT_CONFIG=./Docker/filebeat.elasticsearch.yml \
+ELASTICSEARCH_HOST=es.example.com ELASTICSEARCH_API_KEY=<id>:<api_key> \
+  docker compose --profile siem up -d
+```
+
+`LOGSTASH_PORT` defaults to 5044, `ELASTICSEARCH_PORT` to 9200 and `ELASTICSEARCH_PROTOCOL` to https. Filebeat
+exits with a missing-field error when a required variable is unset, so a placeholder host is never contacted.
+
+Setting `ELASTICSEARCH_PROTOCOL=http` sends `ELASTICSEARCH_API_KEY` in clear text.
+Use it only on a trusted, isolated network; leave the default `https` everywhere else. A scheme in
+`ELASTICSEARCH_HOST` (for example `http://es.example.com`) overrides `ELASTICSEARCH_PROTOCOL`, so set the host
+as a bare name and check it for an `http://` prefix.
+
+Without Compose, bind-mount the log directory and point any shipper at it:
 
 ```bash
 docker run \
   -v /var/log/bridgewatcher:/app/logs \
   mrjcap/bridgewatcher:latest
-```
-
-Then configure a log shipper:
-
-```yaml
-# filebeat.yml snippet
-filebeat.inputs:
-  - type: log
-    paths:
-      - /var/log/bridgewatcher/*.log
-    tags: ["bridgewatcher"]
 ```
 
 ### Retention

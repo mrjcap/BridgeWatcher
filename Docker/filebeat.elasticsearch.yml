@@ -1,0 +1,12 @@
+filebeat.inputs:
+  - type: filestream
+    id: bridgewatcher-logs
+    enabled: true
+    paths:
+      - /var/log/bridgewatcher/*.log
+    tags: ["bridgewatcher"]
+
+output.elasticsearch:
+  hosts: ["${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT:9200}"]
+  protocol: "${ELASTICSEARCH_PROTOCOL:https}"
+  api_key: "${ELASTICSEARCH_API_KEY}"
