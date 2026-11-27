@@ -210,6 +210,31 @@ Describe 'Code Comment Ban and Ratchet Review' {
             ($findings.Line -join ',') | Should -Be '1,2'
         }
 
+        It 'Scans template substitutions for comments but ignores comment markers in template text' {
+            $sample = @(
+                'const a = `${1 /* note */}`;',
+                'const b = `x /* y */ // z`;',
+                'const c = `${1}//still text`;',
+                'const d = `${2}`; //real'
+            ) -join "`n"
+
+            $findings = @(Get-MarkupCommentFindingsFromContent -Content $sample -RelativePath 'app.js')
+            ($findings.Line -join ',') | Should -Be '1,4'
+        }
+
+        It 'Handles nested templates and object literals inside substitutions' {
+            $sample = @(
+                'const a = `${ {k: 1}.k }//text`;',
+                'const b = `${ `inner ${ 2 /* c */ } //x` }//text`;',
+                'const c = `plain`;',
+                '}',
+                'const d = 3; // real'
+            ) -join "`n"
+
+            $findings = @(Get-MarkupCommentFindingsFromContent -Content $sample -RelativePath 'app.js')
+            ($findings.Line -join ',') | Should -Be '2,5'
+        }
+
         It 'Does not treat comment openers inside CSS strings or HTML text as comments' {
             $css = @('a::before { content: "/*"; }', 'b::after { content: ''//''; }') -join "`n"
             @(Get-MarkupCommentFindingsFromContent -Content $css -RelativePath 'site.css') | Should -BeNullOrEmpty
