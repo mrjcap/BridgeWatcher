@@ -86,7 +86,7 @@ jobs:
             -v "$(pwd)/Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro" \
             "$FILEBEAT_IMAGE" test config -c /usr/share/filebeat/filebeat.yml --strict.perms=false
           docker run --rm --entrypoint filebeat \
-            -e ELASTICSEARCH_HOST=es.example.com -e ELASTICSEARCH_USERNAME=filebeat -e ELASTICSEARCH_PASSWORD=unused \
+            -e ELASTICSEARCH_HOST=es.example.com -e ELASTICSEARCH_USERNAME=filebeat -e ELASTICSEARCH_PASSWORD="$(openssl rand -hex 8)" \
             -v "$(pwd)/Docker/filebeat.elasticsearch.yml:/usr/share/filebeat/filebeat.yml:ro" \
             "$FILEBEAT_IMAGE" test config -c /usr/share/filebeat/filebeat.yml --strict.perms=false
 
@@ -95,7 +95,7 @@ jobs:
           set -euo pipefail
           LOGSTASH_HOST=siem.example.com docker compose --profile siem config --quiet
           FILEBEAT_CONFIG=./Docker/filebeat.elasticsearch.yml ELASTICSEARCH_HOST=es.example.com \
-            ELASTICSEARCH_USERNAME=filebeat ELASTICSEARCH_PASSWORD=unused docker compose --profile siem config --quiet
+            ELASTICSEARCH_USERNAME=filebeat ELASTICSEARCH_PASSWORD="$(openssl rand -hex 8)" docker compose --profile siem config --quiet
           SYSLOG_ADDRESS=tcp://loghost:514 docker compose -f docker-compose.yml -f docker-compose.syslog.yml config --quiet
           if docker compose -f docker-compose.yml -f docker-compose.syslog.yml config --quiet 2>/dev/null; then
             echo "::error::The syslog override must require SYSLOG_ADDRESS."

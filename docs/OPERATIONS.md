@@ -122,6 +122,9 @@ ELASTICSEARCH_HOST=es.example.com ELASTICSEARCH_USERNAME=filebeat ELASTICSEARCH_
 `LOGSTASH_PORT` defaults to 5044, `ELASTICSEARCH_PORT` to 9200 and `ELASTICSEARCH_PROTOCOL` to https. Filebeat
 exits with a missing-field error when a required variable is unset, so a placeholder host is never contacted.
 
+Setting `ELASTICSEARCH_PROTOCOL=http` sends `ELASTICSEARCH_USERNAME` and `ELASTICSEARCH_PASSWORD` in clear text.
+Use it only on a trusted, isolated network; leave the default `https` everywhere else.
+
 Without Compose, bind-mount the log directory and point any shipper at it:
 
 ```bash
