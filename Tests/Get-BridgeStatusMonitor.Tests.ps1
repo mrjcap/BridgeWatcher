@@ -165,7 +165,21 @@ Describe 'Get-BridgeStatusMonitor' {
             }
 
             { Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat -Configuration $script:Config } | Should -Not -Throw
-            Should -Invoke -CommandName Write-BridgeLog -Times 4 -Exactly
+            Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -ParameterFilter {
+                $Stage -eq $script:Config.LoggingConfig.InfoStage -and
+                $Level -eq $script:Config.LoggingConfig.VerboseLevel -and
+                $Message -like "$($script:Config.StatusMessages.MonitoringStart)*"
+            }
+            Should -Invoke -CommandName Write-BridgeLog -Times 2 -Exactly -ParameterFilter {
+                $Stage -eq $script:Config.LoggingConfig.ErrorStage -and
+                $Level -eq $script:Config.LoggingConfig.WarningLevel -and
+                $Message -like "$($script:Config.ErrorMessages.MonitoringError)*Test Exception*"
+            }
+            Should -Invoke -CommandName Write-BridgeLog -Times 1 -Exactly -ParameterFilter {
+                $Stage -eq $script:Config.LoggingConfig.InfoStage -and
+                $Level -eq $script:Config.LoggingConfig.VerboseLevel -and
+                $Message -like "$($script:Config.StatusMessages.MonitoringComplete)*"
+            }
         }
     }
     Context 'Προεπιλεγμένες Παράμετροι' {
