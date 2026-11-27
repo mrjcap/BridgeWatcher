@@ -291,34 +291,33 @@ jobs:
         run: |
           Write-Verbose "Verifying module publication..."
 
-          Start-Sleep -Seconds 30
-
-          $maxAttempts = 6
-          $attempt = 1
+          $maxAttempts = 8
+          $maxDelaySeconds = 60
+          $delaySeconds = 5
+          $lastState = 'not queried'
           $found = $false
 
-          do {
+          for ($attempt = 1; $attempt -le $maxAttempts -and -not $found; $attempt++) {
+            Write-Verbose "Attempt $attempt of $maxAttempts to find published module..."
             try {
-              Write-Verbose "Attempt $attempt of $maxAttempts to find published module..."
               $module = Find-Module -Name $env:MODULE_NAME -RequiredVersion $env:NEXT_VERSION -Repository PSGallery -ErrorAction Stop
-
-              if ($module) {
-                Write-Verbose " Module successfully found in PowerShell Gallery"
-                Write-Verbose "   Name: $($module.Name)"
-                Write-Verbose "   Version: $($module.Version)"
-                Write-Verbose "   Published: $($module.PublishedDate)"
-                $found = $true
-                break
-              }
+              $found = [bool]$module
+              $lastState = if ($found) { 'found' } else { 'Find-Module returned no result' }
             } catch {
-              Write-Verbose "⏳ Module not yet available, waiting... (Attempt $attempt)"
-              Start-Sleep -Seconds 30
-              $attempt++
+              $lastState = $_.Exception.Message
             }
-          } while ($attempt -le $maxAttempts -and -not $found)
+
+            if ($found) {
+              Write-Verbose "Module found in PowerShell Gallery: $($module.Name) $($module.Version) published $($module.PublishedDate)"
+            } elseif ($attempt -lt $maxAttempts) {
+              Write-Verbose "Module not yet available ($lastState). Waiting $delaySeconds s before the next attempt."
+              Start-Sleep -Seconds $delaySeconds
+              $delaySeconds = [Math]::Min($delaySeconds * 2, $maxDelaySeconds)
+            }
+          }
 
           if (-not $found) {
-            Write-Error " Module verification failed - not found in PowerShell Gallery after $maxAttempts attempts"
+            Write-Error "Module verification failed after $maxAttempts attempts. Last observed state: $lastState"
             exit 1
           }
 
