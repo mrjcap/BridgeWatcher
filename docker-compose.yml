@@ -43,8 +43,7 @@ services:
       - ELASTICSEARCH_HOST
       - ELASTICSEARCH_PORT
       - ELASTICSEARCH_PROTOCOL
-      - ELASTICSEARCH_USERNAME
-      - ELASTICSEARCH_PASSWORD
+      - ELASTICSEARCH_API_KEY
     volumes:
       - log-data:/var/log/bridgewatcher:ro
       - ${FILEBEAT_CONFIG:-./Docker/filebeat.yml}:/usr/share/filebeat/filebeat.yml:ro

@@ -18,15 +18,14 @@ Describe 'SIEM forwarding configuration' {
         $script:logstash | Should -Match 'hosts:\s*\["\$\{LOGSTASH_HOST\}:\$\{LOGSTASH_PORT:5044\}"\]'
     }
 
-    It 'Takes the Elasticsearch target and credentials from environment variables' {
+    It 'Takes the Elasticsearch target and API key from environment variables' {
         $script:elasticsearch | Should -Match '\$\{ELASTICSEARCH_HOST\}'
-        $script:elasticsearch | Should -Match 'username:\s*"\$\{ELASTICSEARCH_USERNAME\}"'
-        $script:elasticsearch | Should -Match 'password:\s*"\$\{ELASTICSEARCH_PASSWORD\}"'
+        $script:elasticsearch | Should -Match 'api_key:\s*"\$\{ELASTICSEARCH_API_KEY\}"'
     }
 
     It 'Lets the compose file select the Filebeat configuration and passes the variables through' {
         $script:compose | Should -Match '\$\{FILEBEAT_CONFIG:-\./Docker/filebeat\.yml\}:/usr/share/filebeat/filebeat\.yml:ro'
-        foreach ($name in 'LOGSTASH_HOST', 'ELASTICSEARCH_HOST', 'ELASTICSEARCH_USERNAME', 'ELASTICSEARCH_PASSWORD') {
+        foreach ($name in 'LOGSTASH_HOST', 'ELASTICSEARCH_HOST', 'ELASTICSEARCH_API_KEY') {
             $script:compose | Should -Match "(?m)^\s+-\s+$name\s*$"
         }
     }

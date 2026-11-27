@@ -111,18 +111,18 @@ LOGSTASH_HOST=siem.example.com LOGSTASH_PORT=5044 \
   docker compose --profile siem up -d
 ```
 
-Elasticsearch output (select `Docker/filebeat.elasticsearch.yml`):
+Elasticsearch output, authenticated with an Elasticsearch API key (select `Docker/filebeat.elasticsearch.yml`):
 
 ```bash
 FILEBEAT_CONFIG=./Docker/filebeat.elasticsearch.yml \
-ELASTICSEARCH_HOST=es.example.com ELASTICSEARCH_USERNAME=filebeat ELASTICSEARCH_PASSWORD=... \
+ELASTICSEARCH_HOST=es.example.com ELASTICSEARCH_API_KEY=<id>:<api_key> \
   docker compose --profile siem up -d
 ```
 
 `LOGSTASH_PORT` defaults to 5044, `ELASTICSEARCH_PORT` to 9200 and `ELASTICSEARCH_PROTOCOL` to https. Filebeat
 exits with a missing-field error when a required variable is unset, so a placeholder host is never contacted.
 
-Setting `ELASTICSEARCH_PROTOCOL=http` sends `ELASTICSEARCH_USERNAME` and `ELASTICSEARCH_PASSWORD` in clear text.
+Setting `ELASTICSEARCH_PROTOCOL=http` sends `ELASTICSEARCH_API_KEY` in clear text.
 Use it only on a trusted, isolated network; leave the default `https` everywhere else.
 
 Without Compose, bind-mount the log directory and point any shipper at it:

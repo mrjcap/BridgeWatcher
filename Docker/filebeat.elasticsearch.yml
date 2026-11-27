@@ -9,5 +9,4 @@ filebeat.inputs:
 output.elasticsearch:
   hosts: ["${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT:9200}"]
   protocol: "${ELASTICSEARCH_PROTOCOL:https}"
-  username: "${ELASTICSEARCH_USERNAME}"
-  password: "${ELASTICSEARCH_PASSWORD}"
+  api_key: "${ELASTICSEARCH_API_KEY}"
