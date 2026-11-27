@@ -279,10 +279,18 @@ Describe 'Adversarial Regression and Security Tests' {
             $dockerWf | Should -Match 'exit-code:\s*[''"]?1[''"]?'
         }
 
-        It 'C-09d: .semgrepignore must not ignore PowerShell module source files' {
-            $semgrepIgnore = Get-Content -LiteralPath "$PSScriptRoot/../.semgrepignore" -Raw
+        It 'C-09d: Semgrep must not ignore PowerShell sources, workflows, or disable rules repository-wide' {
+            $root = Join-Path -Path $PSScriptRoot -ChildPath '..'
+            $ignorePath = Join-Path -Path $root -ChildPath '.semgrepignore'
+            $semgrepIgnore = if (Test-Path -LiteralPath $ignorePath) { Get-Content -LiteralPath $ignorePath -Raw } else { '' }
             $semgrepIgnore | Should -Not -Match '(?m)^\*\.ps1\s*$'
             $semgrepIgnore | Should -Not -Match '(?m)^\*\.psm1\s*$'
+            $semgrepIgnore | Should -Not -Match '\.github/workflows'
+
+            $rulesPath = Join-Path -Path $root -ChildPath '.semgrep.yml'
+            if (Test-Path -LiteralPath $rulesPath) {
+                Get-Content -LiteralPath $rulesPath -Raw | Should -Not -Match '(?m)^disable:'
+            }
         }
     }
 }
