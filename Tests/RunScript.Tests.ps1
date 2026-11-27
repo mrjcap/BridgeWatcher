@@ -29,24 +29,12 @@ Describe 'run.ps1 Script Execution' {
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
             $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
-            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
                 ApiKey    = $ApiKey
                 PoApiKey  = $PoApiKey
                 PoUserKey = $PoUserKey
             }
         }
-
-        Mock Get-BridgeStatusMonitor {
-            param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
-            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
-            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
-            $script:calledParams = @{
-                ApiKey    = $ApiKey
-                PoApiKey  = $PoApiKey
-                PoUserKey = $PoUserKey
-            }
-        } -ModuleName 'BridgeWatcher'
 
         . "$PSScriptRoot/../run.ps1"
 
@@ -70,16 +58,6 @@ Describe 'run.ps1 Script Execution' {
                 PoUserKey = $PoUserKey
             }
         }
-
-        Mock Get-BridgeStatusMonitor {
-            param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
-            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
-            $script:calledParams = @{
-                ApiKey    = $ApiKey
-                PoApiKey  = $PoApiKey
-                PoUserKey = $PoUserKey
-            }
-        } -ModuleName 'BridgeWatcher'
 
         . "$PSScriptRoot/../run.ps1"
 
@@ -108,16 +86,6 @@ Describe 'run.ps1 Script Execution' {
                 PoUserKey = $PoUserKey
             }
         }
-
-        Mock Get-BridgeStatusMonitor {
-            param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
-            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
-            $script:calledParams = @{
-                ApiKey    = $ApiKey
-                PoApiKey  = $PoApiKey
-                PoUserKey = $PoUserKey
-            }
-        } -ModuleName 'BridgeWatcher'
 
         Mock Test-Path {
             param($Path)
@@ -165,17 +133,6 @@ Describe 'run.ps1 Script Execution' {
                 PoUserKey     = $PoUserKey
             }
         }
-
-        Mock Get-BridgeStatusMonitor {
-            param($Configuration, $IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
-            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
-            $script:calledParams = @{
-                Configuration = $Configuration
-                ApiKey        = $ApiKey
-                PoApiKey      = $PoApiKey
-                PoUserKey     = $PoUserKey
-            }
-        } -ModuleName 'BridgeWatcher'
 
         Mock Test-Path {
             param($Path)
