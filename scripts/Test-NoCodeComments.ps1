@@ -236,7 +236,7 @@ function Get-MarkupInitialMode {
 function Get-MarkupTokenRegexMap {
     <#
     .SYNOPSIS
-    Builds one tokenizer regex per language mode. Each matches the next string literal, comment opener, or mode switch.
+    Builds one tokenizer regex per language mode. Each matches the next string literal, comment opener, template delimiter, or mode switch.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -246,25 +246,69 @@ function Get-MarkupTokenRegexMap {
     $tag = '(?:[^>"'']|"[^"]*"|''[^'']*'')*>'
     $doubleQuoted = '"(?:[^"\\\r\n]|\\[\s\S])*"'
     $singleQuoted = '''(?:[^''\\\r\n]|\\[\s\S])*'''
-    $template = '`(?:[^`\\]|\\[\s\S])*`'
 
     return @{
-        Markup = [regex]::new("<!--|<script\b$tag|<style\b$tag", $options)
-        Script = [regex]::new("$doubleQuoted|$singleQuoted|$template|//[^\r\n]*|/\*|</script\b", $options)
-        Style  = [regex]::new("$doubleQuoted|$singleQuoted|/\*|</style\b", $options)
+        Markup   = [regex]::new("<!--|<script\b$tag|<style\b$tag", $options)
+        Script   = [regex]::new("$doubleQuoted|$singleQuoted|//[^\r\n]*|/\*|</script\b|``|\{|\}", $options)
+        Template = [regex]::new('\\[\s\S]|\$\{|`|</script\b', $options)
+        Style    = [regex]::new("$doubleQuoted|$singleQuoted|/\*|</style\b", $options)
+    }
+}
+
+function Step-MarkupScriptState {
+    <#
+    .SYNOPSIS
+    Updates brace depth and template-literal nesting after a script-mode or template-mode token.
+
+    .DESCRIPTION
+    A backtick opens or closes a template literal, "${" opens a substitution whose contents are ordinary script, and
+    a closing brace at depth zero returns from a substitution to its template. Frames on the stack remember the mode
+    and brace depth to resume.
+
+    .PARAMETER State
+    The scanner state hashtable with Mode, Depth, and Stack entries. It is modified in place.
+
+    .PARAMETER Text
+    The token text.
+    #>
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory)][hashtable]$State,
+        [Parameter(Mandatory)][string]$Text
+    )
+
+    $closesTemplate = ($Text -eq '`' -and $State.Mode -eq 'Template')
+    $closesSubstitution = ($Text -eq '}' -and $State.Depth -eq 0 -and $State.Stack.Count -gt 0 -and $State.Stack.Peek().Mode -eq 'Template')
+
+    if ($closesTemplate -or $closesSubstitution) {
+        $frame = $State.Stack.Pop()
+        $State.Mode = $frame.Mode
+        $State.Depth = $frame.Depth
+    } elseif ($Text -eq '`') {
+        $State.Stack.Push([PSCustomObject]@{ Mode = $State.Mode; Depth = $State.Depth })
+        $State.Mode = 'Template'
+    } elseif ($Text -eq '${') {
+        $State.Stack.Push([PSCustomObject]@{ Mode = 'Template'; Depth = 0 })
+        $State.Mode = 'Script'
+        $State.Depth = 0
+    } elseif ($Text -eq '{') {
+        $State.Depth++
+    } elseif ($Text -eq '}' -and $State.Depth -gt 0) {
+        $State.Depth--
     }
 }
 
 function Resolve-MarkupToken {
     <#
     .SYNOPSIS
-    Interprets one tokenizer match and reports the next mode, where scanning resumes, and the comment span if any.
+    Interprets one tokenizer match, updates the scanner state, and reports where scanning resumes and the comment span if any.
 
     .PARAMETER Token
     The regex match produced by the tokenizer for the current mode.
 
-    .PARAMETER Mode
-    The current language mode: Markup, Script, or Style.
+    .PARAMETER State
+    The scanner state hashtable with Mode, Depth, and Stack entries. It is modified in place.
 
     .PARAMETER Content
     The full file text.
@@ -273,13 +317,13 @@ function Resolve-MarkupToken {
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)][System.Text.RegularExpressions.Match]$Token,
-        [Parameter(Mandatory)][string]$Mode,
+        [Parameter(Mandatory)][hashtable]$State,
         [Parameter(Mandatory)][string]$Content
     )
 
     $text = $Token.Value
     $tokenEnd = $Token.Index + $Token.Length
-    $result = [PSCustomObject]@{ Mode = $Mode; Resume = $tokenEnd; CommentEnd = -1 }
+    $result = [PSCustomObject]@{ Resume = $tokenEnd; CommentEnd = -1 }
 
     $closer = $null
     if ($text.StartsWith('<!--')) { $closer = '-->' } elseif ($text.StartsWith('/*')) { $closer = '*/' }
@@ -291,11 +335,15 @@ function Resolve-MarkupToken {
     } elseif ($text.StartsWith('//')) {
         $result.CommentEnd = $tokenEnd
     } elseif ($text -match '^</') {
-        $result.Mode = 'Markup'
+        $State.Mode = 'Markup'
+        $State.Depth = 0
+        $State.Stack.Clear()
     } elseif ($text -match '^<script') {
-        $result.Mode = 'Script'
+        $State.Mode = 'Script'
     } elseif ($text -match '^<style') {
-        $result.Mode = 'Style'
+        $State.Mode = 'Style'
+    } else {
+        Step-MarkupScriptState -State $State -Text $text
     }
 
     return $result
@@ -309,8 +357,8 @@ function Get-MarkupCommentFindingsFromContent {
     .DESCRIPTION
     Tracks the language mode (markup, script, or style) and skips string literals, so comment openers inside strings
     such as "/*" or "https://example.com" are not reported. HTML and XML comments are recognised in markup mode,
-    block comments in script and style modes, and line comments in script mode only. Regular expression literals in
-    JavaScript are not parsed.
+    block comments in script and style modes, and line comments in script mode only. Template literal text is skipped
+    while the code inside "${...}" substitutions is scanned. Regular expression literals in JavaScript are not parsed.
 
     .PARAMETER Content
     File content text.
@@ -330,7 +378,11 @@ function Get-MarkupCommentFindingsFromContent {
     }
 
     $regexByMode = Get-MarkupTokenRegexMap
-    $mode = Get-MarkupInitialMode -RelativePath $RelativePath
+    $state = @{
+        Mode  = Get-MarkupInitialMode -RelativePath $RelativePath
+        Depth = 0
+        Stack = [System.Collections.Generic.Stack[object]]::new()
+    }
     $lineStarts = [System.Collections.Generic.List[int]]::new()
     $lineStarts.Add(0)
     for ($at = $Content.IndexOf("`n"); $at -ge 0; $at = $Content.IndexOf("`n", $at + 1)) {
@@ -341,16 +393,15 @@ function Get-MarkupCommentFindingsFromContent {
     $commentLines = [System.Collections.Generic.SortedSet[int]]::new()
     $position = 0
     while ($position -lt $Content.Length) {
-        $token = $regexByMode[$mode].Match($Content, $position)
+        $token = $regexByMode[$state.Mode].Match($Content, $position)
         if (-not $token.Success) { break }
 
-        $resolved = Resolve-MarkupToken -Token $token -Mode $mode -Content $Content
+        $resolved = Resolve-MarkupToken -Token $token -State $state -Content $Content
         if ($resolved.CommentEnd -ge 0) {
             $first = Get-MarkupLineIndex -LineStarts $startsArray -Offset $token.Index
             $last = Get-MarkupLineIndex -LineStarts $startsArray -Offset ([Math]::Max($token.Index, $resolved.CommentEnd - 1))
             for ($line = $first; $line -le $last; $line++) { $null = $commentLines.Add($line) }
         }
-        $mode = $resolved.Mode
         $position = [Math]::Max($resolved.Resume, $position + 1)
     }
 
