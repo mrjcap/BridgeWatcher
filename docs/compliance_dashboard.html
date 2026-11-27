@@ -4,16 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BridgeWatcher — Compliance & Security Dashboard</title>
-    <!-- Modern Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <!-- Chart.js via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" integrity="sha512-IMvjDnJzMKoQZLPYQHxR4g8nm0sSd9bR7Kl5ayxnPHV8ChqVpHCdBYXGib3ZftuDlfaceqn7t47fObseBCEEJw==" crossorigin="anonymous"></script>
     <style>
-        /* Color Palette: Nord / Polar Night */
         :root {
             --polar-night-0: #2e3440;
             --polar-night-1: #3b4252;
@@ -36,7 +32,7 @@
             --aurora-purple: #b48ead;
             
             --bg-main: var(--polar-night-0);
-            --bg-sidebar: #242933; /* Darker than polar-night-0 for contrast */
+            --bg-sidebar: #242933;
             --bg-card: var(--polar-night-1);
             --bg-card-hover: var(--polar-night-2);
             --border-color: var(--polar-night-3);
@@ -67,7 +63,6 @@
             overflow-x: hidden;
         }
 
-        /* Sidebar Styling */
         .sidebar {
             width: 280px;
             background-color: var(--bg-sidebar);
@@ -157,7 +152,6 @@
             color: var(--frost-1);
         }
 
-        /* Main Content Styling */
         .main-content {
             margin-left: 280px;
             flex: 1;
@@ -207,7 +201,6 @@
             color: var(--aurora-green);
         }
 
-        /* Dashboard Grid Layouts */
         .tab-content {
             display: none;
         }
@@ -222,7 +215,6 @@
             display: block;
         }
 
-        /* KPI Cards */
         .kpi-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -305,7 +297,6 @@
             color: var(--text-muted);
         }
 
-        /* Dashboard Layout Grid */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -352,7 +343,6 @@
             color: var(--frost-1);
         }
 
-        /* Tables styling */
         .table-responsive {
             overflow-x: auto;
             width: 100%;
@@ -392,7 +382,6 @@
             background-color: rgba(67, 76, 94, 0.3);
         }
 
-        /* Badges */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -429,7 +418,6 @@
             border: 1px solid rgba(136, 192, 208, 0.3);
         }
 
-        /* Status Pills */
         .status-pill {
             display: inline-flex;
             align-items: center;
@@ -449,7 +437,6 @@
         .status-pill.fail::before { background-color: var(--aurora-red); }
         .status-pill.warn::before { background-color: var(--aurora-orange); }
 
-        /* Checklist Cards */
         .checklist-item {
             display: flex;
             align-items: flex-start;
@@ -493,7 +480,6 @@
             line-height: 1.5;
         }
 
-        /* Search & Filter Bar */
         .filter-bar {
             display: flex;
             gap: 16px;
@@ -549,7 +535,6 @@
             border-color: var(--frost-1);
         }
 
-        /* Chart container */
         .chart-box {
             position: relative;
             height: 280px;
@@ -559,7 +544,6 @@
             align-items: center;
         }
 
-        /* Responsive Mobile Drawer */
         .menu-toggle {
             display: none;
             background: none;
@@ -570,7 +554,6 @@
             z-index: 110;
         }
 
-        /* Documentation & Roadmap Cards */
         .docs-grid, .roadmap-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -628,7 +611,6 @@
             text-decoration: underline;
         }
 
-        /* Callouts / Alerts */
         .alert-box {
             padding: 16px;
             border-radius: var(--border-radius);
@@ -671,7 +653,6 @@
             line-height: 1.5;
         }
 
-        /* Attestation Box */
         .attestation-wrapper {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -706,7 +687,6 @@
             color: var(--frost-1);
         }
 
-        /* Code block wrapper */
         .code-snippet {
             background-color: var(--polar-night-0);
             border: 1px solid var(--border-color);
@@ -719,13 +699,11 @@
             line-height: 1.6;
         }
 
-        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsive Breakpoints */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -754,14 +732,12 @@
 </head>
 <body>
 
-    <!-- Mobile Navigation Toggle -->
     <div style="position: fixed; top: 24px; right: 24px; z-index: 120;">
         <button class="menu-toggle" id="menuToggleBtn">
             <i class="fa-solid fa-bars"></i>
         </button>
     </div>
 
-    <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">BridgeWatcher</div>
@@ -793,9 +769,7 @@
         </div>
     </aside>
 
-    <!-- Main Content Panel -->
     <main class="main-content">
-        <!-- Header -->
         <header>
             <div class="header-title">
                 <h1 id="tabTitleHeader">Compliance & Security Dashboard</h1>
@@ -807,9 +781,7 @@
             </div>
         </header>
 
-        <!-- Tab 1: Overview -->
         <section id="overview" class="tab-content active">
-            <!-- KPIs row -->
             <div class="kpi-container">
                 <div class="kpi-card success">
                     <div class="kpi-header">
@@ -857,9 +829,7 @@
                 </div>
             </div>
 
-            <!-- Dashboard Grid -->
             <div class="dashboard-grid">
-                <!-- Left: Maturity Comparison Charts -->
                 <div class="panel">
                     <div class="panel-header">
                         <div class="panel-title">
@@ -872,7 +842,6 @@
                     </div>
                 </div>
 
-                <!-- Right: Quick Stats & Applicability -->
                 <div class="panel">
                     <div class="panel-header">
                         <div class="panel-title">
@@ -919,7 +888,6 @@
                 </div>
             </div>
 
-            <!-- Verification & Attestation Panel -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title">
@@ -955,9 +923,7 @@
             </div>
         </section>
 
-        <!-- Tab 2: Initial Audit -->
         <section id="audit" class="tab-content">
-            <!-- Executive Summary Text -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title"><i class="fa-solid fa-file-invoice"></i><span>Initial Audit Summary</span></div>
@@ -974,7 +940,6 @@
                 </div>
             </div>
 
-            <!-- Threat Sources -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title"><i class="fa-solid fa-spider"></i><span>NIST SP 800-30 Threat Catalog</span></div>
@@ -1031,7 +996,6 @@
                 </div>
             </div>
 
-            <!-- Initial Risk Register -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title"><i class="fa-solid fa-skull-crossbones"></i><span>Initial Risk Assessment</span></div>
@@ -1111,9 +1075,7 @@
             </div>
         </section>
 
-        <!-- Tab 3: Reassessment -->
         <section id="reassessment" class="tab-content">
-            <!-- Interactivity: Findings Filtering -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title"><i class="fa-solid fa-list-check"></i><span>Remediated Findings & Actions</span></div>
@@ -1258,7 +1220,6 @@
                 </div>
             </div>
 
-            <!-- Post-Remediation Risk Register -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title"><i class="fa-solid fa-shield-virus"></i><span>Updated Risk Register (Post-Remediation)</span></div>
@@ -1330,9 +1291,7 @@
             </div>
         </section>
 
-        <!-- Tab 4: Evidence Portfolio -->
         <section id="portfolio" class="tab-content">
-            <!-- Statement of Applicability (SOA) -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title">
@@ -1455,7 +1414,6 @@
                 </div>
             </div>
 
-            <!-- Scope & System Boundary -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title"><i class="fa-solid fa-vector-square"></i><span>System Scope Boundary</span></div>
@@ -1501,9 +1459,7 @@
             </div>
         </section>
 
-        <!-- Tab 5: Roadmap & Docs -->
         <section id="roadmap" class="tab-content">
-            <!-- Documentation Index -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title">
@@ -1512,7 +1468,6 @@
                     </div>
                 </div>
                 <div class="docs-grid">
-                    <!-- Doc Card 1 -->
                     <div class="doc-card">
                         <div class="doc-icon"><i class="fa-solid fa-file-shield"></i></div>
                         <div class="doc-details">
@@ -1521,7 +1476,6 @@
                         </div>
                         <a href="../SECURITY.md" class="doc-action" target="_blank">View File <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                     </div>
-                    <!-- Doc Card 2 -->
                     <div class="doc-card">
                         <div class="doc-icon"><i class="fa-solid fa-kit-medical"></i></div>
                         <div class="doc-details">
@@ -1530,7 +1484,6 @@
                         </div>
                         <a href="INCIDENT-RESPONSE.md" class="doc-action" target="_blank">View File <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                     </div>
-                    <!-- Doc Card 3 -->
                     <div class="doc-card">
                         <div class="doc-icon"><i class="fa-solid fa-gears"></i></div>
                         <div class="doc-details">
@@ -1539,7 +1492,6 @@
                         </div>
                         <a href="OPERATIONS.md" class="doc-action" target="_blank">View File <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                     </div>
-                    <!-- Doc Card 4 -->
                     <div class="doc-card">
                         <div class="doc-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
                         <div class="doc-details">
@@ -1548,7 +1500,6 @@
                         </div>
                         <a href="RISK-ASSESSMENT.md" class="doc-action" target="_blank">View File <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                     </div>
-                    <!-- Doc Card 5 -->
                     <div class="doc-card">
                         <div class="doc-icon"><i class="fa-solid fa-scale-balanced"></i></div>
                         <div class="doc-details">
@@ -1560,7 +1511,6 @@
                 </div>
             </div>
 
-            <!-- Roadmap to Tier 3 -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title">
@@ -1630,9 +1580,7 @@
         </section>
     </main>
 
-    <!-- JavaScript logic -->
     <script>
-        // Sidebar tab switching
         const navItems = document.querySelectorAll('.nav-item');
         const tabContents = document.querySelectorAll('.tab-content');
         const tabTitleHeader = document.getElementById('tabTitleHeader');
@@ -1663,7 +1611,6 @@
             }
         };
 
-        // Mobile toggle menu
         menuToggleBtn.addEventListener('click', () => {
             sidebar.classList.toggle('open');
             const icon = menuToggleBtn.querySelector('i');
@@ -1674,26 +1621,21 @@
             }
         });
 
-        // Tab selection logic
         navItems.forEach(item => {
             item.addEventListener('click', () => {
                 const targetTab = item.dataset.tab;
                 
-                // Active menu toggle
                 navItems.forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 
-                // Show corresponding section
                 tabContents.forEach(content => {
                     content.classList.remove('active');
                 });
                 document.getElementById(targetTab).classList.add('active');
                 
-                // Update headers
                 tabTitleHeader.textContent = tabMetadata[targetTab].title;
                 tabSubtitleHeader.textContent = tabMetadata[targetTab].subtitle;
 
-                // Close sidebar on mobile
                 if (window.innerWidth <= 768) {
                     sidebar.classList.remove('open');
                     menuToggleBtn.querySelector('i').classList.replace('fa-xmark', 'fa-bars');
@@ -1701,7 +1643,6 @@
             });
         });
 
-        // Search & Filter Findings List
         const searchInput = document.getElementById('findingSearch');
         const priorityFilter = document.getElementById('findingPriorityFilter');
         const findingsTable = document.getElementById('findingsTable');
@@ -1729,7 +1670,6 @@
         searchInput.addEventListener('input', filterFindings);
         priorityFilter.addEventListener('change', filterFindings);
 
-        // Chart.js rendering for NIST CSF 2.0 Maturity Profile
         const ctx = document.getElementById('nistMaturityChart').getContext('2d');
         const nistMaturityChart = new Chart(ctx, {
             type: 'radar',

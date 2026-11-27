@@ -7,7 +7,6 @@ on:
     branches: [main]
   merge_group:
   schedule:
-    # Refresh main BuildKit and Trivy caches inside GitHub's 7-day retention window.
     - cron: '0 4 */5 * *'
   workflow_call:
     inputs:
@@ -234,7 +233,6 @@ jobs:
           trap 'docker rm -f bridgewatcher-test 2>/dev/null || true' EXIT
           echo "Testing Docker image functionality..."
 
-          # Create test secrets directory with lowercase names matching docker-compose.yml
           mkdir -p test-secrets test-logs
           chmod 750 test-logs
           sudo chown 99:100 test-logs
@@ -242,10 +240,8 @@ jobs:
           echo "test-po-api-key" > test-secrets/pushover_token
           echo "test-po-user-key" > test-secrets/pushover_user
 
-          # Get the built image tag
           IMAGE_TAG="$DOCKERHUB_USERNAME/$IMAGE_NAME:$VERSION"
 
-          # Test container startup on a read-only filesystem matching docker-compose.yml.
           echo "Creating container for testing..."
           t0=$(date +%s%3N)
           CONTAINER_ID=$(docker create \
@@ -439,18 +435,14 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           VERSION: ${{ inputs.version }}
         run: |
-          # Load the image
           docker load --input /tmp/bridgewatcher.tar
 
-          # Get image tags
           IMAGE_NAME="$DOCKERHUB_USERNAME/${{ env.IMAGE_NAME }}"
           VERSION_TAG="$IMAGE_NAME:$VERSION"
           LATEST_TAG="$IMAGE_NAME:latest"
 
-          # Tag as latest
           docker tag "$VERSION_TAG" "$LATEST_TAG"
 
-          # Push both tags
           echo "Pushing $VERSION_TAG..."
           docker push "$VERSION_TAG"
 

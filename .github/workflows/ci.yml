@@ -96,7 +96,6 @@ jobs:
               continue
             }
             if ($env:IS_MAIN_PUSH -eq 'true') {
-              # Ensure both pinned modules live in ~/.local/share/powershell/Modules for main cache seeding.
               $toInstall += $m
             } elseif (-not (Get-Module -ListAvailable -Name $m.Name | Where-Object { $_.Version -eq [version]$m.RequiredVersion })) {
               $toInstall += $m
@@ -148,7 +147,6 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $failures = [System.Collections.Generic.List[string]]::new()
 
-          # 1. PowerShell AST parsing & module manifest validation
           $parseSw = [System.Diagnostics.Stopwatch]::StartNew()
           $parseErrors = [System.Collections.Generic.List[string]]::new()
           $psFiles = @(
@@ -187,7 +185,6 @@ jobs:
             $failures.Add("PowerShell parse/manifest validation failed with $($parseErrors.Count) error(s).")
           }
 
-          # 2. PSScriptAnalyzer full repository lint + UTF-8 BOM compliance
           $lintSw = [System.Diagnostics.Stopwatch]::StartNew()
           Import-Module -Name PSScriptAnalyzer -RequiredVersion $env:PSSA_VERSION -Force -ErrorAction Stop
           $analysisResults = @(

@@ -8,8 +8,3 @@ filebeat.inputs:
 
 output.logstash:
   hosts: ["your-logstash-siem-host:5044"]
-  # Alternatively, output directly to Elasticsearch:
-  # hosts: ["your-elasticsearch-siem-host:9200"]
-  # protocol: "https"
-  # username: "elastic"
-  # password: "changeme"

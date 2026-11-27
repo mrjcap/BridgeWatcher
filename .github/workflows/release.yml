@@ -50,7 +50,6 @@ jobs:
         run: |
           echo " Validating release conditions..."
 
-          # Check if there are uncommitted changes
           if ! git diff --quiet; then
             echo " Uncommitted changes detected"
             echo "can_proceed=false" >> $GITHUB_OUTPUT
@@ -58,7 +57,6 @@ jobs:
             exit 1
           fi
 
-          # Check if we're on main/master branch
           CURRENT_BRANCH=$(git branch --show-current)
           if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "master" ]]; then
             echo " Release must be run from main/master branch (current: $CURRENT_BRANCH)"
@@ -67,7 +65,6 @@ jobs:
             exit 1
           fi
 
-          # Check for recent commits (unless force_release is true)
           if [[ "$FORCE_RELEASE" != "true" ]]; then
             COMMITS_SINCE_LAST_TAG=$(git rev-list --count $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD 2>/dev/null || echo "10")
             if [[ "$COMMITS_SINCE_LAST_TAG" -lt "1" ]]; then
@@ -287,7 +284,6 @@ jobs:
           echo "| Docker Build | ${DOCKER_BUILD_RESULT:-skipped} | $( [ "$DOCKER_BUILD_RESULT" = "success" ] && echo ' Built' || echo 'N/A' ) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Determine overall status
           if [[ "$PROCEED_WITH_RELEASE" == "true" && "$MODULE_PUBLISH_RESULT" == "success" ]]; then
             echo "##  Release Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
           else

@@ -72,7 +72,6 @@ jobs:
         run: |
           Write-Verbose "Validating module before publish..."
 
-          # Find module manifest
           $manifestPath = Get-ChildItem -Path . -Filter "*.psd1" -Recurse |
             Where-Object { $_.BaseName -eq $_.Directory.Name } |
             Select-Object -First 1
@@ -83,17 +82,14 @@ jobs:
           }
 
           try {
-            # Test module manifest
             $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
             Write-Verbose " Module manifest is valid: $($manifest.Name) v$($manifest.Version)"
 
-            # Validate version matches input
             if ($manifest.Version -ne $env:NEXT_VERSION) {
               Write-Error " Module version ($($manifest.Version)) doesn't match expected version ($env:NEXT_VERSION)"
               exit 1
             }
 
-            # Check required fields
             $requiredFields = @('Author', 'Description', 'PowerShellVersion')
             foreach ($field in $requiredFields) {
               if (-not $manifest.$field) {
@@ -102,7 +98,6 @@ jobs:
               }
             }
 
-            # Validate functions exist
             if ($manifest.FunctionsToExport -and $manifest.FunctionsToExport -ne '*') {
               $moduleDir = $manifestPath.Directory.FullName
               $publicFunctions = Get-ChildItem "$moduleDir\Public\*.ps1" -ErrorAction SilentlyContinue
@@ -114,7 +109,6 @@ jobs:
               }
             }
 
-            # Set outputs
             echo "validation_passed=true" >> $env:GITHUB_OUTPUT
             echo "module_name=$($manifest.Name)" >> $env:GITHUB_OUTPUT
 
@@ -246,7 +240,6 @@ jobs:
           if ($env:DRY_RUN -eq 'true') {
             Write-Verbose " DRY RUN MODE - Skipping actual publish"
 
-            # Validate the module would be publishable
             try {
               $publishSplat = @{
                 Path           = './BridgeWatcher'
@@ -263,7 +256,6 @@ jobs:
               exit 1
             }
           } else {
-            # Actual publish
             try {
               $publishSplat = @{
                 Path           = './BridgeWatcher'
@@ -278,7 +270,6 @@ jobs:
             } catch {
               Write-Error " Failed to publish module: $_"
 
-              # Try to delete the release if publish failed
               if ($env:RELEASE_ID) {
                 Write-Verbose "Attempting to clean up failed release..."
                 try {
@@ -302,7 +293,6 @@ jobs:
         run: |
           Write-Verbose "Verifying module publication..."
 
-          # Wait a bit for the gallery to update
           Start-Sleep -Seconds 30
 
           $maxAttempts = 6
