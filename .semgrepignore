@@ -1,12 +1,9 @@
-# Ignore PowerShell workflows that Semgrep incorrectly parses as Bash
 .github/workflows/ci.yml
 .github/workflows/publish.yml
 .github/workflows/powershell-docs.yml
 .github/workflows/release.yml
 .github/workflows/docker-build.yml
 
-# Ignore PowerShell data files, not module source.
 *.psd1
 
-# Ignore test files
 Tests/

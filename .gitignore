@@ -1,35 +1,27 @@
-# Test Results
 coverage.xml
 testResults.xml
 
-# Runtime/debug artifacts
 out.json
 test.json
 
-# Logs
 logs/
 *.log
 
-# Secrets
 secrets/
 test-secrets/
 
-# PowerShell
 *.ps1xml~
 *.psc1
 *.psd1~
 *.psm1~
 
-# Visual Studio Code
 .vscode/*
 !.vscode/settings.json
 *.code-workspace
 
-# Windows
 Thumbs.db
 Desktop.ini
 
-# Temporary files
 *.tmp
 *.temp
 
@@ -37,7 +29,6 @@ prompts/
 output/
 .agents/
 
-# AI Session & Scratch Artifacts
 HANDOFF.md
 LESSONS_LEARNT.md
 config.json
@@ -45,5 +36,4 @@ graphify-out/
 refactor.py
 scratch/
 
-# Architecture Decision Records (local only)
 docs/adr/

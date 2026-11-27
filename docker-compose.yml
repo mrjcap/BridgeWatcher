@@ -24,15 +24,7 @@ services:
       - api_key
       - pushover_token
       - pushover_user
-    # Option A: Active Syslog Forwarding (Docker Daemon Level)
-    # To enable, uncomment the logging section below and configure your SIEM endpoint.
-    # logging:
-    #   driver: syslog
-    #   options:
-    #     syslog-address: "tcp://your-siem-syslog-host:514"
-    #     tag: "bridgewatcher"
 
-  # Option B: Filebeat sidecar container to forward logs to external SIEM
   filebeat:
     image: docker.elastic.co/beats/filebeat:9.5.7@sha256:6249b9ebe009870253817e73276ada580751aba41844bbb7923f9b764d3e94ad
     container_name: bridgewatcher-filebeat

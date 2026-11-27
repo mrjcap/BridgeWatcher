@@ -143,7 +143,6 @@ jobs:
             $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
             Write-Verbose " Module manifest is valid: $($manifest.Name) v$($manifest.Version)"
 
-            # Store manifest info for later use
             echo "MANIFEST_PATH=$($manifestPath.FullName)" >> $env:GITHUB_ENV
             echo "MODULE_NAME=$($manifest.Name)" >> $env:GITHUB_ENV
             echo "MODULE_VERSION=$($manifest.Version)" >> $env:GITHUB_ENV
@@ -161,18 +160,15 @@ jobs:
           $moduleName = $env:MODULE_NAME
           $docsPath = 'docs'
 
-          # Ensure docs directory exists
           if (-not (Test-Path $docsPath)) {
             New-Item -ItemType Directory -Path $docsPath -Force
             Write-Verbose "Created docs directory"
           }
 
           try {
-            # Import the module
             Write-Verbose "Importing module: $moduleName"
             Import-Module $manifestPath -Force -Verbose:$false
 
-            # Hide non-cmdlet docs temporarily to avoid PlatyPS parsing errors
             $tempDocs = Join-Path (Resolve-Path ~).Path 'docs_backup'
             New-Item -ItemType Directory -Path $tempDocs -Force | Out-Null
             $cmdlets = Get-Command -Module $moduleName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
@@ -184,7 +180,6 @@ jobs:
               $nonCmdletDocs | Move-Item -Destination $tempDocs
             }
 
-            # Check if cmdlet documentation already exists
             $existingDocs = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
 
             if ($existingDocs) {
@@ -197,19 +192,16 @@ jobs:
               New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force -Verbose:$false
             }
 
-            # Restore non-cmdlet docs
             if (Test-Path "$tempDocs\*.md") {
               Get-ChildItem "$tempDocs\*.md" | Move-Item -Destination $docsPath -Force
             }
 
-            # Generate module page if it doesn't exist
             $modulePagePath = Join-Path $docsPath "about_$($moduleName).md"
             if (-not (Test-Path $modulePagePath)) {
               Write-Verbose "Creating module overview page..."
               New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName "about_$($moduleName).md"
               Write-Verbose " Documentation generated successfully"
             }
-            # platyPS emits bare PowerShell fences and an unwrapped CommonParameters paragraph.
             foreach ($cmdlet in $cmdlets) {
               $docPath = Join-Path $docsPath "$cmdlet.md"
               if (-not (Test-Path -LiteralPath $docPath -PathType Leaf)) { continue }
@@ -240,7 +232,6 @@ jobs:
               }
             }
 
-            # List generated files
             $generatedFiles = Get-ChildItem $docsPath -Filter "*.md"
             Write-Verbose "Generated documentation files:"
             $generatedFiles | ForEach-Object { Write-Verbose "  - $($_.Name)"  }
@@ -260,7 +251,6 @@ jobs:
         run: |
           set -euo pipefail
           npm install --no-save --ignore-scripts "markdownlint-cli2@${MARKDOWNLINT_CLI2_VERSION}"
-      # Show npm debug logs on failure
       - name: Show npm debug log
         if: failure()
         run: |
@@ -295,12 +285,10 @@ jobs:
           foreach ($file in $markdownFiles) {
             $content = Get-Content $file.FullName -Raw
 
-            # Check for placeholder text that should be filled
             if ($content -match '\{\{ Fill .+ Description \}\}') {
               $issues += "File $($file.Name) contains unfilled placeholders"
             }
 
-            # Check for basic markdown structure
             if ($content -notmatch '^# ') {
               $issues += "File $($file.Name) missing main heading"
             }
