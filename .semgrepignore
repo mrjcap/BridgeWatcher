@@ -1,9 +1,0 @@
-.github/workflows/ci.yml
-.github/workflows/publish.yml
-.github/workflows/powershell-docs.yml
-.github/workflows/release.yml
-.github/workflows/docker-build.yml
-
-*.psd1
-
-Tests/

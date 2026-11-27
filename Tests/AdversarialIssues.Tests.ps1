@@ -279,10 +279,29 @@ Describe 'Adversarial Regression and Security Tests' {
             $dockerWf | Should -Match 'exit-code:\s*[''"]?1[''"]?'
         }
 
-        It 'C-09d: .semgrepignore must not ignore PowerShell module source files' {
-            $semgrepIgnore = Get-Content -LiteralPath "$PSScriptRoot/../.semgrepignore" -Raw
-            $semgrepIgnore | Should -Not -Match '(?m)^\*\.ps1\s*$'
-            $semgrepIgnore | Should -Not -Match '(?m)^\*\.psm1\s*$'
+        It 'C-09d: Semgrep must not ignore PowerShell sources, workflows, or disable rules repository-wide' {
+            $root = Join-Path -Path $PSScriptRoot -ChildPath '..'
+            $ignorePath = Join-Path -Path $root -ChildPath '.semgrepignore'
+            $semgrepIgnore = if (Test-Path -LiteralPath $ignorePath) { Get-Content -LiteralPath $ignorePath -Raw } else { '' }
+            $rootFull = (Resolve-Path -LiteralPath $root).Path
+            $protected = @(Get-ChildItem -LiteralPath $rootFull -Recurse -File -Force -Include '*.ps1', '*.psm1', '*.psd1', '*.yml', '*.yaml' |
+                    ForEach-Object { $_.FullName.Substring($rootFull.Length).TrimStart('/', '\') -replace '\\', '/' } |
+                    Where-Object { $_ -notmatch '^(\.git|Pester_[^/]*|node_modules)/' })
+            $protected | Should -Contain '.github/workflows/publish.yml'
+            $protected | Should -Contain 'BridgeWatcher/BridgeWatcher.psd1'
+            $protected | Should -Contain 'Tests/AdversarialIssues.Tests.ps1'
+            $patterns = @($semgrepIgnore -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('!') })
+            foreach ($pattern in $patterns) {
+                $glob = '^(.*/)?' + (([regex]::Escape($pattern.Trim('/')) -replace '\\\*\\\*', '.*') -replace '\\\*', '[^/]*') + '(/.*)?$'
+                foreach ($path in $protected) {
+                    $path | Should -Not -Match $glob -Because "the ignore pattern '$pattern' must not exclude $path"
+                }
+            }
+
+            $rulesPath = Join-Path -Path $root -ChildPath '.semgrep.yml'
+            if (Test-Path -LiteralPath $rulesPath) {
+                Get-Content -LiteralPath $rulesPath -Raw | Should -Not -Match '(?m)^disable:'
+            }
         }
     }
 }
