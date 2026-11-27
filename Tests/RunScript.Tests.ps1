@@ -6,11 +6,13 @@ Describe 'run.ps1 Script Execution' {
         $script:OriginalEnvPoApiKey = $Env:POAPI_KEY
         $script:OriginalEnvPoUserKey = $Env:POUSER_KEY
         $script:OriginalEnvOutDir = $Env:BRIDGEWATCHER_OUT
+        $script:OriginalEnvSecretsDir = $Env:BRIDGEWATCHER_SECRETS_DIR
 
         $Env:API_KEY = $null
         $Env:POAPI_KEY = $null
         $Env:POUSER_KEY = $null
         $Env:BRIDGEWATCHER_OUT = "$TestDrive"
+        $Env:BRIDGEWATCHER_SECRETS_DIR = $null
         $script:calledParams = $null
     }
 
@@ -19,6 +21,7 @@ Describe 'run.ps1 Script Execution' {
         $Env:POAPI_KEY = $script:OriginalEnvPoApiKey
         $Env:POUSER_KEY = $script:OriginalEnvPoUserKey
         $Env:BRIDGEWATCHER_OUT = $script:OriginalEnvOutDir
+        $Env:BRIDGEWATCHER_SECRETS_DIR = $script:OriginalEnvSecretsDir
     }
 
     It 'Should read secrets from environment variables if present, bypassing file reads' {
@@ -71,6 +74,7 @@ Describe 'run.ps1 Script Execution' {
         $Env:API_KEY = $null
         $Env:POAPI_KEY = $null
         $Env:POUSER_KEY = $null
+        $Env:BRIDGEWATCHER_SECRETS_DIR = "$TestDrive/run/secrets"
 
         $null = New-Item -ItemType Directory -Path "$TestDrive/run/secrets" -Force
         "  file-api-key`n`r  " | Out-File -FilePath "$TestDrive/run/secrets/API_KEY" -NoNewline
@@ -87,24 +91,6 @@ Describe 'run.ps1 Script Execution' {
             }
         }
 
-        Mock Test-Path {
-            param($Path)
-            if ($Path -like '*/run/secrets/*') {
-                $fileName = Split-Path $Path -Leaf
-                return ( & (Get-Command Test-Path -CommandType Cmdlet) -Path "$TestDrive/run/secrets/$fileName" )
-            }
-            return ( & (Get-Command Test-Path -CommandType Cmdlet) @PSBoundParameters )
-        }
-
-        Mock Get-Content {
-            param($Path, $Raw)
-            if ($Path -like '*/run/secrets/*') {
-                $fileName = Split-Path $Path -Leaf
-                return ( & (Get-Command Get-Content -CommandType Cmdlet) -Path "$TestDrive/run/secrets/$fileName" -Raw )
-            }
-            return ( & (Get-Command Get-Content -CommandType Cmdlet) @PSBoundParameters )
-        }
-
         . "$PSScriptRoot/../run.ps1"
 
         Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
@@ -117,6 +103,7 @@ Describe 'run.ps1 Script Execution' {
         $Env:API_KEY = $null
         $Env:POAPI_KEY = $null
         $Env:POUSER_KEY = $null
+        $Env:BRIDGEWATCHER_SECRETS_DIR = "$TestDrive/run/secrets_lower"
 
         $null = New-Item -ItemType Directory -Path "$TestDrive/run/secrets_lower" -Force
         "lower-api-key`n" | Out-File -FilePath "$TestDrive/run/secrets_lower/api_key" -NoNewline
@@ -132,25 +119,6 @@ Describe 'run.ps1 Script Execution' {
                 PoApiKey      = $PoApiKey
                 PoUserKey     = $PoUserKey
             }
-        }
-
-        Mock Test-Path {
-            param($Path)
-            if ($Path -like '*/run/secrets/*') {
-                $fileName = Split-Path $Path -Leaf
-                return ( & (Get-Command Test-Path -CommandType Cmdlet) -Path "$TestDrive/run/secrets_lower/$fileName" )
-            }
-            return ( & (Get-Command Test-Path -CommandType Cmdlet) @PSBoundParameters )
-        }
-
-        Mock Get-Content {
-            param($Path, $Raw)
-            $null = $Raw
-            if ($Path -like '*/run/secrets/*') {
-                $fileName = Split-Path $Path -Leaf
-                return ( & (Get-Command Get-Content -CommandType Cmdlet) -Path "$TestDrive/run/secrets_lower/$fileName" -Raw )
-            }
-            return ( & (Get-Command Get-Content -CommandType Cmdlet) @PSBoundParameters )
         }
 
         . "$PSScriptRoot/../run.ps1"
