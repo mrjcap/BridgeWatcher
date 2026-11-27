@@ -266,7 +266,7 @@ function Step-MarkupScriptState {
     and brace depth to resume.
 
     .PARAMETER State
-    The scanner state hashtable with Mode, Depth, and Stack entries. It is modified in place.
+    The scanner state hashtable with Mode, Embedded, Depth, and Stack entries. It is modified in place.
 
     .PARAMETER Text
     The token text.
@@ -308,7 +308,7 @@ function Resolve-MarkupToken {
     The regex match produced by the tokenizer for the current mode.
 
     .PARAMETER State
-    The scanner state hashtable with Mode, Depth, and Stack entries. It is modified in place.
+    The scanner state hashtable with Mode, Embedded, Depth, and Stack entries. It is modified in place.
 
     .PARAMETER Content
     The full file text.
@@ -335,9 +335,11 @@ function Resolve-MarkupToken {
     } elseif ($text.StartsWith('//')) {
         $result.CommentEnd = $tokenEnd
     } elseif ($text -match '^</') {
-        $State.Mode = 'Markup'
-        $State.Depth = 0
-        $State.Stack.Clear()
+        if ($State.Embedded) {
+            $State.Mode = 'Markup'
+            $State.Depth = 0
+            $State.Stack.Clear()
+        }
     } elseif ($text -match '^<script') {
         $State.Mode = 'Script'
     } elseif ($text -match '^<style') {
@@ -378,10 +380,12 @@ function Get-MarkupCommentFindingsFromContent {
     }
 
     $regexByMode = Get-MarkupTokenRegexMap
+    $initialMode = Get-MarkupInitialMode -RelativePath $RelativePath
     $state = @{
-        Mode  = Get-MarkupInitialMode -RelativePath $RelativePath
-        Depth = 0
-        Stack = [System.Collections.Generic.Stack[object]]::new()
+        Mode     = $initialMode
+        Embedded = ($initialMode -eq 'Markup')
+        Depth    = 0
+        Stack    = [System.Collections.Generic.Stack[object]]::new()
     }
     $lineStarts = [System.Collections.Generic.List[int]]::new()
     $lineStarts.Add(0)

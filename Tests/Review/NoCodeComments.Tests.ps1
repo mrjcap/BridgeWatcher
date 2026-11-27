@@ -210,6 +210,22 @@ Describe 'Code Comment Ban and Ratchet Review' {
             ($findings.Line -join ',') | Should -Be '1,2'
         }
 
+        It 'Keeps standalone JavaScript and CSS in their own mode when a closing tag appears in text' {
+            $js = @('const marker = `</script>`;', 'const n = 1; // banned') -join "`n"
+            $jsFindings = @(Get-MarkupCommentFindingsFromContent -Content $js -RelativePath 'app.js')
+            ($jsFindings.Line -join ',') | Should -Be '2'
+
+            $css = @('a::before { content: "</style>"; }', '/* banned */') -join "`n"
+            $cssFindings = @(Get-MarkupCommentFindingsFromContent -Content $css -RelativePath 'site.css')
+            ($cssFindings.Line -join ',') | Should -Be '2'
+        }
+
+        It 'Still leaves an embedded script element when a template ends inside it' {
+            $html = @('<script>const a = `x`;</script>', '<p>// text</p>', '<!-- real -->') -join "`n"
+            $findings = @(Get-MarkupCommentFindingsFromContent -Content $html -RelativePath 'page.html')
+            ($findings.Line -join ',') | Should -Be '3'
+        }
+
         It 'Scans template substitutions for comments but ignores comment markers in template text' {
             $sample = @(
                 'const a = `${1 /* note */}`;',
