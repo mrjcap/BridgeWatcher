@@ -63,6 +63,14 @@
         $script:dockerfileContent | Should -Not -Match 'CMD \["pwsh"'
     }
 
+    It 'Sets ash pipefail SHELL before RUN instructions with pipes in Dockerfile (Hadolint DL4006)' {
+        $script:dockerfileContent | Should -Match '(?m)^SHELL \["/bin/ash", "-eo", "pipefail", "-c"\]\s*$'
+        $shellPos = $script:dockerfileContent.IndexOf('SHELL ["/bin/ash", "-eo", "pipefail", "-c"]')
+        $runPos = $script:dockerfileContent.IndexOf('RUN apk update')
+        $shellPos | Should -BeGreaterThan -1
+        $runPos | Should -BeGreaterThan $shellPos
+    }
+
     It 'Integrates upstream branch changes without --force-with-lease in powershell-docs.yml' {
         $script:docsContent | Should -Not -Match '--force-with-lease'
         $script:docsContent | Should -Match "ref:\s*\$\{\{\s*github\.event_name\s*==\s*'pull_request'\s*&&\s*github\.ref\s*\|\|\s*\(github\.head_ref\s*\|\|\s*github\.ref_name\)\s*\}\}"

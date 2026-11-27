@@ -6,6 +6,8 @@ ARG POWERSHELL_SHA256=5a6408b1d196e9d6b6d1af71daa931834c5fea07d14a78cf369292c239
 ARG PUID=99
 ARG PGID=100
 
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+
 # hadolint ignore=DL3018
 RUN apk update && \
     apk upgrade --no-cache && \
