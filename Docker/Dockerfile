@@ -2,12 +2,10 @@ FROM mcr.microsoft.com/dotnet/runtime:11.0.0-alpine3.24-amd64@sha256:a0ac7a4038d
 
 # renovate: datasource=github-releases depName=PowerShell/PowerShell
 ARG POWERSHELL_VERSION=7.7.0
-# Update with the linux-musl-x64 tarball digest from the same PowerShell release.
 ARG POWERSHELL_SHA256=5a6408b1d196e9d6b6d1af71daa931834c5fea07d14a78cf369292c23944e78d
 ARG PUID=99
 ARG PGID=100
 
-# Install PowerShell and dependencies
 # hadolint ignore=DL3018
 RUN apk update && \
     apk upgrade --no-cache && \
@@ -44,7 +42,6 @@ ENV XDG_CACHE_HOME=/tmp/.cache
 ENV XDG_CONFIG_HOME=/tmp/.config
 ENV XDG_DATA_HOME=/tmp/.local/share
 
-# Smart user creation - reuse 'users' group for GID 100
 RUN if [ "${PGID}" = "100" ]; then \
         adduser -D -u ${PUID} -G users -h /home/appuser -s /bin/sh appuser; \
     else \

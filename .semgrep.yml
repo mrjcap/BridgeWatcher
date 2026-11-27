@@ -1,4 +1,3 @@
-# Semgrep configuration to ignore PowerShell workflows
 rules:
   - id: ignore-powershell-workflows
     patterns:
@@ -10,7 +9,6 @@ rules:
     severity: INFO
     metadata:
       category: security
-      
-# Disable the problematic rule
+
 disable:
   - yaml.github-actions.security.curl-eval.curl-eval

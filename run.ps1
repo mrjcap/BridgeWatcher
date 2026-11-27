@@ -37,18 +37,15 @@ if (-not $API_KEY -or -not $POAPI_KEY -or -not $POUSER_KEY) {
     throw 'One or more secrets are missing or empty'
 }
 
-# Χρήση του home directory του user για output
 $OutDir = $Env:BRIDGEWATCHER_OUT
 if ([string]::IsNullOrWhiteSpace($OutDir)) {
     $OutDir = '/app/logs'
 }
 
-# Ensure output directory exists
 if (-not (Test-Path $OutDir)) {
     New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 }
 $Configuration = New-BridgeConfiguration -LogDirectory $OutDir
-# Wrap το Get-BridgeStatusMonitor
 try {
     $startBridgeStatusMonitorSplat = @{
         Configuration   = $Configuration
@@ -63,12 +60,11 @@ try {
     Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat
 } catch {
     Write-Error "Monitor failed: $_"
-    # F-10: Alert on monitoring failure via Pushover
     try {
         Send-BridgePushover -Configuration $Configuration -PoUserKey $POUSER_KEY -PoApiKey $POAPI_KEY -Message "⚠️ BridgeWatcher monitor failed: $($_.Exception.Message)" -Title 'BridgeWatcher Alert' -Priority 1
     } catch {
         Write-Warning "Failed to send failure alert: $($_.Exception.Message)"
     }
-    exit 1  # Container θα κάνει restart αν έχεις --restart policy
+    exit 1
 }
 

@@ -1111,7 +1111,6 @@ function Invoke-LocalShardWorker {
     $result = Invoke-Pester -Configuration $pesterConfig
     $sw.Stop()
 
-    # Export per-file timings
     $timings = [ordered]@{}
     foreach ($container in @($result.Containers)) {
         $itemPath = if ($container.Item -is [System.IO.FileInfo]) { $container.Item.FullName } else { [string]$container.Item }
@@ -1120,7 +1119,6 @@ function Invoke-LocalShardWorker {
     }
     ConvertTo-Json -InputObject $timings -Depth 3 | Set-Content -LiteralPath (Join-Path -Path $OutputDir -ChildPath 'timings.json') -Encoding utf8
 
-    # Export exact command-level coverage
     if ($EnableCoverage) {
         $commands = [System.Collections.Generic.List[object]]::new()
         foreach ($cmd in @($result.CodeCoverage.CommandsExecuted)) {
@@ -1484,7 +1482,6 @@ function Invoke-ShardArtifactMerge {
     }
 }
 
-# ---- Entry Point ----
 if ($MyInvocation.InvocationName -eq '.') {
     return
 }
@@ -1497,7 +1494,6 @@ if ([string]::IsNullOrWhiteSpace($TestResultOutputPath)) {
     $TestResultOutputPath = Join-Path -Path $resolvedRoot -ChildPath 'testResults.xml'
 }
 
-# Child worker execution mode
 if (-not [string]::IsNullOrWhiteSpace($WorkerManifestPath)) {
     $manifest = Get-Content -LiteralPath $WorkerManifestPath -Raw | ConvertFrom-Json
     $assignedFiles = @($manifest.Files)
@@ -1532,7 +1528,6 @@ if ($targetFiles.Count -eq 0) {
     throw 'Test inventory is empty; refusing to report an empty successful run.'
 }
 
-# Matrix CI shard artifact merge mode
 if (-not [string]::IsNullOrWhiteSpace($MergeShardArtifactsDirectory)) {
     Write-Output "Merging $ShardCount shard artifact bundle(s) from '$MergeShardArtifactsDirectory' (expected files=$($targetFiles.Count))..."
     $null = Invoke-ShardArtifactMerge `
@@ -1687,7 +1682,6 @@ try {
                 $psi.UseShellExecute = $false
                 $psi.RedirectStandardOutput = $true
                 $psi.RedirectStandardError = $true
-                # Give each shard its own isolated temporary directory.
                 $psi.Environment['TMPDIR'] = $sTmp
                 $psi.Environment['TEMP'] = $sTmp
                 $psi.Environment['TMP'] = $sTmp

@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 
 if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
     throw 'PRE-COMMIT FAILED: PSScriptAnalyzer module is not installed. Run Install-Module PSScriptAnalyzer -Scope CurrentUser.'
@@ -23,7 +23,6 @@ $sw = [System.Diagnostics.Stopwatch]::StartNew()
 $failures = [System.Collections.Generic.List[string]]::new()
 $findings = [System.Collections.Generic.List[object]]::new()
 
-# 1. Verify PowerShell syntax parsing on every staged file.
 foreach ($file in $stagedFiles) {
     $tokens = $null
     $parseErrors = $null
@@ -36,7 +35,9 @@ foreach ($file in $stagedFiles) {
     }
 }
 
-# 2. Run PSScriptAnalyzer matching CI severity rules per directory + UTF-8 BOM enforcement.
+$customRulePath = Join-Path -Path $PSScriptRoot -ChildPath '../scripts/NoCodeCommentsRule.psm1'
+$hasCustomRule = Test-Path -LiteralPath $customRulePath -PathType Leaf
+
 foreach ($file in $stagedFiles) {
     $rel = $file.FullName.Substring($stagedRoot.Length).TrimStart('\', '/').Replace('\', '/')
     if ($rel -match '^scripts/') {
@@ -45,6 +46,11 @@ foreach ($file in $stagedFiles) {
         $res = @(Invoke-ScriptAnalyzer -Path $file.FullName -Settings $settingsPath)
     }
     foreach ($item in $res) { $findings.Add($item) }
+
+    if ($hasCustomRule) {
+        $commentRes = @(Invoke-ScriptAnalyzer -Path $file.FullName -CustomRulePath $customRulePath -IncludeRule Measure-NoCodeComment)
+        foreach ($item in $commentRes) { $findings.Add($item) }
+    }
 
     if ($rel -match '^(BridgeWatcher|Tests)/') {
         $bomRes = @(Invoke-ScriptAnalyzer -Path $file.FullName -IncludeRule PSUseBOMForUnicodeEncodedFile)

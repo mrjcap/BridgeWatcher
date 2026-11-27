@@ -23,19 +23,15 @@ param(
     [string]$Path = './CHANGELOG.md'
 )
 
-# Check if file exists
 if (-not (Test-Path $Path)) {
     Write-Warning "CHANGELOG.md not found at $Path"
     return "Release $Version"
 }
 
-# Normalize version (remove 'v' prefix)
 $normalizedVersion = $Version -replace '^v', ''
 
-# Read changelog
 $changelog = Get-Content $Path -Raw
 
-# Extract section for this version
 $sectionPattern = "(## \[$normalizedVersion\][^\r\n]*\r?\n(?:.*?\r?\n)*?)(?=\r?\n## |\Z)"
 if ($changelog -notmatch $sectionPattern) {
     Write-Warning "No changelog entry found for '$Version'"
@@ -44,7 +40,6 @@ if ($changelog -notmatch $sectionPattern) {
 
 $section = $matches[1].Trim()
 
-# Simple emoji mapping for common Greek headers
 $section = $section -replace '### Προστέθηκαν\b', '### ✨ Προστέθηκαν'
 $section = $section -replace '### Αλλαγές\b', '### 🔄 Αλλαγές'
 $section = $section -replace '### Διορθώθηκαν\b', '### 🐛 Διορθώθηκαν'

@@ -207,6 +207,18 @@ jobs:
             $failures.Add("PSScriptAnalyzer found $($analysisResults.Count) issue(s).")
           }
 
+          $commentSw = [System.Diagnostics.Stopwatch]::StartNew()
+          $commentCheck = & ./scripts/Test-NoCodeComments.ps1 -RepositoryRoot . -PassThru
+          $commentSw.Stop()
+          $commentSec = [Math]::Round($commentSw.Elapsed.TotalSeconds, 2)
+          Write-Output "Code comment ratchet ($($commentCheck.ScannedFileCount) files, $($commentCheck.TotalComments)/$($commentCheck.RatchetTotal)): ${commentSec}s"
+          if (-not $commentCheck.Passed) {
+            foreach ($v in $commentCheck.Violations) {
+              Write-Output "::error::$v"
+              $failures.Add($v)
+            }
+          }
+
           if ($failures.Count -gt 0) {
             foreach ($msg in $failures) { Write-Output "::error::$msg" }
             exit 1

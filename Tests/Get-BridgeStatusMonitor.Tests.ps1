@@ -165,7 +165,6 @@ Describe 'Get-BridgeStatusMonitor' {
             }
 
             { Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat -Configuration $script:Config } | Should -Not -Throw
-            # 1 για το μήνυμα εκκίνησης, 2 για το μήνυμα σφάλματος, 1 για το μήνυμα ολοκλήρωσης
             Should -Invoke -CommandName Write-BridgeLog -Times 4 -Exactly
         }
     }

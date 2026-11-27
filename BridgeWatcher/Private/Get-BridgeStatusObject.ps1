@@ -152,8 +152,6 @@ function Get-BridgeStatusObject {
                 Level   = 'Warning'
             }
             Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-            # A missing fingerprint must not suppress valid status changes for the other bridge.
-            # Comparison retains the previous schedule/hash until the image can be downloaded.
             $ImageHash = $null
         }
     }

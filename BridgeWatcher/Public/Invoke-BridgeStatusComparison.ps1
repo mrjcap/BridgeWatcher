@@ -74,8 +74,6 @@ function Get-BridgeRawComparisonDiff {
     }
 
     $scheduledStatus = $Configuration.Statuses.ClosedWithSchedule
-    # Compare each bridge independently. Explicitly missing hashes are unknown,
-    # not image changes; records without the field retain the legacy URL fallback.
     $imageProperty = {
         $hasHashProperty = if ($_ -is [System.Collections.IDictionary]) {
             $_.Contains('ImageHash')
@@ -163,7 +161,6 @@ function Test-BridgeChangeIsActionable {
         return $false
     }
 
-    # The delivered fallback belongs to these image bytes, not to a changing URL.
     $previousFallback = Get-BridgeOptionalProperty -InputObject $prevBridge -PropertyName 'FallbackNotifiedImageHash'
     if ($previousFallback -and $previousFallback -eq (Get-BridgeOptionalProperty -InputObject $currentBridge -PropertyName 'ImageHash')) {
         Copy-BridgePreviousOcrProperty -PreviousBridge $prevBridge -CurrentBridge $currentBridge -PropertyNames 'FallbackNotifiedImageHash'
@@ -194,7 +191,6 @@ function Test-BridgeChangeIsActionable {
 function Test-BridgeScheduledOpening {
     param($PreviousBridge, $CurrentBridge, $Configuration)
 
-    # Ignore cache-busting queries when comparing the saved and current images.
     $previousPath = (Get-BridgeOptionalProperty -InputObject $PreviousBridge -PropertyName 'ImageUrl') -replace '[?#].*$', ''
     $currentPath = (Get-BridgeOptionalProperty -InputObject $CurrentBridge -PropertyName 'ImageUrl') -replace '[?#].*$', ''
     if (-not $previousPath -or $currentPath -eq $previousPath -or
@@ -222,7 +218,6 @@ function Test-BridgeScheduledOpening {
             return $false
         }
         $endUtc = if ($zone.IsAmbiguousTime($end)) {
-            # The smaller UTC offset gives the later occurrence of the wall time.
             $offset = $zone.GetAmbiguousTimeOffsets($end) | Sort-Object | Select-Object -First 1
             [datetimeoffset]::new($end, $offset).UtcDateTime
         } else {

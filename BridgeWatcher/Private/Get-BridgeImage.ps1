@@ -52,7 +52,6 @@
     $imageList = [System.Collections.ArrayList]::new()
     foreach ($m in $bmatches) {
         $src = $m.Groups[1].Value
-        # Use regex to filter out pngs, ignoring any query parameters or hash fragments
         if ($src -notmatch '\.png([?#].*)?$' -and $src -match 'image-bridge|info\.php') {
             $null = $imageList.Add([pscustomobject]@{ src = $src })
         }

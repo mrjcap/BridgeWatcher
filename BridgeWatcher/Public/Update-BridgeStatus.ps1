@@ -218,12 +218,10 @@ function Update-BridgeStatus {
                 DeferredOpenings = $deferredOpenings
             }
             $diffEvents = Invoke-BridgeStatusComparison @invokeSplat
-            # Keep the saved schedule as the comparison baseline on the next poll.
             $snapshotCurrent = $currentState
             if ($deferredOpenings.Count -gt 0) {
                 $snapshotCurrent = @(Resolve-BridgeDeferredSnapshot -CurrentState $currentState -DeferredOpenings $deferredOpenings)
             }
-            # Checkpoint successful deliveries independently, keeping failed bridges pending.
             $notifiedBridgeNames = [System.Collections.Generic.List[string]]::new()
             $notificationFailures = @()
             foreach ($diffEvent in $diffEvents) {

@@ -539,7 +539,6 @@ function Test-SelectionAgainstFullResult {
     }
 }
 
-# ---- Entry Point ----
 if ($MyInvocation.InvocationName -eq '.') {
     return
 }

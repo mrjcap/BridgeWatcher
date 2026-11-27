@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 
 $totalSw = [System.Diagnostics.Stopwatch]::StartNew()
 Import-Module Pester -MinimumVersion 5.0 -Force
@@ -45,6 +45,16 @@ if ($lint) {
     $lint | Format-Table -Property ScriptName, Line, Severity, RuleName, Message -Wrap
     $staticFailures.Add("PSScriptAnalyzer found $($lint.Count) issue(s).")
 }
+
+Write-Output 'Running code comment ratchet check...'
+$commentSw = [System.Diagnostics.Stopwatch]::StartNew()
+$commentCheck = & ./scripts/Test-NoCodeComments.ps1 -RepositoryRoot . -PassThru
+$commentSw.Stop()
+Write-Output ("Comment ratchet check: {0:N2}s ({1}/{2} ratcheted across {3} files)" -f $commentSw.Elapsed.TotalSeconds, $commentCheck.TotalComments, $commentCheck.RatchetTotal, $commentCheck.ScannedFileCount)
+if (-not $commentCheck.Passed) {
+    foreach ($v in $commentCheck.Violations) { $staticFailures.Add($v) }
+}
+
 if ($staticFailures.Count -gt 0) {
     foreach ($msg in $staticFailures) { Write-Output $msg }
     throw 'GATE FAILED: Static checks failed.'

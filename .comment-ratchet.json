@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "description": "Per-file maximum allowed non-help, non-directive code comments. Ratchet-only: counts may decrease toward 0 and never increase.",
+  "total": 50,
+  "files": {
+    ".github/workflows/ci.yml": 3,
+    ".github/workflows/docker-build.yml": 8,
+    ".github/workflows/powershell-docs.yml": 12,
+    ".github/workflows/publish.yml": 10,
+    ".github/workflows/release.yml": 4,
+    "Docker/filebeat.yml": 5,
+    "docker-compose.yml": 8
+  }
+}

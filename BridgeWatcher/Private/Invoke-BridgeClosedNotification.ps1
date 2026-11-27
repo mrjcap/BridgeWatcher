@@ -122,7 +122,6 @@ function Invoke-BridgeScheduledClosureNotification {
         $ocrResult = Invoke-BridgeOCRGoogleCloud @ocrSplat
     } catch {
         $OcrFailed.Value = $true
-        # Retry the same image on the next poll rather than saving it as processed.
         $failedHash = Get-BridgeOptionalProperty -InputObject $entry -PropertyName 'ImageHash'
         if ($failedHash) {
             $entry.ImageHash = $null
