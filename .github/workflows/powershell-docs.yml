@@ -158,84 +158,31 @@ jobs:
 
           $manifestPath = $env:MANIFEST_PATH
           $moduleName = $env:MODULE_NAME
-          $docsPath = 'docs'
-
-          if (-not (Test-Path $docsPath)) {
-            New-Item -ItemType Directory -Path $docsPath -Force
-            Write-Verbose "Created docs directory"
-          }
+          $docsPath = 'docs/cmdlets'
 
           try {
+            New-Item -ItemType Directory -Path $docsPath -Force | Out-Null
+
             Write-Verbose "Importing module: $moduleName"
             Import-Module $manifestPath -Force -Verbose:$false
 
-            $tempDocs = Join-Path (Resolve-Path ~).Path 'docs_backup'
-            New-Item -ItemType Directory -Path $tempDocs -Force | Out-Null
-            $cmdlets = Get-Command -Module $moduleName -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
-            $nonCmdletDocs = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue | Where-Object { 
-              $name = $_.BaseName
-              $name -notmatch '^about_' -and $cmdlets -notcontains $name
-            }
-            if ($nonCmdletDocs) {
-              $nonCmdletDocs | Move-Item -Destination $tempDocs
-            }
-
-            $existingDocs = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
-
-            if ($existingDocs) {
+            if (Get-ChildItem -Path $docsPath -Filter '*.md' -ErrorAction SilentlyContinue) {
               Write-Verbose "Updating existing documentation..."
               Update-MarkdownHelp -Path $docsPath -Force -Verbose:$false
-              Write-Verbose "Creating missing documentation..."
-              New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force -Verbose:$false
-            } else {
-              Write-Verbose "Creating new documentation..."
-              New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force -Verbose:$false
             }
-
-            if (Test-Path "$tempDocs\*.md") {
-              Get-ChildItem "$tempDocs\*.md" | Move-Item -Destination $docsPath -Force
-            }
+            Write-Verbose "Creating missing documentation..."
+            New-MarkdownHelp -Module $moduleName -OutputFolder $docsPath -Force -Verbose:$false
 
             $modulePagePath = Join-Path $docsPath "about_$($moduleName).md"
             if (-not (Test-Path $modulePagePath)) {
               Write-Verbose "Creating module overview page..."
               New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName "about_$($moduleName).md"
-              Write-Verbose " Documentation generated successfully"
-            }
-            foreach ($cmdlet in $cmdlets) {
-              $docPath = Join-Path $docsPath "$cmdlet.md"
-              if (-not (Test-Path -LiteralPath $docPath -PathType Leaf)) { continue }
-
-              $content = Get-Content -LiteralPath $docPath -Raw -Encoding utf8
-              $newline = if ($content.Contains("`r`n")) { "`r`n" } else { "`n" }
-              $lines = $content -split '\r?\n'
-              $section = ''
-              $inFence = $false
-              for ($i = 0; $i -lt $lines.Count; $i++) {
-                $line = $lines[$i]
-                if ($line.StartsWith('```')) {
-                  if (-not $inFence -and $line -eq '```' -and $section -in @('## SYNTAX', '## EXAMPLES')) {
-                    $lines[$i] = '```powershell'
-                  }
-                  $inFence = -not $inFence
-                } elseif (-not $inFence) {
-                  if ($line.StartsWith('## ')) { $section = $line }
-                  if ($line.Length -gt 120 -and $line.StartsWith('This cmdlet supports the common parameters: ')) {
-                    $line = $line.Replace(', -InformationVariable', ",${newline}-InformationVariable")
-                    $lines[$i] = $line.Replace(', and -WarningVariable', ",${newline}and -WarningVariable")
-                  }
-                }
-              }
-              $formatted = $lines -join $newline
-              if ($formatted -cne $content) {
-                Set-Content -LiteralPath $docPath -Value $formatted -Encoding utf8 -NoNewline
-              }
             }
 
-            $generatedFiles = Get-ChildItem $docsPath -Filter "*.md"
+            & ./scripts/Format-PlatyPSMarkdown.ps1 -Path $docsPath
+
             Write-Verbose "Generated documentation files:"
-            $generatedFiles | ForEach-Object { Write-Verbose "  - $($_.Name)"  }
-
+            Get-ChildItem $docsPath -Filter "*.md" | ForEach-Object { Write-Verbose "  - $($_.Name)" }
           } catch {
             Write-Error "Documentation generation failed: $($_.Exception.Message)"
             Write-Verbose "Stack trace: $($_.ScriptStackTrace)"
@@ -259,7 +206,7 @@ jobs:
 
       - name: Lint & auto-fix Markdown (warn-only)
         run: |
-          ./node_modules/.bin/markdownlint-cli2 "docs/*.md" || EXIT_CODE=$?
+          ./node_modules/.bin/markdownlint-cli2 "docs/*.md" "docs/cmdlets/*.md" || EXIT_CODE=$?
           if [ "$EXIT_CODE" -ne 0 ]; then
             echo "::warning file=docs::MarkdownLint found issues, but build will continue."
           fi
@@ -273,7 +220,7 @@ jobs:
         run: |
           Write-Verbose "Validating generated documentation..."
 
-          $docsPath = 'docs'
+          $docsPath = 'docs/cmdlets'
           $markdownFiles = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
 
           if (-not $markdownFiles) {
@@ -329,7 +276,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add docs/*.md
+          git add docs/cmdlets/*.md
           if git diff --cached --quiet; then
             echo "No staged documentation changes to commit"
             exit 0
@@ -358,7 +305,7 @@ jobs:
           Write-Verbose "Module: $env:MODULE_NAME v$env:MODULE_VERSION"
           Write-Verbose "Changes detected: ${{ steps.docs_changes.outputs.changes_detected }}"
 
-          $docsPath = 'docs'
+          $docsPath = 'docs/cmdlets'
           if (Test-Path $docsPath) {
             $docFiles = Get-ChildItem "$docsPath\*.md" -ErrorAction SilentlyContinue
             Write-Verbose "Documentation files: $($docFiles.Count)"
