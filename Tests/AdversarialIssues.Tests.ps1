@@ -40,7 +40,6 @@ Describe 'Adversarial Regression and Security Tests' {
             }
             Mock -ModuleName BridgeWatcher Start-Sleep {}
 
-            # The function should throw an OCR failure error record, NOT a PropertyNotFoundException on 'Response'
             $err = $null
             try {
                 & (Get-Module BridgeWatcher) {
@@ -97,7 +96,6 @@ Describe 'Adversarial Regression and Security Tests' {
                 ImageHash    = $null
             }
 
-            # Send-BridgePushover wraps errors in [System.Exception] with FullyQualifiedErrorId PushoverSendError
             Mock -ModuleName BridgeWatcher Send-BridgePushover {
                 $err = [System.Management.Automation.ErrorRecord]::new(
                     [System.Exception]::new("Pushover failed"),
@@ -108,7 +106,6 @@ Describe 'Adversarial Regression and Security Tests' {
                 $PSCmdlet.ThrowTerminatingError($err)
             }
 
-            # If caught properly by Invoke-BridgeOpenedNotification, it throws NotificationFailed ErrorRecord
             $thrown = $null
             try {
                 & (Get-Module BridgeWatcher) {
@@ -137,7 +134,6 @@ Describe 'Adversarial Regression and Security Tests' {
                 ImageHash    = 'ABCDEF'
             }
 
-            # Mock OCR to succeed with valid schedule content
             Mock -ModuleName BridgeWatcher Invoke-BridgeOCRGoogleCloud {
                 return [pscustomobject]@{
                     From      = '10/11/2026 23:00'
@@ -149,12 +145,10 @@ Describe 'Adversarial Regression and Security Tests' {
                 }
             }
 
-            # Provider mock that throws a transport error
             $failingProvider = {
                 throw [System.Net.Http.HttpRequestException]::new("Transport failure to notification provider")
             }
 
-            # Track warnings logged
             $warningsLogged = [System.Collections.Generic.List[string]]::new()
             Mock -ModuleName BridgeWatcher Write-BridgeLog {
                 param($Message, $Level)
@@ -170,7 +164,6 @@ Describe 'Adversarial Regression and Security Tests' {
                 } $cfg $entry $failingProvider
             } | Should -Throw -ExpectedMessage '*Transport failure to notification provider*'
 
-            # When notification fails after OCR succeeds, it must NOT log "Απέτυχε η OCR"
             $ocrFailureWarning = $warningsLogged | Where-Object { $_ -like "*Απέτυχε η OCR*" }
             $ocrFailureWarning | Should -BeNullOrEmpty
         }
@@ -202,7 +195,6 @@ Describe 'Adversarial Regression and Security Tests' {
 
             $savedState = Get-Content $outFile -Raw | ConvertFrom-Json
             $posidonia = $savedState | Where-Object { $_.GefyraName -eq 'Ποσειδωνία' }
-            # ImageHash should be cleared so the next polling cycle can re-attempt OCR
             $posidonia.GefyraStatus | Should -Be $cfg.Statuses.ClosedWithSchedule
             $posidonia.ImageHash | Should -BeNullOrEmpty
             Should -Invoke -ModuleName BridgeWatcher -CommandName Invoke-BridgeOCRGoogleCloud -Times 1 -Exactly
@@ -222,7 +214,6 @@ Describe 'Adversarial Regression and Security Tests' {
                 }
             }
 
-            # Should not throw terminating IMAGE_DOWNLOAD_FAILED error, but return object with ImageHash = $null
             $res = InModuleScope -ModuleName BridgeWatcher -Parameters @{ Config = $cfg } -ScriptBlock {
                 param($Config)
                 Get-BridgeStatusObject -Location 'poseidonia' -Status $Config.Statuses.ClosedWithSchedule -Timestamp '2026-11-10T17:00:00Z' -ImageSrc 'image-bridge-open-with-schedule-posidonia.php' -Configuration $Config -ErrorAction Stop
@@ -263,13 +254,11 @@ Describe 'Adversarial Regression and Security Tests' {
     Context 'C-08: Dry run safety in release and publish workflows' {
         It 'C-08a: release.yml must not commit or push changelog when dry_run is true' {
             $releaseWf = Get-Content -LiteralPath "$PSScriptRoot/../.github/workflows/release.yml" -Raw
-            # Step 'Commit and Push Changelog' should check dry_run
             $releaseWf | Should -Match 'Commit and Push Changelog[\s\S]*?!inputs\.dry_run'
         }
 
         It 'C-08b: publish.yml must not push git commits when dry_run is true' {
             $publishWf = Get-Content -LiteralPath "$PSScriptRoot/../.github/workflows/publish.yml" -Raw
-            # Step 'Push changes' should check inputs.dry_run
             $publishWf | Should -Match 'name: Push changes[\s\S]*?!inputs\.dry_run'
         }
     }

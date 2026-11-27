@@ -86,7 +86,6 @@ function Get-BridgeStatus {
                     ))
             }
         }
-        # Return the actual data for backward compatibility
         $bridgeStatuses
     }
 }

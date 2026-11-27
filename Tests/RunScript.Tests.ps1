@@ -26,7 +26,6 @@ Describe 'run.ps1 Script Execution' {
         $Env:POAPI_KEY = 'env-po-api-key'
         $Env:POUSER_KEY = 'env-po-user-key'
 
-        # Mock του Get-BridgeStatusMonitor in both scopes to intercept all calls
         Mock Get-BridgeStatusMonitor {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
             $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
@@ -49,7 +48,6 @@ Describe 'run.ps1 Script Execution' {
             }
         } -ModuleName 'BridgeWatcher'
 
-        # Execute run.ps1
         . "$PSScriptRoot/../run.ps1"
 
         Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
@@ -96,7 +94,6 @@ Describe 'run.ps1 Script Execution' {
         $Env:POAPI_KEY = $null
         $Env:POUSER_KEY = $null
 
-        # Create secret files with newlines and spaces in TestDrive
         $null = New-Item -ItemType Directory -Path "$TestDrive/run/secrets" -Force
         "  file-api-key`n`r  " | Out-File -FilePath "$TestDrive/run/secrets/API_KEY" -NoNewline
         "  file-po-api-key`n  " | Out-File -FilePath "$TestDrive/run/secrets/PUSHOVER_TOKEN" -NoNewline
@@ -122,7 +119,6 @@ Describe 'run.ps1 Script Execution' {
             }
         } -ModuleName 'BridgeWatcher'
 
-        # Route /run/secrets to $TestDrive/run/secrets for the execution of run.ps1
         Mock Test-Path {
             param($Path)
             if ($Path -like '*/run/secrets/*') {

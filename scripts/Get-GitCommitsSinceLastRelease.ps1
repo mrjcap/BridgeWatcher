@@ -41,7 +41,6 @@ param(
 )
 
 function Get-LatestTagOnCurrentBranch {
-    # Επιστρέφει το τελευταίο tag στο current branch (όχι απλά το τελευταίο tag by date)
     $tag = git describe --tags --abbrev=0 2>$null
     if (-not $tag) {
         Write-Verbose 'Δεν βρέθηκαν tags στο current branch. Επιστροφή πρώτου commit.'
@@ -50,7 +49,6 @@ function Get-LatestTagOnCurrentBranch {
     return $tag
 }
 
-# 1. Προσδιορισμός From/To refs
 if (-not $From) {
     $From = Get-LatestTagOnCurrentBranch
 }
@@ -65,11 +63,10 @@ if ($From -eq $To) {
 
 Write-Verbose "Λαμβάνονται commits από '$From' έως '$To'..."
 
-# 2. Σύνθεση git log arguments
 $gitArgs = @("$From..$To", '--pretty=format:%s')
 if (-not $IncludeMergeCommits) { $gitArgs += '--no-merges' }
 
-if ($ExcludeHousekeeping) { # Εξαίρεση housekeeping/CI/τεχνικών commits με approved patterns
+if ($ExcludeHousekeeping) {
     $gitArgs += @(
         '--invert-grep',
         '--grep=^(chore:|chore\(|ci:|ci\(|docs:|docs\(|build:|test:|test\(|refactor:|perf:|style:|(feat|fix)\((ci|tests?|scripts?|lint|changelog|encoding|renovate|release\.yml|update-releasechangelog)\):|Ενημέρωση|Προσθήκη συγχρονισμού|\[skip ci\]|Update changelog)',
@@ -77,7 +74,6 @@ if ($ExcludeHousekeeping) { # Εξαίρεση housekeeping/CI/τεχνικών 
     )
 }
 
-# 3. Εκτέλεση git log και καθαρισμός αποτελεσμάτων
 try {
     $messages = git log @gitArgs | Where-Object { $_.Trim() } | Select-Object -Unique
     if ($messages) {

@@ -34,7 +34,6 @@
 
         $culture = [System.Globalization.CultureInfo]::InvariantCulture
 
-        # Extract exactly the captured groups to avoid parsing errors from OCR spacing
         $dateStr1 = "$($bmatches[0].Groups['Date'].Value) $($bmatches[0].Groups['Time'].Value)"
         $dateStr2 = "$($bmatches[1].Groups['Date'].Value) $($bmatches[1].Groups['Time'].Value)"
 

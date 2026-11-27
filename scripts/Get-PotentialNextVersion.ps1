@@ -20,11 +20,9 @@ param (
 )
 
 try {
-    # Get all version tags
     $tags = @(git tag --sort=version:refname | Where-Object { $_ -match '^v?\d+\.\d+\.\d+$' })
 
     if ($tags.Count -eq 0) {
-        # No tags exist, return default based on bump type
         switch ($BumpType) {
             'major' { Write-Output '1.0.0'; return }
             'minor' { Write-Output '0.1.0'; return }
@@ -32,7 +30,6 @@ try {
         }
     }
 
-    # Get the latest tag
     $latestTag = $tags[-1]
     $cleanVersion = $latestTag -replace '^v', ''
     $parts = $cleanVersion -split '\.'
@@ -41,7 +38,6 @@ try {
     [int]$minor = $parts[1]
     [int]$patch = $parts[2]
 
-    # Calculate new version
     switch ($BumpType) {
         'major' {
             $newVersion = "$($major + 1).0.0"

@@ -68,7 +68,6 @@
                 $errInfo = Get-BridgeHttpExceptionInfo -Exception $_.Exception -FatalStatusCodes @(400, 401, 413, 422)
                 $response = $errInfo.Response
                 try {
-                    # Do not abort on 403 (Quota) or 429 (Rate Limit). Abort on 400, 401, 413, 422.
                     if ($errInfo.IsFatal -or $i -eq $maxRetries) { throw }
                     $baseSleep = [Math]::Pow(2, $i)
                     $jitter = Get-Random -Minimum 0 -Maximum 4

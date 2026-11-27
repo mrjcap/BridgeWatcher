@@ -58,11 +58,9 @@ try {
     Write-Output "Current version: $currentVersion"
 
     if ($Version) {
-        # Set specific version
         $newVersion = $Version
         Write-Output "Setting version to: $newVersion"
     } else {
-        # Increment patch version
         $versionParts = $currentVersion -split '\.'
         $versionParts[2] = [int]$versionParts[2] + 1
         $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"

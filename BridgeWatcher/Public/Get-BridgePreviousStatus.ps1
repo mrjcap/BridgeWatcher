@@ -55,7 +55,6 @@ function Get-BridgePreviousStatus {
             }
             $results = Get-Content @getContentSplat | ConvertFrom-Json @convertFromJsonSplat
 
-            # Φιλτράρισμα άκυρων εγγραφών (π.χ. αν αποθηκεύτηκε BridgeResult αντί για Array)
             $validResults = @(@($results) | Where-Object {
                 $null -ne $_ -and $_.psobject.properties.match('GefyraName').Count -gt 0
             })
@@ -64,7 +63,6 @@ function Get-BridgePreviousStatus {
                 return @()
             }
 
-            # Backfill ImageHash for state files saved before this property existed
             foreach ($item in $validResults) {
                 if (-not ($item.PSObject.Properties.Name -contains 'ImageHash')) {
                     $item | Add-Member -MemberType NoteProperty -Name 'ImageHash' -Value $null

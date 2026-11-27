@@ -47,7 +47,6 @@ Describe 'Invoke-TestSuite Orchestrator' {
             $allAssigned.Count | Should -Be $files.Count
             @($allAssigned | Select-Object -Unique).Count | Should -Be $files.Count
 
-            # Heaviest two files must land in different shards
             $shard0Names = @($shards[0].Files | ForEach-Object { Split-Path -Path $_ -Leaf })
             $shard1Names = @($shards[1].Files | ForEach-Object { Split-Path -Path $_ -Leaf })
             (($shard0Names -contains 'SlowA.Tests.ps1') -xor ($shard1Names -contains 'SlowA.Tests.ps1')) | Should -BeTrue
@@ -202,7 +201,6 @@ Describe 'Invoke-TestSuite Orchestrator' {
             $res.CoveragePercent | Should -Be 100
             (Get-Content -LiteralPath $outTimings -Raw | ConvertFrom-Json).'Tests/Two.Tests.ps1' | Should -Be 1.5
 
-            # Missing an expected file must fail loudly
             $t3 = Join-Path -Path $fakeRoot -ChildPath 'Tests/Omitted.Tests.ps1'
             {
                 Invoke-ShardArtifactMerge `

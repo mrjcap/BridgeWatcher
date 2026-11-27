@@ -19,7 +19,6 @@ param(
     [string[]]$Commits
 )
 
-# Μοτίβα για κάθε κατηγορία (με conventional commits και ελληνικά)
 $patterns = @{
     "feat"     = @(
         "^feat:",
@@ -98,7 +97,6 @@ $patterns = @{
     )
 }
 
-# Προετοιμασία sections
 $sections = @{
     'feat'     = @()
     'fix'      = @()
@@ -115,10 +113,8 @@ $sections = @{
 }
 
 foreach ($msg in $Commits) {
-    # Pass commit message through directly (no translation applied)
     $greekMsg = $msg
     $matched = $false
-    # Strip leading emojis and whitespace for matching
     $cleanMsg = $greekMsg -replace '^[\p{So}\p{Cn}\p{Cs}\p{Cf}]+\s*', ''
     Write-Verbose "Processing commit: $cleanMsg (original: $msg, greek: $greekMsg)"
 
