@@ -113,16 +113,15 @@ $sections = @{
 }
 
 foreach ($msg in $Commits) {
-    $greekMsg = $msg
     $matched = $false
-    $cleanMsg = $greekMsg -replace '^[\p{So}\p{Cn}\p{Cs}\p{Cf}]+\s*', ''
-    Write-Verbose "Processing commit: $cleanMsg (original: $msg, greek: $greekMsg)"
+    $cleanMsg = $msg -replace '^[\p{So}\p{Cn}\p{Cs}\p{Cf}]+\s*', ''
+    Write-Verbose "Processing commit: $cleanMsg (original: $msg)"
 
     foreach ($section in $patterns.Keys) {
         foreach ($pat in $patterns[$section]) {
             if ($cleanMsg.ToLower() -match $pat) {
                 Write-Verbose "  Matched pattern '$pat' in section '$section'"
-                $sections[$section] += $greekMsg
+                $sections[$section] += $msg
                 $matched = $true
                 break
             }
@@ -131,7 +130,7 @@ foreach ($msg in $Commits) {
     }
     if (-not $matched) {
         Write-Verbose "  No match found, adding to 'other'"
-        $sections['other'] += $greekMsg
+        $sections['other'] += $msg
     }
 }
 
