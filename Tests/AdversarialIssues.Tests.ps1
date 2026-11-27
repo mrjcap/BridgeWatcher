@@ -285,7 +285,7 @@ Describe 'Adversarial Regression and Security Tests' {
             $semgrepIgnore = if (Test-Path -LiteralPath $ignorePath) { Get-Content -LiteralPath $ignorePath -Raw } else { '' }
             $semgrepIgnore | Should -Not -Match '(?m)^\*\.ps1\s*$'
             $semgrepIgnore | Should -Not -Match '(?m)^\*\.psm1\s*$'
-            $semgrepIgnore | Should -Not -Match '\.github/workflows'
+            $semgrepIgnore | Should -Not -Match '(?m)^\s*[!/]?\**/?\.github(/|\s*$|\*)'
 
             $rulesPath = Join-Path -Path $root -ChildPath '.semgrep.yml'
             if (Test-Path -LiteralPath $rulesPath) {
