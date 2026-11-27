@@ -123,7 +123,9 @@ ELASTICSEARCH_HOST=es.example.com ELASTICSEARCH_API_KEY=<id>:<api_key> \
 exits with a missing-field error when a required variable is unset, so a placeholder host is never contacted.
 
 Setting `ELASTICSEARCH_PROTOCOL=http` sends `ELASTICSEARCH_API_KEY` in clear text.
-Use it only on a trusted, isolated network; leave the default `https` everywhere else.
+Use it only on a trusted, isolated network; leave the default `https` everywhere else. A scheme in
+`ELASTICSEARCH_HOST` (for example `http://es.example.com`) overrides `ELASTICSEARCH_PROTOCOL`, so set the host
+as a bare name and check it for an `http://` prefix.
 
 Without Compose, bind-mount the log directory and point any shipper at it:
 
