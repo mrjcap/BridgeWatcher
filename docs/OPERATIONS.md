@@ -90,35 +90,44 @@ BridgeWatcher writes daily rotating `.log` files inside the container filesystem
 
 ### Recommended: syslog forwarding
 
-Use the Docker syslog driver to forward logs to a central collector:
+Layer the syslog override file on top of the base compose file. No tracked file needs editing:
 
 ```bash
-docker run \
-  --log-driver=syslog \
-  --log-opt syslog-address=tcp://loghost:514 \
-  --log-opt tag=bridgewatcher \
-  mrjcap/bridgewatcher:latest
+SYSLOG_ADDRESS=tcp://loghost:514 \
+  docker compose -f docker-compose.yml -f docker-compose.syslog.yml up -d
 ```
 
-### Alternative: bind-mount and shipper
+Compose refuses to start the override without `SYSLOG_ADDRESS`.
 
-Mount the log directory and use Filebeat or Promtail:
+### Alternative: Filebeat sidecar
+
+The `siem` profile runs Filebeat against the shared log volume. Settings come from environment variables
+(or an `.env` file), not from edits to the repository.
+
+Logstash output (default `Docker/filebeat.yml`):
+
+```bash
+LOGSTASH_HOST=siem.example.com LOGSTASH_PORT=5044 \
+  docker compose --profile siem up -d
+```
+
+Elasticsearch output (select `Docker/filebeat.elasticsearch.yml`):
+
+```bash
+FILEBEAT_CONFIG=./Docker/filebeat.elasticsearch.yml \
+ELASTICSEARCH_HOST=es.example.com ELASTICSEARCH_USERNAME=filebeat ELASTICSEARCH_PASSWORD=... \
+  docker compose --profile siem up -d
+```
+
+`LOGSTASH_PORT` defaults to 5044, `ELASTICSEARCH_PORT` to 9200 and `ELASTICSEARCH_PROTOCOL` to https. Filebeat
+exits with a missing-field error when a required variable is unset, so a placeholder host is never contacted.
+
+Without Compose, bind-mount the log directory and point any shipper at it:
 
 ```bash
 docker run \
   -v /var/log/bridgewatcher:/app/logs \
   mrjcap/bridgewatcher:latest
-```
-
-Then configure a log shipper:
-
-```yaml
-# filebeat.yml snippet
-filebeat.inputs:
-  - type: log
-    paths:
-      - /var/log/bridgewatcher/*.log
-    tags: ["bridgewatcher"]
 ```
 
 ### Retention

@@ -1,0 +1,7 @@
+services:
+  bridgewatcher:
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "${SYSLOG_ADDRESS:?Set SYSLOG_ADDRESS, for example tcp://loghost:514}"
+        tag: bridgewatcher

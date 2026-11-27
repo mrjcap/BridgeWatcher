@@ -7,4 +7,4 @@ filebeat.inputs:
     tags: ["bridgewatcher"]
 
 output.logstash:
-  hosts: ["your-logstash-siem-host:5044"]
+  hosts: ["${LOGSTASH_HOST}:${LOGSTASH_PORT:5044}"]

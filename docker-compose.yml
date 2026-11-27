@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   bridgewatcher:
     image: mrjcap/bridgewatcher:latest
@@ -32,18 +30,31 @@ services:
       - siem
     restart: unless-stopped
     user: root
+    read_only: true
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    tmpfs:
+      - /usr/share/filebeat/logs
+    environment:
+      - LOGSTASH_HOST
+      - LOGSTASH_PORT
+      - ELASTICSEARCH_HOST
+      - ELASTICSEARCH_PORT
+      - ELASTICSEARCH_PROTOCOL
+      - ELASTICSEARCH_USERNAME
+      - ELASTICSEARCH_PASSWORD
     volumes:
       - log-data:/var/log/bridgewatcher:ro
-      - ./Docker/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ${FILEBEAT_CONFIG:-./Docker/filebeat.yml}:/usr/share/filebeat/filebeat.yml:ro
+      - filebeat-data:/usr/share/filebeat/data
     depends_on:
       - bridgewatcher
 
 volumes:
   log-data:
+  filebeat-data:
 
 secrets:
   api_key:
