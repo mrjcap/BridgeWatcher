@@ -10,8 +10,14 @@ $API_KEY = if ($Env:API_KEY) { $Env:API_KEY.Trim() } else { $null }
 $POAPI_KEY = if ($Env:POAPI_KEY) { $Env:POAPI_KEY.Trim() } else { $null }
 $POUSER_KEY = if ($Env:POUSER_KEY) { $Env:POUSER_KEY.Trim() } else { $null }
 
+$SecretsDir = $Env:BRIDGEWATCHER_SECRETS_DIR
+if ([string]::IsNullOrWhiteSpace($SecretsDir)) {
+    $SecretsDir = '/run/secrets'
+}
+
 if ([string]::IsNullOrWhiteSpace($API_KEY)) {
-    foreach ($secretPath in @('/run/secrets/api_key', '/run/secrets/API_KEY')) {
+    foreach ($secretName in @('api_key', 'API_KEY')) {
+        $secretPath = Join-Path -Path $SecretsDir -ChildPath $secretName
         if (Test-Path $secretPath) {
             $API_KEY = (Get-Content $secretPath -Raw).Trim()
             break
@@ -19,7 +25,8 @@ if ([string]::IsNullOrWhiteSpace($API_KEY)) {
     }
 }
 if ([string]::IsNullOrWhiteSpace($POAPI_KEY)) {
-    foreach ($secretPath in @('/run/secrets/pushover_token', '/run/secrets/PUSHOVER_TOKEN')) {
+    foreach ($secretName in @('pushover_token', 'PUSHOVER_TOKEN')) {
+        $secretPath = Join-Path -Path $SecretsDir -ChildPath $secretName
         if (Test-Path $secretPath) {
             $POAPI_KEY = (Get-Content $secretPath -Raw).Trim()
             break
@@ -27,7 +34,8 @@ if ([string]::IsNullOrWhiteSpace($POAPI_KEY)) {
     }
 }
 if ([string]::IsNullOrWhiteSpace($POUSER_KEY)) {
-    foreach ($secretPath in @('/run/secrets/pushover_user', '/run/secrets/PUSHOVER_USER')) {
+    foreach ($secretName in @('pushover_user', 'PUSHOVER_USER')) {
+        $secretPath = Join-Path -Path $SecretsDir -ChildPath $secretName
         if (Test-Path $secretPath) {
             $POUSER_KEY = (Get-Content $secretPath -Raw).Trim()
             break
