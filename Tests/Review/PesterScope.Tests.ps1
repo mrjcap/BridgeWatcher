@@ -12,6 +12,38 @@ $TestFiles = Get-ChildItem -Path "$PSScriptRoot/.." -Filter *.Tests.ps1 -Recurse
 }
 
 Describe "Pester 5 Scope Rule Compliance" {
+    BeforeAll {
+        function Get-BeforeAllScriptBlock {
+            <#
+            .SYNOPSIS
+            Extracts the direct ScriptBlockExpressionAst argument from a BeforeAll CommandAst.
+
+            .PARAMETER CommandAst
+            The CommandAst representing a BeforeAll invocation.
+            #>
+            [CmdletBinding()]
+            [OutputType([System.Management.Automation.Language.ScriptBlockExpressionAst])]
+            param(
+                [Parameter(Mandatory)]
+                [System.Management.Automation.Language.CommandAst]$CommandAst
+            )
+
+            $elements = $CommandAst.CommandElements
+            for ($i = 1; $i -lt $elements.Count; $i++) {
+                $element = $elements[$i]
+                if ($element -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) {
+                    return $element
+                }
+                if ($element -is [System.Management.Automation.Language.CommandParameterAst] -and
+                    $element.ParameterName -eq 'ScriptBlock' -and
+                    $element.Argument -is [System.Management.Automation.Language.ScriptBlockExpressionAst]) {
+                    return $element.Argument
+                }
+            }
+            return $null
+        }
+    }
+
     It "Should use `$script:` scope for variables initialized inside BeforeAll blocks in <Name>" -ForEach $TestFiles {
         $file = $_
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
@@ -25,18 +57,7 @@ Describe "Pester 5 Scope Rule Compliance" {
         $violations = [System.Collections.Generic.List[PSCustomObject]]::new()
 
         foreach ($ba in $beforeAlls) {
-            $sb = $ba.FindAll({
-                param($node)
-                $node -is [System.Management.Automation.Language.ScriptBlockExpressionAst]
-            }, $false) | Select-Object -First 1
-
-            if (-not $sb) {
-                $sb = $ba.FindAll({
-                    param($node)
-                    $node -is [System.Management.Automation.Language.ScriptBlockExpressionAst]
-                }, $true) | Select-Object -First 1
-            }
-
+            $sb = Get-BeforeAllScriptBlock -CommandAst $ba
             if (-not $sb) { continue }
 
             $assignments = $sb.FindAll({
@@ -79,5 +100,29 @@ Describe "Pester 5 Scope Rule Compliance" {
         }
 
         $violationMessage | Should -BeNullOrEmpty
-    }}
+    }
+
+    Context 'Verification of BeforeAll CommandElements extraction' {
+        It 'Extracts positional and named -ScriptBlock arguments directly' {
+            foreach ($snippet in @(
+                'BeforeAll { $script:a = 1 }',
+                'BeforeAll -ScriptBlock { $script:a = 1 }',
+                'BeforeAll -ScriptBlock:{ $script:a = 1 }'
+            )) {
+                $ast = [System.Management.Automation.Language.Parser]::ParseInput($snippet, [ref]$null, [ref]$null)
+                $cmd = $ast.Find({ param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true)
+                $sb = Get-BeforeAllScriptBlock -CommandAst $cmd
+                $sb | Should -Not -BeNullOrEmpty
+                $sb.Extent.Text | Should -Be '{ $script:a = 1 }'
+            }
+        }
+
+        It 'Does not recursively match nested script blocks inside non-ScriptBlock arguments' {
+            $ast = [System.Management.Automation.Language.Parser]::ParseInput('BeforeAll (Get-Item | Where-Object { $x = 1 })', [ref]$null, [ref]$null)
+            $cmd = $ast.Find({ param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true)
+            $sb = Get-BeforeAllScriptBlock -CommandAst $cmd
+            $sb | Should -BeNullOrEmpty
+        }
+    }
+}
 
