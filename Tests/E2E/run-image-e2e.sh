@@ -112,6 +112,7 @@ usr_sha="$(secret pushover_user | sha256sum | cut -d' ' -f1)"
 img_sha="$(sha256sum "$FIX/poseidonia-schedule.png" | cut -d' ' -f1)"
 seed_sha="$(sha256sum "$FIX/seed-bridge_status.json" | cut -d' ' -f1)"
 
+sudo rm -rf "$LOGS"
 sudo install -d -o 99 -g 100 -m 750 "$LOGS"
 sudo install -o 99 -g 100 -m 640 "$FIX/seed-bridge_status.json" "$LOGS/bridge_status.json"
 
