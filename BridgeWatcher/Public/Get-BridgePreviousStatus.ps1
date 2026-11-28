@@ -32,7 +32,7 @@ function Get-BridgePreviousStatus {
     begin {
     }
     process {
-        if (-not (Test-Path -Path $InputFile)) {
+        if (-not (Test-Path -LiteralPath $InputFile)) {
             $writeBridgeLogSplat = @{
                 Stage   = $Configuration.LoggingConfig.ErrorStage
                 Message = "Το αρχείο $($InputFile) δεν βρέθηκε – επιστρέφεται κενό array."
@@ -45,9 +45,9 @@ function Get-BridgePreviousStatus {
             $isLegacy = $null -ne $env:IsLegacyPowerShell
             $isLegacyPowerShell = if ($isLegacy) { $env:IsLegacyPowerShell -eq 'true' } else { $PSVersionTable.PSVersion.Major -lt 6 }
             $getContentSplat = @{
-                Path     = $InputFile
-                Raw      = $true
-                Encoding = if ($isLegacyPowerShell) { 'utf8' } else { 'utf8BOM' }
+                LiteralPath = $InputFile
+                Raw         = $true
+                Encoding    = if ($isLegacyPowerShell) { 'utf8' } else { 'utf8BOM' }
             }
             $convertFromJsonSplat = @{}
             if (-not $isLegacyPowerShell) {

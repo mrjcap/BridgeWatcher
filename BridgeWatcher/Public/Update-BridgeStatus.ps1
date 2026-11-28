@@ -213,7 +213,7 @@ function Update-BridgeStatus {
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         $previousState = @()
-        if (Test-Path -Path $OutputFile) {
+        if (Test-Path -LiteralPath $OutputFile) {
             $getDiorigaPreviousStatusSplat = @{
                 InputFile     = $OutputFile
                 Configuration = $Configuration

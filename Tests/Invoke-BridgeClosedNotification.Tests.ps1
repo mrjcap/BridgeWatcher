@@ -147,6 +147,34 @@ Describe -Name 'Invoke-BridgeClosedNotification' -Fixture {
             Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly
         }
 
+        It -Name 'Keeps an empty OCR result retryable and sends only one fallback for the same image' -Test {
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith { $null }
+            Mock -CommandName Send-BridgePushover -MockWith {}
+            $entry = @{
+                GefyraName   = 'Ισθμία'
+                GefyraStatus = 'Κλειστή με πρόγραμμα'
+                ImageUrl     = 'https://example.com/schedule.jpg'
+                ImageHash    = 'unchanged'
+            }
+            $fixtureKey = 'dummy-key'
+            $call = @{
+                Configuration = $script:Config
+                CurrentState  = @($entry)
+                ApiKey        = $fixtureKey
+                PoUserKey     = $fixtureKey
+                PoApiKey      = $fixtureKey
+            }
+
+            Invoke-BridgeClosedNotification @call
+            $entry.ImageHash | Should -BeNullOrEmpty
+            $entry.FallbackNotifiedImageHash | Should -BeExactly -ExpectedValue 'unchanged'
+
+            $entry.ImageHash = 'unchanged'
+            Invoke-BridgeClosedNotification @call
+            Should -Invoke -CommandName Invoke-BridgeOCRGoogleCloud -Times 2 -Exactly
+            Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly
+        }
+
         It -Name 'Στέλνει fallback ειδοποίηση όταν το OCR επιστρέφει $null' -Test {
 
             Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith { $null }
