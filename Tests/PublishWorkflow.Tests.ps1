@@ -3,12 +3,16 @@ Describe 'Publish Workflow Verification Step' {
         $script:workflowPath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../.github/workflows/publish.yml'))
         $script:content = Get-Content -Path $script:workflowPath -Raw
         $script:start = $script:content.IndexOf('- name: Verify module publication')
-        $script:end = $script:content.IndexOf('- name: Cleanup Git repository')
+        $script:end = $script:content.IndexOf('- name: Set job outputs')
         $script:verifyStep = $script:content.Substring($script:start, $script:end - $script:start)
     }
 
     It 'Locates the verification step' {
         $script:verifyStep | Should -Match 'Find-Module'
+    }
+
+    It 'Does not run aggressive Git cleanup before setting job outputs' {
+        $script:verifyStep | Should -Not -Match 'git gc'
     }
 
     It 'Does not sleep unconditionally before the first poll' {
