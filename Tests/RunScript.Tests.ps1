@@ -150,11 +150,16 @@ Describe -Name 'run.ps1 Script Execution' -Fixture {
         }
     }
 
-    It -Name 'Should apply BRIDGEWATCHER_CONFIG_PATH overrides to the monitor configuration' -Test {
+    It -Name 'Should apply BRIDGEWATCHER_CONFIG_PATH overrides to the monitor configuration for <Case>' -TestCases @(
+        @{ Case = 'an ordinary filename'; FileName = 'bridgewatcher.e2e.json' }
+        @{ Case = 'a bracketed filename'; FileName = 'bridgewatcher[1].e2e.json' }
+    ) -Test {
+        param($Case, $FileName)
+        $null = $Case
         $Env:API_KEY = 'env-api-key'
         $Env:POAPI_KEY = 'env-po-api-key'
         $Env:POUSER_KEY = 'env-po-user-key'
-        $configFile = Join-Path -Path $TestDrive -ChildPath 'bridgewatcher.e2e.json'
+        $configFile = Join-Path -Path $TestDrive -ChildPath $FileName
         @{
             Urls     = @{
                 Source      = 'https://fixture.bridgewatcher.test:8443/dioriga/'
@@ -163,7 +168,7 @@ Describe -Name 'run.ps1 Script Execution' -Fixture {
                 PushoverApi = 'https://fixture.bridgewatcher.test:8443/1/messages.json'
             }
             Defaults = @{ HttpRequestTimeout = 10 }
-        } | ConvertTo-Json -Depth 3 | Set-Content -Path $configFile -Encoding utf8
+        } | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $configFile -Encoding utf8
         $Env:BRIDGEWATCHER_CONFIG_PATH = "  $configFile  "
 
         Mock -CommandName Get-BridgeStatusMonitor -MockWith {

@@ -3,10 +3,9 @@ import hashlib
 import json
 import os
 import ssl
-import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qsl, urlsplit
 
 FIXTURES = os.environ.get("E2E_FIXTURES", "/fixtures")
 RECORDS = os.environ.get("E2E_RECORDS", "/records")
@@ -25,10 +24,13 @@ PUSHOVER_PATH = "/1/messages.json"
 
 JSON_CONTENT_TYPE = "application/json; charset=utf-8"
 TEXT_CONTENT_TYPE = "text/plain; charset=utf-8"
-PUSHOVER_REJECT_BODY = (
-    b'{"status":0,"errors":["user identifier is invalid"],"request":"e2e"}'
-)
-PUSHOVER_OK_BODY = b'{"status":1,"request":"e2e"}'
+PUSHOVER_RESPONSES = {
+    "reject": (
+        400,
+        b'{"status":0,"errors":["user identifier is invalid"],"request":"e2e"}',
+    ),
+    "accept": (200, b'{"status":1,"request":"e2e"}'),
+}
 
 
 def read_bytes(name):
@@ -42,6 +44,17 @@ VISION = read_bytes("vision-response.json")
 IMAGE_SHA256 = hashlib.sha256(IMAGE).hexdigest()
 LOCK = threading.Lock()
 
+GET_ROUTES = {
+    (PROBE_PATH, ""): ("probe", b"ok", TEXT_CONTENT_TYPE, {}),
+    (PAGE_PATH, ""): ("page", PAGE, "text/html; charset=utf-8", {}),
+    (IMAGE_PATH, IMAGE_QUERY): (
+        "image",
+        IMAGE,
+        "image/png",
+        {"served_sha256": IMAGE_SHA256},
+    ),
+}
+
 
 def sha256_text(value):
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
@@ -51,9 +64,6 @@ class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     server_version = "BridgeWatcherFixture"
     sys_version = ""
-
-    def log_message(self, fmt, *args):
-        sys.stderr.write("fixture: " + (fmt % args) + "\n")
 
     def record(self, route, status, **extra):
         parts = urlsplit(self.path)
@@ -86,8 +96,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def read_body(self):
-        length = int(self.headers.get("Content-Length", "0") or "0")
-        return self.rfile.read(length) if length > 0 else b""
+        raw_length = self.headers.get("Content-Length", "0")
+        return self.rfile.read(int(raw_length))
 
     def handle_vision(self, raw):
         try:
@@ -115,9 +125,11 @@ class Handler(BaseHTTPRequestHandler):
         return self.reply(200, VISION, JSON_CONTENT_TYPE)
 
     def handle_pushover(self, raw):
-        parsed = parse_qs(raw.decode("utf-8"), keep_blank_values=True)
-        form = {key: values[0] for key, values in parsed.items()}
-        status = 400 if PUSHOVER_MODE == "reject" else 200
+        form = dict(parse_qsl(raw.decode("utf-8"), keep_blank_values=True))
+        status, body = PUSHOVER_RESPONSES.get(
+            PUSHOVER_MODE,
+            PUSHOVER_RESPONSES["accept"],
+        )
         self.record(
             "pushover",
             status,
@@ -128,33 +140,30 @@ class Handler(BaseHTTPRequestHandler):
             message=form.get("message", ""),
             fields=sorted(form.keys()),
         )
-        if status == 400:
-            return self.reply(400, PUSHOVER_REJECT_BODY, JSON_CONTENT_TYPE)
-        return self.reply(200, PUSHOVER_OK_BODY, JSON_CONTENT_TYPE)
+        return self.reply(status, body, JSON_CONTENT_TYPE)
 
     def do_GET(self):
         parts = urlsplit(self.path)
-        if parts.path == PROBE_PATH and parts.query == "":
-            self.record("probe", 200)
-            return self.reply(200, b"ok", TEXT_CONTENT_TYPE)
-        if parts.path == PAGE_PATH and parts.query == "":
-            self.record("page", 200)
-            return self.reply(200, PAGE, "text/html; charset=utf-8")
-        if parts.path == IMAGE_PATH and parts.query == IMAGE_QUERY:
-            self.record("image", 200, served_sha256=IMAGE_SHA256)
-            return self.reply(200, IMAGE, "image/png")
-        self.record("unexpected", 404)
-        return self.reply(404, b"not found", TEXT_CONTENT_TYPE)
+        match = GET_ROUTES.get((parts.path, parts.query))
+        if match is None:
+            self.record("unexpected", 404)
+            return self.reply(404, b"not found", TEXT_CONTENT_TYPE)
+        route, body, content_type, extra = match
+        self.record(route, 200, **extra)
+        return self.reply(200, body, content_type)
 
     def do_POST(self):
         parts = urlsplit(self.path)
         raw = self.read_body()
-        if parts.path == VISION_PATH and parts.query == "":
-            return self.handle_vision(raw)
-        if parts.path == PUSHOVER_PATH and parts.query == "":
-            return self.handle_pushover(raw)
-        self.record("unexpected", 404)
-        return self.reply(404, b"not found", TEXT_CONTENT_TYPE)
+        handlers = {
+            (VISION_PATH, ""): self.handle_vision,
+            (PUSHOVER_PATH, ""): self.handle_pushover,
+        }
+        handler = handlers.get((parts.path, parts.query))
+        if handler is None:
+            self.record("unexpected", 404)
+            return self.reply(404, b"not found", TEXT_CONTENT_TYPE)
+        return handler(raw)
 
 
 def main():

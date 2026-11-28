@@ -147,10 +147,10 @@ function New-BridgeConfiguration {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($ConfigurationPath)) {
-        if (-not (Test-Path -Path $ConfigurationPath)) {
+        if (-not (Test-Path -LiteralPath $ConfigurationPath)) {
             throw [System.IO.FileNotFoundException]::new("Configuration file not found: $ConfigurationPath", $ConfigurationPath)
         }
-        $rawJson = Get-Content -Path $ConfigurationPath -Raw -Encoding utf8
+        $rawJson = Get-Content -LiteralPath $ConfigurationPath -Raw -Encoding utf8
         $fileConfig = ConvertFrom-Json -InputObject $rawJson
         foreach ($section in @('Urls', 'Defaults')) {
             $sectionProp = $fileConfig.PSObject.Properties[$section]
