@@ -12,6 +12,19 @@ Describe 'Invoke-BridgeOCRRequest' {
 
 
 
+    It 'Returns the accepted OCR response without retrying when its success log fails' {
+        Mock -CommandName Invoke-RestMethod -MockWith { @{ responses = @(@{}) } }
+        Mock -CommandName Write-BridgeLog -MockWith {}
+        Mock -CommandName Write-BridgeLog -ParameterFilter { $Message -like '*Αίτημα OCR*' } -MockWith { throw 'Log append failed' }
+        Mock -CommandName Write-Warning -MockWith {}
+
+        $result = Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'test-key' -RequestBody '{}'
+
+        $result.responses.Count | Should -Be 1
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
+        Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -Scope It -ParameterFilter { $Message -like '*Log append failed*' }
+    }
+
     It 'Στέλνει POST και επιστρέφει αποτέλεσμα' {
 
 

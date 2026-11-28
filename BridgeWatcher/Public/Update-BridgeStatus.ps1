@@ -121,7 +121,7 @@ function Resolve-BridgeAlertSnapshot {
 .SYNOPSIS
 Returns the records to persist when scheduled openings have been deferred.
 .DESCRIPTION
-Keeps each deferred bridge's saved record and emits all other current records in order.
+Keeps each deferred bridge's saved alert state and attaches the latest unconfirmed observation.
 .PARAMETER CurrentState
 The records from the current poll.
 .PARAMETER DeferredOpenings
@@ -132,7 +132,14 @@ function Resolve-BridgeDeferredSnapshot {
 
     foreach ($entry in $CurrentState) {
         if ($DeferredOpenings.ContainsKey($entry.GefyraName)) {
-            $DeferredOpenings[$entry.GefyraName]
+            $saved = $DeferredOpenings[$entry.GefyraName].PSObject.Copy()
+            $observation = [pscustomobject]@{
+                Status             = $entry.GefyraStatus
+                Timestamp          = Get-BridgeOptionalProperty -InputObject $entry -PropertyName 'Timestamp'
+                ReopeningConfirmed = $false
+            }
+            $saved | Add-Member -NotePropertyName Observation -NotePropertyValue $observation -Force
+            $saved
         } else {
             $entry
         }

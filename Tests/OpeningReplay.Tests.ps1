@@ -76,7 +76,9 @@ Describe 'Scheduled opening replay through Update-BridgeStatus' {
         $poll.Now = $endUtc.AddSeconds(1)
         $null = Update-BridgeStatus @params
         Should -Invoke Invoke-BridgeOpenedNotification -ModuleName BridgeWatcher -Times 1 -Exactly -ParameterFilter { $CurrentState[0].GefyraName -eq $saved.GefyraName }
-        (Get-BridgePreviousStatus -InputFile $path -Configuration $cfg | Where-Object GefyraName -EQ $saved.GefyraName).GefyraStatus | Should -Be $cfg.Statuses.Open
+        $confirmed = Get-BridgePreviousStatus -InputFile $path -Configuration $cfg | Where-Object GefyraName -EQ $saved.GefyraName
+        $confirmed.GefyraStatus | Should -Be $cfg.Statuses.Open
+        $confirmed.PSObject.Properties.Name | Should -Not -Contain 'Observation'
         $null = Update-BridgeStatus @params
         Should -Invoke Invoke-BridgeOpenedNotification -ModuleName BridgeWatcher -Times 1 -Exactly
         Should -Invoke Invoke-BridgeClosedNotification -ModuleName BridgeWatcher -Times 1 -Exactly
@@ -137,8 +139,25 @@ Describe 'Scheduled opening replay through Update-BridgeStatus' {
         $bridge.To | Should -BeExactly $End
     }
 
+    It 'Records repeated open observations without confirming an unreadable closure has ended' {
+        $saved.PSObject.Properties.Remove('To')
+        ConvertTo-Json -InputObject @($saved) | Set-Content -LiteralPath $path -Encoding utf8BOM
+        foreach ($offset in 1..2) {
+            $poll.Now = $endUtc.AddDays($offset)
+            $null = Update-BridgeStatus @params
+            $bridge = Get-BridgePreviousStatus -InputFile $path -Configuration $cfg | Where-Object -Property GefyraName -EQ -Value $saved.GefyraName
+            $bridge.GefyraStatus | Should -BeExactly $saved.GefyraStatus
+            $bridge.Observation.Status | Should -BeExactly $cfg.Statuses.Open
+            Get-Content -LiteralPath $path -Raw | Should -Match ([regex]::Escape($poll.Now.ToString('o')))
+            $bridge.Observation.ReopeningConfirmed | Should -BeFalse
+        }
+        Should -Invoke Invoke-BridgeOpenedNotification -ModuleName BridgeWatcher -Times 0 -Exactly
+        foreach ($snapshot in $poll.Writes) {
+            ($snapshot | Where-Object -Property GefyraName -EQ -Value $saved.GefyraName).Observation.ReopeningConfirmed | Should -BeFalse
+        }
+    }
+
     It 'Does not open after the scheduled time when <Case>' -ForEach @(
-        @{ Case = 'To is missing'; End = $null; Extra = ''; QueryOnly = $false }
         @{ Case = 'To is invalid'; End = '31/02/2030 12:00'; Extra = ''; QueryOnly = $false }
         @{ Case = 'the same panel still shows a schedule'; End = '15/01/2030 12:00'; Extra = '<img src="image-bridge-open-with-schedule-posidonia.php?2">'; QueryOnly = $false }
         @{ Case = 'the same panel contains a schedule image with an unexpected suffix'; End = '15/01/2030 12:00'; Extra = '<img src="image-bridge-open-with-schedule-isthmia.php?2">'; QueryOnly = $false }

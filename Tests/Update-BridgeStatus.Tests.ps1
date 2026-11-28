@@ -230,6 +230,60 @@ InModuleScope BridgeWatcher {
             $saved.ImageHash | Should -Be 'replacement'
         }
 
+        It 'Checkpoints an accepted push when only the delivery success log fails' {
+            $params = @{
+                OutputFile = (Join-Path -Path $TestDrive -ChildPath 'push-checkpoint.json'); Configuration = $script:Config
+                ApiKey = 'ocr'; PoUserKey = 'user'; PoApiKey = 'app'
+            }
+            Mock -CommandName Get-BridgeStatus -MockWith {
+                [pscustomobject]@{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.Open
+                    ImageUrl = 'https://example.com/open'; ImageHash = $null; Timestamp = '2030-01-15T11:30:00' }
+            }
+            Mock -CommandName Invoke-RestMethod -MockWith { @{ status = 1 } }
+            Mock -CommandName Write-BridgeLog -MockWith {}
+            Mock -CommandName Write-BridgeLog -ParameterFilter { $Message -like '*Pushover*' -and $Level -eq 'Verbose' } -MockWith { throw 'Log append failed' }
+            Mock -CommandName Write-Warning -MockWith {}
+
+            $null = Update-BridgeStatus @params
+            $null = Update-BridgeStatus @params
+
+            Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
+            Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -Scope It -ParameterFilter { $Message -like '*Log append failed*' }
+            (Get-BridgePreviousStatus -InputFile $params.OutputFile -Configuration $script:Config).GefyraStatus | Should -BeExactly $script:Config.Statuses.Open
+        }
+
+        It 'Retries an image-level Vision error and sends the recovered schedule' {
+            $params = @{
+                OutputFile = (Join-Path -Path $TestDrive -ChildPath 'vision-recovery.json'); Configuration = $script:Config
+                ApiKey = 'ocr'; PoUserKey = 'user'; PoApiKey = 'app'
+            }
+            $poll = @{ Recovered = $false }
+            Mock -CommandName Get-BridgeStatus -MockWith {
+                [pscustomobject]@{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule
+                    ImageUrl = 'https://example.com/schedule'; ImageHash = 'same-image' }
+            }
+            Mock -CommandName Write-BridgeLog -MockWith {}
+            Mock -CommandName Get-BridgeCachedImageBytes -MockWith { [byte[]]@(1, 2, 3) }
+            Mock -CommandName Invoke-RestMethod -MockWith {
+                if ($poll.Recovered) {
+                    return ConvertFrom-Json -InputObject '{"responses":[{"textAnnotations":[{"description":"15/01/2030 11:30 to 15/01/2030 12:00"}]}]}'
+                }
+                return ConvertFrom-Json -InputObject '{"responses":[{"error":{"code":14,"message":"Unavailable"}}]}'
+            }
+            Mock -CommandName Send-BridgePushover -MockWith {}
+
+            $null = Update-BridgeStatus @params
+            $null = Update-BridgeStatus @params
+            $poll.Recovered = $true
+            $null = Update-BridgeStatus @params
+            $null = Update-BridgeStatus @params
+
+            Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly
+            Should -Invoke -CommandName Send-BridgePushover -Times 2 -Exactly
+            $saved = Get-BridgePreviousStatus -InputFile $params.OutputFile -Configuration $script:Config
+            $saved.To | Should -BeExactly '15/01/2030 12:00'
+        }
+
         Context 'End-to-End Orchestration Pipeline (External HTTP Mocked Only)' {
             It 'Εκτελεί πλήρη ροή δύο διαδοχικών κύκλων χωρίς εσωτερικά mocks και αποφεύγει διπλές ειδοποιήσεις' {
                 $e2eLogDir = Join-Path $TestDrive 'e2e_logs'
