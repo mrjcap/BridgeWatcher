@@ -14,11 +14,9 @@ if ! command -v pwsh >/dev/null 2>&1; then
     exit 1
 fi
 
-git -C "$repo_root" cat-file blob :PSScriptAnalyzerSettings.psd1 > "$snapshot/PSScriptAnalyzerSettings.psd1"
-while IFS= read -r -d '' path; do
-    mkdir -p -- "$snapshot/staged/$(dirname -- "$path")"
-    git -C "$repo_root" cat-file blob ":$path" > "$snapshot/staged/$path"
-done < "$snapshot/paths"
+git -C "$repo_root" ls-files --cached -z -- \
+    ':(icase)*.ps1' ':(icase)*.psm1' ':(icase)*.psd1' |
+    git -C "$repo_root" checkout-index --prefix="$snapshot/staged/" -z --stdin
 
 cd "$snapshot"
 pwsh -NoProfile -NonInteractive -File "$repo_root/.githooks/Invoke-StagedScriptAnalyzer.ps1"
