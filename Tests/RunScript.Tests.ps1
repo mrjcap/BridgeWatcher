@@ -7,12 +7,14 @@ Describe -Name 'run.ps1 Script Execution' -Fixture {
         $script:OriginalEnvPoUserKey = $Env:POUSER_KEY
         $script:OriginalEnvOutDir = $Env:BRIDGEWATCHER_OUT
         $script:OriginalEnvSecretsDir = $Env:BRIDGEWATCHER_SECRETS_DIR
+        $script:OriginalEnvConfigPath = $Env:BRIDGEWATCHER_CONFIG_PATH
 
         $Env:API_KEY = $null
         $Env:POAPI_KEY = $null
         $Env:POUSER_KEY = $null
         $Env:BRIDGEWATCHER_OUT = "$TestDrive"
         $Env:BRIDGEWATCHER_SECRETS_DIR = $null
+        $Env:BRIDGEWATCHER_CONFIG_PATH = $null
         $script:calledParams = $null
     }
 
@@ -22,6 +24,7 @@ Describe -Name 'run.ps1 Script Execution' -Fixture {
         $Env:POUSER_KEY = $script:OriginalEnvPoUserKey
         $Env:BRIDGEWATCHER_OUT = $script:OriginalEnvOutDir
         $Env:BRIDGEWATCHER_SECRETS_DIR = $script:OriginalEnvSecretsDir
+        $Env:BRIDGEWATCHER_CONFIG_PATH = $script:OriginalEnvConfigPath
     }
 
     It -Name 'Should read secrets from environment variables if present, bypassing file reads' -Test {
@@ -145,5 +148,137 @@ Describe -Name 'run.ps1 Script Execution' -Fixture {
         Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly -ParameterFilter {
             $null -ne $Configuration -and $Configuration.Defaults.LogDirectory -eq "$TestDrive" -and $Priority -eq 1
         }
+    }
+
+    It -Name 'Should apply BRIDGEWATCHER_CONFIG_PATH overrides to the monitor configuration' -Test {
+        $Env:API_KEY = 'env-api-key'
+        $Env:POAPI_KEY = 'env-po-api-key'
+        $Env:POUSER_KEY = 'env-po-user-key'
+        $configFile = Join-Path -Path $TestDrive -ChildPath 'bridgewatcher.e2e.json'
+        @{
+            Urls     = @{
+                Source      = 'https://fixture.bridgewatcher.test:8443/dioriga/'
+                BaseImage   = 'https://fixture.bridgewatcher.test:8443/dioriga'
+                OCRApi      = 'https://fixture.bridgewatcher.test:8443/v1/images:annotate'
+                PushoverApi = 'https://fixture.bridgewatcher.test:8443/1/messages.json'
+            }
+            Defaults = @{ HttpRequestTimeout = 10 }
+        } | ConvertTo-Json -Depth 3 | Set-Content -Path $configFile -Encoding utf8
+        $Env:BRIDGEWATCHER_CONFIG_PATH = "  $configFile  "
+
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith {
+            param($Configuration, $IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $ApiKey; $null = $PoApiKey; $null = $PoUserKey; $null = $Verbose
+            $script:calledParams = @{ Configuration = $Configuration }
+        }
+
+        . "$PSScriptRoot/../run.ps1"
+
+        Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
+        $script:calledParams.Configuration.Urls.Source | Should -Be -ExpectedValue 'https://fixture.bridgewatcher.test:8443/dioriga/'
+        $script:calledParams.Configuration.Urls.BaseImage | Should -Be -ExpectedValue 'https://fixture.bridgewatcher.test:8443/dioriga'
+        $script:calledParams.Configuration.Urls.OCRApi | Should -Be -ExpectedValue 'https://fixture.bridgewatcher.test:8443/v1/images:annotate'
+        $script:calledParams.Configuration.Urls.PushoverApi | Should -Be -ExpectedValue 'https://fixture.bridgewatcher.test:8443/1/messages.json'
+        $script:calledParams.Configuration.Defaults.HttpRequestTimeout | Should -Be -ExpectedValue 10
+        $script:calledParams.Configuration.Defaults.LogDirectory | Should -Be -ExpectedValue "$TestDrive"
+    }
+
+    It -Name 'Should keep production endpoints when BRIDGEWATCHER_CONFIG_PATH is <Case>' -TestCases @(
+        @{ Case = 'unset'; Value = $null }
+        @{ Case = 'blank'; Value = '   ' }
+    ) -Test {
+        param($Case, $Value)
+        $null = $Case
+        $Env:API_KEY = 'env-api-key'
+        $Env:POAPI_KEY = 'env-po-api-key'
+        $Env:POUSER_KEY = 'env-po-user-key'
+        $Env:BRIDGEWATCHER_CONFIG_PATH = $Value
+
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith {
+            param($Configuration, $IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
+            $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $ApiKey; $null = $PoApiKey; $null = $PoUserKey; $null = $Verbose
+            $script:calledParams = @{ Configuration = $Configuration }
+        }
+
+        . "$PSScriptRoot/../run.ps1"
+
+        Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
+        $script:calledParams.Configuration.Urls.Source | Should -Be -ExpectedValue 'https://www.topvision.gr/dioriga/'
+        $script:calledParams.Configuration.Urls.OCRApi | Should -Be -ExpectedValue 'https://vision.googleapis.com/v1/images:annotate'
+        $script:calledParams.Configuration.Urls.PushoverApi | Should -Be -ExpectedValue 'https://api.pushover.net/1/messages.json'
+        $script:calledParams.Configuration.Defaults.HttpRequestTimeout | Should -Be -ExpectedValue 60
+    }
+
+    It -Name 'Should throw FileNotFoundException before monitoring when BRIDGEWATCHER_CONFIG_PATH is <Case>' -TestCases @(
+        @{ Case = 'missing'; Kind = 'missing' }
+        @{ Case = 'a directory'; Kind = 'directory' }
+    ) -Test {
+        param($Case, $Kind)
+        $null = $Case
+        $Env:API_KEY = 'env-api-key'
+        $Env:POAPI_KEY = 'env-po-api-key'
+        $Env:POUSER_KEY = 'env-po-user-key'
+        $target = Join-Path -Path $TestDrive -ChildPath "config-$Kind"
+        if ($Kind -eq 'directory') {
+            $null = New-Item -ItemType Directory -Path $target -Force
+        }
+        $Env:BRIDGEWATCHER_CONFIG_PATH = $target
+
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith {}
+        Mock -CommandName Send-BridgePushover -MockWith {}
+
+        { . "$PSScriptRoot/../run.ps1" } | Should -Throw -ExceptionType ([System.IO.FileNotFoundException])
+
+        Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 0 -Exactly
+        Should -Invoke -CommandName Send-BridgePushover -Times 0 -Exactly
+    }
+
+    It -Name 'Should throw before monitoring when BRIDGEWATCHER_CONFIG_PATH is not valid JSON' -Test {
+        $Env:API_KEY = 'env-api-key'
+        $Env:POAPI_KEY = 'env-po-api-key'
+        $Env:POUSER_KEY = 'env-po-user-key'
+        $configFile = Join-Path -Path $TestDrive -ChildPath 'broken.json'
+        Set-Content -Path $configFile -Value '{ "Urls": ' -Encoding utf8
+        $Env:BRIDGEWATCHER_CONFIG_PATH = $configFile
+
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith {}
+        Mock -CommandName Send-BridgePushover -MockWith {}
+
+        { . "$PSScriptRoot/../run.ps1" } | Should -Throw
+
+        Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 0 -Exactly
+        Should -Invoke -CommandName Send-BridgePushover -Times 0 -Exactly
+    }
+
+    It -Name 'Should throw before monitoring when BRIDGEWATCHER_CONFIG_PATH is unreadable' -Skip:$IsWindows -Test {
+        $Env:API_KEY = 'env-api-key'
+        $Env:POAPI_KEY = 'env-po-api-key'
+        $Env:POUSER_KEY = 'env-po-user-key'
+        $configFile = Join-Path -Path $TestDrive -ChildPath 'unreadable.json'
+        Set-Content -Path $configFile -Value '{}' -Encoding utf8
+        [System.IO.File]::SetUnixFileMode($configFile, [System.IO.UnixFileMode]::None)
+        $readable = $true
+        try {
+            $null = [System.IO.File]::ReadAllText($configFile)
+        } catch [System.UnauthorizedAccessException] {
+            $readable = $false
+        }
+        if ($readable) {
+            Set-ItResult -Skipped -Because 'the current user can read files with mode 000'
+            return
+        }
+        $Env:BRIDGEWATCHER_CONFIG_PATH = $configFile
+
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith {}
+        Mock -CommandName Send-BridgePushover -MockWith {}
+
+        try {
+            { . "$PSScriptRoot/../run.ps1" } | Should -Throw
+        } finally {
+            [System.IO.File]::SetUnixFileMode($configFile, [System.IO.UnixFileMode]'UserRead, UserWrite')
+        }
+
+        Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 0 -Exactly
+        Should -Invoke -CommandName Send-BridgePushover -Times 0 -Exactly
     }
 }

@@ -239,17 +239,18 @@ jobs:
           docker load --input /tmp/bridgewatcher.tar
 
       - name: Test Docker image
+        id: e2e
         if: steps.build.outcome == 'success' || steps.build_release.outcome == 'success'
+        timeout-minutes: 10
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}
           VERSION: ${{ inputs.version || 'pr-test' }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           DOCKER_CONTENT_TRUST: 0
+          E2E_FIXTURE_IMAGE: public.ecr.aws/docker/library/python:3.13-alpine@sha256:9ef1a599f863231c3d91e941389bfdc4a2d6070557243d54df1a4e57015b960e
+          E2E_POLL_DEADLINE_SECONDS: '90'
         run: |
           set -euo pipefail
-          trap 'docker rm -f bridgewatcher-test 2>/dev/null || true' EXIT
-          echo "Testing Docker image functionality..."
-
           mkdir -m 0700 test-secrets test-logs
           chmod 750 test-logs
           sudo chown 99:100 test-logs
@@ -259,58 +260,18 @@ jobs:
           sudo chmod 0600 test-secrets/{api_key,pushover_token,pushover_user}
           sudo chown 99 test-secrets test-secrets/{api_key,pushover_token,pushover_user}
 
-          IMAGE_TAG="$DOCKERHUB_USERNAME/$IMAGE_NAME:$VERSION"
+          export IMAGE_TAG="$DOCKERHUB_USERNAME/$IMAGE_NAME:$VERSION"
+          bash Tests/E2E/run-image-e2e.sh happy
+          bash Tests/E2E/run-image-e2e.sh pushover-reject
 
-          echo "Creating container for testing..."
-          t0=$(date +%s%3N)
-          CONTAINER_ID=$(docker create \
-            --pull=never \
-            --name bridgewatcher-test \
-            --read-only \
-            --tmpfs /tmp:rw,noexec,nosuid \
-            --health-interval=30s \
-            --health-timeout=10s \
-            --health-retries=3 \
-            -v "$(pwd)/test-secrets:/run/secrets:ro" \
-            -v "$(pwd)/test-logs:/app/logs" \
-            "$IMAGE_TAG")
-          t1=$(date +%s%3N)
-          docker start "$CONTAINER_ID" >/dev/null
-          t2=$(date +%s%3N)
-          echo "Container started: $CONTAINER_ID (create=$((t1 - t0))ms, start=$((t2 - t1))ms)"
-
-          MODULE_READY=0
-          MODULE_OUT=""
-          for _ in $(seq 1 40); do
-            if [ -z "$(docker ps -q -f id="$CONTAINER_ID")" ]; then
-              echo "Container exited unexpectedly. Dumping logs and status:"
-              docker logs "$CONTAINER_ID" 2>&1 || true
-              docker ps -a --filter "id=$CONTAINER_ID" --format '{{.ID}} {{.Status}} {{.Names}}' || true
-              exit 1
-            fi
-            if MODULE_OUT=$(docker exec "$CONTAINER_ID" pwsh -NoLogo -NoProfile -Command "Import-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -Force; if (-not (Get-Module BridgeWatcher)) { exit 1 }; Get-Module ./modules/BridgeWatcher/BridgeWatcher.psd1 -ListAvailable" 2>&1); then
-              MODULE_READY=1
-              break
-            fi
-            sleep 0.25
-          done
-
-          if [ "$MODULE_READY" -ne 1 ]; then
-            echo "BridgeWatcher module did not import within readiness window. Container logs:"
-            docker logs "$CONTAINER_ID" 2>&1 || true
-            exit 1
-          fi
-
-          if [ -z "$(docker ps -q -f id="$CONTAINER_ID")" ]; then
-            echo "Container exited unexpectedly after readiness check. Dumping logs:"
-            docker logs "$CONTAINER_ID" 2>&1 || true
-            exit 1
-          fi
-
-          echo "$MODULE_OUT"
-          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null || echo "none")
-          echo "Container health status: $HEALTH_STATUS"
-          echo "Container functionality test passed"
+      - name: Upload E2E evidence
+        if: always() && steps.e2e.outcome == 'failure'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docker-e2e-evidence
+          path: e2e-evidence/
+          retention-days: 3
+          if-no-files-found: ignore
 
       - name: Scan Docker image for vulnerabilities
         if: always() && (steps.build.outcome == 'success' || steps.build_release.outcome == 'success')
@@ -380,8 +341,9 @@ jobs:
       - name: Clean up
         if: always()
         run: |
-          docker rm -f bridgewatcher-test 2>/dev/null || true
-          sudo rm -rf test-secrets test-logs
+          timeout 60 docker rm -f bridgewatcher-test-happy bridgewatcher-test-pushover-reject bridgewatcher-e2e-fixture-happy bridgewatcher-e2e-fixture-pushover-reject 2>/dev/null || true
+          timeout 60 docker network rm bridgewatcher-e2e-happy bridgewatcher-e2e-pushover-reject 2>/dev/null || true
+          sudo rm -rf test-secrets test-logs test-e2e e2e-evidence
           docker system prune -f
 
       - name: Report elapsed time

@@ -55,7 +55,18 @@ if ([string]::IsNullOrWhiteSpace($OutDir)) {
 if (-not (Test-Path -Path $OutDir)) {
     New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 }
-$Configuration = New-BridgeConfiguration -LogDirectory $OutDir
+$configurationSplat = @{
+    LogDirectory = $OutDir
+}
+$ConfigurationPath = $Env:BRIDGEWATCHER_CONFIG_PATH
+if (-not [string]::IsNullOrWhiteSpace($ConfigurationPath)) {
+    $ConfigurationPath = $ConfigurationPath.Trim()
+    if (-not (Test-Path -LiteralPath $ConfigurationPath -PathType Leaf)) {
+        throw [System.IO.FileNotFoundException]::new("BRIDGEWATCHER_CONFIG_PATH does not point to a file: $ConfigurationPath", $ConfigurationPath)
+    }
+    $configurationSplat['ConfigurationPath'] = $ConfigurationPath
+}
+$Configuration = New-BridgeConfiguration @configurationSplat
 try {
     $startBridgeStatusMonitorSplat = @{
         Configuration   = $Configuration
