@@ -26,6 +26,7 @@ NET="bridgewatcher-e2e-$MODE"
 APP="bridgewatcher-test-$MODE"
 SRV="bridgewatcher-e2e-fixture-$MODE"
 CLEANUP_SECONDS="${E2E_CLEANUP_TIMEOUT_SECONDS:-60}"
+COLLECT_SECONDS="${E2E_COLLECT_TIMEOUT_SECONDS:-15}"
 MARK_DONE="Finished comparison and saved snapshot."
 MARK_START="Starting comparison..."
 MARK_MONITOR_ERROR="Σφάλμα κατά την ανάκτηση της κατάστασης της γέφυρας"
@@ -33,33 +34,40 @@ MARK_OCR_FAILURE="Απέτυχε η OCR"
 EXPECT_FROM="09/07/2026 00:01"
 EXPECT_TO="09/07/2026 00:40"
 EXPECT_TITLE="ℹ️ Το πρόγραμμα κλεισίματος της γέφυρας Ποσειδωνία ολοκληρώθηκε"
+EXPECT_IMAGE_HASH="CD918AA95F316456C5D42A80D4DC7D75"
 
-[ -d "$ROOT/test-logs" ] || { echo "::error::test-logs must be prepared by the workflow step" >&2; exit 2; }
-[ -d "$SECRETS" ] || { echo "::error::test-secrets must be prepared by the workflow step" >&2; exit 2; }
+[[ -d "$ROOT/test-logs" ]] || { echo "::error::test-logs must be prepared by the workflow step" >&2; exit 2; }
+[[ -d "$SECRETS" ]] || { echo "::error::test-secrets must be prepared by the workflow step" >&2; exit 2; }
 
-applog() { sudo sh -c 'cat "$1"/BridgeWatcher-*.log 2>/dev/null || true' _ "$LOGS"; }
-appsnap() { sudo sh -c 'cat "$1/bridge_status.json" 2>/dev/null || true' _ "$LOGS"; }
-read_snapshot() { sudo cat "$LOGS/bridge_status.json"; }
-secret() { sudo cat "$SECRETS/$1" 2>/dev/null | tr -d '\r\n'; }
+applog() {
+  sudo find "$LOGS" -maxdepth 1 -type f -name 'BridgeWatcher-*.log' -exec cat {} + 2>/dev/null || true
+}
+appsnap() {
+  sudo find "$LOGS" -maxdepth 1 -type f -name 'bridge_status.json' -exec cat {} + 2>/dev/null || true
+}
+secret() {
+  local name="$1"
+  sudo cat "$SECRETS/$name" 2>/dev/null | tr -d '\r\n'
+}
 fail() { echo "::error::e2e[$MODE]: $*" >&2; exit 1; }
 teardown() {
   local status=0
   timeout "$CLEANUP_SECONDS" docker rm -f "$APP" "$SRV" >/dev/null 2>&1 || status=$?
-  [ "$status" -ne 124 ] || echo "::warning::e2e[$MODE]: container removal did not finish within ${CLEANUP_SECONDS}s" >&2
+  [[ "$status" -ne 124 ]] || echo "::warning::e2e[$MODE]: container removal did not finish within ${CLEANUP_SECONDS}s" >&2
   timeout "$CLEANUP_SECONDS" docker network rm "$NET" >/dev/null 2>&1 || true
 }
 
 collect() {
   mkdir -p "$EVIDENCE"
-  docker logs "$APP" >"$EVIDENCE/app-stdout.log" 2>&1 || true
-  docker logs "$SRV" >"$EVIDENCE/fixture-stdout.log" 2>&1 || true
-  docker inspect -f '{{json .State}}' "$APP" >"$EVIDENCE/app-state.json" 2>/dev/null || true
-  if [ -f "$REC" ]; then cp "$REC" "$EVIDENCE/requests.jsonl" || true; fi
+  timeout "$COLLECT_SECONDS" docker logs "$APP" >"$EVIDENCE/app-stdout.log" 2>&1 || true
+  timeout "$COLLECT_SECONDS" docker logs "$SRV" >"$EVIDENCE/fixture-stdout.log" 2>&1 || true
+  timeout "$COLLECT_SECONDS" docker inspect -f '{{json .State}}' "$APP" >"$EVIDENCE/app-state.json" 2>/dev/null || true
+  if [[ -f "$REC" ]]; then cp "$REC" "$EVIDENCE/requests.jsonl" || true; fi
   applog >"$EVIDENCE/bridgewatcher.log" || true
   appsnap >"$EVIDENCE/bridge_status.json" || true
   for name in api_key pushover_token pushover_user; do
     value="$(secret "$name" || true)"
-    [ -n "$value" ] || continue
+    [[ -n "$value" ]] || continue
     escaped="$(printf '%s' "$value" | sed 's/[][\/.^$*&]/\\&/g')"
     sed -i "s/$escaped/[REDACTED:$name]/g" "$EVIDENCE"/*.log "$EVIDENCE"/*.json 2>/dev/null || true
   done
@@ -67,10 +75,10 @@ collect() {
 
 cleanup() {
   rc=$?
-  collect
+  collect || true
   teardown
   rm -rf "$WORK"
-  if [ "$rc" -eq 0 ]; then echo "e2e[$MODE]: PASS"; else echo "e2e[$MODE]: FAIL (evidence in e2e-evidence/$MODE)"; fi
+  if [[ "$rc" -eq 0 ]]; then echo "e2e[$MODE]: PASS"; else echo "e2e[$MODE]: FAIL (evidence in e2e-evidence/$MODE)"; fi
   exit "$rc"
 }
 trap cleanup EXIT
@@ -92,8 +100,8 @@ openssl x509 -req -in "$WORK/tls/server.csr" -CA "$WORK/ca/ca.pem" -CAkey "$WORK
   -set_serial "0x$(openssl rand -hex 8)" -days 1 -extfile "$WORK/tls/server.ext" -out "$WORK/tls/server.pem" 2>/dev/null
 rm -f "$WORK/tls/ca.key" "$WORK/tls/server.csr" "$WORK/tls/server.ext"
 chmod 644 "$WORK/ca/ca.pem"
-[ "$(ls -A "$WORK/ca")" = "ca.pem" ] || fail "CA directory must contain only ca.pem"
-[ -z "$(ls -A "$WORK/ca-empty")" ] || fail "SSL_CERT_DIR must be empty"
+[[ "$(ls -A "$WORK/ca")" == "ca.pem" ]] || fail "CA directory must contain only ca.pem"
+[[ -z "$(ls -A "$WORK/ca-empty")" ]] || fail "SSL_CERT_DIR must be empty"
 
 for name in api_key pushover_token pushover_user; do
   sudo test -s "$SECRETS/$name" || fail "test-secrets/$name must be prepared by the workflow step"
@@ -102,7 +110,6 @@ key_sha="$(secret api_key | sha256sum | cut -d' ' -f1)"
 tok_sha="$(secret pushover_token | sha256sum | cut -d' ' -f1)"
 usr_sha="$(secret pushover_user | sha256sum | cut -d' ' -f1)"
 img_sha="$(sha256sum "$FIX/poseidonia-schedule.png" | cut -d' ' -f1)"
-img_md5="$(md5sum "$FIX/poseidonia-schedule.png" | cut -d' ' -f1 | tr '[:lower:]' '[:upper:]')"
 seed_sha="$(sha256sum "$FIX/seed-bridge_status.json" | cut -d' ' -f1)"
 
 sudo install -d -o 99 -g 100 -m 750 "$LOGS"
@@ -119,11 +126,11 @@ docker run -d --name "$SRV" --network "$NET" --network-alias "$HOST" \
   "$E2E_FIXTURE_IMAGE" python /srv/fixture_server.py >/dev/null
 
 for _ in $(seq 1 60); do
-  [ -f "$WORK/records/ready" ] && break
-  [ "$(docker inspect -f '{{.State.Running}}' "$SRV")" = "true" ] || fail "fixture server exited during startup"
+  [[ -f "$WORK/records/ready" ]] && break
+  [[ "$(docker inspect -f '{{.State.Running}}' "$SRV")" == "true" ]] || fail "fixture server exited during startup"
   sleep 0.25
 done
-[ -f "$WORK/records/ready" ] || fail "fixture server not ready within 15s"
+[[ -f "$WORK/records/ready" ]] || fail "fixture server not ready within 15s"
 
 docker run --rm --pull=never --network "$NET" --read-only --cap-drop ALL --security-opt no-new-privileges \
   -v "$WORK/ca/ca.pem:/e2e/ca/ca.pem:ro" --entrypoint curl "$IMAGE_TAG" \
@@ -144,28 +151,28 @@ start="$(date +%s)"
 docker start "$APP" >/dev/null
 outcome=""
 while :; do
-  [ "$(docker inspect -f '{{.State.Running}}' "$APP")" = "true" ] || fail "application container exited"
-  [ "$(docker inspect -f '{{.State.Running}}' "$SRV")" = "true" ] || fail "fixture server exited"
-  if [ -f "$REC" ] && grep -q '"route":"unexpected"' "$REC"; then fail "application made an unexpected request"; fi
+  [[ "$(docker inspect -f '{{.State.Running}}' "$APP")" == "true" ]] || fail "application container exited"
+  [[ "$(docker inspect -f '{{.State.Running}}' "$SRV")" == "true" ]] || fail "fixture server exited"
+  if [[ -f "$REC" ]] && grep -q '"route":"unexpected"' "$REC"; then fail "application made an unexpected request"; fi
   log="$(applog)"
   if printf '%s' "$log" | grep -qF "$MARK_DONE"; then outcome="done"; break; fi
   if printf '%s' "$log" | grep -qF "$MARK_MONITOR_ERROR"; then outcome="monitor-error"; break; fi
-  [ $(( $(date +%s) - start )) -lt "$DEADLINE_SECONDS" ] || fail "no poll outcome within ${DEADLINE_SECONDS}s"
+  [[ $(( $(date +%s) - start )) -lt "$DEADLINE_SECONDS" ]] || fail "no poll outcome within ${DEADLINE_SECONDS}s"
   sleep 0.5
 done
 elapsed=$(( $(date +%s) - start ))
 echo "e2e[$MODE]: first poll outcome '$outcome' after ${elapsed}s"
 sleep 1
-[ "$(docker inspect -f '{{.State.Running}}' "$APP")" = "true" ] || fail "application container exited after the poll"
+[[ "$(docker inspect -f '{{.State.Running}}' "$APP")" == "true" ]] || fail "application container exited after the poll"
 
 failed=0
 note() {
   local status="$1" name="$2"
-  if [ "$status" -eq 0 ]; then echo "  ok   $name"; else echo "  FAIL $name"; failed=1; fi
+  if [[ "$status" -eq 0 ]]; then echo "  ok   $name"; else echo "  FAIL $name"; failed=1; fi
 }
 textcheck() {
   local name="$1" result="$2"
-  if [ "$result" = "true" ]; then echo "  ok   $name"; else echo "  FAIL $name"; failed=1; fi
+  if [[ "$result" == "true" ]]; then echo "  ok   $name"; else echo "  FAIL $name"; failed=1; fi
 }
 
 log="$(applog)"
@@ -203,26 +210,27 @@ jq -e -s --arg title "$EXPECT_TITLE" --arg first "Από: $EXPECT_FROM Έως: $
   '[.[] | select(.route == "pushover")][0] | .title == $title and (.message | split("\n")[0]) == $first' "$REC" >/dev/null 2>&1 || rc=$?
 note "$rc" "pushover title and first message line match the 9 July window"
 
-textcheck "exactly one poll started" "$([ "$starts" -eq 1 ] && echo true || echo false)"
-textcheck "no OCR failure logged" "$([ "$ocrfails" -eq 0 ] && echo true || echo false)"
+textcheck "exactly one poll started" "$([[ "$starts" -eq 1 ]] && echo true || echo false)"
+textcheck "no OCR failure logged" "$([[ "$ocrfails" -eq 0 ]] && echo true || echo false)"
 
 snap="$WORK/snapshot.json"
-read_snapshot >"$snap"
+appsnap >"$snap"
+[[ -s "$snap" ]] || fail "snapshot file missing or not a regular file"
 
-if [ "$MODE" = "happy" ]; then
+if [[ "$MODE" == "happy" ]]; then
   rc=0
   jq -e -s '[.[] | select(.route != "probe") | .status] | all(. == 200)' "$REC" >/dev/null 2>&1 || rc=$?
   note "$rc" "fixture answered 200 to every app request"
 
-  textcheck "completion marker logged exactly once" "$([ "$dones" -eq 1 ] && echo true || echo false)"
-  textcheck "no monitor error logged" "$([ "$errors" -eq 0 ] && echo true || echo false)"
+  textcheck "completion marker logged exactly once" "$([[ "$dones" -eq 1 ]] && echo true || echo false)"
+  textcheck "no monitor error logged" "$([[ "$errors" -eq 0 ]] && echo true || echo false)"
 
   rc=0
   jq -e '[.[].GefyraName] | sort == ["Ισθμία","Ποσειδωνία"]' "$snap" >/dev/null 2>&1 || rc=$?
   note "$rc" "snapshot holds exactly Ποσειδωνία and Ισθμία"
 
   rc=0
-  jq -e --arg url "$BASE/image-bridge-open-with-schedule-posidonia.php?1720472460" --arg md5 "$img_md5" \
+  jq -e --arg url "$BASE/image-bridge-open-with-schedule-posidonia.php?1720472460" --arg md5 "$EXPECT_IMAGE_HASH" \
     --arg from "$EXPECT_FROM" --arg to "$EXPECT_TO" \
     '[.[] | select(.GefyraName == "Ποσειδωνία")] | length == 1 and .[0].GefyraStatus == "Κλειστή με πρόγραμμα" and .[0].ImageUrl == $url and .[0].ImageHash == $md5 and .[0].From == $from and .[0].To == $to and .[0].ScheduleState == "Expired"' "$snap" >/dev/null 2>&1 || rc=$?
   note "$rc" "Ποσειδωνία: Κλειστή με πρόγραμμα, page ImageUrl, uppercase MD5, 9 July From/To, ScheduleState Expired"
@@ -236,9 +244,9 @@ else
   jq -e -s '[.[] | select(.route == "pushover") | .status] == [400]' "$REC" >/dev/null 2>&1 || rc=$?
   note "$rc" "fixture rejected the single pushover attempt with 400"
 
-  textcheck "completion marker never logged" "$([ "$dones" -eq 0 ] && echo true || echo false)"
-  textcheck "monitor error logged once" "$([ "$errors" -eq 1 ] && echo true || echo false)"
-  textcheck "snapshot is byte-identical to the seed" "$([ "$(sha256sum "$snap" | cut -d' ' -f1)" = "$seed_sha" ] && echo true || echo false)"
+  textcheck "completion marker never logged" "$([[ "$dones" -eq 0 ]] && echo true || echo false)"
+  textcheck "monitor error logged once" "$([[ "$errors" -eq 1 ]] && echo true || echo false)"
+  textcheck "snapshot is byte-identical to the seed" "$([[ "$(sha256sum "$snap" | cut -d' ' -f1)" == "$seed_sha" ]] && echo true || echo false)"
 fi
 
-[ "$failed" -eq 0 ] || fail "assertions failed"
+[[ "$failed" -eq 0 ]] || fail "assertions failed"
