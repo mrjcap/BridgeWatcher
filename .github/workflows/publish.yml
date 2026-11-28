@@ -211,6 +211,7 @@ jobs:
         with:
           tag_name: v${{ inputs.next_version }}
           target_commitish: ${{ steps.push_changes.outputs.commit_sha }}
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           name: Release v${{ inputs.next_version }}
           body: ${{ steps.release_notes.outputs.notes }}
           draft: ${{ inputs.dry_run }}
