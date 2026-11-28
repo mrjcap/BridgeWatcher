@@ -30,7 +30,9 @@ RUN apk update && \
     curl --fail --show-error --silent --location \
         "${POWERSHELL_RELEASE_URL}/hashes.sha256" \
         -o /tmp/hashes.sha256 && \
-    POWERSHELL_SHA256="$(iconv -f UTF-16 -t UTF-8 /tmp/hashes.sha256 | tr -d '\r' | awk -v asset="*${POWERSHELL_ASSET}" '$2 == asset { print $1 }')" && \
+    POWERSHELL_SHA256="$(iconv -f UTF-16 -t UTF-8 /tmp/hashes.sha256 | \
+        tr -d '\r' | \
+        awk -v asset="*${POWERSHELL_ASSET}" '$2 == asset { print $1 }')" && \
     test -n "${POWERSHELL_SHA256}" && \
     printf '%s  %s\n' "${POWERSHELL_SHA256}" /tmp/powershell.tar.gz | sha256sum -c - && \
     mkdir -p /opt/microsoft/powershell/7 && \
