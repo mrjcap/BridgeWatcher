@@ -250,12 +250,14 @@ jobs:
           trap 'docker rm -f bridgewatcher-test 2>/dev/null || true' EXIT
           echo "Testing Docker image functionality..."
 
-          mkdir -p test-secrets test-logs
+          mkdir -m 0700 test-secrets test-logs
           chmod 750 test-logs
           sudo chown 99:100 test-logs
-          echo "test-api-key" > test-secrets/api_key
-          echo "test-po-api-key" > test-secrets/pushover_token
-          echo "test-po-user-key" > test-secrets/pushover_user
+          printf '%s\n' 'test-api-key' > test-secrets/api_key
+          printf '%s\n' 'test-po-api-key' > test-secrets/pushover_token
+          printf '%s\n' 'test-po-user-key' > test-secrets/pushover_user
+          sudo chmod 0600 test-secrets/{api_key,pushover_token,pushover_user}
+          sudo chown 99 test-secrets test-secrets/{api_key,pushover_token,pushover_user}
 
           IMAGE_TAG="$DOCKERHUB_USERNAME/$IMAGE_NAME:$VERSION"
 

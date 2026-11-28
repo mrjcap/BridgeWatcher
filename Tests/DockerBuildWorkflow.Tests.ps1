@@ -28,6 +28,12 @@
         $script:content | Should -Match -RegularExpression 'chmod 750 test-logs\s+sudo chown 99:100 test-logs'
     }
 
+    It -Name 'Sets owner-only test-secrets permissions for container UID 99' -Test {
+        $script:content | Should -Match -RegularExpression 'mkdir -m 0700 test-secrets test-logs'
+        $script:content | Should -Match -RegularExpression 'sudo chmod 0600 test-secrets/\{api_key,pushover_token,pushover_user\}'
+        $script:content | Should -Match -RegularExpression 'sudo chown 99 test-secrets test-secrets/\{api_key,pushover_token,pushover_user\}'
+    }
+
     It -Name 'Cleans up container-owned test-logs directory using sudo' -Test {
         $script:content | Should -Match -RegularExpression 'sudo rm -rf test-secrets test-logs'
     }
