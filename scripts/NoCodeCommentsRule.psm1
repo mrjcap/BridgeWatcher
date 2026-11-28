@@ -1,20 +1,20 @@
 Set-StrictMode -Version Latest
 
+<#
+.SYNOPSIS
+Determines whether a PowerShell comment token is an exempted help block or tool directive.
+
+.DESCRIPTION
+Exempts PowerShell comment-based help blocks required by PSScriptAnalyzer and platyPS,
+#Requires directives, and security scanner pragmas such as gitleaks:allow.
+
+.PARAMETER CommentText
+The raw text of a PowerShell Comment token.
+
+.OUTPUTS
+[bool]
+#>
 function Test-IsExemptPowerShellCommentToken {
-    <#
-    .SYNOPSIS
-    Determines whether a PowerShell comment token is an exempted help block or tool directive.
-
-    .DESCRIPTION
-    Exempts PowerShell comment-based help blocks required by PSScriptAnalyzer and platyPS,
-    #Requires directives, and security scanner pragmas such as gitleaks:allow.
-
-    .PARAMETER CommentText
-    The raw text of a PowerShell Comment token.
-
-    .OUTPUTS
-    [bool]
-    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param(
@@ -37,22 +37,22 @@ function Test-IsExemptPowerShellCommentToken {
     return $false
 }
 
+<#
+.SYNOPSIS
+PSScriptAnalyzer custom rule banning non-help, non-directive code comments.
+
+.DESCRIPTION
+Inspects PowerShell AST tokens and emits a Warning diagnostic record for every
+comment token that is neither a PowerShell comment-based help block nor an
+approved tooling directive.
+
+.PARAMETER Token
+The token array supplied by PSScriptAnalyzer for the analyzed file.
+
+.OUTPUTS
+[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+#>
 function Measure-NoCodeComment {
-    <#
-    .SYNOPSIS
-    PSScriptAnalyzer custom rule banning non-help, non-directive code comments.
-
-    .DESCRIPTION
-    Inspects PowerShell AST tokens and emits a Warning diagnostic record for every
-    comment token that is neither a PowerShell comment-based help block nor an
-    approved tooling directive.
-
-    .PARAMETER Token
-    The token array supplied by PSScriptAnalyzer for the analyzed file.
-
-    .OUTPUTS
-    [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
-    #>
     [CmdletBinding()]
     [OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
     param(

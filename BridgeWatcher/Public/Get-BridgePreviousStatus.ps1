@@ -32,7 +32,7 @@ function Get-BridgePreviousStatus {
     begin {
     }
     process {
-        if (-not (Test-Path $InputFile)) {
+        if (-not (Test-Path -Path $InputFile)) {
             $writeBridgeLogSplat = @{
                 Stage   = $Configuration.LoggingConfig.ErrorStage
                 Message = "Το αρχείο $($InputFile) δεν βρέθηκε – επιστρέφεται κενό array."
@@ -55,7 +55,7 @@ function Get-BridgePreviousStatus {
             }
             $results = Get-Content @getContentSplat | ConvertFrom-Json @convertFromJsonSplat
 
-            $validResults = @(@($results) | Where-Object {
+            $validResults = @(@($results) | Where-Object -FilterScript {
                 $null -ne $_ -and $_.psobject.properties.match('GefyraName').Count -gt 0
             })
 

@@ -148,6 +148,9 @@ $ErrorActionPreference = 'Stop'
 <#
 .SYNOPSIS
 Converts an absolute file path to a normalized repository-relative forward-slash path.
+
+.DESCRIPTION
+Computes the path relative to the repository and standardizes separators for cross-platform records.
 .PARAMETER Path
 Full or relative path to normalize.
 .PARAMETER Root
@@ -174,6 +177,9 @@ function ConvertTo-RepoRelativePath {
 <#
 .SYNOPSIS
 Checks whether a Pester Describe, Context, or It CommandAst specifies the Integration tag.
+
+.DESCRIPTION
+Looks for an Integration tag on a Pester command without executing the test source.
 .PARAMETER CommandAst
 PowerShell CommandAst node to inspect for an Integration tag argument.
 #>
@@ -202,6 +208,9 @@ function Test-CommandAstHasIntegrationTag {
 <#
 .SYNOPSIS
 Determines whether a Pester test file defines an Integration-tagged block.
+
+.DESCRIPTION
+Parses the test file and checks the tags on its Pester blocks before selecting a suite.
 .PARAMETER FilePath
 Path to the .Tests.ps1 file to inspect via the PowerShell AST.
 #>
@@ -217,7 +226,7 @@ function Test-IsIntegrationTestFile {
     $errors = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($FilePath, [ref]$tokens, [ref]$errors)
     if ($errors -and $errors.Count -gt 0) {
-        $messages = ($errors | ForEach-Object { $_.Message }) -join '; '
+        $messages = ($errors | ForEach-Object -Process { $_.Message }) -join '; '
         throw "PowerShell syntax error in '$FilePath': $messages"
     }
 
@@ -238,6 +247,9 @@ function Test-IsIntegrationTestFile {
 <#
 .SYNOPSIS
 Discovers all tracked test files under Tests/ and classifies unit versus Integration-tagged files.
+
+.DESCRIPTION
+Lists test files in deterministic order and builds separate lists for unit and integration runs.
 .PARAMETER Root
 Repository root directory.
 #>
@@ -275,6 +287,9 @@ function Get-TrackedTestInventory {
 <#
 .SYNOPSIS
 Loads historical per-file test timings from JSON if available.
+
+.DESCRIPTION
+Uses a recorded duration when available so the sharder can estimate work before running tests.
 .PARAMETER Path
 Path to the timings JSON file.
 #>
@@ -309,6 +324,9 @@ function Get-HistoricalTestTiming {
 <#
 .SYNOPSIS
 Returns the shard object with the lowest cumulative estimated weight.
+
+.DESCRIPTION
+Compares the accumulated weights to choose the next shard to receive a file.
 .PARAMETER Shards
 Collection of shard partition objects with TotalWeight properties.
 #>
@@ -331,6 +349,9 @@ function Get-LightestTestShard {
 <#
 .SYNOPSIS
 Verifies that shard assignments cover every expected test file with zero omissions and zero duplicates.
+
+.DESCRIPTION
+Compares the flattened shard paths with the input inventory before any shard runs.
 .PARAMETER Shards
 Collection of shard partition objects.
 .PARAMETER ExpectedFiles
@@ -346,7 +367,7 @@ function Confirm-ShardInventory {
         [string[]]$ExpectedFiles
     )
 
-    $assigned = @($Shards | ForEach-Object { $_.Files })
+    $assigned = @($Shards | ForEach-Object -Process { $_.Files })
     $uniqueAssigned = @($assigned | Select-Object -Unique)
     if ($assigned.Count -ne $ExpectedFiles.Count -or $uniqueAssigned.Count -ne $ExpectedFiles.Count) {
         throw "Shard inventory verification failed: expected $($ExpectedFiles.Count) unique files, assigned=$($assigned.Count), unique=$($uniqueAssigned.Count)."
@@ -362,6 +383,9 @@ function Confirm-ShardInventory {
 <#
 .SYNOPSIS
 Partitions test files across shards using longest-processing-time-first balancing and verifies complete coverage.
+
+.DESCRIPTION
+Assigns the costliest files first so each is placed on the shard with the lowest current weight.
 .PARAMETER Files
 List of test file paths to partition.
 .PARAMETER Count
@@ -427,6 +451,9 @@ function Split-TestFilesIntoShard {
 <#
 .SYNOPSIS
 Gets or initializes a file coverage record within the JaCoCo package map.
+
+.DESCRIPTION
+Uses the relative file path as the lookup key when accumulating line and method coverage.
 .PARAMETER Packages
 Ordered dictionary mapping package names to file dictionaries.
 .PARAMETER RelativeFile
@@ -464,6 +491,9 @@ function Get-JaCoCoFileRecord {
 <#
 .SYNOPSIS
 Gets or initializes a method coverage record within a JaCoCo file record.
+
+.DESCRIPTION
+Creates a method entry on first use so subsequent command records can share the entry.
 .PARAMETER FileRecord
 Hashtable representing coverage metrics for a single source file.
 .PARAMETER FunctionName
@@ -502,6 +532,9 @@ function Get-JaCoCoMethodRecord {
 <#
 .SYNOPSIS
 Records a single merged command coverage entry into the JaCoCo package map.
+
+.DESCRIPTION
+Adds a command hit to the matching file and scope records used by the XML writer.
 .PARAMETER Packages
 Ordered dictionary mapping package names to file dictionaries.
 .PARAMETER CommandRecord
@@ -543,6 +576,9 @@ function Add-JaCoCoCommandRecord {
 <#
 .SYNOPSIS
 Groups merged command coverage records by JaCoCo package and file.
+
+.DESCRIPTION
+Builds package, file, and method records from the merged command hits before rendering coverage XML.
 .PARAMETER MergedCommands
 List of merged command coverage records.
 .PARAMETER ReportRoot
@@ -568,6 +604,9 @@ function ConvertTo-JaCoCoPackageMap {
 <#
 .SYNOPSIS
 Appends JaCoCo counter XML elements to a StringBuilder.
+
+.DESCRIPTION
+Writes hit and miss counts for the supplied counter type to the output XML.
 .PARAMETER Builder
 StringBuilder accumulating XML text.
 .PARAMETER Indent
@@ -597,6 +636,9 @@ function Add-JaCoCoCounterXml {
 <#
 .SYNOPSIS
 Appends a JaCoCo method XML element and returns whether the method was covered.
+
+.DESCRIPTION
+Writes the method and its counters, allowing callers to tally covered methods.
 .PARAMETER Builder
 StringBuilder accumulating XML text.
 .PARAMETER MethodName
@@ -619,7 +661,7 @@ function Add-JaCoCoMethodXml {
     )
 
     $escMeth = [System.Security.SecurityElement]::Escape($MethodName)
-    $mLineCov = @($MethodRecord.Lines.Values | Where-Object { $_ }).Count
+    $mLineCov = @($MethodRecord.Lines.Values | Where-Object -FilterScript { $_ }).Count
     $mLineMiss = $MethodRecord.Lines.Count - $mLineCov
     $mCovFlag = if ($MethodRecord.InstrCov -gt 0) { 1 } else { 0 }
     $mMissFlag = 1 - $mCovFlag
@@ -635,6 +677,9 @@ function Add-JaCoCoMethodXml {
 <#
 .SYNOPSIS
 Appends a JaCoCo class XML element and returns its aggregated coverage counters.
+
+.DESCRIPTION
+Writes methods under one class and returns the class totals for its package.
 .PARAMETER Builder
 StringBuilder accumulating XML text.
 .PARAMETER FileRecord
@@ -692,6 +737,9 @@ function Add-JaCoCoClassXml {
 <#
 .SYNOPSIS
 Appends a JaCoCo sourcefile XML element for a file coverage record.
+
+.DESCRIPTION
+Writes the source lines and their coverage counts for one file.
 .PARAMETER Builder
 StringBuilder accumulating XML text.
 .PARAMETER FileRecord
@@ -722,7 +770,7 @@ function Add-JaCoCoSourceFileXml {
         $null = $Builder.AppendLine("      <line nr=`"$lk`" mi=`"$($line.Miss)`" ci=`"$($line.Cov)`" mb=`"0`" cb=`"0`" />")
     }
 
-    $fMethCov = @($FileRecord.Methods.Values | Where-Object { $_.InstrCov -gt 0 }).Count
+    $fMethCov = @($FileRecord.Methods.Values | Where-Object -FilterScript { $_.InstrCov -gt 0 }).Count
     $fClassCov = if ($fInstrCov -gt 0) { 1 } else { 0 }
     $metrics = @{
         InstrCov  = $fInstrCov
@@ -741,6 +789,9 @@ function Add-JaCoCoSourceFileXml {
 <#
 .SYNOPSIS
 Appends a JaCoCo package XML element and returns its aggregated coverage counters.
+
+.DESCRIPTION
+Combines class and source-file XML with counters for the entire package.
 .PARAMETER Builder
 StringBuilder accumulating XML text.
 .PARAMETER PackageName
@@ -791,6 +842,9 @@ function Add-JaCoCoPackageXml {
 <#
 .SYNOPSIS
 Writes merged command-level coverage records into Pester-compatible JaCoCo XML.
+
+.DESCRIPTION
+Creates a single coverage report from merged command hits for downstream CI reporting.
 .PARAMETER MergedCommands
 List of merged command records with File, StartLine, Function, and HitCount.
 .PARAMETER ReportRoot
@@ -850,6 +904,9 @@ function Export-MergedJaCoCoXml {
 <#
 .SYNOPSIS
 Merges JUnit XML test result files from multiple shards into a single JUnit XML file.
+
+.DESCRIPTION
+Loads the shard result documents and writes a combined suite with aggregate counts.
 .PARAMETER InputFiles
 Paths to shard JUnit XML files.
 .PARAMETER OutputPath
@@ -922,6 +979,9 @@ function Merge-ShardJUnitXml {
 <#
 .SYNOPSIS
 Reads and validates a single shard coverage JSON file.
+
+.DESCRIPTION
+Loads the recorded commands and validates the coverage payload before merging hits.
 .PARAMETER FilePath
 Path to the shard coverage JSON file.
 #>
@@ -945,6 +1005,9 @@ function Read-ShardCoveragePayload {
 <#
 .SYNOPSIS
 Merges shard command hit records into the shared ordered coverage dictionary.
+
+.DESCRIPTION
+Updates the shared coverage map with the command keys and hit state from one shard.
 .PARAMETER Merged
 Ordered dictionary mapping command keys to merged coverage records.
 .PARAMETER Commands
@@ -982,6 +1045,9 @@ function Merge-ShardCommandCoverage {
 <#
 .SYNOPSIS
 Merges command-level coverage JSON files from multiple shards and verifies denominator integrity.
+
+.DESCRIPTION
+Combines shard command hits while checking that the merged command inventory matches the expected denominator.
 .PARAMETER InputFiles
 Paths to shard coverage JSON files.
 #>
@@ -1011,8 +1077,8 @@ function Merge-ShardCoverageData {
     }
 
     $allCommands = @($merged.Values)
-    $executed = @($allCommands | Where-Object { $_.HitCount -gt 0 })
-    $missed = @($allCommands | Where-Object { $_.HitCount -eq 0 })
+    $executed = @($allCommands | Where-Object -FilterScript { $_.HitCount -gt 0 })
+    $missed = @($allCommands | Where-Object -FilterScript { $_.HitCount -eq 0 })
     $percent = if ($allCommands.Count -eq 0) { 0.0 } else { ($executed.Count / $allCommands.Count) * 100.0 }
 
     return [pscustomobject]@{
@@ -1028,6 +1094,9 @@ function Merge-ShardCoverageData {
 <#
 .SYNOPSIS
 Executes a single Pester shard in the current process and emits summary, timing, JUnit, and command-level coverage files.
+
+.DESCRIPTION
+Runs the selected test files with the shard configuration and saves the artifacts consumed by the merge step.
 .PARAMETER AssignedFiles
 Array of test file paths assigned to this shard.
 .PARAMETER Root
@@ -1171,6 +1240,9 @@ function Invoke-LocalShardWorker {
 <#
 .SYNOPSIS
 Exports per-shard summary, JUnit XML, coverage JSON, timings JSON, and manifest JSON into a target directory.
+
+.DESCRIPTION
+Writes the shard outputs together with a manifest so the merge can verify the inventory.
 .PARAMETER SourceDir
 Temporary directory containing shard worker outputs.
 .PARAMETER DestinationDir
@@ -1214,7 +1286,7 @@ function Write-ShardArtifactBundle {
         }
     }
 
-    $relFiles = @($AssignedFiles | ForEach-Object { ConvertTo-RepoRelativePath -Path $_ -Root $Root })
+    $relFiles = @($AssignedFiles | ForEach-Object -Process { ConvertTo-RepoRelativePath -Path $_ -Root $Root })
     $manifest = [pscustomobject]@{
         ShardIndex = $ShardIndex
         ShardCount = $ShardCount
@@ -1226,6 +1298,9 @@ function Write-ShardArtifactBundle {
 <#
 .SYNOPSIS
 Loads shard artifact bundles from disk and confirms complete non-overlapping test inventory coverage.
+
+.DESCRIPTION
+Collects each shard report and checks for missing, duplicate, or overlapping shard data.
 .PARAMETER ArtifactsRoot
 Directory containing shard-0, shard-1, ... subdirectories.
 .PARAMETER ExpectedShardCount
@@ -1272,7 +1347,7 @@ function Read-ShardArtifactBundle {
         })
     }
 
-    $expectedRel = @($ExpectedFiles | ForEach-Object { ConvertTo-RepoRelativePath -Path $_ -Root $Root })
+    $expectedRel = @($ExpectedFiles | ForEach-Object -Process { ConvertTo-RepoRelativePath -Path $_ -Root $Root })
     Confirm-ShardInventory -Shards @($bundles) -ExpectedFiles $expectedRel
     return @($bundles)
 }
@@ -1280,6 +1355,9 @@ function Read-ShardArtifactBundle {
 <#
 .SYNOPSIS
 Merges per-file test timings JSON files from multiple shards into a single sorted JSON file.
+
+.DESCRIPTION
+Combines available timing records by test path and orders them before writing JSON.
 .PARAMETER InputFiles
 Paths to per-shard timings.json files.
 .PARAMETER OutputPath
@@ -1320,6 +1398,9 @@ function Merge-ShardTimingFile {
 <#
 .SYNOPSIS
 Validates merged coverage against the required threshold and writes JaCoCo XML.
+
+.DESCRIPTION
+Checks the merged coverage percentage before exporting the final coverage report.
 .PARAMETER CoverageFiles
 Paths to per-shard coverage-commands.json files.
 .PARAMETER Root
@@ -1370,6 +1451,9 @@ function Export-ValidatedMergedCoverage {
 <#
 .SYNOPSIS
 Merges matrix CI shard artifact bundles, verifying complete inventory, test pass status, and coverage threshold.
+
+.DESCRIPTION
+Coordinates validation of the CI bundles and emits merged test results and coverage.
 .PARAMETER ArtifactsRoot
 Directory containing shard-0, shard-1, ... subdirectories.
 .PARAMETER ExpectedShardCount
@@ -1515,7 +1599,7 @@ $overallSw = [System.Diagnostics.Stopwatch]::StartNew()
 
 $inventory = Get-TrackedTestInventory -Root $resolvedRoot
 $targetFiles = if ($TestFiles.Count -gt 0) {
-    @($TestFiles | ForEach-Object { (Resolve-Path -LiteralPath $_).Path } | Select-Object -Unique)
+    @($TestFiles | ForEach-Object -Process { (Resolve-Path -LiteralPath $_).Path } | Select-Object -Unique)
 } elseif ($IntegrationOnly) {
     @($inventory.IntegrationFiles)
 } elseif ($IncludeIntegration) {
@@ -1529,7 +1613,7 @@ if ($targetFiles.Count -eq 0) {
 }
 
 if (-not [string]::IsNullOrWhiteSpace($MergeShardArtifactsDirectory)) {
-    Write-Output "Merging $ShardCount shard artifact bundle(s) from '$MergeShardArtifactsDirectory' (expected files=$($targetFiles.Count))..."
+    Write-Output -InputObject "Merging $ShardCount shard artifact bundle(s) from '$MergeShardArtifactsDirectory' (expected files=$($targetFiles.Count))..."
     $null = Invoke-ShardArtifactMerge `
         -ArtifactsRoot $MergeShardArtifactsDirectory `
         -ExpectedShardCount $ShardCount `
@@ -1541,7 +1625,7 @@ if (-not [string]::IsNullOrWhiteSpace($MergeShardArtifactsDirectory)) {
         -CoverageThreshold $CoverageThreshold `
         -SkipCoverage:$SkipCoverage
     $overallSw.Stop()
-    Write-Output ("Shard artifact merge completed in {0:N2}s" -f $overallSw.Elapsed.TotalSeconds)
+    Write-Output -InputObject ("Shard artifact merge completed in {0:N2}s" -f $overallSw.Elapsed.TotalSeconds)
     return
 }
 
@@ -1553,7 +1637,7 @@ if ($Shuffle -and $effectiveSeed -eq 0) {
 $timingsMap = Get-HistoricalTestTiming -Path $TimingsPath
 $shards = Split-TestFilesIntoShard -Files $targetFiles -Count $ShardCount -Root $resolvedRoot -TimingsMap $timingsMap
 
-Write-Output "Test inventory: total tracked=$($inventory.AllFiles.Count) (unit=$($inventory.UnitFiles.Count), integration=$($inventory.IntegrationFiles.Count)); selected=$($targetFiles.Count); shards=$($shards.Count)"
+Write-Output -InputObject "Test inventory: total tracked=$($inventory.AllFiles.Count) (unit=$($inventory.UnitFiles.Count), integration=$($inventory.IntegrationFiles.Count)); selected=$($targetFiles.Count); shards=$($shards.Count)"
 if ($Shuffle) {
     $reproCmd = "pwsh -NoProfile -File ./scripts/Invoke-TestSuite.ps1 -Shuffle -Seed $effectiveSeed"
     if ($ShardCount -gt 1) {
@@ -1565,8 +1649,8 @@ if ($Shuffle) {
     if ($RunAllShardsInParallel) {
         $reproCmd += ' -RunAllShardsInParallel'
     }
-    Write-Output "Randomized order enabled with seed=$effectiveSeed"
-    Write-Output "Reproduce locally: $reproCmd"
+    Write-Output -InputObject "Randomized order enabled with seed=$effectiveSeed"
+    Write-Output -InputObject "Reproduce locally: $reproCmd"
 }
 
 $workRoot = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ("bw-testrun-" + [System.Guid]::NewGuid().ToString('N'))
@@ -1625,14 +1709,14 @@ try {
             $correctnessFailed = $true
         } else {
             $summary = Get-Content -LiteralPath (Join-Path -Path $shardDir -ChildPath 'summary.json') -Raw | ConvertFrom-Json
-            Write-Output ("Shard {0}: Result={1} Passed={2} Failed={3} Skipped={4} Files={5} Duration={6:N2}s" -f $ShardIndex, $summary.Result, $summary.PassedCount, $summary.FailedCount, $summary.SkippedCount, $summary.FilesExecuted, ($summary.DurationMs / 1000.0))
+            Write-Output -InputObject ("Shard {0}: Result={1} Passed={2} Failed={3} Skipped={4} Files={5} Duration={6:N2}s" -f $ShardIndex, $summary.Result, $summary.PassedCount, $summary.FailedCount, $summary.SkippedCount, $summary.FilesExecuted, ($summary.DurationMs / 1000.0))
             if ($summary.Result -ne 'Passed' -or $summary.FailedCount -gt 0) {
                 $correctnessFailed = $true
                 $failureReasons.Add("Shard $ShardIndex failed ($($summary.FailedCount) failed tests).")
             }
             if ($shouldEnforceCoverage -and $shards.Count -eq 1) {
                 $cov = Merge-ShardCoverageData -InputFiles @((Join-Path -Path $shardDir -ChildPath 'coverage-commands.json'))
-                Write-Output ("Coverage: {0:N2}% ({1}/{2} analyzed commands)" -f $cov.CoveragePercent, $cov.CommandsExecuted, $cov.CommandsAnalyzed)
+                Write-Output -InputObject ("Coverage: {0:N2}% ({1}/{2} analyzed commands)" -f $cov.CoveragePercent, $cov.CommandsExecuted, $cov.CommandsAnalyzed)
                 if ($cov.CoveragePercent -lt $CoverageThreshold) {
                     $correctnessFailed = $true
                     $failureReasons.Add(("Coverage {0:N2}% is below required {1:N2}%." -f $cov.CoveragePercent, $CoverageThreshold))
@@ -1643,7 +1727,7 @@ try {
         $pwshExe = (Get-Process -Id $PID).Path
         $workerLimit = if ($Workers -gt 0) { $Workers } else { [Environment]::ProcessorCount }
         $workerLimit = [Math]::Max(1, [Math]::Min($workerLimit, $shards.Count))
-        Write-Output "Running $($shards.Count) process-isolated shards with up to $workerLimit concurrent worker(s)..."
+        Write-Output -InputObject "Running $($shards.Count) process-isolated shards with up to $workerLimit concurrent worker(s)..."
 
         $pending = [System.Collections.Generic.Queue[object]]::new()
         foreach ($s in $shards) { $pending.Enqueue($s) }
@@ -1738,14 +1822,14 @@ try {
                 $totalFailed += [int]$summary.FailedCount
                 $totalSkipped += [int]$summary.SkippedCount
                 $totalNotRun += [int]$summary.NotRunCount
-                Write-Output ("Shard {0}: Result={1} Passed={2} Failed={3} Skipped={4} Files={5} Duration={6:N2}s" -f $entry.Shard.Index, $summary.Result, $summary.PassedCount, $summary.FailedCount, $summary.SkippedCount, $summary.FilesExecuted, ($summary.DurationMs / 1000.0))
+                Write-Output -InputObject ("Shard {0}: Result={1} Passed={2} Failed={3} Skipped={4} Files={5} Duration={6:N2}s" -f $entry.Shard.Index, $summary.Result, $summary.PassedCount, $summary.FailedCount, $summary.SkippedCount, $summary.FilesExecuted, ($summary.DurationMs / 1000.0))
             }
 
             if ($exitCode -ne 0 -or ($null -eq $summary) -or $summary.Result -ne 'Passed' -or $summary.FailedCount -gt 0) {
                 $correctnessFailed = $true
                 $failureReasons.Add("Shard $($entry.Shard.Index) failed with exit code $exitCode.")
-                if (-not [string]::IsNullOrWhiteSpace($stdout)) { Write-Output $stdout }
-                if (-not [string]::IsNullOrWhiteSpace($stderr)) { Write-Output $stderr }
+                if (-not [string]::IsNullOrWhiteSpace($stdout)) { Write-Output -InputObject $stdout }
+                if (-not [string]::IsNullOrWhiteSpace($stderr)) { Write-Output -InputObject $stderr }
             }
 
             $jFile = Join-Path -Path $entry.Dir -ChildPath 'junit.xml'
@@ -1761,7 +1845,7 @@ try {
             }
         }
 
-        Write-Output "Merged tests: Passed=$totalPassed Failed=$totalFailed Skipped=$totalSkipped NotRun=$totalNotRun"
+        Write-Output -InputObject "Merged tests: Passed=$totalPassed Failed=$totalFailed Skipped=$totalSkipped NotRun=$totalNotRun"
 
         if ($junitFiles.Count -eq $shards.Count) {
             Merge-ShardJUnitXml -InputFiles @($junitFiles) -OutputPath $TestResultOutputPath
@@ -1790,12 +1874,12 @@ try {
                     -ReportRoot $resolvedRoot `
                     -OutputPath $CoverageOutputPath `
                     -ElapsedMilliseconds $overallSw.ElapsedMilliseconds
-                Write-Output ("Merged coverage: {0:N2}% ({1}/{2} analyzed commands)" -f $cov.CoveragePercent, $cov.CommandsExecuted, $cov.CommandsAnalyzed)
+                Write-Output -InputObject ("Merged coverage: {0:N2}% ({1}/{2} analyzed commands)" -f $cov.CoveragePercent, $cov.CommandsExecuted, $cov.CommandsAnalyzed)
                 if ($cov.CoveragePercent -lt $CoverageThreshold) {
                     $correctnessFailed = $true
                     $failureReasons.Add(("Merged coverage {0:N2}% is below required {1:N2}% ({2} missed commands)." -f $cov.CoveragePercent, $CoverageThreshold, $cov.CommandsMissed))
                     foreach ($mc in ($cov.MissedCommands | Select-Object -First 20)) {
-                        Write-Output "  MISSED: $($mc.File):$($mc.StartLine) ($($mc.Function)) $($mc.Command)"
+                        Write-Output -InputObject "  MISSED: $($mc.File):$($mc.StartLine) ($($mc.Function)) $($mc.Command)"
                     }
                 }
             }
@@ -1809,7 +1893,7 @@ try {
 
 $overallSw.Stop()
 $elapsedSeconds = [Math]::Round($overallSw.Elapsed.TotalSeconds, 2)
-Write-Output "Test suite completed in ${elapsedSeconds}s"
+Write-Output -InputObject "Test suite completed in ${elapsedSeconds}s"
 
 if ($correctnessFailed) {
     $detail = $failureReasons -join '; '

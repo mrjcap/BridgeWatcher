@@ -20,17 +20,20 @@ param(
     [string]$Path
 )
 
+<#
+.SYNOPSIS
+Wraps the long CommonParameters paragraph emitted by platyPS.
+
+.DESCRIPTION
+Splits the generated common-parameter text at the expected documentation boundary.
+
+.PARAMETER Line
+One Markdown line outside a code fence.
+
+.PARAMETER Newline
+The line ending used by the file.
+#>
 function Format-PlatyPSCommonParameterLine {
-    <#
-    .SYNOPSIS
-    Wraps the long CommonParameters paragraph emitted by platyPS.
-
-    .PARAMETER Line
-    One Markdown line outside a code fence.
-
-    .PARAMETER Newline
-    The line ending used by the file.
-    #>
     [CmdletBinding()]
     [OutputType([string])]
     param(
@@ -46,17 +49,20 @@ function Format-PlatyPSCommonParameterLine {
     return $wrapped.Replace(', and -WarningVariable', ",${Newline}and -WarningVariable")
 }
 
+<#
+.SYNOPSIS
+Parses a Markdown code fence line.
+
+.DESCRIPTION
+Returns the delimiter of a fence marker so the formatter can track where code blocks begin and end.
+
+.PARAMETER Line
+One Markdown line.
+
+.OUTPUTS
+An object with the fence character, its length and any info string, or $null when the line is not a fence.
+#>
 function Get-PlatyPSFenceMarker {
-    <#
-    .SYNOPSIS
-    Parses a Markdown code fence line.
-
-    .PARAMETER Line
-    One Markdown line.
-
-    .OUTPUTS
-    An object with the fence character, its length and any info string, or $null when the line is not a fence.
-    #>
     [CmdletBinding()]
     [OutputType([pscustomobject])]
     param(
@@ -74,17 +80,20 @@ function Get-PlatyPSFenceMarker {
     }
 }
 
+<#
+.SYNOPSIS
+Reports whether a line is an untagged backtick fence in a section that holds PowerShell.
+
+.DESCRIPTION
+Distinguishes a plain backtick fence from an already tagged fence before adding a language label.
+
+.PARAMETER Line
+One Markdown line.
+
+.PARAMETER Section
+The most recent level-two heading.
+#>
 function Test-PlatyPSBareCodeFence {
-    <#
-    .SYNOPSIS
-    Reports whether a line is an untagged backtick fence in a section that holds PowerShell.
-
-    .PARAMETER Line
-    One Markdown line.
-
-    .PARAMETER Section
-    The most recent level-two heading.
-    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param(
@@ -95,20 +104,23 @@ function Test-PlatyPSBareCodeFence {
     return $Line -eq '```' -and $Section -in @('## SYNTAX', '## EXAMPLES')
 }
 
+<#
+.SYNOPSIS
+Returns the fence that is open after a line has been read.
+
+.DESCRIPTION
+Updates the open-fence state while preserving fences with a different delimiter.
+
+.PARAMETER Marker
+The marker parsed from the line, or $null when the line is not a fence.
+
+.PARAMETER Open
+The marker that opened the current fence, or $null outside a fence.
+
+.OUTPUTS
+The open fence marker, or $null when no fence is open.
+#>
 function Step-PlatyPSFence {
-    <#
-    .SYNOPSIS
-    Returns the fence that is open after a line has been read.
-
-    .PARAMETER Marker
-    The marker parsed from the line, or $null when the line is not a fence.
-
-    .PARAMETER Open
-    The marker that opened the current fence, or $null outside a fence.
-
-    .OUTPUTS
-    The open fence marker, or $null when no fence is open.
-    #>
     [CmdletBinding()]
     [OutputType([pscustomobject])]
     param(
@@ -128,14 +140,17 @@ function Step-PlatyPSFence {
     return $Open
 }
 
-function Format-PlatyPSMarkdownContent {
-    <#
-    .SYNOPSIS
-    Applies the platyPS formatting fixes to one document.
+<#
+.SYNOPSIS
+Applies the platyPS formatting fixes to one document.
 
-    .PARAMETER Content
-    The full Markdown text.
-    #>
+.DESCRIPTION
+Tracks section headings and open fences while formatting generated help text.
+
+.PARAMETER Content
+The full Markdown text.
+#>
+function Format-PlatyPSMarkdownContent {
     [CmdletBinding()]
     [OutputType([string])]
     param(
@@ -165,14 +180,17 @@ function Format-PlatyPSMarkdownContent {
     return $lines -join $newline
 }
 
-function Invoke-PlatyPSMarkdownFormat {
-    <#
-    .SYNOPSIS
-    Formats every Markdown file under a path and returns the files that changed.
+<#
+.SYNOPSIS
+Formats every Markdown file under a path and returns the files that changed.
 
-    .PARAMETER Path
-    Directory containing Markdown files, or a single Markdown file.
-    #>
+.DESCRIPTION
+Reads each generated Markdown document and writes back only the ones affected by formatting.
+
+.PARAMETER Path
+Directory containing Markdown files, or a single Markdown file.
+#>
+function Invoke-PlatyPSMarkdownFormat {
     [CmdletBinding()]
     [OutputType([string[]])]
     param(
@@ -212,5 +230,5 @@ if ([string]::IsNullOrWhiteSpace($Path)) {
 
 $rewritten = Invoke-PlatyPSMarkdownFormat -Path $Path
 foreach ($name in $rewritten) {
-    Write-Output "Formatted $name"
+    Write-Output -InputObject "Formatted $name"
 }

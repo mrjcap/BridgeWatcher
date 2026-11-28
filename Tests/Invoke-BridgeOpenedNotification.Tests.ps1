@@ -1,10 +1,10 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 
 
-Describe 'Invoke-BridgeOpenedNotification' {
+Describe -Name 'Invoke-BridgeOpenedNotification' -Fixture {
 
-    BeforeAll {
+    BeforeAll -Scriptblock {
 
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
@@ -19,11 +19,11 @@ Describe 'Invoke-BridgeOpenedNotification' {
         $script:Config = New-BridgeConfiguration
     }
 
-    Context 'Όταν η γέφυρα είναι ανοιχτή' {
+    Context -Name 'Όταν η γέφυρα είναι ανοιχτή' -Fixture {
 
 
 
-        It 'Εκτελεί custom NotificationProvider αντί για Send-BridgePushover' {
+        It -Name 'Εκτελεί custom NotificationProvider αντί για Send-BridgePushover' -Test {
 
             $providerCalled = $false
 
@@ -51,13 +51,13 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
             Invoke-BridgeOpenedNotification @params -Configuration $script:Config
 
-            $script:providerCalled | Should -Be $true
+            $script:providerCalled | Should -Be -ExpectedValue $true
 
         }
 
 
 
-        It 'Στέλνει Pushover ειδοποίηση και γράφει log' {
+        It -Name 'Στέλνει Pushover ειδοποίηση και γράφει log' -Test {
 
             Mock -CommandName Send-BridgePushover -MockWith { }
 
@@ -87,7 +87,7 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
 
 
-        It 'Γράφει error log και ρίχνει terminating error όταν αποτυγχάνει η αποστολή Pushover' {
+        It -Name 'Γράφει error log και ρίχνει terminating error όταν αποτυγχάνει η αποστολή Pushover' -Test {
 
             Mock -CommandName Send-BridgePushover -MockWith { throw [System.Net.WebException]::new('Pushover API failure') }
 
@@ -109,7 +109,7 @@ Describe 'Invoke-BridgeOpenedNotification' {
 
 
 
-            { Invoke-BridgeOpenedNotification @params -Configuration $script:Config } | Should -Throw '*Αποτυχία αποστολής ειδοποίησης ανοίγματος*'
+            { Invoke-BridgeOpenedNotification @params -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Αποτυχία αποστολής ειδοποίησης ανοίγματος*'
 
             Should -Invoke -CommandName Write-BridgeLog -Times 2 -Exactly -Scope It
 

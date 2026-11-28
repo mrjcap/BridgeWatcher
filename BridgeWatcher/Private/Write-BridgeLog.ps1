@@ -1,21 +1,21 @@
-﻿function Remove-BridgeExpiredLogFile {
-    <#
-    .SYNOPSIS
-    Διαγράφει ημερήσια αρχεία καταγραφής BridgeWatcher παλαιότερα από το όριο διατήρησης.
+﻿<#
+.SYNOPSIS
+Διαγράφει ημερήσια αρχεία καταγραφής BridgeWatcher παλαιότερα από το όριο διατήρησης.
 
-    .DESCRIPTION
-    Αναζητά αρχεία με πρότυπο BridgeWatcher-*.log στον φάκελο καταγραφής και διαγράφει
-    όσα έχουν LastWriteTime παλαιότερο από τον καθορισμένο αριθμό ημερών διατήρησης.
+.DESCRIPTION
+Αναζητά αρχεία με πρότυπο BridgeWatcher-*.log στον φάκελο καταγραφής και διαγράφει
+όσα έχουν LastWriteTime παλαιότερο από τον καθορισμένο αριθμό ημερών διατήρησης.
 
-    .PARAMETER LogDirectory
-    Ο φάκελος αποθήκευσης των αρχείων καταγραφής.
+.PARAMETER LogDirectory
+Ο φάκελος αποθήκευσης των αρχείων καταγραφής.
 
-    .PARAMETER RetentionDays
-    Ο αριθμός ημερών διατήρησης των αρχείων καταγραφής (προεπιλογή: 7).
+.PARAMETER RetentionDays
+Ο αριθμός ημερών διατήρησης των αρχείων καταγραφής (προεπιλογή: 7).
 
-    .OUTPUTS
-    None.
-    #>
+.OUTPUTS
+None.
+#>
+function Remove-BridgeExpiredLogFile {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '',
         Justification = 'Εσωτερική βοηθητική συνάρτηση αυτόματου καθαρισμού ληγμένων αρχείων καταγραφής.')]
     [CmdletBinding()]
@@ -27,40 +27,40 @@
 
     $cutoff = (Get-Date).AddDays(-$RetentionDays)
     Get-ChildItem -Path $LogDirectory -Filter 'BridgeWatcher-*.log' -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.LastWriteTime -lt $cutoff } |
+        Where-Object -FilterScript { $_.LastWriteTime -lt $cutoff } |
         Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
+<#
+.SYNOPSIS
+Καταγράφει μηνύματα λειτουργίας του συστήματος.
+
+.DESCRIPTION
+Η Write-BridgeLog γράφει μηνύματα με κατάλληλη κατηγοριοποίηση
+(Verbose, Debug, Warning) και αποθηκεύει σε ημερήσια αρχεία καταγραφής.
+
+.PARAMETER Stage
+The operation stage (Ανάλυση, Απόφαση, Ειδοποίηση, Σφάλμα).
+
+.PARAMETER Message
+Το μήνυμα που θα καταγραφεί.
+
+.PARAMETER Level
+Το επίπεδο λογιστικού μηνύματος (Verbose, Debug, Warning).
+
+.PARAMETER Configuration
+Το configuration object που περιέχει τις ρυθμίσεις.
+
+.OUTPUTS
+None.
+
+.EXAMPLE
+Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 'Verbose'
+
+.NOTES
+Δημιουργεί log directory αν δεν υπάρχει και καταγράφει ημερήσια αρχεία.
+#>
 function Write-BridgeLog {
-    <#
-    .SYNOPSIS
-    Καταγράφει μηνύματα λειτουργίας του συστήματος.
-
-    .DESCRIPTION
-    Η Write-BridgeLog γράφει μηνύματα με κατάλληλη κατηγοριοποίηση
-    (Verbose, Debug, Warning) και αποθηκεύει σε ημερήσια αρχεία καταγραφής.
-
-    .PARAMETER Stage
-    The operation stage (Ανάλυση, Απόφαση, Ειδοποίηση, Σφάλμα).
-
-    .PARAMETER Message
-    Το μήνυμα που θα καταγραφεί.
-
-    .PARAMETER Level
-    Το επίπεδο λογιστικού μηνύματος (Verbose, Debug, Warning).
-
-    .PARAMETER Configuration
-    Το configuration object που περιέχει τις ρυθμίσεις.
-
-    .OUTPUTS
-    None.
-
-    .EXAMPLE
-    Write-BridgeLog -Stage 'Ανάλυση' -Message 'Έλεγχος OCR...' -Level 'Verbose'
-
-    .NOTES
-    Δημιουργεί log directory αν δεν υπάρχει και καταγράφει ημερήσια αρχεία.
-    #>
     [CmdletBinding()]
     [OutputType([void])]
     param (
@@ -76,12 +76,12 @@ function Write-BridgeLog {
     $prefix = "[Bridge:$Stage]"
     $output = "$prefix $Message"
     switch ($Level) {
-        'Verbose' { Write-Verbose $output }
-        'Debug' { Write-Debug $output }
-        'Warning' { Write-Warning $output }
+        'Verbose' { Write-Verbose -Message $output }
+        'Debug' { Write-Debug -Message $output }
+        'Warning' { Write-Warning -Message $output }
     }
     $logDir = $Configuration.Defaults.LogDirectory
-    if (-not (Test-Path $logDir)) {
+    if (-not (Test-Path -Path $logDir)) {
         $newItemSplat = @{
             Path     = $logDir
             ItemType = 'Directory'
@@ -113,7 +113,7 @@ function Write-BridgeLog {
         Add-Content @addContentSplat
     }
     catch {
-        Write-Warning "Failed to write to log file '$logPath': $($_.Exception.Message)"
+        Write-Warning -Message "Failed to write to log file '$logPath': $($_.Exception.Message)"
         $PSCmdlet.ThrowTerminatingError($_)
     }
 

@@ -1,17 +1,17 @@
-﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
-$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1, *.psm1 | ForEach-Object {
+﻿$script:ModulePath = Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\BridgeWatcher")
+$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1, *.psm1 | ForEach-Object -Process {
     [PSCustomObject]@{
         Name     = $_.Name
         FullName = $_.FullName
     }
 }
 
-BeforeAll {
+BeforeAll -Scriptblock {
 }
 
-Describe "Object-Oriented Over-Engineering Prohibition Review" {
-    Context "PowerShell Types and Embedded C# Definitions" {
-        It "Should not define PowerShell classes or enums in <Name>" -ForEach $script:Files {
+Describe -Name "Object-Oriented Over-Engineering Prohibition Review" -Fixture {
+    Context -Name "PowerShell Types and Embedded C# Definitions" -Fixture {
+        It -Name "Should not define PowerShell classes or enums in <Name>" -ForEach $script:Files -Test {
             $file = $_
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
 
@@ -25,10 +25,10 @@ Describe "Object-Oriented Over-Engineering Prohibition Review" {
                 throw "File $($file.Name) contains forbidden TypeDefinitionAst (class/enum): $types"
             }
 
-            $oopNodes.Count | Should -Be 0
+            $oopNodes.Count | Should -Be -ExpectedValue 0
         }
 
-        It "Should not contain C# class/struct/enum definitions via Add-Type -TypeDefinition in <Name>" -ForEach $script:Files {
+        It -Name "Should not contain C# class/struct/enum definitions via Add-Type -TypeDefinition in <Name>" -ForEach $script:Files -Test {
             $file = $_
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
 
@@ -66,7 +66,7 @@ Describe "Object-Oriented Over-Engineering Prohibition Review" {
                 throw "File $($file.Name) contains forbidden Add-Type -TypeDefinition block"
             }
 
-            $violatingCmds.Count | Should -Be 0
+            $violatingCmds.Count | Should -Be -ExpectedValue 0
         }
     }
 }

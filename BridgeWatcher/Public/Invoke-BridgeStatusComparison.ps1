@@ -62,7 +62,7 @@ function Get-BridgeRawComparisonDiff {
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
     if ($PreviousStateArray.Count -eq 0) {
-        return @($CurrentStateArray | ForEach-Object {
+        return @($CurrentStateArray | ForEach-Object -Process {
             [PSCustomObject]@{
                 GefyraName    = $_.GefyraName
                 GefyraStatus  = $_.GefyraStatus
@@ -129,8 +129,8 @@ function Test-BridgeChangeIsActionable {
         Level = 'Verbose'
         Stage = 'Ανάλυση'
     }
-    $prevBridge = $PreviousStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
-    $currentBridge = $CurrentStateArray | Where-Object { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
+    $prevBridge = $PreviousStateArray | Where-Object -FilterScript { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
+    $currentBridge = $CurrentStateArray | Where-Object -FilterScript { $_.GefyraName -eq $Change.GefyraName } | Select-Object -First 1
     $ocrProps = @('ScheduleState', 'From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2', 'ImageHash', 'FallbackNotifiedImageHash')
 
     if ($Change.SideIndicator -eq '==') {
@@ -211,7 +211,7 @@ function Test-BridgeScheduledOpening {
         try {
             $zone = [TimeZoneInfo]::FindSystemTimeZoneById($id)
         } catch {
-            Write-Verbose "Cannot resolve configured time zone '$id': $_"
+            Write-Verbose -Message "Cannot resolve configured time zone '$id': $_"
             continue
         }
         if ($zone.IsInvalidTime($end)) {
@@ -280,8 +280,8 @@ function Invoke-BridgeStatusComparison {
         [hashtable]$DeferredOpenings = @{}
     )
     try {
-        $previousStateArray = @($PreviousState | Where-Object { $null -ne $_ })
-        $currentStateArray = @($CurrentState | Where-Object { $null -ne $_ })
+        $previousStateArray = @($PreviousState | Where-Object -FilterScript { $null -ne $_ })
+        $currentStateArray = @($CurrentState | Where-Object -FilterScript { $null -ne $_ })
 
         $diffEvents = @()
         $diff = Get-BridgeRawComparisonDiff -PreviousStateArray $previousStateArray -CurrentStateArray $currentStateArray -Configuration $Configuration

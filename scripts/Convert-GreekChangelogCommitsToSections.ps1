@@ -115,12 +115,12 @@ $sections = @{
 foreach ($msg in $Commits) {
     $matched = $false
     $cleanMsg = $msg -replace '^[\p{So}\p{Cn}\p{Cs}\p{Cf}]+\s*', ''
-    Write-Verbose "Processing commit: $cleanMsg (original: $msg)"
+    Write-Verbose -Message "Processing commit: $cleanMsg (original: $msg)"
 
     foreach ($section in $patterns.Keys) {
         foreach ($pat in $patterns[$section]) {
             if ($cleanMsg.ToLower() -match $pat) {
-                Write-Verbose "  Matched pattern '$pat' in section '$section'"
+                Write-Verbose -Message "  Matched pattern '$pat' in section '$section'"
                 $sections[$section] += $msg
                 $matched = $true
                 break
@@ -129,7 +129,7 @@ foreach ($msg in $Commits) {
         if ($matched) { break }
     }
     if (-not $matched) {
-        Write-Verbose "  No match found, adding to 'other'"
+        Write-Verbose -Message "  No match found, adding to 'other'"
         $sections['other'] += $msg
     }
 }

@@ -133,11 +133,20 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+<#
+.SYNOPSIS
+Writes the boolean update status to the optional flag file.
+
+.DESCRIPTION
+Writes the result only when a caller provides a path for the status flag.
+
+.PARAMETER Path
+The path to the file the helper reads or writes.
+
+.PARAMETER Updated
+True when the changelog was updated.
+#>
 function Write-ChangelogUpdatedFlag {
-    <#
-    .SYNOPSIS
-    Writes the boolean update status to the optional flag file.
-    #>
     param(
         [string]$Path,
         [bool]$Updated
@@ -149,11 +158,17 @@ function Write-ChangelogUpdatedFlag {
     }
 }
 
+<#
+.SYNOPSIS
+Ensures CHANGELOG.md exists and contains the standard Greek Keep-a-Changelog header.
+
+.DESCRIPTION
+Creates the initial Greek changelog only when the destination does not exist.
+
+.PARAMETER Path
+The path to the file the helper reads or writes.
+#>
 function Initialize-ChangelogFile {
-    <#
-    .SYNOPSIS
-    Ensures CHANGELOG.md exists and contains the standard Greek Keep-a-Changelog header.
-    #>
     param(
         [Parameter(Mandatory)]
         [string]$Path
@@ -161,12 +176,12 @@ function Initialize-ChangelogFile {
 
     $needsInit = $false
     if (-not (Test-Path -Path $Path)) {
-        Write-Verbose 'Creating new CHANGELOG.md file'
+        Write-Verbose -Message 'Creating new CHANGELOG.md file'
         $needsInit = $true
     } else {
         $raw = Get-Content -Path $Path -Raw -ErrorAction SilentlyContinue
         if ([string]::IsNullOrWhiteSpace($raw) -or $raw.Length -lt 100) {
-            Write-Verbose 'CHANGELOG.md is empty or shorter than 100 chars; initializing header'
+            Write-Verbose -Message 'CHANGELOG.md is empty or shorter than 100 chars; initializing header'
             $needsInit = $true
         }
     }
@@ -185,11 +200,20 @@ function Initialize-ChangelogFile {
     }
 }
 
+<#
+.SYNOPSIS
+Wraps a single Markdown list line to at most MaxLen characters preserving indentation.
+
+.DESCRIPTION
+Breaks a line at word boundaries while retaining the indentation on continuation lines.
+
+.PARAMETER Line
+The text to wrap.
+
+.PARAMETER MaxLen
+The maximum width of an output line.
+#>
 function Format-WrapLine {
-    <#
-    .SYNOPSIS
-    Wraps a single Markdown list line to at most MaxLen characters preserving indentation.
-    #>
     param(
         [string]$Line,
         [int]$MaxLen = 120
@@ -220,11 +244,17 @@ function Format-WrapLine {
     return ($chunks -join "`n")
 }
 
+<#
+.SYNOPSIS
+Formats a single commit item into wrapped Markdown bullet lines.
+
+.DESCRIPTION
+Formats the commit heading and its details as wrapped lines in the release section.
+
+.PARAMETER Item
+The commit record to format.
+#>
 function Format-ChangelogSectionItem {
-    <#
-    .SYNOPSIS
-    Formats a single commit item into wrapped Markdown bullet lines.
-    #>
     param(
         [Parameter(Mandatory)]
         [string]$Item
@@ -246,11 +276,20 @@ function Format-ChangelogSectionItem {
     return (($wrappedLines -join "`n") + "`n")
 }
 
+<#
+.SYNOPSIS
+Builds the Markdown entry block for the target release version.
+
+.DESCRIPTION
+Renders the release heading followed by the available changelog sections.
+
+.PARAMETER TargetVersion
+The version being processed.
+
+.PARAMETER SectionData
+The changelog entries grouped by section.
+#>
 function Format-ChangelogVersionEntry {
-    <#
-    .SYNOPSIS
-    Builds the Markdown entry block for the target release version.
-    #>
     param(
         [Parameter(Mandatory)]
         [string]$TargetVersion,
@@ -265,7 +304,7 @@ function Format-ChangelogVersionEntry {
     foreach ($section in $SectionData) {
         $items = @()
         if ($section['Items']) {
-            $items = @($section['Items'] | Where-Object { $_ -and $_.Trim() -ne '' })
+            $items = @($section['Items'] | Where-Object -FilterScript { $_ -and $_.Trim() -ne '' })
         }
         if ($items.Count -eq 0) {
             continue
@@ -280,11 +319,17 @@ function Format-ChangelogVersionEntry {
     return ($entry + "`n")
 }
 
+<#
+.SYNOPSIS
+Splits existing CHANGELOG.md content into header (including Unreleased) and body.
+
+.DESCRIPTION
+Keeps the heading and Unreleased section apart from published versions when updating releases.
+
+.PARAMETER Content
+The source text to inspect.
+#>
 function Get-ChangelogHeaderAndBody {
-    <#
-    .SYNOPSIS
-    Splits existing CHANGELOG.md content into header (including Unreleased) and body.
-    #>
     param(
         [Parameter(Mandatory)]
         [AllowEmptyString()]
@@ -314,7 +359,7 @@ Initialize-ChangelogFile -Path $ChangelogPath
 
 $existingChangelog = Get-Content -Path $ChangelogPath -Raw -ErrorAction SilentlyContinue
 if ($existingChangelog -and $existingChangelog -match "## \[$([regex]::Escape($Version))\]") {
-    Write-Warning "Version [$Version] already exists in changelog. Skipping update."
+    Write-Warning -Message "Version [$Version] already exists in changelog. Skipping update."
     Write-ChangelogUpdatedFlag -Path $UpdatedFlagPath -Updated $false
     return
 }
@@ -325,7 +370,7 @@ $hasProvidedSections = [bool](
 )
 
 if ($hasProvidedSections) {
-    Write-Verbose 'Using provided changelog sections'
+    Write-Verbose -Message 'Using provided changelog sections'
 } else {
     $commitArgs = @{
         To                  = 'HEAD'
@@ -338,14 +383,14 @@ if ($hasProvidedSections) {
         $commitArgs['IncludeMergeCommits'] = $true
     }
 
-    $commits = @(& (Join-Path $PSScriptRoot 'Get-GitCommitsSinceLastRelease.ps1') @commitArgs | Where-Object { $null -ne $_ })
+    $commits = @(& (Join-Path -Path $PSScriptRoot -ChildPath 'Get-GitCommitsSinceLastRelease.ps1') @commitArgs | Where-Object -FilterScript { $null -ne $_ })
     if ($commits.Count -eq 0) {
-        Write-Warning 'No new commits found.'
+        Write-Warning -Message 'No new commits found.'
         Write-ChangelogUpdatedFlag -Path $UpdatedFlagPath -Updated $false
         return
     }
 
-    $sections = & (Join-Path $PSScriptRoot 'Convert-GreekChangelogCommitsToSections.ps1') -Commits $commits
+    $sections = & (Join-Path -Path $PSScriptRoot -ChildPath 'Convert-GreekChangelogCommitsToSections.ps1') -Commits $commits
     $Feat = $sections.feat
     $Fix = $sections.fix
     $Refactor = $sections.refactor
@@ -380,4 +425,4 @@ $newEntry = Format-ChangelogVersionEntry -TargetVersion $Version -SectionData $s
 $finalChangelog = ("$($parts['Header'])$newEntry$($parts['Body'])").TrimEnd("`r", "`n") + "`n"
 Set-Content -Path $ChangelogPath -Value $finalChangelog -Encoding utf8BOM -NoNewline
 Write-ChangelogUpdatedFlag -Path $UpdatedFlagPath -Updated $true
-Write-Verbose "CHANGELOG.md updated for version $Version"
+Write-Verbose -Message "CHANGELOG.md updated for version $Version"

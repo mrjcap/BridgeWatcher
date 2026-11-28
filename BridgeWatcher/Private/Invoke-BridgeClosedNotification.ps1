@@ -132,7 +132,7 @@ function Invoke-BridgeScheduledClosureNotification {
             Level   = 'Warning'
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Notification.Configuration
-        Write-Warning "OCR failed for $($entryImageUrl): $($_.Exception.Message)"
+        Write-Warning -Message "OCR failed for $($entryImageUrl): $($_.Exception.Message)"
         if ($failedHash -and $failedHash -eq $notifiedHash) { return }
         $fallback = @{
             Title   = "🚧 Η γέφυρα $($entry.GefyraName) έκλεισε με πρόγραμμα"
@@ -280,7 +280,7 @@ function Invoke-BridgeClosedNotification {
 
     end {
         if ($ocrFailed) {
-            Write-Warning 'One or more bridge notifications failed during OCR.'
+            Write-Warning -Message 'One or more bridge notifications failed during OCR.'
         }
     }
 }

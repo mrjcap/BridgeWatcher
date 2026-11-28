@@ -1,14 +1,20 @@
-﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "../../BridgeWatcher")
-$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1 | Where-Object {
+﻿$script:ModulePath = Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath "../../BridgeWatcher")
+$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1 | Where-Object -FilterScript {
     $_.FullName -match '[\\/](Public|Private)[\\/]'
 }
 
-BeforeAll {
+BeforeAll -Scriptblock {
+    <#
+    .SYNOPSIS
+    Checks if a variable reference is on the left-hand side of an assignment.
+
+    .DESCRIPTION
+    Distinguishes a write to a variable from a read of its value.
+
+    .PARAMETER ref
+    The variable reference to classify.
+    #>
     function Test-IsAssignmentLeft($ref) {
-        <#
-        .SYNOPSIS
-        Checks if a variable reference is on the left-hand side of an assignment.
-        #>
         $p = $ref.Parent
         while ($p) {
             if ($p -is [System.Management.Automation.Language.AssignmentStatementAst]) {
@@ -21,11 +27,20 @@ BeforeAll {
         return $false
     }
 
+    <#
+    .SYNOPSIS
+    Finds the nearest ancestor AST node matching any of the given types.
+
+    .DESCRIPTION
+    Walks parent links from the supplied node and returns the first matching ancestor.
+
+    .PARAMETER node
+    The AST node to inspect or use as the starting point of the search.
+
+    .PARAMETER types
+    The AST types that can match an ancestor.
+    #>
     function Find-ParentAstOfType($node, [type[]]$types) {
-        <#
-        .SYNOPSIS
-        Finds the nearest ancestor AST node matching any of the given types.
-        #>
         $parent = $node.Parent
         while ($parent) {
             foreach ($t in $types) {
@@ -36,11 +51,23 @@ BeforeAll {
         return $null
     }
 
+    <#
+    .SYNOPSIS
+    Checks if a variable is read lexically after the try-catch block.
+
+    .DESCRIPTION
+    Looks for a read after the try statement within the supplied scope, excluding assignments.
+
+    .PARAMETER varName
+    The name of the variable being checked.
+
+    .PARAMETER tryAst
+    The try statement after which to look for reads.
+
+    .PARAMETER enclosingScope
+    The AST scope that limits the search.
+    #>
     function Test-VariableReadAfterTry($varName, $tryAst, $enclosingScope) {
-        <#
-        .SYNOPSIS
-        Checks if a variable is read lexically after the try-catch block.
-        #>
         $allRefs = $enclosingScope.FindAll({
             param($n)
             $n -is [System.Management.Automation.Language.VariableExpressionAst] -and
@@ -49,26 +76,35 @@ BeforeAll {
 
         foreach ($ref in $allRefs) {
             $isAfter = $ref.Extent.StartOffset -gt $tryAst.Extent.EndOffset
-            if ($isAfter -and -not (Test-IsAssignmentLeft $ref)) {
+            if ($isAfter -and -not (Test-IsAssignmentLeft -ref $ref)) {
                 return $true
             }
         }
         return $false
     }
 
+    <#
+    .SYNOPSIS
+    Checks if a catch block sets a failure state variable read after the try block.
+
+    .DESCRIPTION
+    Looks for assignments in the catch block whose values are read after the enclosing try statement.
+
+    .PARAMETER catchBlock
+    The catch clause to inspect.
+
+    .PARAMETER ast
+    The parsed source containing the catch clause.
+    #>
     function Test-CatchSetsFailureVariable($catchBlock, $ast) {
-        <#
-        .SYNOPSIS
-        Checks if a catch block sets a failure state variable read after the try block.
-        #>
-        $tryAst = Find-ParentAstOfType $catchBlock @([System.Management.Automation.Language.TryStatementAst])
+        $tryAst = Find-ParentAstOfType -node $catchBlock -types @([System.Management.Automation.Language.TryStatementAst])
         if (-not $tryAst) { return $false }
 
         $scopeTypes = @(
             [System.Management.Automation.Language.FunctionDefinitionAst],
             [System.Management.Automation.Language.ScriptBlockAst]
         )
-        $enclosingScope = Find-ParentAstOfType $catchBlock $scopeTypes
+        $enclosingScope = Find-ParentAstOfType -node $catchBlock -types $scopeTypes
         if (-not $enclosingScope) { $enclosingScope = $ast }
 
         $ignorePattern = '(?i)(splat|log|errorRecord|errorMessage|title|message|^null$|^true$|^false$|^_$|^args$|^this$|^input$)'
@@ -85,11 +121,20 @@ BeforeAll {
         return $false
     }
 
+    <#
+    .SYNOPSIS
+    Checks if a catch block complies with Section 6 of AGENTS.md.
+
+    .DESCRIPTION
+    Checks whether the catch block propagates an error or records a failure state that later code reads.
+
+    .PARAMETER catchBlock
+    The catch clause to inspect.
+
+    .PARAMETER ast
+    The parsed source containing the catch clause.
+    #>
     function Test-CatchBlockCompliance($catchBlock, $ast) {
-        <#
-        .SYNOPSIS
-        Checks if a catch block complies with Section 6 of AGENTS.md.
-        #>
         $controlFlowTypes = @(
             [System.Management.Automation.Language.ThrowStatementAst],
             [System.Management.Automation.Language.ReturnStatementAst],
@@ -113,20 +158,20 @@ BeforeAll {
         }, $true)
         if ($hasThrowTerminating) { return $true }
 
-        return (Test-CatchSetsFailureVariable $catchBlock $ast)
+        return (Test-CatchSetsFailureVariable -catchBlock $catchBlock -ast $ast)
     }
 }
 
-Describe "Silent Failure / Catch-and-Log-Only Review" {
-    Context "PowerShell Try/Catch Error Handling Rules" {
-        It "Should not have catch blocks that only log and continue in <Name>" -ForEach $script:Files {
+Describe -Name "Silent Failure / Catch-and-Log-Only Review" -Fixture {
+    Context -Name "PowerShell Try/Catch Error Handling Rules" -Fixture {
+        It -Name "Should not have catch blocks that only log and continue in <Name>" -ForEach $script:Files -Test {
             $file = $_
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
             $catchBlocks = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.CatchClauseAst] }, $true)
 
             $violations = @()
             foreach ($cb in $catchBlocks) {
-                if (-not (Test-CatchBlockCompliance $cb $ast)) {
+                if (-not (Test-CatchBlockCompliance -catchBlock $cb -ast $ast)) {
                     $violations += "Line $($cb.Extent.StartLineNumber): $(($cb.Extent.Text -replace '`r?`n', ' '))"
                 }
             }
@@ -136,7 +181,7 @@ Describe "Silent Failure / Catch-and-Log-Only Review" {
                 throw "File $($file.Name) contains silent failure catch blocks:`n$msg"
             }
 
-            $violations.Count | Should -Be 0
+            $violations.Count | Should -Be -ExpectedValue 0
         }
     }
 }

@@ -23,18 +23,18 @@ param(
     [string]$Path = './CHANGELOG.md'
 )
 
-if (-not (Test-Path $Path)) {
-    Write-Warning "CHANGELOG.md not found at $Path"
+if (-not (Test-Path -Path $Path)) {
+    Write-Warning -Message "CHANGELOG.md not found at $Path"
     return "Release $Version"
 }
 
 $normalizedVersion = $Version -replace '^v', ''
 
-$changelog = Get-Content $Path -Raw
+$changelog = Get-Content -Path $Path -Raw
 
 $sectionPattern = "(## \[$normalizedVersion\][^\r\n]*\r?\n(?:.*?\r?\n)*?)(?=\r?\n## |\Z)"
 if ($changelog -notmatch $sectionPattern) {
-    Write-Warning "No changelog entry found for '$Version'"
+    Write-Warning -Message "No changelog entry found for '$Version'"
     return "Release $Version"
 }
 

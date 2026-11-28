@@ -48,18 +48,24 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+<#
+.SYNOPSIS
+Εντοπίζει το προηγούμενο semver tag πριν από την έκδοση-στόχο.
+
+.DESCRIPTION
+Βρίσκει την προηγούμενη ετικέτα έκδοσης που προηγείται της ζητούμενης έκδοσης.
+
+.PARAMETER TargetVersion
+The version being processed.
+#>
 function Get-PreviousReleaseTag {
-    <#
-    .SYNOPSIS
-    Εντοπίζει το προηγούμενο semver tag πριν από την έκδοση-στόχο.
-    #>
     param(
         [Parameter(Mandatory)]
         [string]$TargetVersion
     )
 
     $tagOutput = @(git tag --sort=version:refname 2>$null)
-    $tags = @($tagOutput | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' })
+    $tags = @($tagOutput | Where-Object -FilterScript { $_ -match '^v\d+\.\d+\.\d+$' })
     if ($tags.Count -eq 0) {
         return $null
     }
@@ -83,14 +89,14 @@ if ([string]::IsNullOrWhiteSpace($ChangelogPath)) {
 $manageScriptPath = Join-Path -Path $PSScriptRoot -ChildPath 'Manage-Changelog.ps1'
 if (-not (Test-Path -Path $manageScriptPath)) {
     Set-Content -Path $UpdatedFlagPath -Value 'false' -Encoding utf8
-    Write-Error "Required script not found: $manageScriptPath"
+    Write-Error -Message "Required script not found: $manageScriptPath"
     exit 1
 }
 
 try {
     $previousTag = Get-PreviousReleaseTag -TargetVersion $Version
     $previousLabel = if ($previousTag) { $previousTag } else { 'None' }
-    Write-Verbose "Previous tag: $previousLabel | Target version: v$Version"
+    Write-Verbose -Message "Previous tag: $previousLabel | Target version: v$Version"
 
     $manageSplat = @{
         Version         = $Version
@@ -108,6 +114,6 @@ try {
     & $manageScriptPath @manageSplat
 } catch {
     Set-Content -Path $UpdatedFlagPath -Value 'false' -Encoding utf8
-    Write-Error "Failed to update changelog: $_"
+    Write-Error -Message "Failed to update changelog: $_"
     exit 1
 }

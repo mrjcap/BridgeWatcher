@@ -1,7 +1,7 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'Test Get-BridgeStatus function' {
-    BeforeAll {
+Describe -Name 'Test Get-BridgeStatus function' -Fixture {
+    BeforeAll -Scriptblock {
 
         . "$PSScriptRoot/TestHelper.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
@@ -11,35 +11,35 @@ Describe 'Test Get-BridgeStatus function' {
         . "$PSScriptRoot/../BridgeWatcher/Public/Get-BridgeStatus.ps1"
         $script:Config = New-BridgeConfiguration
 
-        Mock Export-BridgeStatusJson {
+        Mock -CommandName Export-BridgeStatusJson -MockWith {
     }
-        Mock Write-Warning {}
+        Mock -CommandName Write-Warning -MockWith {}
     }
 
-    Context 'Επιτυχής ανάκτηση HTML και αποθήκευση JSON' {
-        It 'Πρέπει να καλείται Export-BridgeStatusJson με τα σωστά params' {
+    Context -Name 'Επιτυχής ανάκτηση HTML και αποθήκευση JSON' -Fixture {
+        It -Name 'Πρέπει να καλείται Export-BridgeStatusJson με τα σωστά params' -Test {
             $OutputFile = 'C:\mock\path\to\output.json'
             $timestamp = Get-Date -Format o
 
-            Mock Invoke-WebRequest {
+            Mock -CommandName Invoke-WebRequest -MockWith {
                 return [pscustomobject]@{ Content = '<html></html>' }
             }
-            Mock Get-BridgeStatusFromHtml {
+            Mock -CommandName Get-BridgeStatusFromHtml -MockWith {
                 return @(
                     [pscustomobject]@{Location = 'Isthmia'; Status = 'Ανοιχτή'; Timestamp = $timestamp; ImageSrc = 'image1.jpg'; BaseUrl = 'http://localhost' }
                 )
             }
-            Mock Export-BridgeStatusJson {
+            Mock -CommandName Export-BridgeStatusJson -MockWith {
                 New-BridgeResult -Success $true
             }
-            Mock Write-Warning { }
+            Mock -CommandName Write-Warning -MockWith { }
 
             $result = Get-BridgeStatus -OutputFile $OutputFile -Configuration $script:Config
 
             $result | Should -Not -BeNullOrEmpty
-            $result.Count | Should -Be 1
-            $result[0].Location | Should -Be 'Isthmia'
-            $result[0].Status | Should -Be 'Ανοιχτή'
+            $result.Count | Should -Be -ExpectedValue 1
+            $result[0].Location | Should -Be -ExpectedValue 'Isthmia'
+            $result[0].Status | Should -Be -ExpectedValue 'Ανοιχτή'
 
             Should -Invoke -CommandName Invoke-WebRequest -Times 1 -Exactly -Scope It -ParameterFilter {
                 $TimeoutSec -eq $script:Config.Defaults.HttpRequestTimeout
@@ -49,36 +49,36 @@ Describe 'Test Get-BridgeStatus function' {
         }
     }
 
-    Context 'Αποτυχία ανάκτησης HTML' {
-        It 'Πρέπει να ρίχνει terminating error όταν το Invoke-WebRequest αποτυγχάνει' {
-            Mock Invoke-WebRequest { throw 'Σφάλμα δικτύου' }
-            Mock Start-Sleep {}
+    Context -Name 'Αποτυχία ανάκτησης HTML' -Fixture {
+        It -Name 'Πρέπει να ρίχνει terminating error όταν το Invoke-WebRequest αποτυγχάνει' -Test {
+            Mock -CommandName Invoke-WebRequest -MockWith { throw 'Σφάλμα δικτύου' }
+            Mock -CommandName Start-Sleep -MockWith {}
             { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*Σφάλμα δικτύου*"
             Should -Invoke -CommandName Invoke-WebRequest -Times 3 -Exactly -Scope It
             Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
         }
-        It 'Πρέπει να ρίχνει terminating error όταν το response είναι κενό' {
-            Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $null } }
+        It -Name 'Πρέπει να ρίχνει terminating error όταν το response είναι κενό' -Test {
+            Mock -CommandName Invoke-WebRequest -MockWith { return [pscustomobject]@{ Content = $null } }
             { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*The argument is null or empty*"
         }
     }
 
-    Context 'Get-BridgeStatusFromHtml επιστρέφει κενό' {
-        It 'Πρέπει να ρίχνει terminating error όταν δεν υπάρχει διαθέσιμο status για αποθήκευση' {
-            Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html></html>' } }
-            Mock Get-BridgeStatusFromHtml { return @() }
+    Context -Name 'Get-BridgeStatusFromHtml επιστρέφει κενό' -Fixture {
+        It -Name 'Πρέπει να ρίχνει terminating error όταν δεν υπάρχει διαθέσιμο status για αποθήκευση' -Test {
+            Mock -CommandName Invoke-WebRequest -MockWith { return [pscustomobject]@{ Content = '<html></html>' } }
+            Mock -CommandName Get-BridgeStatusFromHtml -MockWith { return @() }
 
             { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*Δεν βρέθηκαν γέφυρες στο HTML περιεχόμενο*"
         }
     }
 
-    Context 'Σφάλμα κατά την αποθήκευση JSON' {
-        It 'Πρέπει να ρίχνει terminating error όταν η αποθήκευση JSON αποτύχει' {
-            Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html></html>' } }
-            Mock Get-BridgeStatusFromHtml {
+    Context -Name 'Σφάλμα κατά την αποθήκευση JSON' -Fixture {
+        It -Name 'Πρέπει να ρίχνει terminating error όταν η αποθήκευση JSON αποτύχει' -Test {
+            Mock -CommandName Invoke-WebRequest -MockWith { return [pscustomobject]@{ Content = '<html></html>' } }
+            Mock -CommandName Get-BridgeStatusFromHtml -MockWith {
                 return @( [pscustomobject]@{ Status = 'Open'; Location = 'Isthmia' } )
             }
-            Mock Export-BridgeStatusJson {
+            Mock -CommandName Export-BridgeStatusJson -MockWith {
                 return New-BridgeResult -Success $false -ErrorMessage "Error during saving" -ErrorCode 'JSON_EXPORT_FAILURE'
             }
 
@@ -87,8 +87,8 @@ Describe 'Test Get-BridgeStatus function' {
     }
 }
 
-Describe 'Get-BridgeStatus Integration' {
-    BeforeAll {
+Describe -Name 'Get-BridgeStatus Integration' -Fixture {
+    BeforeAll -Scriptblock {
 
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -101,7 +101,7 @@ Describe 'Get-BridgeStatus Integration' {
         $script:Config = New-BridgeConfiguration
     }
 
-    It 'Επιστρέφει σωστά αποτελέσματα για Ποσειδωνία και Ισθμία από mocked HTML' {
+    It -Name 'Επιστρέφει σωστά αποτελέσματα για Ποσειδωνία και Ισθμία από mocked HTML' -Test {
         $mockHtml = @'
 <div class="panel panel-primary ">
         <h4><b>ΠΟΣΕΙΔΩΝΊΑ</b></h4>
@@ -126,25 +126,25 @@ Describe 'Get-BridgeStatus Integration' {
             return [pscustomobject]@{ Content = $mockHtml }
         }
         $result = Get-BridgeStatus -Configuration $script:Config
-        $result.Count | Should -Be 2
+        $result.Count | Should -Be -ExpectedValue 2
 
         if ($result[0].GefyraName -eq 'Ποσειδωνία') {
-            $result[0].GefyraName | Should -Be 'Ποσειδωνία'
-            $result[0].GefyraStatus | Should -Be 'Κλειστή με πρόγραμμα'
+            $result[0].GefyraName | Should -Be -ExpectedValue 'Ποσειδωνία'
+            $result[0].GefyraStatus | Should -Be -ExpectedValue 'Κλειστή με πρόγραμμα'
         }
     }
 
-    It 'Ρίχνει σφάλμα όταν το html δεν περιέχει καμία γέφυρα' {
+    It -Name 'Ρίχνει σφάλμα όταν το html δεν περιέχει καμία γέφυρα' -Test {
         $html = @'
     <div class="panel panel-primary">
     <div class="panel-heading"><b>ΑΛΛΗΓΕΦΥΡΑ</b></div>
     </div>
 '@
-        Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $html } }
-        { Get-BridgeStatus -Configuration $script:Config } | Should -Throw "*Δεν βρέθηκε block*"
+        Mock -CommandName Invoke-WebRequest -MockWith { return [pscustomobject]@{ Content = $html } }
+        { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*Δεν βρέθηκε block*"
     }
 
-    It 'Ρίχνει σφάλμα PARSING_ERROR όταν η μία γέφυρα δεν έχει έγκυρη εικόνα κατάστασης (partial scrape)' {
+    It -Name 'Ρίχνει σφάλμα PARSING_ERROR όταν η μία γέφυρα δεν έχει έγκυρη εικόνα κατάστασης (partial scrape)' -Test {
         $partialHtml = @'
 <div class="panel panel-primary ">
         <h4><b>ΠΟΣΕΙΔΩΝΊΑ</b></h4>
@@ -166,13 +166,13 @@ Describe 'Get-BridgeStatus Integration' {
     </div>
 </div>
 '@
-        Mock Invoke-WebRequest { return [pscustomobject]@{ Content = $partialHtml } }
+        Mock -CommandName Invoke-WebRequest -MockWith { return [pscustomobject]@{ Content = $partialHtml } }
         { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ErrorId '*PARSING_ERROR*'
     }
 }
 
-Describe 'Get-BridgeStatus Configuration Fallbacks' {
-    BeforeAll {
+Describe -Name 'Get-BridgeStatus Configuration Fallbacks' -Fixture {
+    BeforeAll -Scriptblock {
         . "$PSScriptRoot/TestHelper.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -183,15 +183,15 @@ Describe 'Get-BridgeStatus Configuration Fallbacks' {
 
 
 
-    It 'Χρησιμοποιεί σωστό configuration όταν περνιέται ρητά' {
-        Mock Invoke-WebRequest { return [pscustomobject]@{ Content = '<html>test</html>' } }
-        Mock Get-BridgeStatusFromHtml {
+    It -Name 'Χρησιμοποιεί σωστό configuration όταν περνιέται ρητά' -Test {
+        Mock -CommandName Invoke-WebRequest -MockWith { return [pscustomobject]@{ Content = '<html>test</html>' } }
+        Mock -CommandName Get-BridgeStatusFromHtml -MockWith {
             return @( [pscustomobject]@{ Status = 'Open'; Location = 'Isthmia' } )
         }
-        Mock Export-BridgeStatusJson {
+        Mock -CommandName Export-BridgeStatusJson -MockWith {
             return New-BridgeResult -Success $true
         }
-        Mock Write-BridgeLog { }
+        Mock -CommandName Write-BridgeLog -MockWith { }
 
         $config = New-BridgeConfiguration
         { Get-BridgeStatus -Configuration $config -OutputFile 'test.json' } | Should -Not -Throw

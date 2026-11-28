@@ -1,12 +1,18 @@
 ﻿$script:BridgeImageBytesByUrl = @{}
 
+<#
+.SYNOPSIS
+Λήψη δεδομένων εικόνας.
+.DESCRIPTION
+Κατεβάζει την εικόνα και επιστρέφει τα bytes της.
+
+.PARAMETER Url
+Η διεύθυνση της εικόνας προς λήψη.
+
+.PARAMETER TimeoutSec
+Το χρονικό όριο της λήψης σε δευτερόλεπτα.
+#>
 function Get-BridgeImageBuffer {
-    <#
-    .SYNOPSIS
-    Λήψη δεδομένων εικόνας.
-    .DESCRIPTION
-    Κατεβάζει την εικόνα και επιστρέφει τα bytes της.
-    #>
     [CmdletBinding()]
     param(
         [string]$Url,
@@ -26,25 +32,25 @@ function Get-BridgeImageBuffer {
     }
 }
 
+<#
+.SYNOPSIS
+Ανακτά τα bytes εικόνας από τη μνήμη cache ή μέσω HTTP.
+
+.DESCRIPTION
+Η Get-BridgeCachedImageBytes επιστρέφει τα αποθηκευμένα bytes από το
+$script:BridgeImageBytesByUrl αν υπάρχουν και δεν είναι κενά, διαφορετικά
+καλεί την Get-BridgeImageBuffer για λήψη τους.
+
+.PARAMETER Url
+Το πλήρες URL της εικόνας προς ανάκτηση.
+
+.PARAMETER TimeoutSec
+Το χρονικό όριο αναμονής HTTP σε δευτερόλεπτα.
+
+.OUTPUTS
+[byte[]]
+#>
 function Get-BridgeCachedImageBytes {
-    <#
-    .SYNOPSIS
-    Ανακτά τα bytes εικόνας από τη μνήμη cache ή μέσω HTTP.
-
-    .DESCRIPTION
-    Η Get-BridgeCachedImageBytes επιστρέφει τα αποθηκευμένα bytes από το
-    $script:BridgeImageBytesByUrl αν υπάρχουν και δεν είναι κενά, διαφορετικά
-    καλεί την Get-BridgeImageBuffer για λήψη τους.
-
-    .PARAMETER Url
-    Το πλήρες URL της εικόνας προς ανάκτηση.
-
-    .PARAMETER TimeoutSec
-    Το χρονικό όριο αναμονής HTTP σε δευτερόλεπτα.
-
-    .OUTPUTS
-    [byte[]]
-    #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification = 'Returns raw image byte array from cache or HTTP')]
     [CmdletBinding()]
     [OutputType([byte[]])]
@@ -61,39 +67,42 @@ function Get-BridgeCachedImageBytes {
     return [byte[]](Get-BridgeImageBuffer -Url $Url -TimeoutSec $TimeoutSec)
 }
 
+<#
+.SYNOPSIS
+Δημιουργεί αντικείμενο κατάστασης γέφυρας.
+
+.DESCRIPTION
+Η Get-BridgeStatusObject δημιουργεί structured αντικείμενο που περιέχει
+όνομα γέφυρας, κατάσταση, χρονική σφραγίδα και URL εικόνας.
+
+.PARAMETER Location
+Το αναγνωριστικό της γέφυρας ('poseidonia' ή 'isthmia').
+
+.PARAMETER Status
+Η κατάσταση της γέφυρας ('Ανοιχτή', 'Κλειστή', 'Άγνωστη').
+
+.PARAMETER Timestamp
+Η χρονική στιγμή καταγραφής.
+
+.PARAMETER ImageSrc
+Το URL ή το σχετικό path της εικόνας.
+
+.PARAMETER BaseUrl
+Το base URL για συμπλήρωση εικόνων (προεπιλογή https://www.topvision.gr/dioriga/).
+
+.OUTPUTS
+Αντικείμενο κατάστασης.
+
+.EXAMPLE
+Get-BridgeStatusObject -Location 'poseidonia' -Status 'Closed' -Timestamp (Get-Date) -ImageSrc 'bridge1.jpg'
+
+.NOTES
+Επιστρέφει πάντα πλήρες αντικείμενο με σωστά πεδία.
+
+.PARAMETER Configuration
+Η διαμόρφωση της BridgeWatcher που χρησιμοποιεί η συνάρτηση.
+#>
 function Get-BridgeStatusObject {
-    <#
-    .SYNOPSIS
-    Δημιουργεί αντικείμενο κατάστασης γέφυρας.
-
-    .DESCRIPTION
-    Η Get-BridgeStatusObject δημιουργεί structured αντικείμενο που περιέχει
-    όνομα γέφυρας, κατάσταση, χρονική σφραγίδα και URL εικόνας.
-
-    .PARAMETER Location
-    Το αναγνωριστικό της γέφυρας ('poseidonia' ή 'isthmia').
-
-    .PARAMETER Status
-    Η κατάσταση της γέφυρας ('Ανοιχτή', 'Κλειστή', 'Άγνωστη').
-
-    .PARAMETER Timestamp
-    Η χρονική στιγμή καταγραφής.
-
-    .PARAMETER ImageSrc
-    Το URL ή το σχετικό path της εικόνας.
-
-    .PARAMETER BaseUrl
-    Το base URL για συμπλήρωση εικόνων (προεπιλογή https://www.topvision.gr/dioriga/).
-
-    .OUTPUTS
-    Αντικείμενο κατάστασης.
-
-    .EXAMPLE
-    Get-BridgeStatusObject -Location 'poseidonia' -Status 'Closed' -Timestamp (Get-Date) -ImageSrc 'bridge1.jpg'
-
-    .NOTES
-    Επιστρέφει πάντα πλήρες αντικείμενο με σωστά πεδία.
-    #>
     [CmdletBinding()]
     [OutputType([pscustomobject])]
     param (

@@ -1,21 +1,21 @@
-﻿function Get-BridgeHttpExceptionInfo {
-    <#
-    .SYNOPSIS
-    Εξάγει την απόκριση HTTP και αν το σφάλμα είναι μη ανακτήσιμο.
+﻿<#
+.SYNOPSIS
+Εξάγει την απόκριση HTTP και αν το σφάλμα είναι μη ανακτήσιμο.
 
-    .DESCRIPTION
-    Ανακτά με ασφάλεια την ιδιότητα Response μιας εξαίρεσης υπό strict mode
-    και ελέγχει αν ο κωδικός κατάστασης HTTP ανήκει στους μη ανακτήσιμους κωδικούς.
+.DESCRIPTION
+Ανακτά με ασφάλεια την ιδιότητα Response μιας εξαίρεσης υπό strict mode
+και ελέγχει αν ο κωδικός κατάστασης HTTP ανήκει στους μη ανακτήσιμους κωδικούς.
 
-    .PARAMETER Exception
-    Το αντικείμενο εξαίρεσης προς εξέταση.
+.PARAMETER Exception
+Το αντικείμενο εξαίρεσης προς εξέταση.
 
-    .PARAMETER FatalStatusCodes
-    Οι κωδικοί κατάστασης HTTP στους οποίους δεν γίνεται επανάληψη.
+.PARAMETER FatalStatusCodes
+Οι κωδικοί κατάστασης HTTP στους οποίους δεν γίνεται επανάληψη.
 
-    .OUTPUTS
-    [PSCustomObject]
-    #>
+.OUTPUTS
+[PSCustomObject]
+#>
+function Get-BridgeHttpExceptionInfo {
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     param (

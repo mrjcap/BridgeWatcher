@@ -1,5 +1,5 @@
-﻿BeforeAll {
-    $script:ModuleRoot = Join-Path $PSScriptRoot '../BridgeWatcher'
+﻿BeforeAll -Scriptblock {
+    $script:ModuleRoot = Join-Path -Path $PSScriptRoot -ChildPath '../BridgeWatcher'
     foreach ($relativePath in @(
         'Private/New-BridgeConfiguration.ps1'
         'Private/Get-BridgeOptionalProperty.ps1'
@@ -17,14 +17,14 @@
         'Public/Invoke-BridgeStatusComparison.ps1'
         'Public/Update-BridgeStatus.ps1'
     )) {
-        . (Join-Path $script:ModuleRoot $relativePath)
+        . (Join-Path -Path $script:ModuleRoot -ChildPath $relativePath)
     }
 }
 
-Describe 'Status update with an unavailable schedule image' {
-    It 'Notifies the healthy bridge and keeps the other bridge schedule until its image recovers' {
-        $config = New-BridgeConfiguration -LogDirectory (Join-Path $TestDrive 'logs')
-        $path = Join-Path $TestDrive 'status.json'
+Describe -Name 'Status update with an unavailable schedule image' -Fixture {
+    It -Name 'Notifies the healthy bridge and keeps the other bridge schedule until its image recovers' -Test {
+        $config = New-BridgeConfiguration -LogDirectory (Join-Path -Path $TestDrive -ChildPath 'logs')
+        $path = Join-Path -Path $TestDrive -ChildPath 'status.json'
         $previous = @(
             [pscustomobject]@{
                 GefyraName = $config.BridgeNames.poseidonia
@@ -41,9 +41,9 @@ Describe 'Status update with an unavailable schedule image' {
                 To = '12/11/2026 12:00'
             }
         )
-        Mock Write-BridgeLog { }
+        Mock -CommandName Write-BridgeLog -MockWith { }
         $null = Export-BridgeStatusJson -Data $previous -Path $path -Configuration $config -Confirm:$false
-        Mock Invoke-WebRequest {
+        Mock -CommandName Invoke-WebRequest -MockWith {
             param($Uri)
             if ($Uri -like '*image-bridge*') {
                 throw [System.Net.WebException]::new('404: schedule image missing')
@@ -53,35 +53,35 @@ Describe 'Status update with an unavailable schedule image' {
 <div class="panel-primary"><h2>Ισθμία</h2><img src="image-bridge-open-with-schedule-isthmia.php?2"></div>
 '@ }
         }
-        Mock Invoke-BridgeOpenedNotification { }
-        Mock Invoke-BridgeClosedNotification { }
+        Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
+        Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
         $null = Update-BridgeStatus -OutputFile $path -ApiKey 'test' -PoUserKey 'test' -PoApiKey 'test' -Configuration $config -Confirm:$false
 
-        Should -Invoke Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 1 -Exactly -ParameterFilter {
             $CurrentState[0].GefyraName -eq $config.BridgeNames.poseidonia
         }
-        Should -Not -Invoke Invoke-BridgeClosedNotification
+        Should -Not -Invoke -CommandName Invoke-BridgeClosedNotification
         $saved = @(Get-BridgePreviousStatus -InputFile $path -Configuration $config)
-        ($saved | Where-Object GefyraName -EQ $config.BridgeNames.poseidonia).GefyraStatus | Should -Be $config.Statuses.Open
-        $scheduled = $saved | Where-Object GefyraName -EQ $config.BridgeNames.isthmia
-        $scheduled.ImageHash | Should -Be 'previous-verified-hash'
-        $scheduled.From | Should -Be '12/11/2026 10:00'
-        $scheduled.To | Should -Be '12/11/2026 12:00'
+        ($saved | Where-Object -Property GefyraName -EQ -Value $config.BridgeNames.poseidonia).GefyraStatus | Should -Be -ExpectedValue $config.Statuses.Open
+        $scheduled = $saved | Where-Object -Property GefyraName -EQ -Value $config.BridgeNames.isthmia
+        $scheduled.ImageHash | Should -Be -ExpectedValue 'previous-verified-hash'
+        $scheduled.From | Should -Be -ExpectedValue '12/11/2026 10:00'
+        $scheduled.To | Should -Be -ExpectedValue '12/11/2026 12:00'
 
-        Mock Get-BridgeImageBuffer { return ,([byte[]](1, 2, 3, 4)) }
+        Mock -CommandName Get-BridgeImageBuffer -MockWith { return ,([byte[]](1, 2, 3, 4)) }
         $null = Update-BridgeStatus -OutputFile $path -ApiKey 'test' -PoUserKey 'test' -PoApiKey 'test' -Configuration $config -Confirm:$false
         $null = Update-BridgeStatus -OutputFile $path -ApiKey 'test' -PoUserKey 'test' -PoApiKey 'test' -Configuration $config -Confirm:$false
-        Should -Invoke Invoke-BridgeClosedNotification -Times 1 -Exactly
-        $recovered = Get-BridgePreviousStatus -InputFile $path -Configuration $config | Where-Object GefyraName -EQ $config.BridgeNames.isthmia
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1 -Exactly
+        $recovered = Get-BridgePreviousStatus -InputFile $path -Configuration $config | Where-Object -Property GefyraName -EQ -Value $config.BridgeNames.isthmia
         $recovered.ImageHash | Should -Not -BeNullOrEmpty
-        $recovered.ImageHash | Should -Not -Be 'previous-verified-hash'
+        $recovered.ImageHash | Should -Not -Be -ExpectedValue 'previous-verified-hash'
     }
 
-    Context 'Outages without a previously verified image' {
-        BeforeEach {
-            $script:Config = New-BridgeConfiguration -LogDirectory (Join-Path $TestDrive 'logs')
-            $script:Path = Join-Path $TestDrive 'status.json'
+    Context -Name 'Outages without a previously verified image' -Fixture {
+        BeforeEach -Scriptblock {
+            $script:Config = New-BridgeConfiguration -LogDirectory (Join-Path -Path $TestDrive -ChildPath 'logs')
+            $script:Path = Join-Path -Path $TestDrive -ChildPath 'status.json'
             $script:ScheduleSuffix = '?1'
             $script:ImageAvailable = $false
             $script:Previous = foreach ($location in @('poseidonia', 'isthmia')) {
@@ -92,20 +92,20 @@ Describe 'Status update with an unavailable schedule image' {
                     ImageHash = $null
                 }
             }
-            Mock Write-BridgeLog { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
             $null = Export-BridgeStatusJson -Data $script:Previous -Path $script:Path -Configuration $script:Config -Confirm:$false
-            Mock Invoke-WebRequest {
+            Mock -CommandName Invoke-WebRequest -MockWith {
                 [pscustomobject]@{ Content = @"
 <div class="panel-primary"><h2>Ποσειδωνία</h2><img src="image-bridge-open-no-schedule.php?1"></div>
 <div class="panel-primary"><h2>Ισθμία</h2><img src="image-bridge-open-with-schedule-isthmia.php$script:ScheduleSuffix"></div>
 "@ }
             }
-            Mock Get-BridgeImageBuffer {
+            Mock -CommandName Get-BridgeImageBuffer -MockWith {
                 if (-not $script:ImageAvailable) { throw 'Synthetic HTTP404' }
                 return ,([byte[]](1, 2, 3, 4))
             }
-            Mock Invoke-BridgeClosedNotification { }
-            Mock Invoke-BridgeOpenedNotification { }
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
             $script:Update = @{
                 OutputFile = $script:Path
                 Configuration = $script:Config
@@ -116,33 +116,33 @@ Describe 'Status update with an unavailable schedule image' {
             }
         }
 
-        It 'Does not replay a missing-image alert on rotating URLs (cold start: <ColdStart>)' -TestCases @(
+        It -Name 'Does not replay a missing-image alert on rotating URLs (cold start: <ColdStart>)' -TestCases @(
             @{ ColdStart = $false }
             @{ ColdStart = $true }
-        ) {
+        ) -Test {
             param([bool]$ColdStart)
             if ($ColdStart) { Remove-Item -LiteralPath $script:Path -Confirm:$false }
             foreach ($poll in 1..3) {
                 $script:ScheduleSuffix = "?$poll"
                 $null = Update-BridgeStatus @script:Update
             }
-            Should -Invoke Invoke-BridgeClosedNotification -Times 1 -Exactly
-            $saved = Get-BridgePreviousStatus -InputFile $script:Path -Configuration $script:Config | Where-Object GefyraName -EQ $script:Config.BridgeNames.isthmia
+            Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 1 -Exactly
+            $saved = Get-BridgePreviousStatus -InputFile $script:Path -Configuration $script:Config | Where-Object -Property GefyraName -EQ -Value $script:Config.BridgeNames.isthmia
             $saved.ImageHash | Should -BeNullOrEmpty
         }
 
-        It 'Notifies once when the image recovers at the unchanged URL suffix <Suffix>' -TestCases @(
+        It -Name 'Notifies once when the image recovers at the unchanged URL suffix <Suffix>' -TestCases @(
             @{ Suffix = '' }
             @{ Suffix = '?1' }
-        ) {
+        ) -Test {
             param([string]$Suffix)
             $script:ScheduleSuffix = $Suffix
             $null = Update-BridgeStatus @script:Update
             $script:ImageAvailable = $true
             $null = Update-BridgeStatus @script:Update
             $null = Update-BridgeStatus @script:Update
-            Should -Invoke Invoke-BridgeClosedNotification -Times 2 -Exactly
-            $saved = Get-BridgePreviousStatus -InputFile $script:Path -Configuration $script:Config | Where-Object GefyraName -EQ $script:Config.BridgeNames.isthmia
+            Should -Invoke -CommandName Invoke-BridgeClosedNotification -Times 2 -Exactly
+            $saved = Get-BridgePreviousStatus -InputFile $script:Path -Configuration $script:Config | Where-Object -Property GefyraName -EQ -Value $script:Config.BridgeNames.isthmia
             $saved.ImageHash | Should -Not -BeNullOrEmpty
         }
     }

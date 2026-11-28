@@ -1,12 +1,12 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-InModuleScope BridgeWatcher {
-    Describe 'Send-BridgePushoverRequest' {
-        BeforeAll {
+InModuleScope -ModuleName BridgeWatcher -ScriptBlock {
+    Describe -Name 'Send-BridgePushoverRequest' -Fixture {
+        BeforeAll -Scriptblock {
             $script:Config = New-BridgeConfiguration
         }
 
-    It 'Επιστρέφει το αποτέλεσμα όταν το API απαντάει επιτυχώς' {
+    It -Name 'Επιστρέφει το αποτέλεσμα όταν το API απαντάει επιτυχώς' -Test {
         Mock -CommandName Invoke-RestMethod -MockWith {
             return @{ status = 1; request = 'abcd' }
         }
@@ -15,11 +15,11 @@ InModuleScope BridgeWatcher {
         $payload = @{ message = 'test' }
         $result = Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config
 
-        $result.status | Should -Be 1
+        $result.status | Should -Be -ExpectedValue 1
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
     }
 
-    It 'Returns the accepted response and warns when logging fails' {
+    It -Name 'Returns the accepted response and warns when logging fails' -Test {
         Mock -CommandName Invoke-RestMethod -MockWith {
             return @{ status = 1; request = 'abcd' }
         }
@@ -31,12 +31,12 @@ InModuleScope BridgeWatcher {
         $payload = @{ message = 'crash alert' }
         $result = Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config
 
-        $result.status | Should -Be 1
+        $result.status | Should -Be -ExpectedValue 1
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
         Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -Scope It -ParameterFilter { $Message -like '*Read-only file system*' }
     }
 
-    It 'Ρίχνει απευθείας terminating error σε HTTP 400 (Bad Request)' {
+    It -Name 'Ρίχνει απευθείας terminating error σε HTTP 400 (Bad Request)' -Test {
         Mock -CommandName Invoke-RestMethod -MockWith {
             $response = [System.Net.HttpWebResponse]::new()
             $response.PSObject.Properties.Add([System.Management.Automation.PSNoteProperty]::new('StatusCode', 400))
@@ -47,12 +47,12 @@ InModuleScope BridgeWatcher {
         Mock -CommandName Start-Sleep -MockWith { }
 
         $payload = @{ message = 'test' }
-        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Bad Request*'
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Bad Request*'
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
         Should -Not -Invoke -CommandName Start-Sleep -Scope It
     }
 
-    It 'Επαναλαμβάνει σε HTTP 500 και ρίχνει terminating error όταν εξαντληθούν οι προσπάθειες' {
+    It -Name 'Επαναλαμβάνει σε HTTP 500 και ρίχνει terminating error όταν εξαντληθούν οι προσπάθειες' -Test {
         Mock -CommandName Invoke-RestMethod -MockWith {
             $response = [System.Net.HttpWebResponse]::new()
             $response.PSObject.Properties.Add([System.Management.Automation.PSNoteProperty]::new('StatusCode', 500))
@@ -63,12 +63,12 @@ InModuleScope BridgeWatcher {
         Mock -CommandName Start-Sleep -MockWith { }
 
         $payload = @{ message = 'test' }
-        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Internal Server Error*'
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Internal Server Error*'
         Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
         Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
     }
 
-    It 'Επαναλαμβάνει σε γενικό σφάλμα και ρίχνει terminating error όταν εξαντληθούν οι προσπάθειες' {
+    It -Name 'Επαναλαμβάνει σε γενικό σφάλμα και ρίχνει terminating error όταν εξαντληθούν οι προσπάθειες' -Test {
         Mock -CommandName Invoke-RestMethod -MockWith {
             throw 'Some generic error'
         }
@@ -76,12 +76,12 @@ InModuleScope BridgeWatcher {
         Mock -CommandName Start-Sleep -MockWith { }
 
         $payload = @{ message = 'test' }
-        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Some generic error*'
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Some generic error*'
         Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
         Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
     }
 
-    It 'Καλεί Dispose() στο Response αν υποστηρίζει IDisposable' {
+    It -Name 'Καλεί Dispose() στο Response αν υποστηρίζει IDisposable' -Test {
         $script:disposeCount = 0
         Mock -CommandName Invoke-RestMethod -MockWith {
             $ex = [System.Net.WebException]::new('Service Unavailable')
@@ -91,11 +91,11 @@ InModuleScope BridgeWatcher {
         Mock -CommandName Start-Sleep -MockWith { }
 
         $payload = @{ message = 'test' }
-        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Service Unavailable*'
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Service Unavailable*'
         Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
     }
 
-    It 'Επαναλαμβάνει σε HttpRequestException χωρίς ιδιότητα Response υπό strict mode και δεν αποτυγχάνει όταν λείπει το title' {
+    It -Name 'Επαναλαμβάνει σε HttpRequestException χωρίς ιδιότητα Response υπό strict mode και δεν αποτυγχάνει όταν λείπει το title' -Test {
         Mock -CommandName Invoke-RestMethod -MockWith {
             throw [System.Net.Http.HttpRequestException]::new('Connection reset by peer')
         }
@@ -103,7 +103,7 @@ InModuleScope BridgeWatcher {
         Mock -CommandName Start-Sleep -MockWith { }
 
         $payload = @{ message = 'transport error alert' }
-        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config -Verbose } | Should -Throw '*Connection reset by peer*'
+        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config -Verbose } | Should -Throw -ExpectedMessage '*Connection reset by peer*'
         Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
         Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
     }

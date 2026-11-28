@@ -1,7 +1,7 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'Get-BridgeStatusMonitor' {
-    BeforeAll {
+Describe -Name 'Get-BridgeStatusMonitor' -Fixture {
+    BeforeAll -Scriptblock {
 
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -10,8 +10,8 @@ Describe 'Get-BridgeStatusMonitor' {
         $script:Config = New-BridgeConfiguration
     }
 
-    Context 'Default Parameters' {
-        It 'Καλεί Update-BridgeStatus και Start-Sleep σε loop' {
+    Context -Name 'Default Parameters' -Fixture {
+        It -Name 'Καλεί Update-BridgeStatus και Start-Sleep σε loop' -Test {
             Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
             Mock -CommandName Start-Sleep
 
@@ -28,8 +28,8 @@ Describe 'Get-BridgeStatusMonitor' {
         }
     }
 
-    Context 'Όταν ζητείται μόνο μία επανάληψη' {
-        It 'Δεν κάνει Sleep μετά την πρώτη' {
+    Context -Name 'Όταν ζητείται μόνο μία επανάληψη' -Fixture {
+        It -Name 'Δεν κάνει Sleep μετά την πρώτη' -Test {
             Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
             Mock -CommandName Start-Sleep
 
@@ -46,8 +46,8 @@ Describe 'Get-BridgeStatusMonitor' {
         }
     }
 
-    Context 'Με ενεργοποιημένο Verbose' {
-        It 'Εκτυπώνει verbose μηνύματα' {
+    Context -Name 'Με ενεργοποιημένο Verbose' -Fixture {
+        It -Name 'Εκτυπώνει verbose μηνύματα' -Test {
             Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
             Mock -CommandName Start-Sleep
 
@@ -62,8 +62,8 @@ Describe 'Get-BridgeStatusMonitor' {
         }
     }
 
-    Context 'Ελέγχει παραμέτρους' {
-        It 'Χρησιμοποιεί την τιμή του IntervalSeconds' {
+    Context -Name 'Ελέγχει παραμέτρους' -Fixture {
+        It -Name 'Χρησιμοποιεί την τιμή του IntervalSeconds' -Test {
             Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
             Mock -CommandName Start-Sleep
 
@@ -79,8 +79,8 @@ Describe 'Get-BridgeStatusMonitor' {
         }
     }
 
-    Context 'Custom Action Parameter' {
-        It 'Executes custom Action instead of Update-BridgeStatus' {
+    Context -Name 'Custom Action Parameter' -Fixture {
+        It -Name 'Executes custom Action instead of Update-BridgeStatus' -Test {
             Mock -CommandName Update-BridgeStatus -MockWith { }
             Mock -CommandName Start-Sleep
 
@@ -98,11 +98,11 @@ Describe 'Get-BridgeStatusMonitor' {
             }
 
             Get-BridgeStatusMonitor @monitorParams -MaxIterations 2 -IntervalSeconds 1 -Configuration $script:Config
-            $tracker.Called | Should -Be $true
+            $tracker.Called | Should -Be -ExpectedValue $true
             Should -Invoke -CommandName Update-BridgeStatus -Times 0 -Exactly
         }
 
-        It 'Executes custom Action without ApiKey, PoUserKey, or PoApiKey and omits unbound keys from splat' {
+        It -Name 'Executes custom Action without ApiKey, PoUserKey, or PoApiKey and omits unbound keys from splat' -Test {
             Mock -CommandName Update-BridgeStatus -MockWith { }
             Mock -CommandName Start-Sleep
             Mock -CommandName Write-BridgeLog
@@ -115,38 +115,38 @@ Describe 'Get-BridgeStatusMonitor' {
 
             { Get-BridgeStatusMonitor -Configuration $script:Config -OutputFile 'test.json' -MaxIterations 1 -IntervalSeconds 1 -Action $customAction } | Should -Not -Throw
             $script:capturedSplat | Should -Not -BeNullOrEmpty
-            $script:capturedSplat.OutputFile | Should -Be 'test.json'
+            $script:capturedSplat.OutputFile | Should -Be -ExpectedValue 'test.json'
             $script:capturedSplat.ContainsKey('ApiKey') | Should -BeFalse
             $script:capturedSplat.ContainsKey('PoUserKey') | Should -BeFalse
             $script:capturedSplat.ContainsKey('PoApiKey') | Should -BeFalse
             Should -Invoke -CommandName Update-BridgeStatus -Times 0 -Exactly
         }
 
-        It 'Enforces DefaultAction mandatory keys and CustomAction optional keys via ParameterSets' {
-            $cmdInfo = Get-Command Get-BridgeStatusMonitor
-            $cmdInfo.DefaultParameterSet | Should -Be 'DefaultAction'
+        It -Name 'Enforces DefaultAction mandatory keys and CustomAction optional keys via ParameterSets' -Test {
+            $cmdInfo = Get-Command -Name Get-BridgeStatusMonitor
+            $cmdInfo.DefaultParameterSet | Should -Be -ExpectedValue 'DefaultAction'
 
-            $defaultSet = $cmdInfo.ParameterSets | Where-Object { $_.Name -eq 'DefaultAction' }
-            ($defaultSet.Parameters | Where-Object { $_.Name -eq 'ApiKey' }).IsMandatory | Should -BeTrue
-            ($defaultSet.Parameters | Where-Object { $_.Name -eq 'PoUserKey' }).IsMandatory | Should -BeTrue
-            ($defaultSet.Parameters | Where-Object { $_.Name -eq 'PoApiKey' }).IsMandatory | Should -BeTrue
+            $defaultSet = $cmdInfo.ParameterSets | Where-Object -FilterScript { $_.Name -eq 'DefaultAction' }
+            ($defaultSet.Parameters | Where-Object -FilterScript { $_.Name -eq 'ApiKey' }).IsMandatory | Should -BeTrue
+            ($defaultSet.Parameters | Where-Object -FilterScript { $_.Name -eq 'PoUserKey' }).IsMandatory | Should -BeTrue
+            ($defaultSet.Parameters | Where-Object -FilterScript { $_.Name -eq 'PoApiKey' }).IsMandatory | Should -BeTrue
 
-            $customSet = $cmdInfo.ParameterSets | Where-Object { $_.Name -eq 'CustomAction' }
-            ($customSet.Parameters | Where-Object { $_.Name -eq 'Action' }).IsMandatory | Should -BeTrue
-            ($customSet.Parameters | Where-Object { $_.Name -eq 'ApiKey' }).IsMandatory | Should -BeFalse
-            ($customSet.Parameters | Where-Object { $_.Name -eq 'PoUserKey' }).IsMandatory | Should -BeFalse
-            ($customSet.Parameters | Where-Object { $_.Name -eq 'PoApiKey' }).IsMandatory | Should -BeFalse
+            $customSet = $cmdInfo.ParameterSets | Where-Object -FilterScript { $_.Name -eq 'CustomAction' }
+            ($customSet.Parameters | Where-Object -FilterScript { $_.Name -eq 'Action' }).IsMandatory | Should -BeTrue
+            ($customSet.Parameters | Where-Object -FilterScript { $_.Name -eq 'ApiKey' }).IsMandatory | Should -BeFalse
+            ($customSet.Parameters | Where-Object -FilterScript { $_.Name -eq 'PoUserKey' }).IsMandatory | Should -BeFalse
+            ($customSet.Parameters | Where-Object -FilterScript { $_.Name -eq 'PoApiKey' }).IsMandatory | Should -BeFalse
 
             { Get-BridgeStatusMonitor -Configuration $script:Config -OutputFile 'test.json' -ApiKey '' -PoUserKey 'u' -PoApiKey 'p' } | Should -Throw
         }
     }
 
-    Context 'Exception Handling' {
-        It 'Συνεχίζει την εκτέλεση όταν αποτυγχάνει η Update-BridgeStatus αλλά τουλάχιστον μία πετυχαίνει' {
-            Mock Write-BridgeLog {}
-            Mock Start-Sleep
+    Context -Name 'Exception Handling' -Fixture {
+        It -Name 'Συνεχίζει την εκτέλεση όταν αποτυγχάνει η Update-BridgeStatus αλλά τουλάχιστον μία πετυχαίνει' -Test {
+            Mock -CommandName Write-BridgeLog -MockWith {}
+            Mock -CommandName Start-Sleep
             $script:callCount = 0
-            Mock Update-BridgeStatus {
+            Mock -CommandName Update-BridgeStatus -MockWith {
                 $script:callCount++
                 if ($script:callCount -eq 2) {
                     return @{ dummy = $true }
@@ -182,8 +182,8 @@ Describe 'Get-BridgeStatusMonitor' {
             }
         }
     }
-    Context 'Προεπιλεγμένες Παράμετροι' {
-        It 'Χρησιμοποιεί DefaultMaxIterations και DefaultIntervalSeconds αν δεν δοθούν' {
+    Context -Name 'Προεπιλεγμένες Παράμετροι' -Fixture {
+        It -Name 'Χρησιμοποιεί DefaultMaxIterations και DefaultIntervalSeconds αν δεν δοθούν' -Test {
             Mock -CommandName Update-BridgeStatus -MockWith { @{ dummy = $true } }
 
             $mockConfig = New-BridgeConfiguration
@@ -197,8 +197,8 @@ Describe 'Get-BridgeStatusMonitor' {
 
 
 
-    Context 'Loop Failure Contract' {
-        It 'Throws a terminating error if the maximum consecutive failures are reached' {
+    Context -Name 'Loop Failure Contract' -Fixture {
+        It -Name 'Throws a terminating error if the maximum consecutive failures are reached' -Test {
             Mock -CommandName Update-BridgeStatus -MockWith { throw "Simulated API Failure" }
             Mock -CommandName Start-Sleep
             Mock -CommandName Write-BridgeLog
@@ -213,11 +213,11 @@ Describe 'Get-BridgeStatusMonitor' {
                 Configuration = $script:Config
             }
 
-            { Get-BridgeStatusMonitor @monitorParams -MaxIterations 10 -IntervalSeconds 1 -Configuration $script:Config } | Should -Throw "Monitoring failed 5 consecutive times. Halting."
+            { Get-BridgeStatusMonitor @monitorParams -MaxIterations 10 -IntervalSeconds 1 -Configuration $script:Config } | Should -Throw -ExpectedMessage "Monitoring failed 5 consecutive times. Halting."
             Should -Invoke -CommandName Update-BridgeStatus -Times 5 -Exactly
         }
 
-        It 'Terminates immediately on iteration 1 with zero Start-Sleep calls on ParameterBindingException' {
+        It -Name 'Terminates immediately on iteration 1 with zero Start-Sleep calls on ParameterBindingException' -Test {
             Mock -CommandName Start-Sleep
             Mock -CommandName Write-BridgeLog
 
@@ -228,7 +228,7 @@ Describe 'Get-BridgeStatusMonitor' {
             }
 
             { Get-BridgeStatusMonitor -Configuration $script:Config -OutputFile 'test.json' -MaxIterations 5 -IntervalSeconds 10 -Action $failingAction } | Should -Throw
-            $script:bindingAttemptCount | Should -Be 1
+            $script:bindingAttemptCount | Should -Be -ExpectedValue 1
             Should -Invoke -CommandName Start-Sleep -Times 0 -Exactly
         }
     }

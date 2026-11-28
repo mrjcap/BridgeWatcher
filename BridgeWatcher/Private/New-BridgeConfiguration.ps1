@@ -1,43 +1,43 @@
-﻿function New-BridgeConfiguration {
-    <#
-    .SYNOPSIS
-    Δημιουργεί ένα configuration object για το BridgeWatcher module.
+﻿<#
+.SYNOPSIS
+Δημιουργεί ένα configuration object για το BridgeWatcher module.
 
-    .DESCRIPTION
-    Κεντρικοποιεί όλα τα configuration settings, URLs, patterns και mappings
-    που χρησιμοποιούνται στο BridgeWatcher module. Επιστρέφει ένα αντικείμενο
-    με Urls, Defaults, Statuses και υπο-αντικείμενα μηνυμάτων.
+.DESCRIPTION
+Κεντρικοποιεί όλα τα configuration settings, URLs, patterns και mappings
+που χρησιμοποιούνται στο BridgeWatcher module. Επιστρέφει ένα αντικείμενο
+με Urls, Defaults, Statuses και υπο-αντικείμενα μηνυμάτων.
 
-    .PARAMETER BaseUrl
-    Το base URL για τα δεδομένα και εικόνες γεφυρών.
+.PARAMETER BaseUrl
+Το base URL για τα δεδομένα και εικόνες γεφυρών.
 
-    .PARAMETER OCRApiUrl
-    Το URL για τη Google Cloud Vision API.
+.PARAMETER OCRApiUrl
+Το URL για τη Google Cloud Vision API.
 
-    .PARAMETER PushoverApiUrl
-    Το URL για την αποστολή Pushover notifications.
+.PARAMETER PushoverApiUrl
+Το URL για την αποστολή Pushover notifications.
 
-    .PARAMETER DefaultIntervalSeconds
-    Το προεπιλεγμένο διάστημα σε δευτερόλεπτα για τη παρακολούθηση.
+.PARAMETER DefaultIntervalSeconds
+Το προεπιλεγμένο διάστημα σε δευτερόλεπτα για τη παρακολούθηση.
 
-    .PARAMETER DefaultMaxIterations
-    Ο προεπιλεγμένος μέγιστος αριθμός επαναλήψεων.
+.PARAMETER DefaultMaxIterations
+Ο προεπιλεγμένος μέγιστος αριθμός επαναλήψεων.
 
-    .PARAMETER MaxConsecutiveFailures
-    Ο μέγιστος αριθμός διαδοχικών αποτυχιών.
+.PARAMETER MaxConsecutiveFailures
+Ο μέγιστος αριθμός διαδοχικών αποτυχιών.
 
-    .PARAMETER LogDirectory
-    Ο κατάλογος αποθήκευσης αρχείων καταγραφής.
+.PARAMETER LogDirectory
+Ο κατάλογος αποθήκευσης αρχείων καταγραφής.
 
-    .PARAMETER ConfigurationPath
-    Προαιρετική διαδρομή σε εξωτερικό αρχείο JSON για παράκαμψη των προεπιλογών.
+.PARAMETER ConfigurationPath
+Προαιρετική διαδρομή σε εξωτερικό αρχείο JSON για παράκαμψη των προεπιλογών.
 
-    .OUTPUTS
-    [PSCustomObject] - Αντικείμενο διαμόρφωσης με Urls, Defaults, Statuses και υπο-αντικείμενα μηνυμάτων.
+.OUTPUTS
+[PSCustomObject] - Αντικείμενο διαμόρφωσης με Urls, Defaults, Statuses και υπο-αντικείμενα μηνυμάτων.
 
-    .NOTES
-    Αυτή η συνάρτηση δημιουργεί μόνο ένα configuration object στη μνήμη και δεν αλλάζει την κατάσταση του συστήματος.
-    #>
+.NOTES
+Αυτή η συνάρτηση δημιουργεί μόνο ένα configuration object στη μνήμη και δεν αλλάζει την κατάσταση του συστήματος.
+#>
+function New-BridgeConfiguration {
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Η συνάρτηση δημιουργεί μόνο το αντικείμενο διαμόρφωσης στη μνήμη, δεν αλλάζει την κατάσταση του συστήματος.')]
@@ -74,16 +74,16 @@
         [string]$ConfigurationPath = ''
     )
 
-    $testDriveLog = if (Test-Path 'TestDrive:\') { 'TestDrive:\logs' } else { '' }
-    $defaultLogDir = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'logs'
+    $testDriveLog = if (Test-Path -Path 'TestDrive:\') { 'TestDrive:\logs' } else { '' }
+    $defaultLogDir = Join-Path -Path (Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent) -ChildPath 'logs'
     $LogDirectory = @($LogDirectory, $Env:BRIDGEWATCHER_OUT, $testDriveLog, $defaultLogDir) |
-        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-        ForEach-Object { $_.Trim() } |
+        Where-Object -FilterScript { -not [string]::IsNullOrWhiteSpace($_) } |
+        ForEach-Object -Process { $_.Trim() } |
         Select-Object -First 1
 
-    $sourceUrl = @($BaseUrl, 'https://www.topvision.gr/dioriga') | Where-Object { $_ } | Select-Object -First 1
-    $ocrUrl = @($OCRApiUrl, 'https://vision.googleapis.com/v1/images:annotate') | Where-Object { $_ } | Select-Object -First 1
-    $poUrl = @($PushoverApiUrl, 'https://api.pushover.net/1/messages.json') | Where-Object { $_ } | Select-Object -First 1
+    $sourceUrl = @($BaseUrl, 'https://www.topvision.gr/dioriga') | Where-Object -FilterScript { $_ } | Select-Object -First 1
+    $ocrUrl = @($OCRApiUrl, 'https://vision.googleapis.com/v1/images:annotate') | Where-Object -FilterScript { $_ } | Select-Object -First 1
+    $poUrl = @($PushoverApiUrl, 'https://api.pushover.net/1/messages.json') | Where-Object -FilterScript { $_ } | Select-Object -First 1
 
     $config = [PSCustomObject]@{
         Urls                      = [PSCustomObject]@{

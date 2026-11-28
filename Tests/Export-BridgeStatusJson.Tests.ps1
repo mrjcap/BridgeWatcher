@@ -1,28 +1,28 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-InModuleScope BridgeWatcher {
-Describe 'Δοκιμές Export-BridgeStatusJson' {
+InModuleScope -ModuleName BridgeWatcher -ScriptBlock {
+Describe -Name 'Δοκιμές Export-BridgeStatusJson' -Fixture {
 
-    BeforeAll {
+    BeforeAll -Scriptblock {
         $script:Config = New-BridgeConfiguration
     }
 
-    Context 'Όταν συμβαίνει σφάλμα κατά την αποθήκευση JSON' {
+    Context -Name 'Όταν συμβαίνει σφάλμα κατά την αποθήκευση JSON' -Fixture {
 
-        It 'Επιστρέφει BridgeResult με σφάλμα και γράφει το κατάλληλο μήνυμα' {
-
-
-            Mock Test-Path { $true }
-
-            Mock New-Item { }
+        It -Name 'Επιστρέφει BridgeResult με σφάλμα και γράφει το κατάλληλο μήνυμα' -Test {
 
 
-            Mock ConvertTo-Json { throw 'Fake error during file write' }
+            Mock -CommandName Test-Path -MockWith { $true }
 
-            Mock Move-Item {}
+            Mock -CommandName New-Item -MockWith { }
 
 
-            Mock Write-BridgeLog {}
+            Mock -CommandName ConvertTo-Json -MockWith { throw 'Fake error during file write' }
+
+            Mock -CommandName Move-Item -MockWith {}
+
+
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
 
 
@@ -32,11 +32,11 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             $result | Should -Not -BeNullOrEmpty
 
-            $result.Success | Should -Be $false
+            $result.Success | Should -Be -ExpectedValue $false
 
-            $result.ErrorMessage | Should -Match 'Fake error during file write'
+            $result.ErrorMessage | Should -Match -RegularExpression 'Fake error during file write'
 
-            $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
+            $result.ErrorCode | Should -Be -ExpectedValue 'JSON_EXPORT_FAILURE'
 
 
 
@@ -45,34 +45,34 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         }
 
-        It 'Διαγράφει το προσωρινό αρχείο .tmp όταν το Move-Item αποτυγχάνει' {
-            $targetPath = Join-Path $TestDrive 'atomic-fail.json'
-            Mock Move-Item { throw 'Simulated atomic move failure' }
-            Mock Write-BridgeLog {}
+        It -Name 'Διαγράφει το προσωρινό αρχείο .tmp όταν το Move-Item αποτυγχάνει' -Test {
+            $targetPath = Join-Path -Path $TestDrive -ChildPath 'atomic-fail.json'
+            Mock -CommandName Move-Item -MockWith { throw 'Simulated atomic move failure' }
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
             $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{ Bridge = 'Test' }) -Path $targetPath
-            $result.Success | Should -Be $false
-            $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
+            $result.Success | Should -Be -ExpectedValue $false
+            $result.ErrorCode | Should -Be -ExpectedValue 'JSON_EXPORT_FAILURE'
 
             $leftoverTmp = Get-ChildItem -Path $TestDrive -Filter 'atomic-fail.json.*.tmp'
             $leftoverTmp | Should -BeNullOrEmpty
         }
 
-        It 'Δεν αντικαθιστά το υπάρχον snapshot όταν η Set-Content αποτυγχάνει με non-terminating σφάλμα' {
-            $targetPath = Join-Path $TestDrive 'preserve-good-state.json'
+        It -Name 'Δεν αντικαθιστά το υπάρχον snapshot όταν η Set-Content αποτυγχάνει με non-terminating σφάλμα' -Test {
+            $targetPath = Join-Path -Path $TestDrive -ChildPath 'preserve-good-state.json'
             $originalJson = '[{"GefyraName":"Ισθμία","GefyraStatus":"Ανοιχτή"}]'
             Microsoft.PowerShell.Management\Set-Content -Path $targetPath -Value $originalJson -Encoding UTF8 -Force
 
-            Mock Write-BridgeLog {}
-            Mock Set-Content {
+            Mock -CommandName Write-BridgeLog -MockWith {}
+            Mock -CommandName Set-Content -MockWith {
                 [System.IO.File]::WriteAllText($Path, '{"corrupt":')
-                Write-Error 'Simulated non-terminating disk quota error'
+                Write-Error -Message 'Simulated non-terminating disk quota error'
             }
 
             $result = Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή' }) -Path $targetPath -ErrorAction Continue
-            $result.Success | Should -Be $false
-            $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
-            (Get-Content -Path $targetPath -Raw).Trim() | Should -Be $originalJson
+            $result.Success | Should -Be -ExpectedValue $false
+            $result.ErrorCode | Should -Be -ExpectedValue 'JSON_EXPORT_FAILURE'
+            (Get-Content -Path $targetPath -Raw).Trim() | Should -Be -ExpectedValue $originalJson
 
             $leftoverTmp = Get-ChildItem -Path $TestDrive -Filter 'preserve-good-state.json.*.tmp'
             $leftoverTmp | Should -BeNullOrEmpty
@@ -82,19 +82,19 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-    Context 'Όταν η αποθήκευση JSON είναι επιτυχής' {
+    Context -Name 'Όταν η αποθήκευση JSON είναι επιτυχής' -Fixture {
 
-        It 'Επιστρέφει BridgeResult με επιτυχία' {
+        It -Name 'Επιστρέφει BridgeResult με επιτυχία' -Test {
 
-            Mock Test-Path { $true }
+            Mock -CommandName Test-Path -MockWith { $true }
 
-            Mock New-Item { }
+            Mock -CommandName New-Item -MockWith { }
 
-            Mock Set-Content {}
+            Mock -CommandName Set-Content -MockWith {}
 
-            Mock Move-Item {}
+            Mock -CommandName Move-Item -MockWith {}
 
-            Mock Write-BridgeLog {}
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
 
 
@@ -104,11 +104,11 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             $result | Should -Not -BeNullOrEmpty
 
-            $result.Success | Should -Be $true
+            $result.Success | Should -Be -ExpectedValue $true
 
-            $result.Data.ExportedPath | Should -Be 'valid/path/file.json'
+            $result.Data.ExportedPath | Should -Be -ExpectedValue 'valid/path/file.json'
 
-            $result.Data.RecordCount | Should -Be 1
+            $result.Data.RecordCount | Should -Be -ExpectedValue 1
 
 
 
@@ -117,17 +117,17 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         }
 
-        It 'Πρέπει να καταγράψει επιτυχές μήνυμα (Write-BridgeLog)' {
+        It -Name 'Πρέπει να καταγράψει επιτυχές μήνυμα (Write-BridgeLog)' -Test {
 
-            Mock Test-Path { $true }
+            Mock -CommandName Test-Path -MockWith { $true }
 
-            Mock New-Item { }
+            Mock -CommandName New-Item -MockWith { }
 
-            Mock Set-Content {}
+            Mock -CommandName Set-Content -MockWith {}
 
-            Mock Move-Item {}
+            Mock -CommandName Move-Item -MockWith {}
 
-            Mock Write-BridgeLog {}
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
             Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{Bridge = 'Test' }) -Path 'valid/path/file.json'
 
@@ -138,19 +138,19 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
     }
 
-    Context 'Έλεγχος Validation παραμέτρων' { It 'Δέχεται κενό array όταν το Data είναι κενό' {
+    Context -Name 'Έλεγχος Validation παραμέτρων' -Fixture { It -Name 'Δέχεται κενό array όταν το Data είναι κενό' -Test {
 
-            Mock Test-Path { $true }
+            Mock -CommandName Test-Path -MockWith { $true }
 
-            Mock New-Item { }
+            Mock -CommandName New-Item -MockWith { }
 
-            Mock ConvertTo-Json { '[]' }
+            Mock -CommandName ConvertTo-Json -MockWith { '[]' }
 
 
 
-            Mock Move-Item {}
+            Mock -CommandName Move-Item -MockWith {}
 
-            Mock Write-BridgeLog { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
 
 
@@ -158,15 +158,15 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             $result | Should -Not -BeNullOrEmpty
 
-            $result.Success | Should -Be $true
+            $result.Success | Should -Be -ExpectedValue $true
 
-            $result.Data.RecordCount | Should -Be 0
+            $result.Data.RecordCount | Should -Be -ExpectedValue 0
 
         }
 
 
 
-        It 'Πετάει validation σφάλμα όταν το Path είναι κενό' {
+        It -Name 'Πετάει validation σφάλμα όταν το Path είναι κενό' -Test {
 
             { Export-BridgeStatusJson -Configuration $script:Config -Data @([pscustomobject]@{ gefyra = 'Ισθμία' }) -Path '' } | Should -Throw
 
@@ -174,11 +174,11 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-        It 'Επιστρέφει BridgeResult με σφάλμα όταν αποτυγχάνει η εγγραφή JSON' {
+        It -Name 'Επιστρέφει BridgeResult με σφάλμα όταν αποτυγχάνει η εγγραφή JSON' -Test {
 
-            Mock ConvertTo-Json { throw 'Ο φάκελος προορισμού δεν υπάρχει' }
+            Mock -CommandName ConvertTo-Json -MockWith { throw 'Ο φάκελος προορισμού δεν υπάρχει' }
 
-            Mock Write-BridgeLog
+            Mock -CommandName Write-BridgeLog
 
 
 
@@ -188,30 +188,30 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
             $result | Should -Not -BeNullOrEmpty
 
-            $result.Success | Should -Be $false
+            $result.Success | Should -Be -ExpectedValue $false
 
-            $result.ErrorMessage | Should -Match 'Ο φάκελος προορισμού δεν υπάρχει'
+            $result.ErrorMessage | Should -Match -RegularExpression 'Ο φάκελος προορισμού δεν υπάρχει'
 
-            $result.ErrorCode | Should -Be 'JSON_EXPORT_FAILURE'
+            $result.ErrorCode | Should -Be -ExpectedValue 'JSON_EXPORT_FAILURE'
 
         }
 
     }
 
-    Context 'Configuration Coverage Δοκιμές' {
+    Context -Name 'Configuration Coverage Δοκιμές' -Fixture {
 
-        It 'Καλύπτει Configuration.DefaultJsonDepth path' {
+        It -Name 'Καλύπτει Configuration.DefaultJsonDepth path' -Test {
 
-            Mock Test-Path { $true }
+            Mock -CommandName Test-Path -MockWith { $true }
 
-            Mock New-Item { }
+            Mock -CommandName New-Item -MockWith { }
 
 
 
-            Mock Move-Item {}
+            Mock -CommandName Move-Item -MockWith {}
 
-            Mock ConvertTo-Json { '{"test": "data"}' }
-            Mock Write-BridgeLog {}
+            Mock -CommandName ConvertTo-Json -MockWith { '{"test": "data"}' }
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
             $config = New-BridgeConfiguration
 
@@ -227,12 +227,12 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         }
 
-        It 'Καλύπτει απουσία Configuration.DefaultJsonDepth (fallback σε 10)' {
-            Mock Test-Path { $true }
-            Mock New-Item { }
-            Mock Move-Item {}
-            Mock ConvertTo-Json { '{"test": "data"}' }
-            Mock Write-BridgeLog {}
+        It -Name 'Καλύπτει απουσία Configuration.DefaultJsonDepth (fallback σε 10)' -Test {
+            Mock -CommandName Test-Path -MockWith { $true }
+            Mock -CommandName New-Item -MockWith { }
+            Mock -CommandName Move-Item -MockWith {}
+            Mock -CommandName ConvertTo-Json -MockWith { '{"test": "data"}' }
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
             $config = New-BridgeConfiguration
             $config.Defaults = [PSCustomObject]@{ }
@@ -242,17 +242,17 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
             Should -Invoke -CommandName ConvertTo-Json -ParameterFilter { $Depth -eq 10 } -Times 1
         }
 
-        It 'Καλύπτει Configuration.ExportMessages.Success path' {
+        It -Name 'Καλύπτει Configuration.ExportMessages.Success path' -Test {
 
-            Mock Test-Path { $true }
+            Mock -CommandName Test-Path -MockWith { $true }
 
-            Mock New-Item { }
+            Mock -CommandName New-Item -MockWith { }
 
 
 
-            Mock Move-Item {}
+            Mock -CommandName Move-Item -MockWith {}
 
-            Mock Write-BridgeLog {}
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
 
 
@@ -270,17 +270,17 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         }
 
-        It 'Καλύπτει Configuration.ExportMessages.Failed σε σφάλμα' {
+        It -Name 'Καλύπτει Configuration.ExportMessages.Failed σε σφάλμα' -Test {
 
-            Mock Test-Path { $true }
+            Mock -CommandName Test-Path -MockWith { $true }
 
-            Mock New-Item { }
+            Mock -CommandName New-Item -MockWith { }
 
-            Mock ConvertTo-Json { throw 'Test error' }
+            Mock -CommandName ConvertTo-Json -MockWith { throw 'Test error' }
 
-            Mock Move-Item {}
+            Mock -CommandName Move-Item -MockWith {}
 
-            Mock Write-BridgeLog {}
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
 
 
@@ -294,9 +294,9 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            $result.Success | Should -Be $false
+            $result.Success | Should -Be -ExpectedValue $false
 
-            $result.ErrorMessage | Should -Match 'Custom failed message'
+            $result.ErrorMessage | Should -Match -RegularExpression 'Custom failed message'
 
 
 
@@ -304,14 +304,14 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         }
 
-        It 'Καλύπτει Configuration.ExportMessages.DirectoryNotExists' {
+        It -Name 'Καλύπτει Configuration.ExportMessages.DirectoryNotExists' -Test {
             $config = New-BridgeConfiguration
             $config.ExportMessages.DirectoryNotExists = 'Custom directory not exists'
 
-            Mock Test-Path { $false } -ParameterFilter { $Path -notmatch 'config.json' }
-            Mock Split-Path { 'invalid/path' } -ParameterFilter { $Path -like '*test.json*' }
-            Mock New-Item { throw 'Custom directory not exists' }
-            Mock Write-BridgeLog {}
+            Mock -CommandName Test-Path -MockWith { $false } -ParameterFilter { $Path -notmatch 'config.json' }
+            Mock -CommandName Split-Path -MockWith { 'invalid/path' } -ParameterFilter { $Path -like '*test.json*' }
+            Mock -CommandName New-Item -MockWith { throw 'Custom directory not exists' }
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
 
 
@@ -319,9 +319,9 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
 
 
-            $result.Success | Should -Be $false
+            $result.Success | Should -Be -ExpectedValue $false
 
-            $result.ErrorMessage | Should -Match 'Custom directory not exists'
+            $result.ErrorMessage | Should -Match -RegularExpression 'Custom directory not exists'
 
 
 
@@ -329,17 +329,17 @@ Describe 'Δοκιμές Export-BridgeStatusJson' {
 
         }
 
-        It 'Καλύπτει Configuration.LoggingConfig paths' {
+        It -Name 'Καλύπτει Configuration.LoggingConfig paths' -Test {
 
-            Mock Test-Path { $true }
+            Mock -CommandName Test-Path -MockWith { $true }
 
-            Mock New-Item { }
+            Mock -CommandName New-Item -MockWith { }
 
 
 
-            Mock Move-Item {}
+            Mock -CommandName Move-Item -MockWith {}
 
-            Mock Write-BridgeLog {}
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
 
 

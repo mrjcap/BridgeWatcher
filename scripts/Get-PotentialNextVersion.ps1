@@ -20,13 +20,13 @@ param (
 )
 
 try {
-    $tags = @(git tag --sort=version:refname | Where-Object { $_ -match '^v?\d+\.\d+\.\d+$' })
+    $tags = @(git tag --sort=version:refname | Where-Object -FilterScript { $_ -match '^v?\d+\.\d+\.\d+$' })
 
     if ($tags.Count -eq 0) {
         switch ($BumpType) {
-            'major' { Write-Output '1.0.0'; return }
-            'minor' { Write-Output '0.1.0'; return }
-            'patch' { Write-Output '0.0.1'; return }
+            'major' { Write-Output -InputObject '1.0.0'; return }
+            'minor' { Write-Output -InputObject '0.1.0'; return }
+            'patch' { Write-Output -InputObject '0.0.1'; return }
         }
     }
 
@@ -50,13 +50,13 @@ try {
         }
     }
 
-    Write-Verbose "Current version: $cleanVersion"
-    Write-Verbose "Bump type: $BumpType"
-    Write-Verbose "Next version: $newVersion"
+    Write-Verbose -Message "Current version: $cleanVersion"
+    Write-Verbose -Message "Bump type: $BumpType"
+    Write-Verbose -Message "Next version: $newVersion"
 
-    Write-Output $newVersion
+    Write-Output -InputObject $newVersion
 
 } catch {
-    Write-Error "Failed to calculate next version: $_"
+    Write-Error -Message "Failed to calculate next version: $_"
     exit 1
 }

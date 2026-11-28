@@ -1,20 +1,20 @@
-﻿function Get-BridgeOptionalProperty {
-    <#
-    .SYNOPSIS
-    Ανακτά με ασφάλεια προαιρετική ιδιότητα από hashtable ή PSCustomObject.
+﻿<#
+.SYNOPSIS
+Ανακτά με ασφάλεια προαιρετική ιδιότητα από hashtable ή PSCustomObject.
 
-    .DESCRIPTION
-    Επιστρέφει την τιμή μιας προαιρετικής ιδιότητας χωρίς σφάλμα σε strict mode.
+.DESCRIPTION
+Επιστρέφει την τιμή μιας προαιρετικής ιδιότητας χωρίς σφάλμα σε strict mode.
 
-    .PARAMETER InputObject
-    Το αντικείμενο ή hashtable εισόδου.
+.PARAMETER InputObject
+Το αντικείμενο ή hashtable εισόδου.
 
-    .PARAMETER PropertyName
-    Το όνομα της ιδιότητας προς ανάγνωση.
+.PARAMETER PropertyName
+Το όνομα της ιδιότητας προς ανάγνωση.
 
-    .OUTPUTS
-    [object]
-    #>
+.OUTPUTS
+[object]
+#>
+function Get-BridgeOptionalProperty {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]

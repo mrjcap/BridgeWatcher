@@ -1,22 +1,40 @@
-﻿function Get-BridgeExportJsonDepth {
-    <#
-    .SYNOPSIS
-    Υπολογίζει το ενεργό βάθος σειριοποίησης JSON από τις παραμέτρους και τις ρυθμίσεις.
-    #>
+﻿<#
+.SYNOPSIS
+Υπολογίζει το ενεργό βάθος σειριοποίησης JSON από τις παραμέτρους και τις ρυθμίσεις.
+
+.DESCRIPTION
+Χρησιμοποιεί το ρητό βάθος JSON όταν δίνεται, αλλιώς διαβάζει την προεπιλογή από τη διαμόρφωση.
+
+.PARAMETER JsonDepth
+Ρητό βάθος σειριοποίησης JSON, όταν δίνεται.
+
+.PARAMETER Configuration
+Η διαμόρφωση που παρέχει το προεπιλεγμένο βάθος JSON.
+#>
+function Get-BridgeExportJsonDepth {
     param (
         [Parameter()][int]$JsonDepth,
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
     $configJsonDepthProp = $Configuration.Defaults.PSObject.Properties['JsonDepth']
     $configJsonDepth = if ($null -ne $configJsonDepthProp) { $configJsonDepthProp.Value } else { 0 }
-    return (@($JsonDepth, $configJsonDepth, 10) | Where-Object { $_ -gt 0 } | Select-Object -First 1)
+    return (@($JsonDepth, $configJsonDepth, 10) | Where-Object -FilterScript { $_ -gt 0 } | Select-Object -First 1)
 }
 
+<#
+.SYNOPSIS
+Εγγράφει περιεχόμενο JSON ατομικά μέσω προσωρινού αρχείου.
+
+.DESCRIPTION
+Γράφει το JSON σε προσωρινό αρχείο δίπλα στον προορισμό πριν το δημοσιεύσει με μετακίνηση. Καθαρίζει το προσωρινό αρχείο μετά την προσπάθεια.
+
+.PARAMETER Path
+Η διαδρομή του τελικού αρχείου JSON.
+
+.PARAMETER JsonContent
+Το σειριοποιημένο περιεχόμενο που θα γραφτεί στο αρχείο.
+#>
 function Write-BridgeAtomicJson {
-    <#
-    .SYNOPSIS
-    Εγγράφει περιεχόμενο JSON ατομικά μέσω προσωρινού αρχείου.
-    #>
     param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Path,
         [Parameter()][AllowNull()][object]$JsonContent
@@ -33,30 +51,30 @@ function Write-BridgeAtomicJson {
     }
 }
 
+<#
+.SYNOPSIS
+Εξάγει την κατάσταση γέφυρας σε αρχείο JSON.
+
+.DESCRIPTION
+Η Export-BridgeStatusJson αποθηκεύει δεδομένα κατάστασης γέφυρας σε μορφή JSON
+σε καθορισμένη διαδρομή.
+
+.PARAMETER Data
+Το αντικείμενο ή η λίστα αντικειμένων που θα εξαχθεί.
+
+.PARAMETER Path
+Η πλήρης διαδρομή του αρχείου εξόδου.
+
+.PARAMETER JsonDepth
+Το βάθος σειριοποίησης (serialization) του JSON.
+
+.PARAMETER Configuration
+Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
+
+.OUTPUTS
+[PSCustomObject] - Αντικείμενο αποτελέσματος.
+#>
 function Export-BridgeStatusJson {
-    <#
-    .SYNOPSIS
-    Εξάγει την κατάσταση γέφυρας σε αρχείο JSON.
-
-    .DESCRIPTION
-    Η Export-BridgeStatusJson αποθηκεύει δεδομένα κατάστασης γέφυρας σε μορφή JSON
-    σε καθορισμένη διαδρομή.
-
-    .PARAMETER Data
-    Το αντικείμενο ή η λίστα αντικειμένων που θα εξαχθεί.
-
-    .PARAMETER Path
-    Η πλήρης διαδρομή του αρχείου εξόδου.
-
-    .PARAMETER JsonDepth
-    Το βάθος σειριοποίησης (serialization) του JSON.
-
-    .PARAMETER Configuration
-    Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
-
-    .OUTPUTS
-    [PSCustomObject] - Αντικείμενο αποτελέσματος.
-    #>
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([PSCustomObject])]
     param (
@@ -96,7 +114,7 @@ function Export-BridgeStatusJson {
             $dataToExport = if ($items.Count -eq 1) { $items[0] } else { $items.ToArray() }
 
             if ($PSCmdlet.ShouldProcess($Path, "Create JSON export")) {
-                $parentDir = Split-Path -Parent $Path
+                $parentDir = Split-Path -Parent -Path $Path
                 if (-not [string]::IsNullOrWhiteSpace($parentDir)) {
                 try {
                     $null = New-Item -ItemType Directory -Force -Path $parentDir -ErrorAction Stop

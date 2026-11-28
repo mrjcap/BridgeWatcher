@@ -7,20 +7,23 @@
     'ShellId', 'StackTrace', 'Matches'
 )
 
-$TestFiles = Get-ChildItem -Path "$PSScriptRoot/.." -Filter *.Tests.ps1 -Recurse | Where-Object {
+$TestFiles = Get-ChildItem -Path "$PSScriptRoot/.." -Filter *.Tests.ps1 -Recurse | Where-Object -FilterScript {
     $_.FullName -notlike "*Review*"
 }
 
-Describe "Pester 5 Scope Rule Compliance" {
-    BeforeAll {
-        function Get-BeforeAllScriptBlock {
-            <#
-            .SYNOPSIS
-            Extracts the direct ScriptBlockExpressionAst argument from a BeforeAll CommandAst.
+Describe -Name "Pester 5 Scope Rule Compliance" -Fixture {
+    BeforeAll -Scriptblock {
+        <#
+        .SYNOPSIS
+        Extracts the direct ScriptBlockExpressionAst argument from a BeforeAll CommandAst.
 
-            .PARAMETER CommandAst
-            The CommandAst representing a BeforeAll invocation.
-            #>
+        .DESCRIPTION
+        Finds the direct script block argument without treating a nested script block as the setup block.
+
+        .PARAMETER CommandAst
+        The CommandAst representing a BeforeAll invocation.
+        #>
+        function Get-BeforeAllScriptBlock {
             [CmdletBinding()]
             [OutputType([System.Management.Automation.Language.ScriptBlockExpressionAst])]
             param(
@@ -44,7 +47,7 @@ Describe "Pester 5 Scope Rule Compliance" {
         }
     }
 
-    It "Should use `$script:` scope for variables initialized inside BeforeAll blocks in <Name>" -ForEach $TestFiles {
+    It -Name "Should use `$script:` scope for variables initialized inside BeforeAll blocks in <Name>" -ForEach $TestFiles -Test {
         $file = $_
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
 
@@ -96,14 +99,14 @@ Describe "Pester 5 Scope Rule Compliance" {
 
         $violationMessage = ""
         if ($violations.Count -gt 0) {
-            $violationMessage = $violations | ForEach-Object { "Line $($_.Line): Variable '$($_.Variable)' is unscoped. Code: '$($_.Code)'" } | Out-String
+            $violationMessage = $violations | ForEach-Object -Process { "Line $($_.Line): Variable '$($_.Variable)' is unscoped. Code: '$($_.Code)'" } | Out-String
         }
 
         $violationMessage | Should -BeNullOrEmpty
     }
 
-    Context 'Verification of BeforeAll CommandElements extraction' {
-        It 'Extracts positional and named -ScriptBlock arguments directly' {
+    Context -Name 'Verification of BeforeAll CommandElements extraction' -Fixture {
+        It -Name 'Extracts positional and named -ScriptBlock arguments directly' -Test {
             foreach ($snippet in @(
                 'BeforeAll { $script:a = 1 }',
                 'BeforeAll -ScriptBlock { $script:a = 1 }',
@@ -113,11 +116,11 @@ Describe "Pester 5 Scope Rule Compliance" {
                 $cmd = $ast.Find({ param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true)
                 $sb = Get-BeforeAllScriptBlock -CommandAst $cmd
                 $sb | Should -Not -BeNullOrEmpty
-                $sb.Extent.Text | Should -Be '{ $script:a = 1 }'
+                $sb.Extent.Text | Should -Be -ExpectedValue '{ $script:a = 1 }'
             }
         }
 
-        It 'Does not recursively match nested script blocks inside non-ScriptBlock arguments' {
+        It -Name 'Does not recursively match nested script blocks inside non-ScriptBlock arguments' -Test {
             $ast = [System.Management.Automation.Language.Parser]::ParseInput('BeforeAll (Get-Item | Where-Object { $x = 1 })', [ref]$null, [ref]$null)
             $cmd = $ast.Find({ param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true)
             $sb = Get-BeforeAllScriptBlock -CommandAst $cmd

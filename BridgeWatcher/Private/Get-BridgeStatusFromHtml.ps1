@@ -1,8 +1,29 @@
-﻿function Resolve-BridgeLocationStatus {
-    <#
-    .SYNOPSIS
-    Αντιστοιχίζει τις εικόνες μιας τοποθεσίας με την ενεργή κατάσταση γέφυρας.
-    #>
+﻿<#
+.SYNOPSIS
+Αντιστοιχίζει τις εικόνες μιας τοποθεσίας με την ενεργή κατάσταση γέφυρας.
+
+.DESCRIPTION
+Συνδυάζει τα μοτίβα κατάστασης και τις εικόνες μιας τοποθεσίας σε εγγραφή για τη ληφθείσα σελίδα.
+
+.PARAMETER Location
+Η τοποθεσία της γέφυρας που αξιολογείται.
+
+.PARAMETER BridgeImages
+Οι εικόνες που εντοπίστηκαν για την τοποθεσία.
+
+.PARAMETER StatusPatterns
+Τα μοτίβα κειμένου για την αναγνώριση της κατάστασης.
+
+.PARAMETER Timestamp
+Η χρονική στιγμή που αντιστοιχεί στα δεδομένα της σελίδας.
+
+.PARAMETER BaseUrl
+Το βασικό URL για την επίλυση σχετικών διευθύνσεων εικόνων.
+
+.PARAMETER Configuration
+Η διαμόρφωση της BridgeWatcher που χρησιμοποιεί η συνάρτηση.
+#>
+function Resolve-BridgeLocationStatus {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Location,
@@ -12,11 +33,11 @@
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$BaseUrl,
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Configuration
     )
-    $hasInfoImage = [bool]($BridgeImages | Where-Object { $_.src -match 'info\.php\?\d+' })
+    $hasInfoImage = [bool]($BridgeImages | Where-Object -FilterScript { $_.src -match 'info\.php\?\d+' })
     foreach ($statusEntry in $StatusPatterns.GetEnumerator()) {
         $status = $statusEntry.Key
         $pattern = $statusEntry.Value
-        $image = $BridgeImages | Where-Object { $_.src -match $pattern } | Select-Object -First 1
+        $image = $BridgeImages | Where-Object -FilterScript { $_.src -match $pattern } | Select-Object -First 1
         if ($image) {
             if ($status -eq $Configuration.Statuses.Open -and -not $hasInfoImage) {
                 $writeBridgeLogSplat = @{
@@ -50,24 +71,27 @@
     return $null
 }
 
+<#
+.SYNOPSIS
+Αναλύει HTML και επιστρέφει καταστάσεις γέφυρας.
+.DESCRIPTION
+Η Get-BridgeStatusFromHtml αναλύει HTML περιεχόμενο και επιστρέφει
+την τρέχουσα κατάσταση για κάθε γέφυρα που ανιχνεύεται.
+.PARAMETER Html
+Το HTML περιεχόμενο σε μορφή string.
+.PARAMETER Timestamp
+Η χρονική στιγμή συλλογής του HTML.
+.OUTPUTS
+[pscustomobject[]] - Καταστάσεις γέφυρας με ονόματα και timestamps.
+.EXAMPLE
+Get-BridgeStatusFromHtml -Html $htmlContent -Timestamp (Get-Date)
+.NOTES
+Χρησιμοποιεί regex και structured parsing για ανάλυση.
+
+.PARAMETER Configuration
+Η διαμόρφωση της BridgeWatcher που χρησιμοποιεί η συνάρτηση.
+#>
 function Get-BridgeStatusFromHtml {
-    <#
-    .SYNOPSIS
-    Αναλύει HTML και επιστρέφει καταστάσεις γέφυρας.
-    .DESCRIPTION
-    Η Get-BridgeStatusFromHtml αναλύει HTML περιεχόμενο και επιστρέφει
-    την τρέχουσα κατάσταση για κάθε γέφυρα που ανιχνεύεται.
-    .PARAMETER Html
-    Το HTML περιεχόμενο σε μορφή string.
-    .PARAMETER Timestamp
-    Η χρονική στιγμή συλλογής του HTML.
-    .OUTPUTS
-    [pscustomobject[]] - Καταστάσεις γέφυρας με ονόματα και timestamps.
-    .EXAMPLE
-    Get-BridgeStatusFromHtml -Html $htmlContent -Timestamp (Get-Date)
-    .NOTES
-    Χρησιμοποιεί regex και structured parsing για ανάλυση.
-    #>
     [CmdletBinding()]
     [OutputType([pscustomobject[]])]
     param (
@@ -131,7 +155,7 @@ function Get-BridgeStatusFromHtml {
             Level   = 'Debug'
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-        $imageList = ($bridgeImages | ForEach-Object { "  • $($_.src)" }) -join "`n"
+        $imageList = ($bridgeImages | ForEach-Object -Process { "  • $($_.src)" }) -join "`n"
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'
             Message = $imageList

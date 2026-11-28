@@ -1,8 +1,8 @@
-﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\BridgeWatcher")
-$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Filter *.ps* | Where-Object Extension -in '.ps1', '.psm1', '.psd1'
+﻿$script:ModulePath = Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\BridgeWatcher")
+$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Filter *.ps* | Where-Object -Property Extension -in -Value '.ps1', '.psm1', '.psd1'
 
-Describe "Architectural Constraints (OOP)" {
-    It "Should not contain OOP keywords (class, enum, interface) in <Name>" -ForEach $script:Files {
+Describe -Name "Architectural Constraints (OOP)" -Fixture {
+    It -Name "Should not contain OOP keywords (class, enum, interface) in <Name>" -ForEach $script:Files -Test {
         $file = $_
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
         $oopNodes = $ast.FindAll({
@@ -15,6 +15,6 @@ Describe "Architectural Constraints (OOP)" {
             throw "File $($file.Name) contains forbidden OOP keywords: $types"
         }
 
-        $oopNodes.Count | Should -Be 0
+        $oopNodes.Count | Should -Be -ExpectedValue 0
     }
 }

@@ -1,16 +1,25 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 . "$PSScriptRoot/TestHelper.ps1"
 
-InModuleScope BridgeWatcher {
-    Describe 'Update-BridgeStatus' {
-        BeforeAll {
+InModuleScope -ModuleName BridgeWatcher -ScriptBlock {
+    Describe -Name 'Update-BridgeStatus' -Fixture {
+        BeforeAll -Scriptblock {
             $script:Config = New-BridgeConfiguration
 
+            <#
+            .SYNOPSIS
+            Initializes mocks for two-bridge partial alert tests.
+
+            .DESCRIPTION
+            Sets up previous and current bridge entries for tests that exercise partial notification delivery.
+
+            .PARAMETER PreviousEntries
+            The bridge entries in the previous snapshot.
+
+            .PARAMETER ExtraCurrentEntries
+            Additional entries to include in the current snapshot.
+            #>
             function script:Initialize-TwoBridgeDiffMock {
-                <#
-                .SYNOPSIS
-                Initializes mocks for two-bridge partial alert tests.
-                #>
                 param(
                     [object[]]$PreviousEntries = @(),
                     [object[]]$ExtraCurrentEntries = @()
@@ -18,79 +27,79 @@ InModuleScope BridgeWatcher {
                 $b1 = [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή για συντήρηση'; Timestamp = '2025-04-25T10:00:00' }
                 $b2 = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-04-25T10:00:00' }
                 $hasPrevious = $PreviousEntries.Count -gt 0
-                Mock Test-Path { return $hasPrevious }.GetNewClosure()
+                Mock -CommandName Test-Path -MockWith { return $hasPrevious }.GetNewClosure()
                 if ($hasPrevious) {
-                    Mock Get-BridgePreviousStatus { return $PreviousEntries }.GetNewClosure()
+                    Mock -CommandName Get-BridgePreviousStatus -MockWith { return $PreviousEntries }.GetNewClosure()
                 }
                 $allCurrent = @($ExtraCurrentEntries) + @($b1, $b2)
-                Mock Get-BridgeStatus { return $allCurrent }.GetNewClosure()
-                Mock Invoke-BridgeStatusComparison {
+                Mock -CommandName Get-BridgeStatus -MockWith { return $allCurrent }.GetNewClosure()
+                Mock -CommandName Invoke-BridgeStatusComparison -MockWith {
                     return @(
                         [PSCustomObject]@{ BridgeName = 'Ποσειδωνία'; Type = 'Closed'; StateInfo = @($b1) },
                         [PSCustomObject]@{ BridgeName = 'Ισθμία'; Type = 'Opened'; StateInfo = @($b2) }
                     )
                 }.GetNewClosure()
                 $script:capturedExports = @()
-                Mock Export-BridgeStatusJson {
+                Mock -CommandName Export-BridgeStatusJson -MockWith {
                     $script:capturedExports += , @($Data)
                     return New-BridgeResult -Success $true
                 }
-                Mock Write-BridgeLog { }
+                Mock -CommandName Write-BridgeLog -MockWith { }
             }
         }
 
-        It 'Εκτελεί όλες τις βασικές λειτουργίες χωρίς σφάλμα' {
+        It -Name 'Εκτελεί όλες τις βασικές λειτουργίες χωρίς σφάλμα' -Test {
             $jsonFile = 'TestDrive:\bridge_status_test.json'
-            Mock Get-BridgePreviousStatus {
+            Mock -CommandName Get-BridgePreviousStatus -MockWith {
                 return @(
                     [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' },
                     [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
                 )
             } -ParameterFilter { $InputFile -eq $jsonFile }
-            Mock Get-BridgeStatus -MockWith {
+            Mock -CommandName Get-BridgeStatus -MockWith {
                 return @(
                     [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' },
                     [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
                 )
             }
-            Mock Invoke-BridgeStatusComparison {}
-            Mock Export-BridgeStatusJson {
+            Mock -CommandName Invoke-BridgeStatusComparison -MockWith {}
+            Mock -CommandName Export-BridgeStatusJson -MockWith {
                 New-BridgeResult -Success $true
             }
-            Mock Write-Verbose {}
+            Mock -CommandName Write-Verbose -MockWith {}
 
             {
                 Update-BridgeStatus -Configuration $script:Config -OutputFile $jsonFile -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
             } | Should -Not -Throw
         }
 
-        It 'Πρέπει να καλούνται Get-BridgePreviousStatus και Get-BridgeStatus με τα σωστά parameters όταν το αρχείο υπάρχει' {
+        It -Name 'Πρέπει να καλούνται Get-BridgePreviousStatus και Get-BridgeStatus με τα σωστά parameters όταν το αρχείο υπάρχει' -Test {
             $jsonFile = 'TestDrive:\bridge_status_test_exists.json'
 
             Set-Content -Path $jsonFile -Value '[]'
 
-            Mock Get-BridgePreviousStatus {
+            Mock -CommandName Get-BridgePreviousStatus -MockWith {
                 return @(
                     [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή'; From = '00:00'; ImageHash = 'abc' }
                 )
             }
-            Mock Get-BridgeStatus -MockWith {
+            Mock -CommandName Get-BridgeStatus -MockWith {
                 return @(
                     [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' }
                 )
             }
-            Mock Invoke-BridgeStatusComparison {
+            Mock -CommandName Invoke-BridgeStatusComparison -MockWith {
                 return @(
                     [PSCustomObject]@{ Type = 'Closed'; StateInfo = @{ GefyraName = 'Ποσειδωνία' } },
                     [PSCustomObject]@{ Type = 'Opened'; StateInfo = @{ GefyraName = 'Ισθμία' } }
                 )
             }
-            Mock Export-BridgeStatusJson {
+            Mock -CommandName Export-BridgeStatusJson -MockWith {
                 New-BridgeResult -Success $true
             }
-            Mock Write-Verbose {}
-            Mock Invoke-BridgeClosedNotification {}
-            Mock Invoke-BridgeOpenedNotification {}
+            Mock -CommandName Write-Verbose -MockWith {}
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith {}
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith {}
 
             $updateBridgeStatusSplat = @{
                 OutputFile    = $jsonFile
@@ -107,15 +116,15 @@ InModuleScope BridgeWatcher {
             Should -Invoke -CommandName Invoke-BridgeOpenedNotification -Times 1 -Exactly -Scope It
         }
 
-        It 'Εκτελείται σωστά με -WhatIf και δεν καλεί Invoke/Export' {
+        It -Name 'Εκτελείται σωστά με -WhatIf και δεν καλεί Invoke/Export' -Test {
             $jsonFile = 'TestDrive:\bridge_status_whatif.json'
 
             Set-Content -Path $jsonFile -Value '[]'
-            Mock Get-BridgePreviousStatus { return @() }
-            Mock Get-BridgeStatus { return @() }
-            Mock Invoke-BridgeStatusComparison {}
-            Mock Export-BridgeStatusJson {}
-            Mock Write-BridgeLog {}
+            Mock -CommandName Get-BridgePreviousStatus -MockWith { return @() }
+            Mock -CommandName Get-BridgeStatus -MockWith { return @() }
+            Mock -CommandName Invoke-BridgeStatusComparison -MockWith {}
+            Mock -CommandName Export-BridgeStatusJson -MockWith {}
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
             Update-BridgeStatus -Configuration $script:Config -OutputFile $jsonFile -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k' -WhatIf
 
@@ -124,26 +133,26 @@ InModuleScope BridgeWatcher {
             Should -Invoke -CommandName Write-BridgeLog -ParameterFilter { $Message -eq 'Finished comparison and saved snapshot.' } -Times 1 -Scope It
         }
 
-        It 'Ρίχνει terminating error όταν η Export-BridgeStatusJson επιστρέφει Success = $false' {
+        It -Name 'Ρίχνει terminating error όταν η Export-BridgeStatusJson επιστρέφει Success = $false' -Test {
             $jsonFile = 'TestDrive:\bridge_status_export_fail.json'
 
             if (Test-Path -Path $jsonFile) { Remove-Item -Path $jsonFile -Force }
-            Mock Get-BridgeStatus { return @([PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' }) }
-            Mock Invoke-BridgeStatusComparison { return @() }
-            Mock Export-BridgeStatusJson {
+            Mock -CommandName Get-BridgeStatus -MockWith { return @([PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή' }) }
+            Mock -CommandName Invoke-BridgeStatusComparison -MockWith { return @() }
+            Mock -CommandName Export-BridgeStatusJson -MockWith {
                 return New-BridgeResult -Success $false -ErrorMessage 'Disk full' -ErrorCode 'JSON_EXPORT_FAILURE'
             }
-            Mock Write-BridgeLog {}
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
             {
                 Update-BridgeStatus -Configuration $script:Config -OutputFile $jsonFile -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
             } | Should -Throw -ExpectedMessage '*Disk full*'
         }
 
-        It 'Αποθηκεύει μόνο την επιτυχημένη γέφυρα σε cold start όταν αποτυγχάνει η δεύτερη ειδοποίηση και επαναρίχνει το σφάλμα' {
+        It -Name 'Αποθηκεύει μόνο την επιτυχημένη γέφυρα σε cold start όταν αποτυγχάνει η δεύτερη ειδοποίηση και επαναρίχνει το σφάλμα' -Test {
             Initialize-TwoBridgeDiffMock
-            Mock Invoke-BridgeClosedNotification { }
-            Mock Invoke-BridgeOpenedNotification { throw 'Bridge 2 Pushover timeout' }
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { throw 'Bridge 2 Pushover timeout' }
 
             {
                 Update-BridgeStatus -Configuration $script:Config -OutputFile 'TestDrive:\bridge_status_cold_partial.json' -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
@@ -151,12 +160,12 @@ InModuleScope BridgeWatcher {
 
             Should -Invoke -CommandName Export-BridgeStatusJson -Times 1 -Exactly -Scope It
             $saved = @($script:capturedExports[0])
-            $saved.Count | Should -Be 1
-            $saved[0].GefyraName | Should -Be 'Ποσειδωνία'
-            $saved[0].GefyraStatus | Should -Be 'Κλειστή για συντήρηση'
+            $saved.Count | Should -Be -ExpectedValue 1
+            $saved[0].GefyraName | Should -Be -ExpectedValue 'Ποσειδωνία'
+            $saved[0].GefyraStatus | Should -Be -ExpectedValue 'Κλειστή για συντήρηση'
         }
 
-        It 'Αποθηκεύει τη νέα κατάσταση της πρώτης γέφυρας, τις αμετάβλητες και την προηγούμενη της αποτυχημένης όταν υπάρχει ιστορικό' {
+        It -Name 'Αποθηκεύει τη νέα κατάσταση της πρώτης γέφυρας, τις αμετάβλητες και την προηγούμενη της αποτυχημένης όταν υπάρχει ιστορικό' -Test {
             $prevEntries = @(
                 [PSCustomObject]@{ GefyraName = 'Κόρινθος'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-04-25T09:55:00' },
                 [PSCustomObject]@{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-04-25T09:55:00' },
@@ -164,8 +173,8 @@ InModuleScope BridgeWatcher {
             )
             $unchangedCurrent = @([PSCustomObject]@{ GefyraName = 'Κόρινθος'; GefyraStatus = 'Ανοιχτή'; Timestamp = '2025-04-25T10:00:00' })
             Initialize-TwoBridgeDiffMock -PreviousEntries $prevEntries -ExtraCurrentEntries $unchangedCurrent
-            Mock Invoke-BridgeClosedNotification { }
-            Mock Invoke-BridgeOpenedNotification { throw 'Bridge 2 Pushover HTTP 503' }
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { throw 'Bridge 2 Pushover HTTP 503' }
 
             {
                 Update-BridgeStatus -Configuration $script:Config -OutputFile 'TestDrive:\bridge_status_warm_partial.json' -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
@@ -173,18 +182,18 @@ InModuleScope BridgeWatcher {
 
             Should -Invoke -CommandName Export-BridgeStatusJson -Times 1 -Exactly -Scope It
             $saved = @($script:capturedExports[0])
-            $saved.Count | Should -Be 3
-            ($saved | Where-Object { $_.GefyraName -eq 'Κόρινθος' }).Timestamp | Should -Be '2025-04-25T10:00:00'
-            ($saved | Where-Object { $_.GefyraName -eq 'Ποσειδωνία' }).GefyraStatus | Should -Be 'Κλειστή για συντήρηση'
-            $isthmiaSaved = $saved | Where-Object { $_.GefyraName -eq 'Ισθμία' }
-            $isthmiaSaved.GefyraStatus | Should -Be 'Κλειστή με πρόγραμμα'
-            $isthmiaSaved.From | Should -Be '10:00'
+            $saved.Count | Should -Be -ExpectedValue 3
+            ($saved | Where-Object -FilterScript { $_.GefyraName -eq 'Κόρινθος' }).Timestamp | Should -Be -ExpectedValue '2025-04-25T10:00:00'
+            ($saved | Where-Object -FilterScript { $_.GefyraName -eq 'Ποσειδωνία' }).GefyraStatus | Should -Be -ExpectedValue 'Κλειστή για συντήρηση'
+            $isthmiaSaved = $saved | Where-Object -FilterScript { $_.GefyraName -eq 'Ισθμία' }
+            $isthmiaSaved.GefyraStatus | Should -Be -ExpectedValue 'Κλειστή με πρόγραμμα'
+            $isthmiaSaved.From | Should -Be -ExpectedValue '10:00'
         }
 
-        It 'Δεν καλεί Export-BridgeStatusJson όταν αποτύχουν όλες οι ειδοποιήσεις αλλαγών' {
+        It -Name 'Δεν καλεί Export-BridgeStatusJson όταν αποτύχουν όλες οι ειδοποιήσεις αλλαγών' -Test {
             Initialize-TwoBridgeDiffMock
-            Mock Invoke-BridgeClosedNotification { throw 'First bridge notification failed' }
-            Mock Invoke-BridgeOpenedNotification { throw 'Second bridge notification failed' }
+            Mock -CommandName Invoke-BridgeClosedNotification -MockWith { throw 'First bridge notification failed' }
+            Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { throw 'Second bridge notification failed' }
 
             {
                 Update-BridgeStatus -Configuration $script:Config -OutputFile 'TestDrive:\bridge_status_first_fail.json' -ApiKey 'a' -PoUserKey 'u' -PoApiKey 'k'
@@ -193,7 +202,7 @@ InModuleScope BridgeWatcher {
             Should -Not -Invoke -CommandName Export-BridgeStatusJson -Scope It
         }
 
-        It 'Retries OCR but delivers the fallback only once per unchanged closure image' {
+        It -Name 'Retries OCR but delivers the fallback only once per unchanged closure image' -Test {
             $params = @{
                 OutputFile = (Join-Path -Path $TestDrive -ChildPath 'retry.json'); Configuration = $script:Config
                 ApiKey = 'ocr'; PoUserKey = 'user'; PoApiKey = 'app'
@@ -226,11 +235,11 @@ InModuleScope BridgeWatcher {
             Should -Invoke -CommandName Invoke-BridgeOCRGoogleCloud -Times 5 -Exactly
             Should -Invoke -CommandName Send-BridgePushover -Times 4 -Exactly
             $saved = Get-BridgePreviousStatus -InputFile $params.OutputFile -Configuration $script:Config
-            $saved.ScheduleState | Should -Be 'Future'
-            $saved.ImageHash | Should -Be 'replacement'
+            $saved.ScheduleState | Should -Be -ExpectedValue 'Future'
+            $saved.ImageHash | Should -Be -ExpectedValue 'replacement'
         }
 
-        It 'Checkpoints an accepted push when only the delivery success log fails' {
+        It -Name 'Checkpoints an accepted push when only the delivery success log fails' -Test {
             $params = @{
                 OutputFile = (Join-Path -Path $TestDrive -ChildPath 'push-checkpoint.json'); Configuration = $script:Config
                 ApiKey = 'ocr'; PoUserKey = 'user'; PoApiKey = 'app'
@@ -249,10 +258,10 @@ InModuleScope BridgeWatcher {
 
             Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
             Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -Scope It -ParameterFilter { $Message -like '*Log append failed*' }
-            (Get-BridgePreviousStatus -InputFile $params.OutputFile -Configuration $script:Config).GefyraStatus | Should -BeExactly $script:Config.Statuses.Open
+            (Get-BridgePreviousStatus -InputFile $params.OutputFile -Configuration $script:Config).GefyraStatus | Should -BeExactly -ExpectedValue $script:Config.Statuses.Open
         }
 
-        It 'Retries an image-level Vision error and sends the recovered schedule' {
+        It -Name 'Retries an image-level Vision error and sends the recovered schedule' -Test {
             $params = @{
                 OutputFile = (Join-Path -Path $TestDrive -ChildPath 'vision-recovery.json'); Configuration = $script:Config
                 ApiKey = 'ocr'; PoUserKey = 'user'; PoApiKey = 'app'
@@ -281,22 +290,22 @@ InModuleScope BridgeWatcher {
             Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly
             Should -Invoke -CommandName Send-BridgePushover -Times 2 -Exactly
             $saved = Get-BridgePreviousStatus -InputFile $params.OutputFile -Configuration $script:Config
-            $saved.To | Should -BeExactly '15/01/2030 12:00'
+            $saved.To | Should -BeExactly -ExpectedValue '15/01/2030 12:00'
         }
 
-        Context 'End-to-End Orchestration Pipeline (External HTTP Mocked Only)' {
-            It 'Εκτελεί πλήρη ροή δύο διαδοχικών κύκλων χωρίς εσωτερικά mocks και αποφεύγει διπλές ειδοποιήσεις' {
-                $e2eLogDir = Join-Path $TestDrive 'e2e_logs'
+        Context -Name 'End-to-End Orchestration Pipeline (External HTTP Mocked Only)' -Fixture {
+            It -Name 'Εκτελεί πλήρη ροή δύο διαδοχικών κύκλων χωρίς εσωτερικά mocks και αποφεύγει διπλές ειδοποιήσεις' -Test {
+                $e2eLogDir = Join-Path -Path $TestDrive -ChildPath 'e2e_logs'
                 $e2eConfig = New-BridgeConfiguration -LogDirectory $e2eLogDir
                 $e2eStatusFile = 'TestDrive:\e2e_status.json'
-                if (Test-Path $e2eStatusFile) {
+                if (Test-Path -Path $e2eStatusFile) {
                     Remove-Item -Path $e2eStatusFile -Force
                 }
 
                 $ocrCalls = [System.Collections.Generic.List[string]]::new()
                 $pushoverCalls = [System.Collections.Generic.List[hashtable]]::new()
 
-                Mock Invoke-WebRequest {
+                Mock -CommandName Invoke-WebRequest -MockWith {
                     if ($Uri -like '*image-bridge-open-with-schedule-posidonia.php*') {
                         return [PSCustomObject]@{
                             Content = [byte[]]@(1, 2, 3, 4)
@@ -327,7 +336,7 @@ InModuleScope BridgeWatcher {
                     }
                 }
 
-                Mock Invoke-RestMethod {
+                Mock -CommandName Invoke-RestMethod -MockWith {
                     if ($Uri -like "$($e2eConfig.Urls.OCRApi)*") {
                         $ocrCalls.Add($Uri)
                         return [PSCustomObject]@{
@@ -360,38 +369,38 @@ InModuleScope BridgeWatcher {
                 }
 
                 $poll1State = @(Update-BridgeStatus @pollParams)
-                $poll1State.Count | Should -Be 2
-                Test-Path $e2eStatusFile | Should -BeTrue
+                $poll1State.Count | Should -Be -ExpectedValue 2
+                Test-Path -Path $e2eStatusFile | Should -BeTrue
 
                 $savedRecords = @(Get-Content -Path $e2eStatusFile -Raw -Encoding utf8BOM | ConvertFrom-Json)
-                $savedRecords.Count | Should -Be 2
+                $savedRecords.Count | Should -Be -ExpectedValue 2
 
-                $poseidoniaRecord = $savedRecords | Where-Object { $_.GefyraName -eq 'Ποσειδωνία' }
-                $isthmiaRecord = $savedRecords | Where-Object { $_.GefyraName -eq 'Ισθμία' }
+                $poseidoniaRecord = $savedRecords | Where-Object -FilterScript { $_.GefyraName -eq 'Ποσειδωνία' }
+                $isthmiaRecord = $savedRecords | Where-Object -FilterScript { $_.GefyraName -eq 'Ισθμία' }
 
                 $poseidoniaRecord | Should -Not -BeNullOrEmpty
-                $poseidoniaRecord.GefyraStatus | Should -Be $e2eConfig.Statuses.ClosedWithSchedule
+                $poseidoniaRecord.GefyraStatus | Should -Be -ExpectedValue $e2eConfig.Statuses.ClosedWithSchedule
                 $poseidoniaRecord.ImageHash | Should -Not -BeNullOrEmpty
 
                 $isthmiaRecord | Should -Not -BeNullOrEmpty
-                $isthmiaRecord.GefyraStatus | Should -Be $e2eConfig.Statuses.Open
+                $isthmiaRecord.GefyraStatus | Should -Be -ExpectedValue $e2eConfig.Statuses.Open
 
-                $ocrCalls.Count | Should -Be 1
-                $pushoverCalls.Count | Should -Be 2
+                $ocrCalls.Count | Should -Be -ExpectedValue 1
+                $pushoverCalls.Count | Should -Be -ExpectedValue 2
 
-                $closedPushover = $pushoverCalls | Where-Object { $_.title -match 'Ποσειδωνία' }
-                $openedPushover = $pushoverCalls | Where-Object { $_.message -match 'Ισθμία' -and $_.title -eq 'Γέφυρα Ανοιχτή!' }
+                $closedPushover = $pushoverCalls | Where-Object -FilterScript { $_.title -match 'Ποσειδωνία' }
+                $openedPushover = $pushoverCalls | Where-Object -FilterScript { $_.message -match 'Ισθμία' -and $_.title -eq 'Γέφυρα Ανοιχτή!' }
 
                 $closedPushover | Should -Not -BeNullOrEmpty
-                $closedPushover.message | Should -Match '25/12/2099 10:00'
-                $closedPushover.message | Should -Match '25/12/2099 11:00'
+                $closedPushover.message | Should -Match -RegularExpression '25/12/2099 10:00'
+                $closedPushover.message | Should -Match -RegularExpression '25/12/2099 11:00'
                 $openedPushover | Should -Not -BeNullOrEmpty
 
                 $poll2State = @(Update-BridgeStatus @pollParams)
-                $poll2State.Count | Should -Be 2
+                $poll2State.Count | Should -Be -ExpectedValue 2
 
-                $ocrCalls.Count | Should -Be 1
-                $pushoverCalls.Count | Should -Be 2
+                $ocrCalls.Count | Should -Be -ExpectedValue 1
+                $pushoverCalls.Count | Should -Be -ExpectedValue 2
                 Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
             }
         }

@@ -40,10 +40,17 @@ param(
     [switch]$IncludeMergeCommits
 )
 
+<#
+.SYNOPSIS
+Finds the latest tag reachable from the current branch.
+
+.DESCRIPTION
+Returns the newest reachable tag, or the first commit when no tag is reachable.
+#>
 function Get-LatestTagOnCurrentBranch {
     $tag = git describe --tags --abbrev=0 2>$null
     if (-not $tag) {
-        Write-Verbose 'Δεν βρέθηκαν tags στο current branch. Επιστροφή πρώτου commit.'
+        Write-Verbose -Message 'Δεν βρέθηκαν tags στο current branch. Επιστροφή πρώτου commit.'
         return (git rev-list --max-parents=0 HEAD).Trim()
     }
     return $tag
@@ -57,11 +64,11 @@ if (-not $To) {
 }
 
 if ($From -eq $To) {
-    Write-Verbose "From και To refs είναι ίδια ($From). Δεν υπάρχουν νέα commits."
+    Write-Verbose -Message "From και To refs είναι ίδια ($From). Δεν υπάρχουν νέα commits."
     return @()
 }
 
-Write-Verbose "Λαμβάνονται commits από '$From' έως '$To'..."
+Write-Verbose -Message "Λαμβάνονται commits από '$From' έως '$To'..."
 
 $gitArgs = @("$From..$To", '--pretty=format:%s')
 if (-not $IncludeMergeCommits) { $gitArgs += '--no-merges' }
@@ -75,13 +82,13 @@ if ($ExcludeHousekeeping) {
 }
 
 try {
-    $messages = git log @gitArgs | Where-Object { $_.Trim() } | Select-Object -Unique
+    $messages = git log @gitArgs | Where-Object -FilterScript { $_.Trim() } | Select-Object -Unique
     if ($messages) {
         $messages
     } else {
-        Write-Verbose 'Δεν βρέθηκαν user-facing commits στο επιλεγμένο range.'
+        Write-Verbose -Message 'Δεν βρέθηκαν user-facing commits στο επιλεγμένο range.'
     }
 } catch {
-    Write-Error "Σφάλμα εκτέλεσης git log: $_"
+    Write-Error -Message "Σφάλμα εκτέλεσης git log: $_"
     throw
 }

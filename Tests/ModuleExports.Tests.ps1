@@ -1,15 +1,15 @@
-﻿Describe 'Module Cmdlet Exports' {
-    BeforeAll {
+﻿Describe -Name 'Module Cmdlet Exports' -Fixture {
+    BeforeAll -Scriptblock {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         $script:Config = New-BridgeConfiguration
-        Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+        Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
     }
 
-    It 'Exports Update-BridgeStatus cmdlet' {
-        (Get-Command -Module BridgeWatcher).Name | Should -Contain 'Update-BridgeStatus'
+    It -Name 'Exports Update-BridgeStatus cmdlet' -Test {
+        (Get-Command -Module BridgeWatcher).Name | Should -Contain -ExpectedValue 'Update-BridgeStatus'
     }
 
-    It 'Does not export Get-BridgeStatusComparison cmdlet' {
-        (Get-Command -Module BridgeWatcher).Name | Should -Not -Contain 'Get-BridgeStatusComparison'
+    It -Name 'Does not export Get-BridgeStatusComparison cmdlet' -Test {
+        (Get-Command -Module BridgeWatcher).Name | Should -Not -Contain -ExpectedValue 'Get-BridgeStatusComparison'
     }
 }

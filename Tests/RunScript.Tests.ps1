@@ -1,7 +1,7 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'run.ps1 Script Execution' {
-    BeforeEach {
+Describe -Name 'run.ps1 Script Execution' -Fixture {
+    BeforeEach -Scriptblock {
         $script:OriginalEnvApiKey = $Env:API_KEY
         $script:OriginalEnvPoApiKey = $Env:POAPI_KEY
         $script:OriginalEnvPoUserKey = $Env:POUSER_KEY
@@ -16,7 +16,7 @@ Describe 'run.ps1 Script Execution' {
         $script:calledParams = $null
     }
 
-    AfterEach {
+    AfterEach -Scriptblock {
         $Env:API_KEY = $script:OriginalEnvApiKey
         $Env:POAPI_KEY = $script:OriginalEnvPoApiKey
         $Env:POUSER_KEY = $script:OriginalEnvPoUserKey
@@ -24,12 +24,12 @@ Describe 'run.ps1 Script Execution' {
         $Env:BRIDGEWATCHER_SECRETS_DIR = $script:OriginalEnvSecretsDir
     }
 
-    It 'Should read secrets from environment variables if present, bypassing file reads' {
+    It -Name 'Should read secrets from environment variables if present, bypassing file reads' -Test {
         $Env:API_KEY = 'env-api-key'
         $Env:POAPI_KEY = 'env-po-api-key'
         $Env:POUSER_KEY = 'env-po-user-key'
 
-        Mock Get-BridgeStatusMonitor {
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
             $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
@@ -42,17 +42,17 @@ Describe 'run.ps1 Script Execution' {
         . "$PSScriptRoot/../run.ps1"
 
         Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
-        $script:calledParams.ApiKey | Should -Be 'env-api-key'
-        $script:calledParams.PoApiKey | Should -Be 'env-po-api-key'
-        $script:calledParams.PoUserKey | Should -Be 'env-po-user-key'
+        $script:calledParams.ApiKey | Should -Be -ExpectedValue 'env-api-key'
+        $script:calledParams.PoApiKey | Should -Be -ExpectedValue 'env-po-api-key'
+        $script:calledParams.PoUserKey | Should -Be -ExpectedValue 'env-po-user-key'
     }
 
-    It 'Should trim newlines and spaces from secrets set in environment variables' {
+    It -Name 'Should trim newlines and spaces from secrets set in environment variables' -Test {
         $Env:API_KEY = "  env-api-key`n`r  "
         $Env:POAPI_KEY = "  env-po-api-key`n  "
         $Env:POUSER_KEY = "env-po-user-key`r"
 
-        Mock Get-BridgeStatusMonitor {
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
             $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
@@ -65,12 +65,12 @@ Describe 'run.ps1 Script Execution' {
         . "$PSScriptRoot/../run.ps1"
 
         Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
-        $script:calledParams.ApiKey | Should -Be 'env-api-key'
-        $script:calledParams.PoApiKey | Should -Be 'env-po-api-key'
-        $script:calledParams.PoUserKey | Should -Be 'env-po-user-key'
+        $script:calledParams.ApiKey | Should -Be -ExpectedValue 'env-api-key'
+        $script:calledParams.PoApiKey | Should -Be -ExpectedValue 'env-po-api-key'
+        $script:calledParams.PoUserKey | Should -Be -ExpectedValue 'env-po-user-key'
     }
 
-    It 'Should trim newlines and spaces from secrets loaded from files' {
+    It -Name 'Should trim newlines and spaces from secrets loaded from files' -Test {
         $Env:API_KEY = $null
         $Env:POAPI_KEY = $null
         $Env:POUSER_KEY = $null
@@ -81,7 +81,7 @@ Describe 'run.ps1 Script Execution' {
         "  file-po-api-key`n  " | Out-File -FilePath "$TestDrive/run/secrets/PUSHOVER_TOKEN" -NoNewline
         "file-po-user-key`r" | Out-File -FilePath "$TestDrive/run/secrets/PUSHOVER_USER" -NoNewline
 
-        Mock Get-BridgeStatusMonitor {
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith {
             param($IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
             $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
@@ -94,12 +94,12 @@ Describe 'run.ps1 Script Execution' {
         . "$PSScriptRoot/../run.ps1"
 
         Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
-        $script:calledParams.ApiKey | Should -Be 'file-api-key'
-        $script:calledParams.PoApiKey | Should -Be 'file-po-api-key'
-        $script:calledParams.PoUserKey | Should -Be 'file-po-user-key'
+        $script:calledParams.ApiKey | Should -Be -ExpectedValue 'file-api-key'
+        $script:calledParams.PoApiKey | Should -Be -ExpectedValue 'file-po-api-key'
+        $script:calledParams.PoUserKey | Should -Be -ExpectedValue 'file-po-user-key'
     }
 
-    It 'Should load lowercase compose secret files (/run/secrets/api_key, pushover_token, pushover_user)' {
+    It -Name 'Should load lowercase compose secret files (/run/secrets/api_key, pushover_token, pushover_user)' -Test {
         $Env:API_KEY = $null
         $Env:POAPI_KEY = $null
         $Env:POUSER_KEY = $null
@@ -110,7 +110,7 @@ Describe 'run.ps1 Script Execution' {
         "lower-po-api-key`n" | Out-File -FilePath "$TestDrive/run/secrets_lower/pushover_token" -NoNewline
         "lower-po-user-key`n" | Out-File -FilePath "$TestDrive/run/secrets_lower/pushover_user" -NoNewline
 
-        Mock Get-BridgeStatusMonitor {
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith {
             param($Configuration, $IntervalSeconds, $MaxIterations, $OutputFile, $ApiKey, $PoApiKey, $PoUserKey, $Verbose)
             $null = $IntervalSeconds; $null = $MaxIterations; $null = $OutputFile; $null = $Verbose
             $script:calledParams = @{
@@ -124,24 +124,24 @@ Describe 'run.ps1 Script Execution' {
         . "$PSScriptRoot/../run.ps1"
 
         Should -Invoke -CommandName Get-BridgeStatusMonitor -Times 1 -Exactly
-        $script:calledParams.ApiKey | Should -Be 'lower-api-key'
-        $script:calledParams.PoApiKey | Should -Be 'lower-po-api-key'
-        $script:calledParams.PoUserKey | Should -Be 'lower-po-user-key'
-        $script:calledParams.Configuration.Defaults.LogDirectory | Should -Be "$TestDrive"
+        $script:calledParams.ApiKey | Should -Be -ExpectedValue 'lower-api-key'
+        $script:calledParams.PoApiKey | Should -Be -ExpectedValue 'lower-po-api-key'
+        $script:calledParams.PoUserKey | Should -Be -ExpectedValue 'lower-po-user-key'
+        $script:calledParams.Configuration.Defaults.LogDirectory | Should -Be -ExpectedValue "$TestDrive"
     }
 
-    It 'Should send a Pushover crash alert with -Configuration when Get-BridgeStatusMonitor throws' {
+    It -Name 'Should send a Pushover crash alert with -Configuration when Get-BridgeStatusMonitor throws' -Test {
         $Env:API_KEY = 'env-api-key'
         $Env:POAPI_KEY = 'env-po-api-key'
         $Env:POUSER_KEY = 'env-po-user-key'
 
-        Mock Get-BridgeStatusMonitor { throw 'Simulated monitor crash' }
-        Mock Write-Error {}
-        Mock Send-BridgePushover {}
+        Mock -CommandName Get-BridgeStatusMonitor -MockWith { throw 'Simulated monitor crash' }
+        Mock -CommandName Write-Error -MockWith {}
+        Mock -CommandName Send-BridgePushover -MockWith {}
 
         & "$PSScriptRoot/../run.ps1"
 
-        $LASTEXITCODE | Should -Be 1
+        $LASTEXITCODE | Should -Be -ExpectedValue 1
         Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly -ParameterFilter {
             $null -ne $Configuration -and $Configuration.Defaults.LogDirectory -eq "$TestDrive" -and $Priority -eq 1
         }
