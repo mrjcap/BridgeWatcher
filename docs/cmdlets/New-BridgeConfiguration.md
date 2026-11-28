@@ -32,10 +32,10 @@ New-BridgeConfiguration [[-BaseUrl] <String>] [[-OCRApiUrl] <String>] [[-Pushove
 ### Example 1
 
 ```powershell
-$config = New-BridgeConfiguration
+PS C:\> {{ Add example code here }}
 ```
 
-Δημιουργεί ένα αντικείμενο διαμόρφωσης με τις προεπιλεγμένες ρυθμίσεις.
+{{ Add example description here }}
 
 ## PARAMETERS
 
@@ -186,8 +186,8 @@ Accept wildcard characters: False
 ### CommonParameters
 
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
--InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
-For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,
+and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
