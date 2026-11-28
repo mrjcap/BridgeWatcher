@@ -51,6 +51,49 @@ function Invoke-Wrapper {
         $issues[0].Line | Should -Be -ExpectedValue 2
     }
 
+    It -Name 'staged analyzer reports <Rule> in scripts independently of general lint' -ForEach @(
+        @{ Code = 'function Get-LintFixture {}'; Rule = 'HelpPlacement' }
+        @{ Code = "Get-StagedFixture -Enabled 'bare'"; Rule = 'PositionalArgument' }
+        @{ Code = "Get-StagedFixture -Enabled -Value 'named'"; Rule = '' }
+    ) -Test {
+        $repoRoot = Join-Path -Path $PSScriptRoot -ChildPath '../..'
+        $analyzer = Join-Path -Path $repoRoot -ChildPath '.githooks/Invoke-StagedScriptAnalyzer.ps1'
+        $snapshot = Join-Path -Path $TestDrive -ChildPath 'snapshot'
+        $null = New-Item -Path "$snapshot/staged/scripts", "$snapshot/staged/Tests/Review" -ItemType Directory -Force
+        Copy-Item -LiteralPath "$PSScriptRoot/PowerShellStyle.psm1" -Destination "$snapshot/staged/Tests/Review"
+        Copy-Item -LiteralPath "$repoRoot/PSScriptAnalyzerSettings.psd1" -Destination "$snapshot/staged"
+        $helper = @'
+<#
+.SYNOPSIS
+Echoes a value.
+.DESCRIPTION
+Returns the provided value when enabled.
+.PARAMETER Enabled
+Enables output.
+.PARAMETER Value
+Text to return.
+#>
+function Get-StagedFixture {
+    param([switch]$Enabled, [string]$Value)
+    if ($Enabled) { $Value }
+}
+'@
+        Set-Content -LiteralPath "$snapshot/staged/scripts/Definition.ps1" -Value $helper
+        Set-Content -LiteralPath "$snapshot/staged/scripts/Fixture.ps1" -Value $Code
+        [IO.File]::WriteAllText("$snapshot/paths", "scripts/Fixture.ps1`0")
+
+        Push-Location -LiteralPath $snapshot
+        try {
+            if ($Rule) {
+                { & $analyzer } | Should -Throw -ExpectedMessage "*$Rule*"
+            } else {
+                (& $analyzer) | Should -Match -RegularExpression 'PRE-COMMIT PASSED: checked 1 staged PowerShell file'
+            }
+        } finally {
+            Pop-Location
+        }
+    }
+
     It -Name 'finds no style violations in tracked PowerShell files' -Test {
         $repoRoot = Join-Path -Path $PSScriptRoot -ChildPath '../..'
         $paths = @(Get-TrackedPowerShellPath -RepositoryRoot $repoRoot)
