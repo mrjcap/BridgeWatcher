@@ -2,11 +2,11 @@
 .SYNOPSIS
 Copies schedule fields from the OCR result into the bridge state.
 .DESCRIPTION
-Updates either a dictionary or a status object in memory. Leaves it unchanged for an empty result.
+Updates either a dictionary or a status object in memory.
 .PARAMETER Entry
 The bridge state to update.
 .PARAMETER OcrResult
-The parsed OCR schedule, or null.
+The parsed OCR schedule.
 #>
 function Set-BridgeEntryOcrMetadata {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Ενημερώνει μόνο αντικείμενο στη μνήμη χωρίς εξωτερικές αλλαγές συστήματος.')]
@@ -14,11 +14,8 @@ function Set-BridgeEntryOcrMetadata {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][ValidateNotNull()][object]$Entry,
-        [Parameter()][AllowNull()][object]$OcrResult
+        [Parameter(Mandatory)][ValidateNotNull()][object]$OcrResult
     )
-    if ($null -eq $OcrResult) {
-        return
-    }
     $ocrProperties = @('ScheduleState', 'From', 'To', 'ClosedFor', 'OpensIn', 'Note1', 'Note2')
     foreach ($prop in $ocrProperties) {
         $val = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName $prop
@@ -34,25 +31,17 @@ function Set-BridgeEntryOcrMetadata {
 .SYNOPSIS
 Builds a scheduled closure notification.
 .DESCRIPTION
-Formats the title and message for a future, active, expired, or unreadable schedule.
+Formats the title and message for a future, active, or expired schedule.
 .PARAMETER Entry
 The bridge whose schedule is being reported.
 .PARAMETER OcrResult
-The parsed schedule, or null if no text was found.
+The parsed schedule.
 #>
 function Get-BridgeScheduledNotificationContent {
     param(
         [Parameter(Mandatory)][ValidateNotNull()][PSCustomObject]$Entry,
-        [Parameter()][AllowNull()][object]$OcrResult
+        [Parameter(Mandatory)][ValidateNotNull()][object]$OcrResult
     )
-
-    $entryImageUrl = Get-BridgeOptionalProperty -InputObject $Entry -PropertyName 'ImageUrl'
-    if (-not $OcrResult) {
-        return @{
-            Title   = "🚧 Η γέφυρα $($Entry.GefyraName) έκλεισε με πρόγραμμα"
-            Message = "Δεν κατέστη δυνατή η αυτόματη ανάγνωση του προγράμματος κλεισίματος. Δείτε την εικόνα εδώ: $entryImageUrl"
-        }
-    }
 
     $fromVal = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName 'From'
     $toVal = Get-BridgeOptionalProperty -InputObject $OcrResult -PropertyName 'To'
@@ -120,6 +109,9 @@ function Invoke-BridgeScheduledClosureNotification {
     $notifiedHash = Get-BridgeOptionalProperty -InputObject $entry -PropertyName 'FallbackNotifiedImageHash'
     try {
         $ocrResult = Invoke-BridgeOCRGoogleCloud @ocrSplat
+        if ($null -eq $ocrResult) {
+            throw 'OCR returned no usable closure schedule.'
+        }
     } catch {
         $OcrFailed.Value = $true
         $failedHash = Get-BridgeOptionalProperty -InputObject $entry -PropertyName 'ImageHash'
@@ -136,7 +128,7 @@ function Invoke-BridgeScheduledClosureNotification {
         if ($failedHash -and $failedHash -eq $notifiedHash) { return }
         $fallback = @{
             Title   = "🚧 Η γέφυρα $($entry.GefyraName) έκλεισε με πρόγραμμα"
-            Message = "Απέτυχε η υπηρεσία OCR. Δείτε την εικόνα εδώ: $entryImageUrl"
+            Message = "Δεν κατέστη δυνατή η αυτόματη ανάγνωση του προγράμματος κλεισίματος. Δείτε την εικόνα εδώ: $entryImageUrl"
         }
         Send-BridgeNotification @Notification @fallback
         if ($failedHash) {

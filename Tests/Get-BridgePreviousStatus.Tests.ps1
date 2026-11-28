@@ -25,6 +25,19 @@ Describe -Name 'Get-BridgePreviousStatus' -Fixture {
         $result[0].GefyraName | Should -Be -ExpectedValue 'Ποσειδωνία'
         $result[1].GefyraStatus | Should -Be -ExpectedValue 'Ανοιχτή'
     }
+    It -Name 'Round-trips a literal snapshot path containing brackets in the directory and filename' -Test {
+        $config = New-BridgeConfiguration -LogDirectory $TestDrive
+        $path = Join-Path -Path $TestDrive -ChildPath 'monitor[1]/status[2].json'
+        $module = Get-Module -Name BridgeWatcher
+        $data = [pscustomobject]@{ GefyraName = 'Fixture'; GefyraStatus = $config.Statuses.Open }
+        $result = & $module {
+            param($Data, $Path, $Configuration)
+            Export-BridgeStatusJson -Data $Data -Path $Path -Configuration $Configuration
+        } -Data $data -Path $path -Configuration $config
+        $result.Success | Should -BeTrue
+        Test-Path -LiteralPath $path | Should -BeTrue
+        (Get-BridgePreviousStatus -InputFile $path -Configuration $config).GefyraName | Should -BeExactly -ExpectedValue 'Fixture'
+    }
     It -Name 'Επιστρέφει κενό array αν το αρχείο δεν υπάρχει' -Test {
         $path = "TestDrive:\nonexistent.json"
         $result = Get-BridgePreviousStatus -Configuration $script:Config -InputFile $path

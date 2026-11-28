@@ -39,14 +39,15 @@ function Write-BridgeAtomicJson {
         [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$Path,
         [Parameter()][AllowNull()][object]$JsonContent
     )
-    $tmpPath = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
+    $destination = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
+    $tmpPath = "$destination.$([guid]::NewGuid().ToString('N')).tmp"
     try {
-        Set-Content -Path $tmpPath -Value $JsonContent -Encoding UTF8 -Force -ErrorAction Stop
-        Move-Item -Path $tmpPath -Destination $Path -Force -ErrorAction Stop
+        Set-Content -LiteralPath $tmpPath -Value $JsonContent -Encoding UTF8 -Force -ErrorAction Stop
+        Move-Item -LiteralPath $tmpPath -Destination $destination -Force -ErrorAction Stop
     }
     finally {
-        if (Test-Path -Path $tmpPath) {
-            Remove-Item -Path $tmpPath -Force -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $tmpPath) {
+            Remove-Item -LiteralPath $tmpPath -Force -ErrorAction SilentlyContinue
         }
     }
 }

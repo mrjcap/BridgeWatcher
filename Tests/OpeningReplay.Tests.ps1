@@ -8,9 +8,12 @@
     Varies the first panel's images and keeps the second bridge on a scheduled closure.
     .PARAMETER PoseidoniaImages
     Image tags to place in the first bridge panel.
+    .PARAMETER IsthmiaOpen
+    Uses the open image for the second bridge instead of a scheduled closure.
     #>
     function Get-OpeningReplayHtml {
-        param([string]$PoseidoniaImages)
+        param([string]$PoseidoniaImages, [switch]$IsthmiaOpen)
+        $isthmiaImage = if ($IsthmiaOpen) { 'image-bridge-open-no-schedule.php?1' } else { 'image-bridge-open-with-schedule-isthmia.php?1' }
         @"
 <div class="panel panel-primary">
     <h4><b>ΠΟΣΕΙΔΩΝΊΑ</b></h4>
@@ -18,7 +21,7 @@
 </div>
 <div class="panel panel-primary">
     <h4><b>ΙΣΘΜΊΑ</b></h4>
-    <div class="panel-body"><div class="form-group"><img src="image-bridge-open-with-schedule-isthmia.php?1"></div></div>
+    <div class="panel-body"><div class="form-group"><img src="$isthmiaImage"></div></div>
 </div>
 "@
     }
@@ -38,7 +41,7 @@ Describe -Name 'Scheduled opening replay through Update-BridgeStatus' -Fixture {
         }
         $plainImage = '<img src="image-bridge-open-no-schedule.php?2">'
         $endUtc = [datetime]::new(2030, 1, 15, 10, 0, 0, [DateTimeKind]::Utc)
-        $poll = @{ Now = $endUtc.AddMinutes(-1); Html = (Get-OpeningReplayHtml -PoseidoniaImages $plainImage); Writes = [System.Collections.Generic.List[object]]::new() }
+        $poll = @{ Now = $endUtc.AddMinutes(-1); Html = (Get-OpeningReplayHtml -PoseidoniaImages $plainImage); Writes = [System.Collections.Generic.List[object]]::new(); HasText = $false }
         Mock -ModuleName BridgeWatcher -CommandName Get-Date -MockWith { if ($Format) { $poll.Now.ToString($Format) } else { $poll.Now } }
         Mock -ModuleName BridgeWatcher -CommandName Invoke-WebRequest -MockWith {
             if ($Uri -eq $cfg.Urls.Source) { return @{ Content = $poll.Html } }
@@ -47,7 +50,10 @@ Describe -Name 'Scheduled opening replay through Update-BridgeStatus' -Fixture {
         }
         Mock -ModuleName BridgeWatcher -CommandName Invoke-RestMethod -MockWith { throw 'Unexpected REST request' }
         Mock -ModuleName BridgeWatcher -CommandName Invoke-BridgeOpenedNotification -MockWith {}
-        Mock -ModuleName BridgeWatcher -CommandName Invoke-BridgeClosedNotification -MockWith {}
+        Mock -ModuleName BridgeWatcher -CommandName Send-BridgeNotification -MockWith {}
+        Mock -ModuleName BridgeWatcher -CommandName Invoke-BridgeOCRRequest -MockWith {
+            [pscustomobject]@{ responses = @(@{ textAnnotations = @(@{ description = '15/01/2030 10:00 15/01/2030 12:00' }) }) }
+        }
         Mock -ModuleName BridgeWatcher -CommandName Write-BridgeLog -MockWith {
             if ($Message -eq "$($cfg.ExportMessages.Success): $path") {
                 $poll.Writes.Add(@(Get-Content -LiteralPath $path -Raw | ConvertFrom-Json))
@@ -56,6 +62,7 @@ Describe -Name 'Scheduled opening replay through Update-BridgeStatus' -Fixture {
     }
 
     It -Name 'Preserves the schedule through the other bridge checkpoint and final write, then opens exactly once' -Test {
+        Mock -ModuleName BridgeWatcher -CommandName Invoke-BridgeClosedNotification -MockWith {}
         ConvertTo-Json -InputObject @($saved, @{ GefyraName = $cfg.BridgeNames.isthmia; GefyraStatus = $cfg.Statuses.Open }) |
             Set-Content -LiteralPath $path -Encoding utf8BOM
         $null = Update-BridgeStatus @params
@@ -82,6 +89,48 @@ Describe -Name 'Scheduled opening replay through Update-BridgeStatus' -Fixture {
         $null = Update-BridgeStatus @params
         Should -Invoke -CommandName Invoke-BridgeOpenedNotification -ModuleName BridgeWatcher -Times 1 -Exactly
         Should -Invoke -CommandName Invoke-BridgeClosedNotification -ModuleName BridgeWatcher -Times 1 -Exactly
+    }
+
+    It -Name 'Writes and reuses the snapshot at a path containing brackets' -Test {
+        Mock -ModuleName BridgeWatcher -CommandName Invoke-BridgeClosedNotification -MockWith {}
+        $params.OutputFile = Join-Path -Path $TestDrive -ChildPath 'monitor[1]/bridge[1].json'
+        $null = Update-BridgeStatus @params
+        $null = Update-BridgeStatus @params
+
+        (Test-Path -LiteralPath $params.OutputFile -PathType Leaf) | Should -BeTrue
+        $records = @(Get-BridgePreviousStatus -InputFile $params.OutputFile -Configuration $cfg)
+        $records.Count | Should -Be -ExpectedValue 2
+        Should -Invoke -CommandName Invoke-BridgeOpenedNotification -ModuleName BridgeWatcher -Times 1 -Exactly
+        Should -Invoke -CommandName Invoke-BridgeClosedNotification -ModuleName BridgeWatcher -Times 1 -Exactly
+    }
+
+    It -Name 'Saves the schedule when OCR later succeeds for the same image' -Test {
+        $poll.Html = Get-OpeningReplayHtml -PoseidoniaImages '<img src="image-bridge-open-with-schedule-posidonia.php?1">' -IsthmiaOpen
+        Mock -ModuleName BridgeWatcher -CommandName Invoke-BridgeOCRRequest -MockWith {
+            if ($poll.HasText) {
+                return [pscustomobject]@{ responses = @(@{ textAnnotations = @(@{ description = '15/01/2030 10:00 15/01/2030 12:00' }) }) }
+            }
+            return [pscustomobject]@{ responses = @([pscustomobject]@{}) }
+        }
+
+        $null = Update-BridgeStatus @params
+        $bridgeAfterEmpty = Get-BridgePreviousStatus -InputFile $path -Configuration $cfg | Where-Object -Property GefyraName -EQ -Value $saved.GefyraName
+        $bridgeAfterEmpty.ImageHash | Should -BeNullOrEmpty
+        $bridgeAfterEmpty.FallbackNotifiedImageHash | Should -Not -BeNullOrEmpty
+
+        $null = Update-BridgeStatus @params
+        Should -Invoke -CommandName Invoke-BridgeOCRRequest -ModuleName BridgeWatcher -Times 2 -Exactly
+        Should -Invoke -CommandName Send-BridgeNotification -ModuleName BridgeWatcher -Times 1 -Exactly
+
+        $poll.HasText = $true
+        $null = Update-BridgeStatus @params
+        $null = Update-BridgeStatus @params
+        Should -Invoke -CommandName Invoke-BridgeOCRRequest -ModuleName BridgeWatcher -Times 3 -Exactly
+        Should -Invoke -CommandName Send-BridgeNotification -ModuleName BridgeWatcher -Times 2 -Exactly
+        $bridge = Get-BridgePreviousStatus -InputFile $path -Configuration $cfg | Where-Object -Property GefyraName -EQ -Value $saved.GefyraName
+        $bridge.To | Should -BeExactly -ExpectedValue $saved.To
+        $bridge.ImageHash | Should -Not -BeNullOrEmpty
+        $bridge.FallbackNotifiedImageHash | Should -BeNullOrEmpty
     }
 
     It -Name 'Waits until the later occurrence of a repeated Athens reopening time has passed' -Test {
