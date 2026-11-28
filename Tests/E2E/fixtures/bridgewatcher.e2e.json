@@ -1,0 +1,11 @@
+{
+  "Urls": {
+    "Source": "https://fixture.bridgewatcher.test:8443/dioriga/",
+    "BaseImage": "https://fixture.bridgewatcher.test:8443/dioriga",
+    "OCRApi": "https://fixture.bridgewatcher.test:8443/v1/images:annotate",
+    "PushoverApi": "https://fixture.bridgewatcher.test:8443/1/messages.json"
+  },
+  "Defaults": {
+    "HttpRequestTimeout": 10
+  }
+}

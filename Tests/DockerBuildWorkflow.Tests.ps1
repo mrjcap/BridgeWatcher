@@ -38,6 +38,20 @@
         $script:content | Should -Match -RegularExpression 'sudo rm -rf test-secrets test-logs'
     }
 
+    It -Name 'Runs the hermetic first-poll E2E test and its negative control against the built image' -Test {
+        $script:content | Should -Match -RegularExpression "(?s)-\s*name:\s*Test Docker image\s+id:\s*e2e\s.*?bash Tests/E2E/run-image-e2e\.sh happy\s+bash Tests/E2E/run-image-e2e\.sh pushover-reject"
+        $script:content | Should -Match -RegularExpression 'E2E_FIXTURE_IMAGE:\s*public\.ecr\.aws/docker/library/python:[^@\s]+@sha256:[0-9a-f]{64}'
+        $script:content | Should -Match -RegularExpression "(?s)-\s*name:\s*Upload E2E evidence\s+if:\s*always\(\)\s*&&\s*steps\.e2e\.outcome\s*==\s*'failure'"
+        $e2ePath = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath 'E2E/run-image-e2e.sh'))
+        $e2eContent = [System.IO.File]::ReadAllText($e2ePath)
+        $e2eContent | Should -Not -Match -RegularExpression "`r"
+        $e2eContent | Should -Match -RegularExpression 'docker network create --internal'
+        $e2eContent | Should -Match -RegularExpression '-e SSL_CERT_FILE=/e2e/ca/ca\.pem -e SSL_CERT_DIR=/e2e/ca-empty'
+        $e2eContent | Should -Match -RegularExpression '-e BRIDGEWATCHER_CONFIG_PATH=/e2e/bridgewatcher\.e2e\.json'
+        $e2eContent | Should -Not -Match -RegularExpression '--insecure|curl -k\b|SkipCertificateCheck'
+        $e2eContent | Should -Not -Match -RegularExpression '>\s*"\$SECRETS/'
+    }
+
     It -Name 'Gates non-PR steps using pull_request event checks instead of workflow_call' -Test {
         $script:content | Should -Not -Match -RegularExpression "github\.event_name\s*[!=]=\s*'workflow_call'"
         $script:content | Should -Match -RegularExpression "github\.event_name\s*!=\s*'pull_request'\s*&&\s*!inputs\.dry_run"

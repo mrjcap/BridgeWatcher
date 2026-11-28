@@ -1,0 +1,16 @@
+[
+  {
+    "GefyraName": "Ποσειδωνία",
+    "GefyraStatus": "Ανοιχτή",
+    "Timestamp": "2026-07-08T23:55:00",
+    "ImageUrl": "https://fixture.bridgewatcher.test:8443/dioriga/image-bridge-open-no-schedule.php?1720472100",
+    "ImageHash": null
+  },
+  {
+    "GefyraName": "Ισθμία",
+    "GefyraStatus": "Ανοιχτή",
+    "Timestamp": "2026-07-08T23:55:00",
+    "ImageUrl": "https://fixture.bridgewatcher.test:8443/dioriga/image-bridge-open-no-schedule.php?1720472400",
+    "ImageHash": null
+  }
+]
