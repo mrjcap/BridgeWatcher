@@ -321,10 +321,6 @@ jobs:
             exit 1
           }
 
-      - name: Cleanup Git repository
-        run: |
-          git gc --prune=now --aggressive
-
       - name: Set job outputs
         id: set_output
         env:
