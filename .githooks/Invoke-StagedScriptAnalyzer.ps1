@@ -63,7 +63,7 @@ $elapsedSec = [Math]::Round($sw.Elapsed.TotalSeconds, 2)
 
 if ($failures.Count -gt 0) {
     foreach ($msg in $failures) {
-        Write-Output $msg
+        Write-Output -InputObject $msg
     }
 }
 
@@ -75,4 +75,4 @@ if ($failures.Count -gt 0 -or $findings.Count -gt 0) {
     throw "PRE-COMMIT FAILED (${elapsedSec}s): $($failures.Count) syntax error(s) and $($findings.Count) PSScriptAnalyzer finding(s) in staged PowerShell files."
 }
 
-Write-Output "PRE-COMMIT PASSED: checked $($stagedFiles.Count) staged PowerShell file(s) in ${elapsedSec}s."
+Write-Output -InputObject "PRE-COMMIT PASSED: checked $($stagedFiles.Count) staged PowerShell file(s) in ${elapsedSec}s."

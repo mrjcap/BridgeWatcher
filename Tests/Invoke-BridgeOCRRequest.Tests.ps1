@@ -1,9 +1,9 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-InModuleScope BridgeWatcher {
-Describe 'Invoke-BridgeOCRRequest' {
+InModuleScope -ModuleName BridgeWatcher -ScriptBlock {
+Describe -Name 'Invoke-BridgeOCRRequest' -Fixture {
 
-    BeforeAll {
+    BeforeAll -Scriptblock {
         $script:Config = New-BridgeConfiguration
 
         Mock -CommandName Start-Sleep -MockWith {
@@ -12,7 +12,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
 
 
-    It 'Returns the accepted OCR response without retrying when its success log fails' {
+    It -Name 'Returns the accepted OCR response without retrying when its success log fails' -Test {
         Mock -CommandName Invoke-RestMethod -MockWith { @{ responses = @(@{}) } }
         Mock -CommandName Write-BridgeLog -MockWith {}
         Mock -CommandName Write-BridgeLog -ParameterFilter { $Message -like '*Αίτημα OCR*' } -MockWith { throw 'Log append failed' }
@@ -20,12 +20,12 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $result = Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'test-key' -RequestBody '{}'
 
-        $result.responses.Count | Should -Be 1
+        $result.responses.Count | Should -Be -ExpectedValue 1
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
         Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -Scope It -ParameterFilter { $Message -like '*Log append failed*' }
     }
 
-    It 'Στέλνει POST και επιστρέφει αποτέλεσμα' {
+    It -Name 'Στέλνει POST και επιστρέφει αποτέλεσμα' -Test {
 
 
 
@@ -37,7 +37,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
         $response = Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'test-key' -RequestBody '{}'
 
-        $response.responses[0].textAnnotations[0].description | Should -Be 'fake text'
+        $response.responses[0].textAnnotations[0].description | Should -Be -ExpectedValue 'fake text'
 
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
 
@@ -45,7 +45,7 @@ Describe 'Invoke-BridgeOCRRequest' {
 
 
 
-    It 'Υπολογίζει διάρκεια με ημέρες, ώρες και λεπτά' {
+    It -Name 'Υπολογίζει διάρκεια με ημέρες, ώρες και λεπτά' -Test {
         $resp = @{
             responses = @(
                 @{
@@ -59,43 +59,43 @@ Describe 'Invoke-BridgeOCRRequest' {
             )
         }
         $res = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $resp
-        $res.ClosedFor | Should -Match 'ημέρες'
-        $res.ClosedFor | Should -Match 'ώρες'
-        $res.ClosedFor | Should -Match 'λεπτά'
+        $res.ClosedFor | Should -Match -RegularExpression 'ημέρες'
+        $res.ClosedFor | Should -Match -RegularExpression 'ώρες'
+        $res.ClosedFor | Should -Match -RegularExpression 'λεπτά'
     }
 
-    It 'Επιστρέφει exception όταν αποτυγχάνει η κλήση στο API' {
-        Mock Invoke-RestMethod { throw 'Simulated API failure' }
-        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw '❌ Αποτυχία OCR: Simulated API failure'
+    It -Name 'Επιστρέφει exception όταν αποτυγχάνει η κλήση στο API' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith { throw 'Simulated API failure' }
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw -ExpectedMessage '❌ Αποτυχία OCR: Simulated API failure'
     }
 
-    It 'Σταματάει χωρίς retries όταν η API επιστρέφει 401 Unauthorized' {
-        Mock Invoke-RestMethod {
+    It -Name 'Σταματάει χωρίς retries όταν η API επιστρέφει 401 Unauthorized' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith {
             $response = [PSCustomObject]@{ StatusCode = 401 }
-            $ex = New-Object System.Net.WebException("Unauthorized")
+            $ex = New-Object -TypeName System.Net.WebException -ArgumentList ("Unauthorized")
             $ex | Add-Member -MemberType NoteProperty -Name Response -Value $response -Force
             throw $ex
         }
-        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "❌ Αποτυχία OCR: Unauthorized"
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw -ExpectedMessage "❌ Αποτυχία OCR: Unauthorized"
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
     }
 
-    It 'Κάνει retries και πετάει το σφάλμα αν εξαντληθούν (π.χ. 500 Internal Server Error)' {
-        Mock Invoke-RestMethod {
+    It -Name 'Κάνει retries και πετάει το σφάλμα αν εξαντληθούν (π.χ. 500 Internal Server Error)' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith {
             $response = [PSCustomObject]@{ StatusCode = 500 }
-            $ex = New-Object System.Net.WebException("Internal Error")
+            $ex = New-Object -TypeName System.Net.WebException -ArgumentList ("Internal Error")
             $ex | Add-Member -MemberType NoteProperty -Name Response -Value $response -Force
             throw $ex
         }
-        Mock Start-Sleep {}
-        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "❌ Αποτυχία OCR: Internal Error"
+        Mock -CommandName Start-Sleep -MockWith {}
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw -ExpectedMessage "❌ Αποτυχία OCR: Internal Error"
         Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly
         Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly
     }
 
-    It 'Πρέπει να επαναλαμβάνει (retry) το αίτημα σε περίπτωση αποτυχίας' {
-        Mock Invoke-RestMethod { throw 'Connection Timeout' }
-        Mock Start-Sleep {}
+    It -Name 'Πρέπει να επαναλαμβάνει (retry) το αίτημα σε περίπτωση αποτυχίας' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith { throw 'Connection Timeout' }
+        Mock -CommandName Start-Sleep -MockWith {}
 
         { Invoke-BridgeOCRRequest -ApiKey 'test_key' -RequestBody '{"test":"json"}' -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Αποτυχία OCR*'
 
@@ -103,28 +103,28 @@ Describe 'Invoke-BridgeOCRRequest' {
         Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly
     }
 
-    It 'Πρέπει να ρίχνει ArgumentException όταν το RequestBody δεν είναι έγκυρο JSON' {
+    It -Name 'Πρέπει να ρίχνει ArgumentException όταν το RequestBody δεν είναι έγκυρο JSON' -Test {
         { Invoke-BridgeOCRRequest -ApiKey 'test_key' -RequestBody '{invalid_json}' -Configuration $script:Config } | Should -Throw -ExpectedMessage '*δεν είναι έγκυρο JSON*'
     }
 
-    It 'Disposes WebException Response if it is IDisposable' {
+    It -Name 'Disposes WebException Response if it is IDisposable' -Test {
         $resp = [System.Net.HttpWebResponse]::new()
-        Mock Invoke-RestMethod {
-            $ex = New-Object System.Net.WebException("Mock WebException")
+        Mock -CommandName Invoke-RestMethod -MockWith {
+            $ex = New-Object -TypeName System.Net.WebException -ArgumentList ("Mock WebException")
             $ex | Add-Member -MemberType NoteProperty -Name Response -Value $resp -Force
             throw $ex
         }
-        Mock Start-Sleep {}
-        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw "❌ Αποτυχία OCR: Mock WebException"
+        Mock -CommandName Start-Sleep -MockWith {}
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw -ExpectedMessage "❌ Αποτυχία OCR: Mock WebException"
     }
 
 
 
-    It 'Καλύπτει Configuration.OCRApiUrl path' {
-        Mock Invoke-RestMethod {
+    It -Name 'Καλύπτει Configuration.OCRApiUrl path' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith {
             return @{ responses = @(@{ textAnnotations = @(@{ description = 'test' }) }) }
         }
-        Mock Write-BridgeLog {}
+        Mock -CommandName Write-BridgeLog -MockWith {}
 
         $config = New-BridgeConfiguration
         $config.Urls.OCRApi = 'https://custom-ocr-api.com/annotate'
@@ -132,15 +132,15 @@ Describe 'Invoke-BridgeOCRRequest' {
         $result = Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{"test": "data"}' -Configuration $config
 
         $result | Should -Not -BeNullOrEmpty
-        $result.responses[0].textAnnotations[0].description | Should -Be 'test'
+        $result.responses[0].textAnnotations[0].description | Should -Be -ExpectedValue 'test'
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
     }
 
-    It 'Καλύπτει Configuration.OCRMessages.StartOCR path' {
-        Mock Invoke-RestMethod {
+    It -Name 'Καλύπτει Configuration.OCRMessages.StartOCR path' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith {
             return @{ responses = @(@{ textAnnotations = @(@{ description = 'test' }) }) }
         }
-        Mock Write-BridgeLog {}
+        Mock -CommandName Write-BridgeLog -MockWith {}
 
         $config = New-BridgeConfiguration
         $config.OCRMessages.StartOCR = 'Custom start OCR message'
@@ -152,9 +152,9 @@ Describe 'Invoke-BridgeOCRRequest' {
         } -Times 1
     }
 
-    It 'Καλύπτει Configuration.OCRMessages.OCRFailed και error logging paths' {
-        Mock Invoke-RestMethod { throw 'Test API failure' }
-        Mock Write-BridgeLog {}
+    It -Name 'Καλύπτει Configuration.OCRMessages.OCRFailed και error logging paths' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith { throw 'Test API failure' }
+        Mock -CommandName Write-BridgeLog -MockWith {}
 
         $config = New-BridgeConfiguration
         $config.OCRMessages.OCRFailed = 'Custom OCR failed message'
@@ -169,11 +169,11 @@ Describe 'Invoke-BridgeOCRRequest' {
         } -Times 1
     }
 
-    It 'Καλύπτει Configuration.LoggingConfig.InfoStage path για επιτυχή κλήση' {
-        Mock Invoke-RestMethod {
+    It -Name 'Καλύπτει Configuration.LoggingConfig.InfoStage path για επιτυχή κλήση' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith {
             return @{ responses = @(@{ textAnnotations = @(@{ description = 'test' }) }) }
         }
-        Mock Write-BridgeLog {}
+        Mock -CommandName Write-BridgeLog -MockWith {}
 
         $config = New-BridgeConfiguration
         $config.LoggingConfig.InfoStage = 'Ανάλυση'
@@ -185,11 +185,11 @@ Describe 'Invoke-BridgeOCRRequest' {
         } -Times 1
     }
 
-    It 'Καλύπτει όλες τις configuration paths μαζί σε επιτυχή σενάριο' {
-        Mock Invoke-RestMethod {
+    It -Name 'Καλύπτει όλες τις configuration paths μαζί σε επιτυχή σενάριο' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith {
             return @{ responses = @(@{ textAnnotations = @(@{ description = 'success' }) }) }
         }
-        Mock Write-BridgeLog {}
+        Mock -CommandName Write-BridgeLog -MockWith {}
 
         $config = New-BridgeConfiguration
         $config.Urls.OCRApi = 'https://custom-api.com/test'
@@ -199,21 +199,21 @@ Describe 'Invoke-BridgeOCRRequest' {
         $result = Invoke-BridgeOCRRequest -ApiKey 'test-key' -RequestBody '{"test": "data"}' -Configuration $config
 
         $result | Should -Not -BeNullOrEmpty
-        $result.responses[0].textAnnotations[0].description | Should -Be 'success'
+        $result.responses[0].textAnnotations[0].description | Should -Be -ExpectedValue 'success'
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly
         Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
             $Message -eq 'Custom start message' -and $Stage -eq 'Ανάλυση'
         } -Times 1
     }
 
-    It 'Επαναλαμβάνει (retry) σε HttpRequestException χωρίς ιδιότητα Response υπό strict mode' {
-        Mock Invoke-RestMethod {
+    It -Name 'Επαναλαμβάνει (retry) σε HttpRequestException χωρίς ιδιότητα Response υπό strict mode' -Test {
+        Mock -CommandName Invoke-RestMethod -MockWith {
             throw [System.Net.Http.HttpRequestException]::new('Name or service not known')
         }
-        Mock Start-Sleep {}
-        Mock Write-BridgeLog {}
+        Mock -CommandName Start-Sleep -MockWith {}
+        Mock -CommandName Write-BridgeLog -MockWith {}
 
-        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw '*Name or service not known*'
+        { Invoke-BridgeOCRRequest -Configuration $script:Config -ApiKey 'abc' -RequestBody '{}' } | Should -Throw -ExpectedMessage '*Name or service not known*'
         Should -Invoke -CommandName Invoke-RestMethod -Times 3 -Exactly -Scope It
         Should -Invoke -CommandName Start-Sleep -Times 2 -Exactly -Scope It
     }

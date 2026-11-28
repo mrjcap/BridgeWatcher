@@ -1,10 +1,10 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 
 
-Describe 'ConvertTo-BridgeTimeRange' {
+Describe -Name 'ConvertTo-BridgeTimeRange' -Fixture {
 
-    BeforeAll {
+    BeforeAll -Scriptblock {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -14,24 +14,24 @@ Describe 'ConvertTo-BridgeTimeRange' {
 
     }
 
-    Context 'Όταν το OCR κείμενο δεν περιέχει έγκυρες ημερομηνίες' {
+    Context -Name 'Όταν το OCR κείμενο δεν περιέχει έγκυρες ημερομηνίες' -Fixture {
 
-        It 'Πρέπει να επιστρέφει $null "Δεν βρέθηκαν επαρκείς ημερομηνίες"' {
+        It -Name 'Πρέπει να επιστρέφει $null "Δεν βρέθηκαν επαρκείς ημερομηνίες"' -Test {
             $fakeLines = @('άκυρο κείμενο χωρίς ημερομηνίες')
             $res = ConvertTo-BridgeTimeRange -Lines $fakeLines
             $res | Should -BeNullOrEmpty
         }
 
-        It 'Επιστρέφει $null όταν δίνονται μη αναγνωρίσιμες ημερομηνίες' {
+        It -Name 'Επιστρέφει $null όταν δίνονται μη αναγνωρίσιμες ημερομηνίες' -Test {
             $res = ConvertTo-BridgeTimeRange -Lines @('ΗμερομηνίεςΠουΔενΥπάρχουνΣανFormat')
             $res | Should -BeNullOrEmpty
         }
 
     }
 
-    Context 'Όταν οι ημερομηνίες είναι εκτός χρονολογικής σειράς στο OCR' {
+    Context -Name 'Όταν οι ημερομηνίες είναι εκτός χρονολογικής σειράς στο OCR' -Fixture {
 
-        It 'Πρέπει να ταξινομεί τις ημερομηνίες χρονολογικά και να επιστρέφει θετικό ClosedFor' {
+        It -Name 'Πρέπει να ταξινομεί τις ημερομηνίες χρονολογικά και να επιστρέφει θετικό ClosedFor' -Test {
 
             $lines = @(
 
@@ -43,33 +43,33 @@ Describe 'ConvertTo-BridgeTimeRange' {
 
             $result = ConvertTo-BridgeTimeRange -Lines $lines
 
-            $result.From | Should -Be ([datetime]::ParseExact('25/04/2025 14:00', 'dd/MM/yyyy HH:mm', $null))
+            $result.From | Should -Be -ExpectedValue ([datetime]::ParseExact('25/04/2025 14:00', 'dd/MM/yyyy HH:mm', $null))
 
-            $result.To | Should -Be ([datetime]::ParseExact('25/04/2025 14:30', 'dd/MM/yyyy HH:mm', $null))
+            $result.To | Should -Be -ExpectedValue ([datetime]::ParseExact('25/04/2025 14:30', 'dd/MM/yyyy HH:mm', $null))
 
-            $result.ClosedFor | Should -Be ([timespan]'00:30:00')
+            $result.ClosedFor | Should -Be -ExpectedValue ([timespan]'00:30:00')
 
         }
 
     }
 
-    Context 'Έλεγχος ανεπαρκών matches και εξαιρέσεων' {
+    Context -Name 'Έλεγχος ανεπαρκών matches και εξαιρέσεων' -Fixture {
 
-        It 'Επιστρέφει $null όταν υπάρχει μόνο 1 ημερομηνία' {
+        It -Name 'Επιστρέφει $null όταν υπάρχει μόνο 1 ημερομηνία' -Test {
             $res = ConvertTo-BridgeTimeRange -Lines @('Μόνο μία: 25/04/2025 14:00')
             $res | Should -BeNullOrEmpty
         }
 
-        It 'Επιστρέφει $null όταν αποτυγχάνει το parse' {
+        It -Name 'Επιστρέφει $null όταν αποτυγχάνει το parse' -Test {
             $res = ConvertTo-BridgeTimeRange -Lines @('99/99/2025 14:00', '25/04/2025 14:00')
             $res | Should -BeNullOrEmpty
         }
 
     }
 
-    Context 'Όταν η πρώτη ημερομηνία είναι μεγαλύτερη της δεύτερης' {
+    Context -Name 'Όταν η πρώτη ημερομηνία είναι μεγαλύτερη της δεύτερης' -Fixture {
 
-        It 'Πρέπει να αντιστρέφει from και to' {
+        It -Name 'Πρέπει να αντιστρέφει from και to' -Test {
 
             $lines = @(
 
@@ -81,9 +81,9 @@ Describe 'ConvertTo-BridgeTimeRange' {
 
             $result = ConvertTo-BridgeTimeRange -Lines $lines
 
-            $result.From | Should -Be ([datetime]::ParseExact('25/04/2025 14:00', 'dd/MM/yyyy HH:mm', $null))
+            $result.From | Should -Be -ExpectedValue ([datetime]::ParseExact('25/04/2025 14:00', 'dd/MM/yyyy HH:mm', $null))
 
-            $result.To | Should -Be ([datetime]::ParseExact('25/04/2025 14:30', 'dd/MM/yyyy HH:mm', $null))
+            $result.To | Should -Be -ExpectedValue ([datetime]::ParseExact('25/04/2025 14:30', 'dd/MM/yyyy HH:mm', $null))
 
         }
 

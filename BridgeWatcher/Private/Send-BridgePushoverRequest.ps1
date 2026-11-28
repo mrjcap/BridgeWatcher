@@ -1,27 +1,27 @@
-﻿function Send-BridgePushoverRequest {
-    <#
-    .SYNOPSIS
-    Αποστέλλει αίτημα ειδοποίησης στο API του Pushover.
+﻿<#
+.SYNOPSIS
+Αποστέλλει αίτημα ειδοποίησης στο API του Pushover.
 
-    .DESCRIPTION
-    Η Send-BridgePushoverRequest στέλνει ένα formatted payload
-    στο Pushover API endpoint και επιστρέφει την απόκριση.
+.DESCRIPTION
+Η Send-BridgePushoverRequest στέλνει ένα formatted payload
+στο Pushover API endpoint και επιστρέφει την απόκριση.
 
-    .PARAMETER Payload
-    Το hashtable με όλα τα απαιτούμενα δεδομένα.
+.PARAMETER Payload
+Το hashtable με όλα τα απαιτούμενα δεδομένα.
 
-    .PARAMETER Configuration
-    Το configuration object που περιέχει τις ρυθμίσεις.
+.PARAMETER Configuration
+Το configuration object που περιέχει τις ρυθμίσεις.
 
-    .OUTPUTS
-    Το αποτέλεσμα του API ή $null σε σφάλμα.
+.OUTPUTS
+Το αποτέλεσμα του API ή $null σε σφάλμα.
 
-    .EXAMPLE
-    Send-BridgePushoverRequest -Payload $pushoverPayload
+.EXAMPLE
+Send-BridgePushoverRequest -Payload $pushoverPayload
 
-    .NOTES
-    Χρησιμοποιεί Invoke-RestMethod με ErrorAction Stop για ασφαλή αποστολή.
-    #>
+.NOTES
+Χρησιμοποιεί Invoke-RestMethod με ErrorAction Stop για ασφαλή αποστολή.
+#>
+function Send-BridgePushoverRequest {
     [CmdletBinding()]
     [OutputType([object])]
     param (
@@ -39,7 +39,7 @@
     $warningLevel = $Configuration.LoggingConfig.WarningLevel
 
     try {
-        Write-Verbose "📲 Αποστολή ειδοποίησης Pushover (Τίτλος: $($Payload['title']))..."
+        Write-Verbose -Message "📲 Αποστολή ειδοποίησης Pushover (Τίτλος: $($Payload['title']))..."
 
         $invokeRestMethodSplat = @{
             Method      = 'Post'

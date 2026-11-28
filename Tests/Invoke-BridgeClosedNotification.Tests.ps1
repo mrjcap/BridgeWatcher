@@ -1,17 +1,17 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-InModuleScope BridgeWatcher {
-Describe 'Invoke-BridgeClosedNotification' {
+InModuleScope -ModuleName BridgeWatcher -ScriptBlock {
+Describe -Name 'Invoke-BridgeClosedNotification' -Fixture {
 
-    BeforeAll {
+    BeforeAll -Scriptblock {
         $script:Config = New-BridgeConfiguration
     }
 
 
 
-    Context 'Όταν η γέφυρα είναι κλειστή' {
+    Context -Name 'Όταν η γέφυρα είναι κλειστή' -Fixture {
 
-        It 'Καλεί OCR και στέλνει Pushover' {
+        It -Name 'Καλεί OCR και στέλνει Pushover' -Test {
 
             Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith {
                 return [pscustomobject]@{
@@ -48,7 +48,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
         }
 
-        It 'Στέλνει debug log και Pushover notification χωρίς OCR' {
+        It -Name 'Στέλνει debug log και Pushover notification χωρίς OCR' -Test {
 
             $entry = [pscustomobject]@{
 
@@ -62,11 +62,11 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             }
 
-            Mock Send-BridgePushover -MockWith { }
+            Mock -CommandName Send-BridgePushover -MockWith { }
 
-            Mock Write-BridgeLog -MockWith { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
-            Mock Invoke-BridgeOCRGoogleCloud { throw 'Δεν πρέπει να κληθεί OCR!' }
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith { throw 'Δεν πρέπει να κληθεί OCR!' }
 
             Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug
 
@@ -78,7 +78,7 @@ Describe 'Invoke-BridgeClosedNotification' {
 
         }
 
-        It 'Γράφει debug για μόνιμα κλειστή γέφυρα' {
+        It -Name 'Γράφει debug για μόνιμα κλειστή γέφυρα' -Test {
 
             $entry = [pscustomobject]@{
 
@@ -98,9 +98,9 @@ Describe 'Invoke-BridgeClosedNotification' {
 
         }
 
-        It 'Propagates delivery failures without sending an OCR-failure fallback' {
-            Mock Write-BridgeLog { }
-            Mock Invoke-BridgeOCRGoogleCloud {
+        It -Name 'Propagates delivery failures without sending an OCR-failure fallback' -Test {
+            Mock -CommandName Write-BridgeLog -MockWith { }
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith {
                 [pscustomobject]@{
                     ScheduleState = 'Future'
                     From          = '25/12/2099 10:00'
@@ -109,7 +109,7 @@ Describe 'Invoke-BridgeClosedNotification' {
                 }
             }
             $attempts = [System.Collections.Generic.List[string]]::new()
-            Mock Send-BridgePushover {
+            Mock -CommandName Send-BridgePushover -MockWith {
                 $attempts.Add($Title)
                 if ($attempts.Count -eq 1) { throw 'Notification transport failed' }
             }
@@ -126,31 +126,31 @@ Describe 'Invoke-BridgeClosedNotification' {
                 PoApiKey      = 'dummy'
             }
 
-            { Invoke-BridgeClosedNotification @parameters } | Should -Throw '*Notification transport failed*'
-            $attempts.Count | Should -Be 1
-            $attempts[0] | Should -Match 'θα κλείσει'
-            $entry.ScheduleState | Should -Be 'Future'
-            Should -Invoke Invoke-BridgeOCRGoogleCloud -Times 1 -Exactly
+            { Invoke-BridgeClosedNotification @parameters } | Should -Throw -ExpectedMessage '*Notification transport failed*'
+            $attempts.Count | Should -Be -ExpectedValue 1
+            $attempts[0] | Should -Match -RegularExpression 'θα κλείσει'
+            $entry.ScheduleState | Should -Be -ExpectedValue 'Future'
+            Should -Invoke -CommandName Invoke-BridgeOCRGoogleCloud -Times 1 -Exactly
         }
 
-        It 'Γράφει warning όταν αποτυγχάνει η OCR' {
+        It -Name 'Γράφει warning όταν αποτυγχάνει η OCR' -Test {
 
-            Mock Invoke-BridgeOCRGoogleCloud { throw 'Fake OCR failure' }
-            Mock Send-BridgePushover -MockWith { }
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith { throw 'Fake OCR failure' }
+            Mock -CommandName Send-BridgePushover -MockWith { }
 
             $entry = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg'; ImageHash = 'first' }
 
             { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose } | Should -Not -Throw
 
             $entry.ImageHash | Should -BeNullOrEmpty
-            $entry.FallbackNotifiedImageHash | Should -Be 'first'
+            $entry.FallbackNotifiedImageHash | Should -Be -ExpectedValue 'first'
             Should -Invoke -CommandName Send-BridgePushover -Times 1 -Exactly
         }
 
-        It 'Στέλνει fallback ειδοποίηση όταν το OCR επιστρέφει $null' {
+        It -Name 'Στέλνει fallback ειδοποίηση όταν το OCR επιστρέφει $null' -Test {
 
-            Mock Invoke-BridgeOCRGoogleCloud { $null }
-            Mock Send-BridgePushover -MockWith { }
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith { $null }
+            Mock -CommandName Send-BridgePushover -MockWith { }
 
             $entry = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = Get-Date; imageUrl = 'https://example.com/x.jpg' }
 
@@ -160,7 +160,7 @@ Describe 'Invoke-BridgeClosedNotification' {
         }
 
 
-        It 'Γράφει debug και δεν καλεί Send-BridgePushover για άγνωστη κατάσταση' {
+        It -Name 'Γράφει debug και δεν καλεί Send-BridgePushover για άγνωστη κατάσταση' -Test {
 
 
             $entry = [pscustomobject]@{
@@ -175,14 +175,14 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             }
 
-            Mock Send-BridgePushover { throw 'Δεν έπρεπε να εκτελεστεί!' }
+            Mock -CommandName Send-BridgePushover -MockWith { throw 'Δεν έπρεπε να εκτελεστεί!' }
 
 
             { Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'x' -PoApiKey 'x' -Verbose -Debug } | Should -Not -Throw
 
         }
 
-        It 'Αγνοεί κενές εγγραφές (null) στο CurrentState χωρίς σφάλμα' {
+        It -Name 'Αγνοεί κενές εγγραφές (null) στο CurrentState χωρίς σφάλμα' -Test {
         $state = @( $null, [PSCustomObject]@{
                 GefyraName   = 'Ισθμία'
                 GefyraStatus = $script:Config.Statuses.ClosedForMaintenance
@@ -201,7 +201,7 @@ Describe 'Invoke-BridgeClosedNotification' {
         $script:ProviderCalled | Should -BeTrue
     }
 
-    It 'Χρησιμοποιεί NotificationProvider αντί Pushover όταν παρέχεται' {
+    It -Name 'Χρησιμοποιεί NotificationProvider αντί Pushover όταν παρέχεται' -Test {
 
             $script:providerCalled = $false
             $script:providerTitle = ''
@@ -222,17 +222,17 @@ Describe 'Invoke-BridgeClosedNotification' {
                 imageUrl     = 'https://example.com/image.jpg'
             }
 
-            Mock Send-BridgePushover { throw 'Δεν έπρεπε να κληθεί Pushover!' }
-            Mock Write-BridgeLog { }
+            Mock -CommandName Send-BridgePushover -MockWith { throw 'Δεν έπρεπε να κληθεί Pushover!' }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -NotificationProvider $provider
 
             $script:providerCalled | Should -BeTrue
-            $script:providerTitle | Should -BeLike '*κλειστή για συντήρηση*'
+            $script:providerTitle | Should -BeLike -ExpectedValue '*κλειστή για συντήρηση*'
         }
 
-        It 'Ξεχωρίζει μελλοντικό πρόγραμμα κλεισίματος χωρίς να δηλώνει ότι η γέφυρα έκλεισε ήδη' {
-            Mock Invoke-BridgeOCRGoogleCloud {
+        It -Name 'Ξεχωρίζει μελλοντικό πρόγραμμα κλεισίματος χωρίς να δηλώνει ότι η γέφυρα έκλεισε ήδη' -Test {
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith {
                 return [pscustomobject]@{
                     ScheduleState = 'Future'
                     From          = '25/04/2025 10:00'
@@ -243,7 +243,7 @@ Describe 'Invoke-BridgeClosedNotification' {
                     Note2         = 'Η γέφυρα θα κλείσει στις 10:00 για 1 ώρα.'
                 }
             }
-            Mock Write-BridgeLog { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             $script:futureTitle = ''
             $script:futureMessage = ''
@@ -263,14 +263,14 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -NotificationProvider $provider
 
-            $script:futureTitle | Should -Match 'θα κλείσει'
-            $script:futureTitle | Should -Not -Match 'έκλεισε$'
-            $script:futureMessage | Should -Match 'Η γέφυρα θα κλείσει στις 10:00'
-            $script:futureMessage | Should -Not -Match 'Ανοίγει σε:'
+            $script:futureTitle | Should -Match -RegularExpression 'θα κλείσει'
+            $script:futureTitle | Should -Not -Match -RegularExpression 'έκλεισε$'
+            $script:futureMessage | Should -Match -RegularExpression 'Η γέφυρα θα κλείσει στις 10:00'
+            $script:futureMessage | Should -Not -Match -RegularExpression 'Ανοίγει σε:'
         }
 
-        It 'Συμπεριλαμβάνει το Note2 και το Ανοίγει σε για ενεργό κλείσιμο' {
-            Mock Invoke-BridgeOCRGoogleCloud {
+        It -Name 'Συμπεριλαμβάνει το Note2 και το Ανοίγει σε για ενεργό κλείσιμο' -Test {
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith {
                 return [pscustomobject]@{
                     ScheduleState = 'Active'
                     From          = '25/04/2025 10:00'
@@ -281,7 +281,7 @@ Describe 'Invoke-BridgeClosedNotification' {
                     Note2         = 'Η γέφυρα είναι ήδη κλειστή από τις 10:00.'
                 }
             }
-            Mock Write-BridgeLog { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             $script:activeTitle = ''
             $script:activeMessage = ''
@@ -301,14 +301,14 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -NotificationProvider $provider
 
-            $script:activeTitle | Should -Be '🚧 Η γέφυρα Ισθμία έκλεισε'
-            $script:activeMessage | Should -Match 'Ανοίγει σε: 45 λεπτά'
-            $script:activeMessage | Should -Match 'Σημείωση: Είναι προτιμότερο να μην περιμένεις'
-            $script:activeMessage | Should -Match 'Η γέφυρα είναι ήδη κλειστή από τις 10:00\.'
+            $script:activeTitle | Should -Be -ExpectedValue '🚧 Η γέφυρα Ισθμία έκλεισε'
+            $script:activeMessage | Should -Match -RegularExpression 'Ανοίγει σε: 45 λεπτά'
+            $script:activeMessage | Should -Match -RegularExpression 'Σημείωση: Είναι προτιμότερο να μην περιμένεις'
+            $script:activeMessage | Should -Match -RegularExpression 'Η γέφυρα είναι ήδη κλειστή από τις 10:00\.'
         }
 
-        It 'Ξεχωρίζει ληγμένο πρόγραμμα κλεισίματος χωρίς να δηλώνει ότι η γέφυρα έκλεισε' {
-            Mock Invoke-BridgeOCRGoogleCloud {
+        It -Name 'Ξεχωρίζει ληγμένο πρόγραμμα κλεισίματος χωρίς να δηλώνει ότι η γέφυρα έκλεισε' -Test {
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith {
                 return [pscustomobject]@{
                     ScheduleState = 'Expired'
                     From          = '25/04/2025 10:00'
@@ -319,7 +319,7 @@ Describe 'Invoke-BridgeClosedNotification' {
                     Note2         = 'Η γέφυρα είναι ανοιχτή.'
                 }
             }
-            Mock Write-BridgeLog { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             $script:expiredTitle = ''
             $script:expiredMessage = ''
@@ -339,13 +339,13 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -NotificationProvider $provider
 
-            $script:expiredTitle | Should -Match 'ολοκληρώθηκε'
-            $script:expiredTitle | Should -Not -Match 'έκλεισε$'
-            $script:expiredMessage | Should -Match 'Η γέφυρα είναι ανοιχτή\.'
+            $script:expiredTitle | Should -Match -RegularExpression 'ολοκληρώθηκε'
+            $script:expiredTitle | Should -Not -Match -RegularExpression 'έκλεισε$'
+            $script:expiredMessage | Should -Match -RegularExpression 'Η γέφυρα είναι ανοιχτή\.'
         }
 
-        It 'Εμπλουτίζει επιτόπου εγγραφή PSCustomObject με όλα τα πεδία OCR' {
-            Mock Invoke-BridgeOCRGoogleCloud {
+        It -Name 'Εμπλουτίζει επιτόπου εγγραφή PSCustomObject με όλα τα πεδία OCR' -Test {
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith {
                 return [pscustomobject]@{
                     Bridge        = 'Ισθμία'
                     ScheduleState = 'Active'
@@ -357,8 +357,8 @@ Describe 'Invoke-BridgeClosedNotification' {
                     Note2         = 'Σημείωση 2'
                 }
             }
-            Mock Send-BridgePushover { }
-            Mock Write-BridgeLog { }
+            Mock -CommandName Send-BridgePushover -MockWith { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             $entry = [pscustomobject]@{
                 GefyraName   = 'Ισθμία'
@@ -369,17 +369,17 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'u' -PoApiKey 'p'
 
-            $entry.ScheduleState | Should -Be 'Active'
-            $entry.From | Should -Be '25/04/2025 10:00'
-            $entry.To | Should -Be '25/04/2025 11:00'
-            $entry.ClosedFor | Should -Be '1 ώρα'
-            $entry.OpensIn | Should -Be '45 λεπτά'
-            $entry.Note1 | Should -Be 'Σημείωση 1'
-            $entry.Note2 | Should -Be 'Σημείωση 2'
+            $entry.ScheduleState | Should -Be -ExpectedValue 'Active'
+            $entry.From | Should -Be -ExpectedValue '25/04/2025 10:00'
+            $entry.To | Should -Be -ExpectedValue '25/04/2025 11:00'
+            $entry.ClosedFor | Should -Be -ExpectedValue '1 ώρα'
+            $entry.OpensIn | Should -Be -ExpectedValue '45 λεπτά'
+            $entry.Note1 | Should -Be -ExpectedValue 'Σημείωση 1'
+            $entry.Note2 | Should -Be -ExpectedValue 'Σημείωση 2'
         }
 
-        It 'Εμπλουτίζει επιτόπου εγγραφή hashtable με όλα τα πεδία OCR' {
-            Mock Invoke-BridgeOCRGoogleCloud {
+        It -Name 'Εμπλουτίζει επιτόπου εγγραφή hashtable με όλα τα πεδία OCR' -Test {
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith {
                 return [pscustomobject]@{
                     Bridge        = 'Ποσειδωνία'
                     ScheduleState = 'Future'
@@ -391,8 +391,8 @@ Describe 'Invoke-BridgeClosedNotification' {
                     Note2         = 'Η γέφυρα θα κλείσει στις 12:00 για 1 ώρα.'
                 }
             }
-            Mock Send-BridgePushover { }
-            Mock Write-BridgeLog { }
+            Mock -CommandName Send-BridgePushover -MockWith { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             $entry = @{
                 GefyraName   = 'Ποσειδωνία'
@@ -403,19 +403,19 @@ Describe 'Invoke-BridgeClosedNotification' {
 
             Invoke-BridgeClosedNotification -Configuration $script:Config -CurrentState @($entry) -ApiKey 'x' -PoUserKey 'u' -PoApiKey 'p'
 
-            $entry['ScheduleState'] | Should -Be 'Future'
-            $entry['From'] | Should -Be '25/04/2025 12:00'
-            $entry['To'] | Should -Be '25/04/2025 13:00'
-            $entry['ClosedFor'] | Should -Be '1 ώρα'
-            $entry['OpensIn'] | Should -Be ''
-            $entry['Note1'] | Should -Be ''
-            $entry['Note2'] | Should -Be 'Η γέφυρα θα κλείσει στις 12:00 για 1 ώρα.'
+            $entry['ScheduleState'] | Should -Be -ExpectedValue 'Future'
+            $entry['From'] | Should -Be -ExpectedValue '25/04/2025 12:00'
+            $entry['To'] | Should -Be -ExpectedValue '25/04/2025 13:00'
+            $entry['ClosedFor'] | Should -Be -ExpectedValue '1 ώρα'
+            $entry['OpensIn'] | Should -Be -ExpectedValue ''
+            $entry['Note1'] | Should -Be -ExpectedValue ''
+            $entry['Note2'] | Should -Be -ExpectedValue 'Η γέφυρα θα κλείσει στις 12:00 για 1 ώρα.'
         }
 
-        It 'Δεν τροποποιεί την εγγραφή όταν το OCR επιστρέφει $null' {
-            Mock Invoke-BridgeOCRGoogleCloud { return $null }
-            Mock Send-BridgePushover { }
-            Mock Write-BridgeLog { }
+        It -Name 'Δεν τροποποιεί την εγγραφή όταν το OCR επιστρέφει $null' -Test {
+            Mock -CommandName Invoke-BridgeOCRGoogleCloud -MockWith { return $null }
+            Mock -CommandName Send-BridgePushover -MockWith { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             $psEntry = [pscustomobject]@{
                 GefyraName   = 'Ισθμία'

@@ -1,15 +1,24 @@
-﻿Import-Module "$PSScriptRoot/../../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'Retry Jitter Requirement Review' {
-    BeforeAll {
-        $script:PublicPath = Resolve-Path "$PSScriptRoot/../../BridgeWatcher/Public"
-        $script:PrivatePath = Resolve-Path "$PSScriptRoot/../../BridgeWatcher/Private"
+Describe -Name 'Retry Jitter Requirement Review' -Fixture {
+    BeforeAll -Scriptblock {
+        $script:PublicPath = Resolve-Path -Path "$PSScriptRoot/../../BridgeWatcher/Public"
+        $script:PrivatePath = Resolve-Path -Path "$PSScriptRoot/../../BridgeWatcher/Private"
 
+        <#
+        .SYNOPSIS
+            Checks if any sleep command is inside a catch block within the loop.
+
+        .DESCRIPTION
+        Matches sleep calls to catch clauses in the same retry loop.
+
+        .PARAMETER Loop
+        The loop AST to inspect.
+
+        .PARAMETER Sleeps
+        The sleep command ASTs associated with the loop.
+        #>
         function Test-SleepInsideCatch {
-            <#
-            .SYNOPSIS
-                Checks if any sleep command is inside a catch block within the loop.
-            #>
             param($Loop, $Sleeps)
             foreach ($sleep in $Sleeps) {
                 $parent = $sleep.Parent
@@ -23,11 +32,20 @@ Describe 'Retry Jitter Requirement Review' {
             return $false
         }
 
+        <#
+        .SYNOPSIS
+            Checks if a loop with Start-Sleep is a network retry or backoff loop.
+
+        .DESCRIPTION
+        Uses the sleep and error-handling structure to distinguish network retries from ordinary loops.
+
+        .PARAMETER Loop
+        The loop AST to inspect.
+
+        .PARAMETER Sleeps
+        The sleep command ASTs associated with the loop.
+        #>
         function Test-IsRetryLoop {
-            <#
-            .SYNOPSIS
-                Checks if a loop with Start-Sleep is a network retry or backoff loop.
-            #>
             param($Loop, $Sleeps)
             if (Test-SleepInsideCatch -Loop $Loop -Sleeps $Sleeps) {
                 return $true
@@ -53,11 +71,17 @@ Describe 'Retry Jitter Requirement Review' {
             }, $true).Count -gt 0
         }
 
+        <#
+        .SYNOPSIS
+            Finds retry jitter violations in AST.
+
+        .DESCRIPTION
+        Parses a script and reports retry sleeps that do not vary their delay.
+
+        .PARAMETER Content
+        The source text to inspect.
+        #>
         function Get-RetryJitterViolation {
-            <#
-            .SYNOPSIS
-                Finds retry jitter violations in AST.
-            #>
             param([string]$Content)
 
             $violations = [System.Collections.Generic.List[string]]::new()
@@ -95,8 +119,8 @@ Describe 'Retry Jitter Requirement Review' {
         }
     }
 
-    Context 'Codebase Compliance' {
-        It 'Verifies that every retry/backoff loop in the codebase has jitter' {
+    Context -Name 'Codebase Compliance' -Fixture {
+        It -Name 'Verifies that every retry/backoff loop in the codebase has jitter' -Test {
             $files = Get-ChildItem -Path $script:PublicPath, $script:PrivatePath -Filter *.ps1 -Recurse
             $allViolations = [System.Collections.Generic.List[string]]::new()
 
@@ -108,12 +132,12 @@ Describe 'Retry Jitter Requirement Review' {
                 }
             }
 
-            $allViolations.Count | Should -Be 0
+            $allViolations.Count | Should -Be -ExpectedValue 0
         }
     }
 
-    Context 'Verification of the Rule Checker (Adversarial Tests)' {
-        It 'Fails when a loop has a fixed retry schedule without jitter' {
+    Context -Name 'Verification of the Rule Checker (Adversarial Tests)' -Fixture {
+        It -Name 'Fails when a loop has a fixed retry schedule without jitter' -Test {
             $badCode = @"
 function Test-BadMock {
     for (`$i = 1; `$i -le 3; `$i++) {
@@ -126,11 +150,11 @@ function Test-BadMock {
 }
 "@
             $violations = @(Get-RetryJitterViolation -Content $badCode)
-            $violations.Count | Should -BeGreaterThan 0
-            $violations[0] | Should -Match 'lacks Get-Random'
+            $violations.Count | Should -BeGreaterThan -ExpectedValue 0
+            $violations[0] | Should -Match -RegularExpression 'lacks Get-Random'
         }
 
-        It 'Fails when a loop has exponential backoff without jitter' {
+        It -Name 'Fails when a loop has exponential backoff without jitter' -Test {
             $badCode = @"
 function Test-BadMock {
     for (`$i = 1; `$i -le 3; `$i++) {
@@ -144,11 +168,11 @@ function Test-BadMock {
 }
 "@
             $violations = @(Get-RetryJitterViolation -Content $badCode)
-            $violations.Count | Should -BeGreaterThan 0
-            $violations[0] | Should -Match 'lacks Get-Random'
+            $violations.Count | Should -BeGreaterThan -ExpectedValue 0
+            $violations[0] | Should -Match -RegularExpression 'lacks Get-Random'
         }
 
-        It 'Passes when a loop has backoff with jitter' {
+        It -Name 'Passes when a loop has backoff with jitter' -Test {
             $goodCode = @"
 function Test-GoodMock {
     for (`$i = 1; `$i -le 3; `$i++) {
@@ -163,7 +187,7 @@ function Test-GoodMock {
 }
 "@
             $violations = @(Get-RetryJitterViolation -Content $goodCode)
-            $violations.Count | Should -Be 0
+            $violations.Count | Should -Be -ExpectedValue 0
         }
     }
 }

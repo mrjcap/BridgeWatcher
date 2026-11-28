@@ -1,27 +1,30 @@
-﻿function Invoke-BridgeOCRGoogleCloud {
-    <#
-    .SYNOPSIS
-    Αναλύει εικόνα με OCR μέσω Google Cloud.
+﻿<#
+.SYNOPSIS
+Αναλύει εικόνα με OCR μέσω Google Cloud.
 
-    .DESCRIPTION
-    Η Invoke-BridgeOCRGoogleCloud στέλνει Base64 εικόνα σε Google Vision OCR
-    και επιστρέφει τα αναγνωρισμένα αποτελέσματα.
+.DESCRIPTION
+Η Invoke-BridgeOCRGoogleCloud στέλνει Base64 εικόνα σε Google Vision OCR
+και επιστρέφει τα αναγνωρισμένα αποτελέσματα.
 
-    .PARAMETER ApiKey
-    Το API Key της υπηρεσίας Google Cloud.
+.PARAMETER ApiKey
+Το API Key της υπηρεσίας Google Cloud.
 
-    .PARAMETER ImageUri
-    Το URI της εικόνας που θα αναλυθεί.
+.PARAMETER ImageUri
+Το URI της εικόνας που θα αναλυθεί.
 
-    .OUTPUTS
-    [pscustomobject[]] - Αποτελέσματα OCR σε μορφή αντικειμένων.
+.OUTPUTS
+[pscustomobject[]] - Αποτελέσματα OCR σε μορφή αντικειμένων.
 
-    .EXAMPLE
-    Invoke-BridgeOCRGoogleCloud -ApiKey 'your-api-key' -ImageUri 'https://example.com/image.jpg'
+.EXAMPLE
+Invoke-BridgeOCRGoogleCloud -ApiKey 'your-api-key' -ImageUri 'https://example.com/image.jpg'
 
-    .NOTES
-    Απαιτεί έγκυρο API Key και δημόσια προσβάσιμες εικόνες.
-    #>
+.NOTES
+Απαιτεί έγκυρο API Key και δημόσια προσβάσιμες εικόνες.
+
+.PARAMETER Configuration
+Η διαμόρφωση της BridgeWatcher που χρησιμοποιεί η συνάρτηση.
+#>
+function Invoke-BridgeOCRGoogleCloud {
     [CmdletBinding()]
     [OutputType([pscustomobject[]])]
     param (

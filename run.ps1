@@ -1,9 +1,9 @@
 ﻿if (-not (Get-Module -Name 'BridgeWatcher')) {
     $ModulePath = "$PSScriptRoot/modules/BridgeWatcher/BridgeWatcher.psd1"
-    if (-not (Test-Path $ModulePath)) {
+    if (-not (Test-Path -Path $ModulePath)) {
         $ModulePath = "$PSScriptRoot/BridgeWatcher/BridgeWatcher.psd1"
     }
-    Import-Module $ModulePath -Force -Verbose
+    Import-Module -Name $ModulePath -Force -Verbose
 }
 
 $API_KEY = if ($Env:API_KEY) { $Env:API_KEY.Trim() } else { $null }
@@ -18,8 +18,8 @@ if ([string]::IsNullOrWhiteSpace($SecretsDir)) {
 if ([string]::IsNullOrWhiteSpace($API_KEY)) {
     foreach ($secretName in @('api_key', 'API_KEY')) {
         $secretPath = Join-Path -Path $SecretsDir -ChildPath $secretName
-        if (Test-Path $secretPath) {
-            $API_KEY = (Get-Content $secretPath -Raw).Trim()
+        if (Test-Path -Path $secretPath) {
+            $API_KEY = (Get-Content -Path $secretPath -Raw).Trim()
             break
         }
     }
@@ -27,8 +27,8 @@ if ([string]::IsNullOrWhiteSpace($API_KEY)) {
 if ([string]::IsNullOrWhiteSpace($POAPI_KEY)) {
     foreach ($secretName in @('pushover_token', 'PUSHOVER_TOKEN')) {
         $secretPath = Join-Path -Path $SecretsDir -ChildPath $secretName
-        if (Test-Path $secretPath) {
-            $POAPI_KEY = (Get-Content $secretPath -Raw).Trim()
+        if (Test-Path -Path $secretPath) {
+            $POAPI_KEY = (Get-Content -Path $secretPath -Raw).Trim()
             break
         }
     }
@@ -36,8 +36,8 @@ if ([string]::IsNullOrWhiteSpace($POAPI_KEY)) {
 if ([string]::IsNullOrWhiteSpace($POUSER_KEY)) {
     foreach ($secretName in @('pushover_user', 'PUSHOVER_USER')) {
         $secretPath = Join-Path -Path $SecretsDir -ChildPath $secretName
-        if (Test-Path $secretPath) {
-            $POUSER_KEY = (Get-Content $secretPath -Raw).Trim()
+        if (Test-Path -Path $secretPath) {
+            $POUSER_KEY = (Get-Content -Path $secretPath -Raw).Trim()
             break
         }
     }
@@ -52,7 +52,7 @@ if ([string]::IsNullOrWhiteSpace($OutDir)) {
     $OutDir = '/app/logs'
 }
 
-if (-not (Test-Path $OutDir)) {
+if (-not (Test-Path -Path $OutDir)) {
     New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 }
 $Configuration = New-BridgeConfiguration -LogDirectory $OutDir
@@ -69,11 +69,11 @@ try {
     }
     Get-BridgeStatusMonitor @startBridgeStatusMonitorSplat
 } catch {
-    Write-Error "Monitor failed: $_"
+    Write-Error -Message "Monitor failed: $_"
     try {
         Send-BridgePushover -Configuration $Configuration -PoUserKey $POUSER_KEY -PoApiKey $POAPI_KEY -Message "⚠️ BridgeWatcher monitor failed: $($_.Exception.Message)" -Title 'BridgeWatcher Alert' -Priority 1
     } catch {
-        Write-Warning "Failed to send failure alert: $($_.Exception.Message)"
+        Write-Warning -Message "Failed to send failure alert: $($_.Exception.Message)"
     }
     exit 1
 }

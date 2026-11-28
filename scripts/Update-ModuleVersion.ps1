@@ -28,6 +28,16 @@ param (
     [string]$GitHubEnv
 )
 
+<#
+.SYNOPSIS
+Reads the version from module manifest text.
+
+.DESCRIPTION
+Extracts the ModuleVersion field from the supplied manifest text and fails if it is absent.
+
+.PARAMETER Content
+The source text to inspect.
+#>
 function Get-ModuleVersion {
     param([string]$Content)
     if ($Content -match "ModuleVersion\s*=\s*'(\d+\.\d+\.\d+)'") {
@@ -38,6 +48,22 @@ function Get-ModuleVersion {
     }
 }
 
+<#
+.SYNOPSIS
+Replaces the module version in manifest text.
+
+.DESCRIPTION
+Substitutes the expected module version in the manifest text only when ShouldProcess approves.
+
+.PARAMETER Content
+The source text to inspect.
+
+.PARAMETER OldVersion
+The current version expected in the manifest.
+
+.PARAMETER NewVersion
+The replacement version to write to the manifest.
+#>
 function Update-ModuleVersionContent {
     [CmdletBinding(SupportsShouldProcess)]
     param(
@@ -53,24 +79,24 @@ function Update-ModuleVersionContent {
 }
 
 try {
-    $content = Get-Content $Path -Raw
+    $content = Get-Content -Path $Path -Raw
     $currentVersion = Get-ModuleVersion -Content $content
-    Write-Output "Current version: $currentVersion"
+    Write-Output -InputObject "Current version: $currentVersion"
 
     if ($Version) {
         $newVersion = $Version
-        Write-Output "Setting version to: $newVersion"
+        Write-Output -InputObject "Setting version to: $newVersion"
     } else {
         $versionParts = $currentVersion -split '\.'
         $versionParts[2] = [int]$versionParts[2] + 1
         $newVersion = "$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
-        Write-Output "Incrementing patch version to: $newVersion"
+        Write-Output -InputObject "Incrementing patch version to: $newVersion"
     }
 
     $newContent = Update-ModuleVersionContent -Content $content -OldVersion $currentVersion -NewVersion $newVersion
-    $utf8Bom = New-Object System.Text.UTF8Encoding $true
+    $utf8Bom = New-Object -TypeName System.Text.UTF8Encoding -ArgumentList $true
     [System.IO.File]::WriteAllText($Path, $newContent, $utf8Bom)
-    Write-Output "Updated version to: $newVersion"
+    Write-Output -InputObject "Updated version to: $newVersion"
 
     if ($GitHubEnv) {
         "new_version=$newVersion" | Out-File -FilePath $GitHubEnv -Append
@@ -79,6 +105,6 @@ try {
     return $newVersion
 }
 catch {
-    Write-Output $_.Exception.Message
+    Write-Output -InputObject $_.Exception.Message
     exit 1
 }

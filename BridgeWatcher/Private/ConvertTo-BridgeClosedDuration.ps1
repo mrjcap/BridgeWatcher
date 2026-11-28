@@ -1,28 +1,28 @@
-﻿function ConvertTo-BridgeClosedDuration {
-    <#
-    .SYNOPSIS
-    Μετατρέπει TimeSpan σε ελληνική περιγραφή διάρκειας.
+﻿<#
+.SYNOPSIS
+Μετατρέπει TimeSpan σε ελληνική περιγραφή διάρκειας.
 
-    .DESCRIPTION
-    Η ConvertTo-BridgeClosedDuration μετατρέπει ένα αντικείμενο TimeSpan
-    σε φιλική ελληνική περιγραφή (π.χ. "2 ώρες, 30 λεπτά").
+.DESCRIPTION
+Η ConvertTo-BridgeClosedDuration μετατρέπει ένα αντικείμενο TimeSpan
+σε φιλική ελληνική περιγραφή (π.χ. "2 ώρες, 30 λεπτά").
 
-    .PARAMETER Duration
-    Η διάρκεια ως αντικείμενο TimeSpan προς μετατροπή σε ελληνική περιγραφή.
+.PARAMETER Duration
+Η διάρκεια ως αντικείμενο TimeSpan προς μετατροπή σε ελληνική περιγραφή.
 
-    .OUTPUTS
-    [string] - Η διάρκεια σε ελληνική περιγραφή.
+.OUTPUTS
+[string] - Η διάρκεια σε ελληνική περιγραφή.
 
-    .EXAMPLE
-    # Επιστρέφει: "2 ώρες, 30 λεπτά"
+.EXAMPLE
+# Επιστρέφει: "2 ώρες, 30 λεπτά"
 
-    .EXAMPLE
-    # Επιστρέφει: "1 ημέρα, 3 ώρες"
+.EXAMPLE
+# Επιστρέφει: "1 ημέρα, 3 ώρες"
 
-    .NOTES
-    Χειρίζεται ημέρες, ώρες και λεπτά με σωστή πληθυντική μορφή στα ελληνικά.
-    Δεν εμφανίζει μηδενικές τιμές (π.χ. αν είναι 0 ώρες, παραλείπεται).
-    #>
+.NOTES
+Χειρίζεται ημέρες, ώρες και λεπτά με σωστή πληθυντική μορφή στα ελληνικά.
+Δεν εμφανίζει μηδενικές τιμές (π.χ. αν είναι 0 ώρες, παραλείπεται).
+#>
+function ConvertTo-BridgeClosedDuration {
     [CmdletBinding()]
     [OutputType([string])]
     param (
@@ -30,7 +30,7 @@
     )
     $components = [System.Collections.Generic.List[string]]::new()
     if ($Duration -lt [timespan]::Zero) {
-        Write-Warning "Η διάρκεια δεν μπορεί να είναι αρνητική."
+        Write-Warning -Message "Η διάρκεια δεν μπορεί να είναι αρνητική."
         return "άγνωστη διάρκεια"
     }
     if ($Duration.Days -gt 0) {

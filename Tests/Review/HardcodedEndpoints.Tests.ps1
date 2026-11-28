@@ -1,17 +1,17 @@
-﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
-$script:PublicPath = Join-Path $script:ModulePath "Public"
-$script:PrivatePath = Join-Path $script:ModulePath "Private"
-$script:Files = Get-ChildItem -Path $script:PublicPath, $script:PrivatePath -Recurse -Filter *.ps1 | ForEach-Object {
+﻿$script:ModulePath = Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\BridgeWatcher")
+$script:PublicPath = Join-Path -Path $script:ModulePath -ChildPath "Public"
+$script:PrivatePath = Join-Path -Path $script:ModulePath -ChildPath "Private"
+$script:Files = Get-ChildItem -Path $script:PublicPath, $script:PrivatePath -Recurse -Filter *.ps1 | ForEach-Object -Process {
     [PSCustomObject]@{
         Name     = $_.Name
         FullName = $_.FullName
     }
 }
 
-Describe "Hardcoded Service Endpoints in Defaults Review" {
+Describe -Name "Hardcoded Service Endpoints in Defaults Review" -Fixture {
     foreach ($file in $script:Files) {
-        Context "$($file.Name)" {
-            It "Should not contain hardcoded URLs, file paths, or API endpoints as default values" {
+        Context -Name "$($file.Name)" -Fixture {
+            It -Name "Should not contain hardcoded URLs, file paths, or API endpoints as default values" -Test {
                 $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
                 $params = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.ParameterAst] }, $true)
                 $violations = @()
@@ -42,13 +42,13 @@ Describe "Hardcoded Service Endpoints in Defaults Review" {
                 }
 
                 if ($violations.Count -gt 0) {
-                    $details = $violations | ForEach-Object {
+                    $details = $violations | ForEach-Object -Process {
                         "Parameter '$($_.Parameter)' has default value '$($_.DefaultValue)' containing hardcoded $($_.Type) '$($_.MatchedValue)'"
                     }
                     throw "Found violations in $($file.Name):`n$($details -join "`n")"
                 }
 
-                $violations.Count | Should -Be 0
+                $violations.Count | Should -Be -ExpectedValue 0
             }
         }
     }

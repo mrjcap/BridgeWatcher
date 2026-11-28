@@ -1,19 +1,19 @@
-﻿function ConvertTo-BridgeTimeRange {
-    <#
-    .SYNOPSIS
-    Εξάγει χρονικό εύρος από κείμενο OCR.
+﻿<#
+.SYNOPSIS
+Εξάγει χρονικό εύρος από κείμενο OCR.
 
-    .DESCRIPTION
-    Η ConvertTo-BridgeTimeRange αναλύει γραμμές κειμένου από OCR
-    και εξάγει ημερομηνίες/ώρες για να δημιουργήσει χρονικό εύρος
-    κλεισίματος γέφυρας.
+.DESCRIPTION
+Η ConvertTo-BridgeTimeRange αναλύει γραμμές κειμένου από OCR
+και εξάγει ημερομηνίες/ώρες για να δημιουργήσει χρονικό εύρος
+κλεισίματος γέφυρας.
 
-    .PARAMETER Lines
-    Πίνακας με γραμμές κειμένου από OCR ανάλυση.
+.PARAMETER Lines
+Πίνακας με γραμμές κειμένου από OCR ανάλυση.
 
-    .OUTPUTS
-    [PSCustomObject] - Αντικείμενο με ιδιότητες From, To και ClosedFor, ή $null αν αποτύχει.
-    #>
+.OUTPUTS
+[PSCustomObject] - Αντικείμενο με ιδιότητες From, To και ClosedFor, ή $null αν αποτύχει.
+#>
+function ConvertTo-BridgeTimeRange {
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     param (
@@ -28,7 +28,7 @@
         $bmatches = [regex]::Matches($text, $pattern)
 
         if ($bmatches.Count -lt 2) {
-            Write-Verbose "Δεν βρέθηκαν επαρκείς ημερομηνίες και ώρες για ανάλυση στο κείμενο OCR."
+            Write-Verbose -Message "Δεν βρέθηκαν επαρκείς ημερομηνίες και ώρες για ανάλυση στο κείμενο OCR."
             return $null
         }
 
@@ -55,7 +55,7 @@
         }
     }
     catch {
-        Write-Warning "Αποτυχία ανάλυσης ημερομηνιών OCR: $($_.Exception.Message)"
+        Write-Warning -Message "Αποτυχία ανάλυσης ημερομηνιών OCR: $($_.Exception.Message)"
         return $null
     }
 }

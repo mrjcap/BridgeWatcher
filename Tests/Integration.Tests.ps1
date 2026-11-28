@@ -1,14 +1,14 @@
-﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+﻿$here = Split-Path -Parent -Path $MyInvocation.MyCommand.Path
 
-$sut = Join-Path -Path (Split-Path -Parent $here) -ChildPath 'BridgeWatcher/BridgeWatcher.psd1'
+$sut = Join-Path -Path (Split-Path -Parent -Path $here) -ChildPath 'BridgeWatcher/BridgeWatcher.psd1'
 
-Import-Module $sut -Force
+Import-Module -Name $sut -Force
 
 
 
-Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
+Describe -Name "Integration - Live Bridge HTML Parsing" -Tag 'Integration' -Fixture {
 
-    BeforeAll {
+    BeforeAll -Scriptblock {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
 
@@ -33,7 +33,7 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
 
 
 
-    It "Should successfully fetch and parse the live HTML from topvision.gr" {
+    It -Name "Should successfully fetch and parse the live HTML from topvision.gr" -Test {
 
         $config = New-BridgeConfiguration
 
@@ -49,7 +49,7 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
             return
         }
 
-        $response.StatusCode | Should -BeLessThan 400
+        $response.StatusCode | Should -BeLessThan -ExpectedValue 400
         $htmlResultData | Should -Not -BeNullOrEmpty
 
 
@@ -70,13 +70,13 @@ Describe "Integration - Live Bridge HTML Parsing" -Tag 'Integration' {
 
         $statusResults | Should -Not -BeNullOrEmpty
 
-        $statusResults.Count | Should -BeGreaterThan 0
+        $statusResults.Count | Should -BeGreaterThan -ExpectedValue 0
 
 
 
         foreach ($status in $statusResults) {
 
-            $status.GefyraName | Should -Match '^(Ποσειδων[ιί]α|Ισθμ[ιί]α)$'
+            $status.GefyraName | Should -Match -RegularExpression '^(Ποσειδων[ιί]α|Ισθμ[ιί]α)$'
 
             $status.GefyraStatus | Should -Not -BeNullOrEmpty
 

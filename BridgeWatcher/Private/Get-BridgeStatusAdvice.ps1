@@ -1,33 +1,33 @@
-﻿function Get-BridgeStatusAdvice {
-    <#
-    .SYNOPSIS
-    Προτείνει αν αξίζει να περιμένετε το άνοιγμα της γέφυρας.
+﻿<#
+.SYNOPSIS
+Προτείνει αν αξίζει να περιμένετε το άνοιγμα της γέφυρας.
 
-    .DESCRIPTION
-    Η Get-BridgeStatusAdvice λαμβάνει τον χρόνο σε λεπτά μέχρι να ανοίξει
-    η γέφυρα και επιστρέφει μήνυμα για το αν πρέπει να περιμένετε.
+.DESCRIPTION
+Η Get-BridgeStatusAdvice λαμβάνει τον χρόνο σε λεπτά μέχρι να ανοίξει
+η γέφυρα και επιστρέφει μήνυμα για το αν πρέπει να περιμένετε.
 
-    .PARAMETER MinutesUntilOpen
-    Τα λεπτά που απομένουν μέχρι να ανοίξει η γέφυρα.
+.PARAMETER MinutesUntilOpen
+Τα λεπτά που απομένουν μέχρι να ανοίξει η γέφυρα.
 
-    .PARAMETER MaxWaitTimeMinutes
-    Ο μέγιστος χρόνος αναμονής σε λεπτά (προεπιλογή: 12 λεπτά).
+.PARAMETER MaxWaitTimeMinutes
+Ο μέγιστος χρόνος αναμονής σε λεπτά (προεπιλογή: 12 λεπτά).
 
-    .PARAMETER Configuration
-    Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
+.PARAMETER Configuration
+Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
 
-    .OUTPUTS
-    [string] - Συμβολοσειρά με την προτεινόμενη σύσταση.
+.OUTPUTS
+[string] - Συμβολοσειρά με την προτεινόμενη σύσταση.
 
-    .EXAMPLE
-    Get-BridgeStatusAdvice -MinutesUntilOpen 15
+.EXAMPLE
+Get-BridgeStatusAdvice -MinutesUntilOpen 15
 
-    .EXAMPLE
-    Get-BridgeStatusAdvice -MinutesUntilOpen 8 -MaxWaitTimeMinutes 10
+.EXAMPLE
+Get-BridgeStatusAdvice -MinutesUntilOpen 8 -MaxWaitTimeMinutes 10
 
-    .NOTES
-    Αν τα λεπτά είναι περισσότερα από το MaxWaitTimeMinutes, επιστρέφεται σύσταση να μην περιμένετε.
-    #>
+.NOTES
+Αν τα λεπτά είναι περισσότερα από το MaxWaitTimeMinutes, επιστρέφεται σύσταση να μην περιμένετε.
+#>
+function Get-BridgeStatusAdvice {
     [CmdletBinding()]
     [OutputType([string])]
     param (

@@ -1,6 +1,21 @@
 ﻿<#
 .SYNOPSIS
 Δημιουργεί ένα αντικείμενο αποτελέσματος.
+
+.DESCRIPTION
+Δημιουργεί αντικείμενο αποτελέσματος για δοκιμές με δεδομένα ή πληροφορίες αποτυχίας.
+
+.PARAMETER Success
+Δηλώνει αν η λειτουργία ολοκληρώθηκε επιτυχώς.
+
+.PARAMETER Data
+Τα δεδομένα που επιστρέφει μια επιτυχής λειτουργία.
+
+.PARAMETER ErrorMessage
+Το μήνυμα που περιγράφει την αποτυχία.
+
+.PARAMETER ErrorCode
+Ο κωδικός της αποτυχίας.
 #>
 function global:New-BridgeResult {
     param(
@@ -21,6 +36,12 @@ function global:New-BridgeResult {
 <#
 .SYNOPSIS
 Ελέγχει αν το αποτέλεσμα είναι επιτυχές.
+
+.DESCRIPTION
+Ελέγχει ότι το αποτέλεσμα δοκιμής έχει την αναμενόμενη δομή.
+
+.PARAMETER Result
+Το αντικείμενο αποτελέσματος που ελέγχεται.
 #>
 function global:Test-BridgeResult {
     param($Result)

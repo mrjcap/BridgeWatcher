@@ -148,17 +148,17 @@ jobs:
 
           $parseSw = [System.Diagnostics.Stopwatch]::StartNew()
           $parseErrors = [System.Collections.Generic.List[string]]::new()
-          $psFiles = @(
-            Get-ChildItem -Path './BridgeWatcher', './Tests', './scripts' -Recurse -File -Include '*.ps1', '*.psm1', '*.psd1'
-            Get-Item -LiteralPath './run.ps1', './gate.ps1', './PSScriptAnalyzerSettings.psd1'
-          )
-          foreach ($file in $psFiles) {
+          Import-Module -Name ./Tests/Review/PowerShellStyle.psm1
+          $repoRoot = (Get-Location).Path
+          $paths = @(Get-TrackedPowerShellPath -RepositoryRoot $repoRoot)
+          foreach ($path in $paths) {
+            $file = Join-Path -Path $repoRoot -ChildPath $path
             $tokens = $null
             $errors = $null
-            $null = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors)
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errors)
             if ($errors -and $errors.Count -gt 0) {
               foreach ($err in $errors) {
-                $parseErrors.Add("$($file.FullName):$($err.Extent.StartLineNumber): $($err.Message)")
+                $parseErrors.Add("${path}:$($err.Extent.StartLineNumber): $($err.Message)")
               }
             }
           }
@@ -170,7 +170,7 @@ jobs:
             try {
               $manifest = Test-ModuleManifest -Path $manifestPath.FullName -ErrorAction Stop
               Import-Module -Name $manifestPath.FullName -Force -ErrorAction Stop
-              Write-Output "Validated manifest $($manifest.Name) v$($manifest.Version) and parsed $($psFiles.Count) PowerShell files."
+              Write-Output "Validated manifest $($manifest.Name) v$($manifest.Version) and parsed $($paths.Count) PowerShell files."
             } catch {
               $parseErrors.Add("Module manifest/import validation failed: $($_.Exception.Message)")
             }
@@ -186,17 +186,10 @@ jobs:
 
           $lintSw = [System.Diagnostics.Stopwatch]::StartNew()
           Import-Module -Name PSScriptAnalyzer -RequiredVersion $env:PSSA_VERSION -Force -ErrorAction Stop
-          $analysisResults = @(
-            Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
-            Invoke-ScriptAnalyzer -Path ./Tests -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
-            Invoke-ScriptAnalyzer -Path ./run.ps1 -Settings ./PSScriptAnalyzerSettings.psd1
-            Invoke-ScriptAnalyzer -Path ./scripts -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 -Severity Error,Warning
-            Invoke-ScriptAnalyzer -Path ./BridgeWatcher -Recurse -IncludeRule PSUseBOMForUnicodeEncodedFile
-            Invoke-ScriptAnalyzer -Path ./Tests -Recurse -IncludeRule PSUseBOMForUnicodeEncodedFile
-          )
+          $analysisResults = @(Invoke-PowerShellPolicyLint -RepositoryRoot $repoRoot -Paths $paths)
           $lintSw.Stop()
           $lintSec = [Math]::Round($lintSw.Elapsed.TotalSeconds, 2)
-          Write-Output "PSScriptAnalyzer full scan ($($psFiles.Count) files): ${lintSec}s"
+          Write-Output "PSScriptAnalyzer full scan ($($paths.Count) files): ${lintSec}s"
 
           if ($analysisResults.Count -gt 0) {
             $analysisResults | Format-Table -Property ScriptName, Line, Severity, RuleName, Message -Wrap

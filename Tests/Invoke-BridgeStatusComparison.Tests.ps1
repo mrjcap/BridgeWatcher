@@ -1,13 +1,13 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-InModuleScope BridgeWatcher {
-Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
+InModuleScope -ModuleName BridgeWatcher -ScriptBlock {
+Describe -Name 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' -Fixture {
 
-    BeforeAll {
+    BeforeAll -Scriptblock {
         $script:Config = New-BridgeConfiguration
     }
 
-    It 'Omits a closure event when its bridge record cannot be resolved' {
+    It -Name 'Omits a closure event when its bridge record cannot be resolved' -Test {
         Mock -CommandName Resolve-BridgeStateForChange -MockWith { return ,@() }
         $entry = [pscustomobject]@{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.PermanentlyClosed }
 
@@ -17,11 +17,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         $events | Should -BeNullOrEmpty
     }
 
-    It 'Δεν στέλνει ειδοποίηση όταν η κατάσταση δεν αλλάζει' {
+    It -Name 'Δεν στέλνει ειδοποίηση όταν η κατάσταση δεν αλλάζει' -Test {
 
-        Mock -CommandName Invoke-BridgeClosedNotification { 'Closed notification sent' }
+        Mock -CommandName Invoke-BridgeClosedNotification -MockWith { 'Closed notification sent' }
 
-        Mock -CommandName Invoke-BridgeOpenedNotification { 'Opened notification sent' }
+        Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { 'Opened notification sent' }
 
         $sameState = @(
 
@@ -51,13 +51,13 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
 
-        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
     }
 
-    It 'Στέλνει απευθείας ειδοποίηση χωρίς OCR' {
+    It -Name 'Στέλνει απευθείας ειδοποίηση χωρίς OCR' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -81,12 +81,12 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
-        $evt_Closed.Count | Should -Be 1
+        $evt_Closed = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be -ExpectedValue 1
 
     }
 
-    It 'Στέλνει ειδοποίηση με OCR' {
+    It -Name 'Στέλνει ειδοποίηση με OCR' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -110,12 +110,12 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
-        $evt_Closed.Count | Should -Be 1
+        $evt_Closed = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be -ExpectedValue 1
 
     }
 
-    It 'Στέλνει ειδοποίηση ανοίγματος' {
+    It -Name 'Στέλνει ειδοποίηση ανοίγματος' -Test {
 
 
 
@@ -125,7 +125,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $timestamp = Get-Date
 
-        Mock Get-Date { [datetime]::new(2030, 1, 15, 10, 1, 0, [DateTimeKind]::Utc) }
+        Mock -CommandName Get-Date -MockWith { [datetime]::new(2030, 1, 15, 10, 1, 0, [DateTimeKind]::Utc) }
         $previous = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; To = '15/01/2030 12:00'; ImageUrl = 'image-bridge-open-with-schedule-isthmia.php?1' }
 
         $current = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = $timestamp; ImageUrl = 'image-bridge-open-no-schedule.php?2' }
@@ -141,12 +141,12 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         }
 
         $result = Invoke-BridgeStatusComparison @params
-        $result.Count | Should -Be 1
+        $result.Count | Should -Be -ExpectedValue 1
 
 
     }
 
-    It 'Δεν στέλνει ειδοποίηση' {
+    It -Name 'Δεν στέλνει ειδοποίηση' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -175,14 +175,14 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
 
-        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
 
     }
 
-    It 'Δεν στέλνει ειδοποίηση όταν GefyraName δεν ταιριάζει' {
+    It -Name 'Δεν στέλνει ειδοποίηση όταν GefyraName δεν ταιριάζει' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -201,11 +201,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         }
 
         $result = Invoke-BridgeStatusComparison @params
-        $result.Count | Should -Be 1
+        $result.Count | Should -Be -ExpectedValue 1
 
     }
 
-    It 'Δεν στέλνει ειδοποίηση σε άκυρη τιμή status' {
+    It -Name 'Δεν στέλνει ειδοποίηση σε άκυρη τιμή status' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -228,7 +228,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
-    It 'Δεν στέλνει ειδοποίηση όταν μόνο το timestamp αλλάζει' {
+    It -Name 'Δεν στέλνει ειδοποίηση όταν μόνο το timestamp αλλάζει' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -256,7 +256,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
-    It 'Πετάει σφάλμα όταν η CurrentState είναι $null' {
+    It -Name 'Πετάει σφάλμα όταν η CurrentState είναι $null' -Test {
 
         $params = @{
 
@@ -272,7 +272,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
-    It 'Πετάει σφάλμα όταν η PreviousState είναι $null' {
+    It -Name 'Πετάει σφάλμα όταν η PreviousState είναι $null' -Test {
 
         $params = @{
 
@@ -288,7 +288,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
-    It 'Δεν στέλνει ειδοποίηση όταν λείπει το imageUrl' {
+    It -Name 'Δεν στέλνει ειδοποίηση όταν λείπει το imageUrl' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -306,13 +306,13 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
-        $evt_Closed.Count | Should -Be 1
+        $evt_Closed = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be -ExpectedValue 1
 
 
     }
 
-    It 'Επεξεργάζεται σωστά πολλαπλές αλλαγές' {
+    It -Name 'Επεξεργάζεται σωστά πολλαπλές αλλαγές' -Test {
 
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
@@ -348,12 +348,12 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         $result = Invoke-BridgeStatusComparison @params
 
 
-        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
-        $evt_Closed.Count | Should -Be 2
+        $evt_Closed = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be -ExpectedValue 2
 
     }
 
-    It 'Δεν στέλνει ειδοποίηση όταν μόνο το imageUrl αλλάζει' {
+    It -Name 'Δεν στέλνει ειδοποίηση όταν μόνο το imageUrl αλλάζει' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -377,13 +377,13 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
 
-        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
     }
 
-    It 'Στέλνει ειδοποίηση όταν μόνο το imageUrl αλλάζει και η κατάσταση είναι Κλειστή με πρόγραμμα' {
+    It -Name 'Στέλνει ειδοποίηση όταν μόνο το imageUrl αλλάζει και η κατάσταση είναι Κλειστή με πρόγραμμα' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -407,20 +407,20 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
-        $evt_Closed.Count | Should -Be 1
+        $evt_Closed = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be -ExpectedValue 1
 
-        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
     }
 
-    It 'Στέλνει σωστά ειδοποιήσεις για κλείσιμο και άνοιγμα όταν αλλάζουν δύο γέφυρες αντίθετα' {
+    It -Name 'Στέλνει σωστά ειδοποιήσεις για κλείσιμο και άνοιγμα όταν αλλάζουν δύο γέφυρες αντίθετα' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
-        Mock Get-Date { [datetime]::new(2030, 1, 15, 10, 1, 0, [DateTimeKind]::Utc) }
+        Mock -CommandName Get-Date -MockWith { [datetime]::new(2030, 1, 15, 10, 1, 0, [DateTimeKind]::Utc) }
         $previousState = @(
 
             @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
@@ -450,24 +450,24 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         $result = Invoke-BridgeStatusComparison @params
 
 
-        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
-        $evt_Closed.Count | Should -Be 1
+        $evt_Closed = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be -ExpectedValue 1
 
-        $evt_Opened = $result | Where-Object { $_.Type -eq 'Opened' }
-        $evt_Opened.Count | Should -Be 1
+        $evt_Opened = $result | Where-Object -FilterScript { $_.Type -eq 'Opened' }
+        $evt_Opened.Count | Should -Be -ExpectedValue 1
 
     }
 
-    It 'Γράφει warning όταν λείπει κατάσταση' {
+    It -Name 'Γράφει warning όταν λείπει κατάσταση' -Test {
 
         $result = Invoke-BridgeStatusComparison -PreviousState $null -CurrentState @{ GefyraName = 'X'; GefyraStatus = 'Ανοιχτή' } -Configuration $script:Config
-        $result.Count | Should -Be 1
+        $result.Count | Should -Be -ExpectedValue 1
 
     }
 
-    It 'Γράφει verbose όταν δεν υπάρχουν αλλαγές' {
+    It -Name 'Γράφει verbose όταν δεν υπάρχουν αλλαγές' -Test {
 
-        Mock Send-BridgePushover {}
+        Mock -CommandName Send-BridgePushover -MockWith {}
 
         $same = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή'; timestamp = Get-Date; imageUrl = 'x.jpg' }
 
@@ -476,7 +476,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
-    It 'Γράφει Exception όταν CurrentState ή PreviousState είναι κενό array' {
+    It -Name 'Γράφει Exception όταν CurrentState ή PreviousState είναι κενό array' -Test {
 
         $paramsMissingCurrent = @{
 
@@ -501,11 +501,11 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
         }
 
         $result = Invoke-BridgeStatusComparison @paramsMissingPrevious
-        $result.Count | Should -Be 1
+        $result.Count | Should -Be -ExpectedValue 1
 
     }
 
-    It 'Γράφει verbose όταν δεν υπάρχει καμία αλλαγή στις γέφυρες' {
+    It -Name 'Γράφει verbose όταν δεν υπάρχει καμία αλλαγή στις γέφυρες' -Test {
 
         $state = @{
 
@@ -536,7 +536,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
-    It 'Γράφει Write-Verbose όταν δεν υπάρχει καμία αλλαγή στις γέφυρες' {
+    It -Name 'Γράφει Write-Verbose όταν δεν υπάρχει καμία αλλαγή στις γέφυρες' -Test {
 
         $state = @{
 
@@ -570,9 +570,9 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
-    It 'Γράφει Write-Verbose όταν δεν υπάρχουν διαφορές (mocked Compare-Object)' {
+    It -Name 'Γράφει Write-Verbose όταν δεν υπάρχουν διαφορές (mocked Compare-Object)' -Test {
 
-        Mock Compare-Object { @() }
+        Mock -CommandName Compare-Object -MockWith { @() }
 
         $state = @{
 
@@ -598,7 +598,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
     }
 
-    It 'πρέπει να στείλει ειδοποίηση τύπου Closed' {
+    It -Name 'πρέπει να στείλει ειδοποίηση τύπου Closed' -Test {
 
         $defaultParams = @{
 
@@ -608,7 +608,7 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith {
             param($CurrentState)
-            "NOTIFY:Closed:$($CurrentState[0].GefyraName)" | Out-File -Append "$TestDrive\notify.txt"
+            "NOTIFY:Closed:$($CurrentState[0].GefyraName)" | Out-File -Append -FilePath "$TestDrive\notify.txt"
         }
 
         $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
@@ -617,12 +617,12 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState $prev -CurrentState $curr
 
-        $evt_Closed_Ισθμία = $result | Where-Object { $_.Type -eq 'Closed' -and $_.BridgeName -eq 'Ισθμία' }
+        $evt_Closed_Ισθμία = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' -and $_.BridgeName -eq 'Ισθμία' }
         $evt_Closed_Ισθμία | Should -Not -BeNullOrEmpty
 
     }
 
-    It 'Στέλνει ειδοποίηση τύπου Open όταν γίνεται αλλαγή απο "Κλειστή για συντήρηση" (=>)' {
+    It -Name 'Στέλνει ειδοποίηση τύπου Open όταν γίνεται αλλαγή απο "Κλειστή για συντήρηση" (=>)' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -644,15 +644,15 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
-        $evt_Closed.Count | Should -Be 1
+        $evt_Closed = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' }
+        $evt_Closed.Count | Should -Be -ExpectedValue 1
 
-        $result | Where-Object { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.Type -eq 'Opened' } | Should -BeNullOrEmpty
 
     }
 
 
-    It 'Στέλνει ειδοποίηση τύπου Opened όταν γίνεται αλλαγή από Κλειστή σε Ανοιχτή (=>)' {
+    It -Name 'Στέλνει ειδοποίηση τύπου Opened όταν γίνεται αλλαγή από Κλειστή σε Ανοιχτή (=>)' -Test {
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
 
@@ -674,44 +674,44 @@ Describe 'Invoke-BridgeStatusComparison - Ειδοποιήσεις' {
 
         $result = Invoke-BridgeStatusComparison @params
 
-        $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
+        $result | Where-Object -FilterScript { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
 
-        $evt_Opened = $result | Where-Object { $_.Type -eq 'Opened' }
-        $evt_Opened.Count | Should -Be 1
+        $evt_Opened = $result | Where-Object -FilterScript { $_.Type -eq 'Opened' }
+        $evt_Opened.Count | Should -Be -ExpectedValue 1
 
     }
 
 }
 
-Describe 'Invoke-BridgeStatusComparison' {
+Describe -Name 'Invoke-BridgeStatusComparison' -Fixture {
 
 
 
-    BeforeEach {
+    BeforeEach -Scriptblock {
 
-        Remove-Item "$TestDrive\log.txt", "$TestDrive\notify.txt" -ErrorAction SilentlyContinue
+        Remove-Item -Path "$TestDrive\log.txt", "$TestDrive\notify.txt" -ErrorAction SilentlyContinue
 
     }
 
 
 
-    BeforeAll {
+    BeforeAll -Scriptblock {
         $script:Config = New-BridgeConfiguration
 
         Mock -CommandName Write-BridgeLog -MockWith {
 
             param([string]$Stage, [string]$Message, [string]$Level)
 
-            "$Stage|$Level|$Message" | Out-File -Append "$TestDrive\log.txt"
+            "$Stage|$Level|$Message" | Out-File -Append -FilePath "$TestDrive\log.txt"
         }
 
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith {
             param($CurrentState)
-            "NOTIFY:Closed:$($CurrentState[0].GefyraName)" | Out-File -Append "$TestDrive\notify.txt"
+            "NOTIFY:Closed:$($CurrentState[0].GefyraName)" | Out-File -Append -FilePath "$TestDrive\notify.txt"
         }
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith {
             param($CurrentState)
-            "NOTIFY:Opened:$($CurrentState[0].GefyraName)" | Out-File -Append "$TestDrive\notify.txt"
+            "NOTIFY:Opened:$($CurrentState[0].GefyraName)" | Out-File -Append -FilePath "$TestDrive\notify.txt"
         }
 
         $script:defaultParams = @{
@@ -724,39 +724,39 @@ Describe 'Invoke-BridgeStatusComparison' {
 
     }
 
-    Context 'Καμία αλλαγή' {
+    Context -Name 'Καμία αλλαγή' -Fixture {
 
 
 
-        It 'πυροδοτεί το block "Καμία ουσιαστική αλλαγή"' {
+        It -Name 'πυροδοτεί το block "Καμία ουσιαστική αλλαγή"' -Test {
 
             $obj = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($obj) -CurrentState @($obj)
             $result | Should -BeNullOrEmpty
 
-            (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match 'Καμία ουσιαστική αλλαγή'
+            (Get-Content -Path "$TestDrive\log.txt") -join "`n" | Should -Match -RegularExpression 'Καμία ουσιαστική αλλαγή'
 
-            Test-Path "$TestDrive\notify.txt" | Should -BeFalse
+            Test-Path -Path "$TestDrive\notify.txt" | Should -BeFalse
 
         }
 
-        It 'πυροδοτεί το block "Καμία αλλαγή" όταν δεν υπάρχουν καθόλου αλλαγές' {
+        It -Name 'πυροδοτεί το block "Καμία αλλαγή" όταν δεν υπάρχουν καθόλου αλλαγές' -Test {
 
             $emptyObj = @{ GefyraName = 'Foo'; GefyraStatus = 'Ανοιχτή' }
 
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($emptyObj) -CurrentState @($emptyObj)
             $result | Should -BeNullOrEmpty
 
-            (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match 'Καμία ουσιαστική αλλαγή'
+            (Get-Content -Path "$TestDrive\log.txt") -join "`n" | Should -Match -RegularExpression 'Καμία ουσιαστική αλλαγή'
 
         }
 
     }
 
-    Context 'Κατάσταση αλλαγής ➡️' {
+    Context -Name 'Κατάσταση αλλαγής ➡️' -Fixture {
 
-        It 'πρέπει να στείλει ειδοποίηση τύπου Closed' {
+        It -Name 'πρέπει να στείλει ειδοποίηση τύπου Closed' -Test {
 
             $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Ανοιχτή' }
 
@@ -764,30 +764,30 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
 
-            $evt_Closed_Ισθμία = $result | Where-Object { $_.Type -eq 'Closed' -and $_.BridgeName -eq 'Ισθμία' }
+            $evt_Closed_Ισθμία = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' -and $_.BridgeName -eq 'Ισθμία' }
             $evt_Closed_Ισθμία | Should -Not -BeNullOrEmpty
 
         }
 
-        It 'πρέπει να στείλει ειδοποίηση τύπου Opened' {
+        It -Name 'πρέπει να στείλει ειδοποίηση τύπου Opened' -Test {
 
-            Mock Get-Date { [datetime]::new(2030, 1, 15, 10, 1, 0, [DateTimeKind]::Utc) }
+            Mock -CommandName Get-Date -MockWith { [datetime]::new(2030, 1, 15, 10, 1, 0, [DateTimeKind]::Utc) }
             $prev = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; To = '15/01/2030 12:00'; ImageUrl = 'image-bridge-open-with-schedule-posidonia.php?1'; ScheduleState = 'Active' }
 
             $curr = @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = 'Ανοιχτή'; ImageUrl = 'image-bridge-open-no-schedule.php?2' }
 
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
 
-            $evt_Opened_Ποσειδωνία = $result | Where-Object { $_.Type -eq 'Opened' -and $_.BridgeName -eq 'Ποσειδωνία' }
+            $evt_Opened_Ποσειδωνία = $result | Where-Object -FilterScript { $_.Type -eq 'Opened' -and $_.BridgeName -eq 'Ποσειδωνία' }
             $evt_Opened_Ποσειδωνία | Should -Not -BeNullOrEmpty
 
         }
 
     }
 
-    Context 'Κατάσταση αλλαγής ⬅️' {
+    Context -Name 'Κατάσταση αλλαγής ⬅️' -Fixture {
 
-        It 'πυροδοτεί "Μόνιμα κλειστή|<="' {
+        It -Name 'πυροδοτεί "Μόνιμα κλειστή|<="' -Test {
 
             $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Μόνιμα κλειστή' }
 
@@ -795,16 +795,16 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($curr) -CurrentState @($prev)
 
-            $evt_Closed_Ισθμία = $result | Where-Object { $_.Type -eq 'Closed' -and $_.BridgeName -eq 'Ισθμία' }
+            $evt_Closed_Ισθμία = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' -and $_.BridgeName -eq 'Ισθμία' }
             $evt_Closed_Ισθμία | Should -Not -BeNullOrEmpty
 
         }
 
     }
 
-    Context 'Άγνωστο combo' {
+    Context -Name 'Άγνωστο combo' -Fixture {
 
-        It 'γράφει λογικά "Άγνωστο combo"' {
+        It -Name 'γράφει λογικά "Άγνωστο combo"' -Test {
 
             $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = 'Foo' }
 
@@ -813,28 +813,28 @@ Describe 'Invoke-BridgeStatusComparison' {
             $result = Invoke-BridgeStatusComparison @defaultParams -PreviousState @($prev) -CurrentState @($curr)
             $result | Should -BeNullOrEmpty
 
-            (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match 'Άγνωστο combo'
+            (Get-Content -Path "$TestDrive\log.txt") -join "`n" | Should -Match -RegularExpression 'Άγνωστο combo'
 
         }
 
     }
 
-    Context 'Σφάλμα εσωτερικό (catch)' {
+    Context -Name 'Σφάλμα εσωτερικό (catch)' -Fixture {
 
-        It 'γράφει εξαίρεση στο log όταν αποτυγχάνει εσωτερικά' {
+        It -Name 'γράφει εξαίρεση στο log όταν αποτυγχάνει εσωτερικά' -Test {
 
             Mock -CommandName Compare-Object -MockWith { throw 'mock fail' }
 
             { Invoke-BridgeStatusComparison @defaultParams -PreviousState @(@{ GefyraName = 'X'; GefyraStatus = 'Y' }) -CurrentState @(@{ GefyraName = 'X'; GefyraStatus = 'Y' }) } | Should -Throw
 
-            (Get-Content "$TestDrive\log.txt") -join "`n" | Should -Match '❌ mock fail'
+            (Get-Content -Path "$TestDrive\log.txt") -join "`n" | Should -Match -RegularExpression '❌ mock fail'
 
         }
 
     }
 
-    Context 'ImageHash Comparison' {
-        It 'Στέλνει ειδοποίηση όταν αλλάζει το ImageHash στην Κλειστή με πρόγραμμα' {
+    Context -Name 'ImageHash Comparison' -Fixture {
+        It -Name 'Στέλνει ειδοποίηση όταν αλλάζει το ImageHash στην Κλειστή με πρόγραμμα' -Test {
             Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
@@ -849,11 +849,11 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $result = Invoke-BridgeStatusComparison @params
 
-            $evt_Closed = $result | Where-Object { $_.Type -eq 'Closed' }
-            $evt_Closed.Count | Should -Be 1
+            $evt_Closed = $result | Where-Object -FilterScript { $_.Type -eq 'Closed' }
+            $evt_Closed.Count | Should -Be -ExpectedValue 1
         }
 
-        It 'Δεν στέλνει ειδοποίηση όταν το ImageHash είναι ίδιο στην Κλειστή με πρόγραμμα' {
+        It -Name 'Δεν στέλνει ειδοποίηση όταν το ImageHash είναι ίδιο στην Κλειστή με πρόγραμμα' -Test {
             Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
@@ -868,10 +868,10 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $result = Invoke-BridgeStatusComparison @params
 
-            $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
+            $result | Where-Object -FilterScript { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
         }
 
-        It 'Επαναχρησιμοποιεί το προηγούμενο ImageHash αν το νέο είναι κενό/σφάλμα' {
+        It -Name 'Επαναχρησιμοποιεί το προηγούμενο ImageHash αν το νέο είναι κενό/σφάλμα' -Test {
             Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
             Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
 
@@ -888,15 +888,15 @@ Describe 'Invoke-BridgeStatusComparison' {
 
             $result = Invoke-BridgeStatusComparison @params
 
-            $result | Where-Object { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
-            $copy.ImageHash | Should -Be 'hashA'
+            $result | Where-Object -FilterScript { $_.Type -eq 'Closed' } | Should -BeNullOrEmpty
+            $copy.ImageHash | Should -Be -ExpectedValue 'hashA'
         }
     }
 
-    It 'Backfills OCR properties when SideIndicator is ==' {
+    It -Name 'Backfills OCR properties when SideIndicator is ==' -Test {
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
-        Mock Send-BridgePushover {}
+        Mock -CommandName Send-BridgePushover -MockWith {}
 
         $prev = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; From = '10:00'; To = '12:00'; ClosedFor = '2h'; OpensIn = '1h'; Note1 = 'n1'; Note2 = 'n2' }
         $curr = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα' }
@@ -906,13 +906,13 @@ Describe 'Invoke-BridgeStatusComparison' {
             Configuration = $script:Config
         }
         $null = Invoke-BridgeStatusComparison @params
-        $curr.From | Should -Be '10:00'
+        $curr.From | Should -Be -ExpectedValue '10:00'
     }
 
-    It 'Backfills OCR properties when SideIndicator is => and ClosedWithSchedule' {
+    It -Name 'Backfills OCR properties when SideIndicator is => and ClosedWithSchedule' -Test {
         Mock -CommandName Invoke-BridgeClosedNotification -MockWith { }
         Mock -CommandName Invoke-BridgeOpenedNotification -MockWith { }
-        Mock Send-BridgePushover {}
+        Mock -CommandName Send-BridgePushover -MockWith {}
 
         $prev = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; From = '10:00'; To = '12:00'; ClosedFor = '2h'; OpensIn = '1h'; Note1 = 'n1'; Note2 = 'n2'; ImageUrl = 'x.jpg'; ImageHash = 'hashA' }
         $curr = [PSCustomObject]@{ GefyraName = 'Ισθμία'; GefyraStatus = 'Κλειστή με πρόγραμμα'; timestamp = (Get-Date); ImageUrl = 'y.jpg'; ImageHash = $null }
@@ -922,41 +922,41 @@ Describe 'Invoke-BridgeStatusComparison' {
             Configuration = $script:Config
         }
         $null = Invoke-BridgeStatusComparison @params
-        $curr.From | Should -Be '10:00'
+        $curr.From | Should -Be -ExpectedValue '10:00'
     }
 
-    It 'Keeps legacy URL fallback independent of the other bridge hash (dictionary: <AsDictionary>)' -TestCases @(
+    It -Name 'Keeps legacy URL fallback independent of the other bridge hash (dictionary: <AsDictionary>)' -TestCases @(
         @{ AsDictionary = $true }
         @{ AsDictionary = $false }
-    ) {
+    ) -Test {
         param([bool]$AsDictionary)
         $prev = @(
             @{ GefyraName = 'Ποσειδωνία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule; ImageUrl = 'old.jpg' }
             @{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule; ImageUrl = 'schedule.jpg'; ImageHash = 'verified' }
         )
-        $curr = @($prev | ForEach-Object { $_.Clone() })
+        $curr = @($prev | ForEach-Object -Process { $_.Clone() })
         $curr[0].ImageUrl = 'new.jpg'
         if (-not $AsDictionary) {
-            $prev = @($prev | ForEach-Object { [pscustomobject]$_ })
-            $curr = @($curr | ForEach-Object { [pscustomobject]$_ })
+            $prev = @($prev | ForEach-Object -Process { [pscustomobject]$_ })
+            $curr = @($curr | ForEach-Object -Process { [pscustomobject]$_ })
         }
         $events = @(Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $script:Config)
-        $events.Count | Should -Be 1
-        $events[0].BridgeName | Should -Be 'Ποσειδωνία'
+        $events.Count | Should -Be -ExpectedValue 1
+        $events[0].BridgeName | Should -Be -ExpectedValue 'Ποσειδωνία'
     }
 
-    It 'Treats absent verified fingerprints as unchanged despite URL cache busting (<MissingHash>)' -TestCases @(
+    It -Name 'Treats absent verified fingerprints as unchanged despite URL cache busting (<MissingHash>)' -TestCases @(
         @{ MissingHash = $null }
         @{ MissingHash = '' }
-    ) {
+    ) -Test {
         param($MissingHash)
         $prev = @{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule; ImageUrl = 'schedule.php?1'; ImageHash = $null }
         $curr = @{ GefyraName = 'Ισθμία'; GefyraStatus = $script:Config.Statuses.ClosedWithSchedule; ImageUrl = 'schedule.php?2'; ImageHash = $MissingHash }
         $events = @(Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $script:Config)
-        $events.Count | Should -Be 0
+        $events.Count | Should -Be -ExpectedValue 0
     }
 
-    It 'Δεν αποτυγχάνει σε strict mode όταν μια αμετάβλητη γέφυρα δεν έχει ιδιότητες OCR και μια άλλη αλλάζει κατάσταση' {
+    It -Name 'Δεν αποτυγχάνει σε strict mode όταν μια αμετάβλητη γέφυρα δεν έχει ιδιότητες OCR και μια άλλη αλλάζει κατάσταση' -Test {
         $prev = @(
             [PSCustomObject]@{
                 GefyraName   = 'Ποσειδωνία'
@@ -991,9 +991,9 @@ Describe 'Invoke-BridgeStatusComparison' {
         )
 
         $events = Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $script:Config
-        $events.Count | Should -Be 1
-        $events[0].BridgeName | Should -Be 'Ισθμία'
-        $events[0].Type | Should -Be 'Closed'
+        $events.Count | Should -Be -ExpectedValue 1
+        $events[0].BridgeName | Should -Be -ExpectedValue 'Ισθμία'
+        $events[0].Type | Should -Be -ExpectedValue 'Closed'
     }
 }
 }

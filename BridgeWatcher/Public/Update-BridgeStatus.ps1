@@ -2,6 +2,9 @@
     .SYNOPSIS
     Ελέγχει το αποτέλεσμα εξαγωγής JSON και εγείρει τερματικό σφάλμα σε αποτυχία.
 
+.DESCRIPTION
+Μετατρέπει την αποτυχία αποθήκευσης του στιγμιότυπου σε τερματικό σφάλμα για τον καλούντα.
+
     .PARAMETER ExportResult
     Το αποτέλεσμα της Export-BridgeStatusJson.
 
@@ -10,7 +13,7 @@
 
     .PARAMETER Cmdlet
     Το αντικείμενο PSCmdlet του καλούντος.
-    #>
+#>
 function Assert-BridgeSnapshotExport {
     [CmdletBinding()]
     param (
@@ -32,6 +35,9 @@ function Assert-BridgeSnapshotExport {
     .SYNOPSIS
     Αποστέλλει την κατάλληλη ειδοποίηση για ένα συμβάν αλλαγής γέφυρας.
 
+.DESCRIPTION
+Επιλέγει αποστολή για άνοιγμα ή κλείσιμο και περνά τα στοιχεία του συμβάντος στην αντίστοιχη ειδοποίηση.
+
     .PARAMETER DiffEvent
     Το συμβάν διαφοράς κατάστασης γέφυρας.
 
@@ -46,7 +52,7 @@ function Assert-BridgeSnapshotExport {
 
     .PARAMETER Configuration
     Το αντικείμενο διαμόρφωσης.
-    #>
+#>
 function Invoke-BridgeDiffEventDelivery {
     [CmdletBinding()]
     param (
@@ -105,9 +111,9 @@ function Resolve-BridgeAlertSnapshot {
     }
     $pendingBridgeNames = @(
         $DiffEvents |
-            ForEach-Object { @($_.StateInfo) } |
-            ForEach-Object { $_.GefyraName } |
-            Where-Object { $_ -notin $NotifiedBridgeNames }
+            ForEach-Object -Process { @($_.StateInfo) } |
+            ForEach-Object -Process { $_.GefyraName } |
+            Where-Object -FilterScript { $_ -notin $NotifiedBridgeNames }
     )
     foreach ($entry in $CurrentState) {
         if ($entry.GefyraName -notin $pendingBridgeNames) {
@@ -207,7 +213,7 @@ function Update-BridgeStatus {
         }
         Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
         $previousState = @()
-        if (Test-Path $OutputFile) {
+        if (Test-Path -Path $OutputFile) {
             $getDiorigaPreviousStatusSplat = @{
                 InputFile     = $OutputFile
                 Configuration = $Configuration
@@ -246,7 +252,7 @@ function Update-BridgeStatus {
                     continue
                 }
 
-                $eventBridgeNames = [string[]]@($diffEvent.StateInfo | ForEach-Object { [string]$_.GefyraName })
+                $eventBridgeNames = [string[]]@($diffEvent.StateInfo | ForEach-Object -Process { [string]$_.GefyraName })
                 $notifiedBridgeNames.AddRange($eventBridgeNames)
                 $snapshotSplat = @{
                     PreviousState       = $previousState

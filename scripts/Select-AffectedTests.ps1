@@ -55,6 +55,9 @@ $ErrorActionPreference = 'Stop'
 <#
 .SYNOPSIS
 Normalizes a repository-relative path to lowercase-safe forward-slash form without leading ./ prefix.
+
+.DESCRIPTION
+Normalizes the separators and strips the optional ./ prefix before a path comparison.
 .PARAMETER Path
 Relative or absolute path to normalize.
 .PARAMETER Root
@@ -88,6 +91,9 @@ function ConvertTo-NormalizedRelativePath {
 <#
 .SYNOPSIS
 Returns the explicit list of file patterns that unconditionally force full-suite execution.
+
+.DESCRIPTION
+Builds the path rules for changes that cannot safely use the impacted-test selector.
 #>
 function Get-FullSuiteForceRule {
     [CmdletBinding()]
@@ -153,6 +159,9 @@ function Get-ReverseFileDependency {
 <#
 .SYNOPSIS
 Parses BridgeWatcher source files via the PowerShell AST to build a reverse call dependency graph.
+
+.DESCRIPTION
+Records call relationships so a changed helper can be traced to functions that depend on it.
 .PARAMETER Root
 Repository root directory.
 #>
@@ -215,6 +224,9 @@ function Get-SourceDependencyGraph {
 <#
 .SYNOPSIS
 Computes the transitive closure of affected source files and function names from a set of directly modified source files.
+
+.DESCRIPTION
+Walks reverse call relationships so indirect callers are included in the affected set.
 .PARAMETER DirectlyChangedSources
 Repository-relative paths of directly changed source files.
 .PARAMETER Graph
@@ -352,7 +364,7 @@ function Get-SourceImpactTest {
 
     $required = @('Tests/ArchitectureConstraints.Tests.ps1', 'Tests/LinterCompliance.Tests.ps1',
         'Tests/ModuleExports.Tests.ps1', 'Tests/VulnerabilityReproduction.Tests.ps1')
-    $baseNames = @($Closure.AffectedSourceFiles | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
+    $baseNames = @($Closure.AffectedSourceFiles | ForEach-Object -Process { [System.IO.Path]::GetFileNameWithoutExtension($_) })
     $tokens = @($Closure.AffectedFunctions) + $baseNames | Select-Object -Unique
     $patterns = foreach ($token in $tokens) { [regex]::Escape($token) }
     $pattern = "(?<![A-Za-z0-9_-])(?:$($patterns -join '|'))(?![A-Za-z0-9_-])"
@@ -370,6 +382,9 @@ function Get-SourceImpactTest {
 <#
 .SYNOPSIS
 Selects affected test files for the given changed paths, falling back to the full suite whenever impact is uncertain.
+
+.DESCRIPTION
+Uses changed paths and the reverse dependency graph to choose tests, or returns the full suite when needed.
 .PARAMETER Root
 Repository root directory.
 .PARAMETER Paths
@@ -394,10 +409,10 @@ function Select-AffectedTestFile {
     $allTests = @(
         Get-ChildItem -Path (Join-Path -Path $Root -ChildPath 'Tests') -Recurse -File -Filter '*.Tests.ps1' |
             Sort-Object -Property FullName |
-            ForEach-Object { ConvertTo-NormalizedRelativePath -Path $_.FullName -Root $Root }
+            ForEach-Object -Process { ConvertTo-NormalizedRelativePath -Path $_.FullName -Root $Root }
     )
 
-    $normalizedChanged = @($Paths | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { ConvertTo-NormalizedRelativePath -Path $_ -Root $Root } | Select-Object -Unique)
+    $normalizedChanged = @($Paths | Where-Object -FilterScript { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object -Process { ConvertTo-NormalizedRelativePath -Path $_ -Root $Root } | Select-Object -Unique)
 
     if ($normalizedChanged.Count -eq 0) {
         return [pscustomobject]@{
@@ -487,6 +502,9 @@ function Select-AffectedTestFile {
 <#
 .SYNOPSIS
 Validates a selector result against a full-suite JUnit XML report and detects any failing test omitted by the selector.
+
+.DESCRIPTION
+Compares the selection with a known full run to find failures that the selection would miss.
 .PARAMETER Selection
 Selection object returned by Select-AffectedTestFile.
 .PARAMETER FullJUnitXmlPath
@@ -567,12 +585,12 @@ if (-not [string]::IsNullOrWhiteSpace($OutputJsonPath)) {
     ConvertTo-Json -InputObject $selection -Depth 5 | Set-Content -LiteralPath $OutputJsonPath -Encoding utf8
 }
 
-Write-Output "Test selection mode=$($selection.Mode) selected=$($selection.SelectedTests.Count)/$($selection.TotalTests) reasons=$($selection.Reasons -join '; ')"
+Write-Output -InputObject "Test selection mode=$($selection.Mode) selected=$($selection.SelectedTests.Count)/$($selection.TotalTests) reasons=$($selection.Reasons -join '; ')"
 
 if (-not [string]::IsNullOrWhiteSpace($ShadowValidateAgainstFullResultPath)) {
     $validation = Test-SelectionAgainstFullResult -Selection $selection -FullJUnitXmlPath $ShadowValidateAgainstFullResultPath -Root $resolvedRoot
     if (-not $validation.Passed) {
         throw "SELECTOR OMISSION DETECTED: Full suite failed in $($validation.OmittedFailures -join ', ') which was NOT selected by Select-AffectedTests!"
     }
-    Write-Output "Shadow validation passed: all $($validation.FailedTestFiles.Count) failing full-suite file(s) were covered by selection."
+    Write-Output -InputObject "Shadow validation passed: all $($validation.FailedTestFiles.Count) failing full-suite file(s) were covered by selection."
 }

@@ -1,15 +1,15 @@
-﻿$rootPath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
-$files = Get-ChildItem -Path (Join-Path $rootPath "Public\*.ps1"), (Join-Path $rootPath "Private\*.ps1")
+﻿$rootPath = Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\BridgeWatcher")
+$files = Get-ChildItem -Path (Join-Path -Path $rootPath -ChildPath "Public\*.ps1"), (Join-Path -Path $rootPath -ChildPath "Private\*.ps1")
 
-Describe "API Contract Validation Strictness" {
+Describe -Name "API Contract Validation Strictness" -Fixture {
     foreach ($file in $files) {
-        Context "$($file.Name)" {
-            BeforeAll {
+        Context -Name "$($file.Name)" -Fixture {
+            BeforeAll -Scriptblock {
                 $script:ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
                 $script:paramBlocks = $script:ast.FindAll({ $args[0] -is [System.Management.Automation.Language.ParamBlockAst] }, $true)
             }
 
-            It "Should not have mandatory string parameters without ValidateNotNullOrEmpty" {
+            It -Name "Should not have mandatory string parameters without ValidateNotNullOrEmpty" -Test {
                 $violations = @()
                 foreach ($block in $script:paramBlocks) {
                     foreach ($param in $block.Parameters) {
@@ -17,7 +17,7 @@ Describe "API Contract Validation Strictness" {
                             $isMandatory = $false
                             foreach ($attr in $param.Attributes) {
                                 if ($attr.TypeName.FullName -eq 'Parameter' -or $attr.TypeName.FullName -eq 'System.Management.Automation.ParameterAttribute') {
-                                    $mandatoryArg = $attr.NamedArguments | Where-Object { $_.ArgumentName -eq 'Mandatory' }
+                                    $mandatoryArg = $attr.NamedArguments | Where-Object -FilterScript { $_.ArgumentName -eq 'Mandatory' }
                                     if ($mandatoryArg) {
                                         if ($mandatoryArg.Argument -is [System.Management.Automation.Language.ConstantExpressionAst]) {
                                             $isMandatory = [bool]$mandatoryArg.Argument.Value
@@ -42,10 +42,10 @@ Describe "API Contract Validation Strictness" {
                         }
                     }
                 }
-                $violations.Count | Should -Be 0
+                $violations.Count | Should -Be -ExpectedValue 0
             }
 
-            It "Should have consistent validation attributes for sibling string parameters" {
+            It -Name "Should have consistent validation attributes for sibling string parameters" -Test {
                 $violations = @()
                 foreach ($block in $script:paramBlocks) {
                     $stringParams = @()
@@ -77,7 +77,7 @@ Describe "API Contract Validation Strictness" {
                         }
                     }
                 }
-                $violations.Count | Should -Be 0
+                $violations.Count | Should -Be -ExpectedValue 0
             }
         }
     }

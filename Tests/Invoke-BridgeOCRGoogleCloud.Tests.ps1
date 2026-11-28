@@ -1,7 +1,7 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'Invoke-BridgeOCRGoogleCloud' {
-    BeforeAll {
+Describe -Name 'Invoke-BridgeOCRGoogleCloud' -Fixture {
+    BeforeAll -Scriptblock {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeStatusObject.ps1"
@@ -12,17 +12,17 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
         $script:Config = New-BridgeConfiguration
     }
 
-    It 'Στέλνει Base64 image.content αντί imageUri και κατεβάζει μέσω Get-BridgeImageBuffer όταν δεν είναι στη cache' {
+    It -Name 'Στέλνει Base64 image.content αντί imageUri και κατεβάζει μέσω Get-BridgeImageBuffer όταν δεν είναι στη cache' -Test {
         $script:BridgeImageBytesByUrl.Clear()
         $validUri = 'https://example.com/image-bridge-open-with-schedule-isthmia.php'
         $expectedBytes = [System.Text.Encoding]::UTF8.GetBytes('schedule-image-payload')
         $expectedBase64 = [System.Convert]::ToBase64String($expectedBytes)
         $script:CapturedRequestBody = $null
 
-        Mock Get-BridgeImageBuffer {
+        Mock -CommandName Get-BridgeImageBuffer -MockWith {
             return $expectedBytes
         }
-        Mock Invoke-BridgeOCRRequest {
+        Mock -CommandName Invoke-BridgeOCRRequest -MockWith {
             $script:CapturedRequestBody = $RequestBody
             return @{
                 responses = @(
@@ -38,12 +38,12 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
                 )
             }
         }
-        Mock ConvertFrom-BridgeOCRResult {
+        Mock -CommandName ConvertFrom-BridgeOCRResult -MockWith {
             return @{ mock = 'result' }
         }
 
         $out = Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'abc' -ImageUri $validUri
-        $out.mock | Should -Be 'result'
+        $out.mock | Should -Be -ExpectedValue 'result'
 
         Should -Invoke -CommandName Get-BridgeImageBuffer -Times 1 -Exactly -Scope It -ParameterFilter {
             $Url -eq $validUri -and $TimeoutSec -eq $script:Config.Defaults.HttpRequestTimeout
@@ -52,21 +52,21 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
         Should -Invoke -CommandName ConvertFrom-BridgeOCRResult -Times 1 -Exactly -Scope It
 
         $parsedBody = $script:CapturedRequestBody | ConvertFrom-Json
-        $parsedBody.requests[0].image.content | Should -Be $expectedBase64
+        $parsedBody.requests[0].image.content | Should -Be -ExpectedValue $expectedBase64
         $parsedBody.requests[0].image.PSObject.Properties['source'] | Should -BeNullOrEmpty
-        $script:CapturedRequestBody | Should -Not -Match 'imageUri'
+        $script:CapturedRequestBody | Should -Not -Match -RegularExpression 'imageUri'
     }
 
-    It 'Επαναχρησιμοποιεί τα cached bytes από Get-BridgeStatusObject χωρίς δεύτερη κλήση Invoke-WebRequest' {
+    It -Name 'Επαναχρησιμοποιεί τα cached bytes από Get-BridgeStatusObject χωρίς δεύτερη κλήση Invoke-WebRequest' -Test {
         $script:BridgeImageBytesByUrl.Clear()
         $rawBytes = [byte[]]@(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
         $expectedBase64 = [System.Convert]::ToBase64String($rawBytes)
         $script:CachedRequestBody = $null
 
-        Mock Invoke-WebRequest {
+        Mock -CommandName Invoke-WebRequest -MockWith {
             return [pscustomobject]@{ Content = $rawBytes }
         }
-        Mock Invoke-BridgeOCRRequest {
+        Mock -CommandName Invoke-BridgeOCRRequest -MockWith {
             $script:CachedRequestBody = $RequestBody
             return @{
                 responses = @(
@@ -78,7 +78,7 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
                 )
             }
         }
-        Mock ConvertFrom-BridgeOCRResult {
+        Mock -CommandName ConvertFrom-BridgeOCRResult -MockWith {
             return [pscustomobject]@{ Bridge = 'Ποσειδωνία' }
         }
 
@@ -87,16 +87,16 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
             -ImageSrc 'image-bridge-open-with-schedule-posidonia.php?123'
 
         $ocrOut = Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'abc' -ImageUri $statusObj.ImageUrl
-        $ocrOut.Bridge | Should -Be 'Ποσειδωνία'
+        $ocrOut.Bridge | Should -Be -ExpectedValue 'Ποσειδωνία'
 
         Should -Invoke -CommandName Invoke-WebRequest -Times 1 -Exactly -Scope It
         $parsedBody = $script:CachedRequestBody | ConvertFrom-Json
-        $parsedBody.requests[0].image.content | Should -Be $expectedBase64
+        $parsedBody.requests[0].image.content | Should -Be -ExpectedValue $expectedBase64
     }
 
-    It 'Εκκαθαρίζει τη cache όταν το πλήθος φτάσει τα 4 αντικείμενα πριν την εισαγωγή νέου' {
+    It -Name 'Εκκαθαρίζει τη cache όταν το πλήθος φτάσει τα 4 αντικείμενα πριν την εισαγωγή νέου' -Test {
         $script:BridgeImageBytesByUrl.Clear()
-        Mock Get-BridgeImageBuffer {
+        Mock -CommandName Get-BridgeImageBuffer -MockWith {
             return [byte[]]@(1, 2, 3, 4)
         }
 
@@ -105,24 +105,24 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
                 -Status $script:Config.Statuses.ClosedWithSchedule -Timestamp '2025-04-10T13:00:00Z' `
                 -ImageSrc "schedule-$idx.php"
         }
-        $script:BridgeImageBytesByUrl.Count | Should -Be 4
+        $script:BridgeImageBytesByUrl.Count | Should -Be -ExpectedValue 4
 
         $fifth = Get-BridgeStatusObject -Configuration $script:Config -Location 'isthmia' `
             -Status $script:Config.Statuses.ClosedWithSchedule -Timestamp '2025-04-10T13:00:00Z' `
             -ImageSrc 'schedule-5.php'
 
-        $script:BridgeImageBytesByUrl.Count | Should -Be 1
+        $script:BridgeImageBytesByUrl.Count | Should -Be -ExpectedValue 1
         $script:BridgeImageBytesByUrl.ContainsKey($fifth.ImageUrl) | Should -BeTrue
     }
 
-    It 'Ρίχνει σφάλμα αν το URI είναι άκυρο' {
+    It -Name 'Ρίχνει σφάλμα αν το URI είναι άκυρο' -Test {
         { Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'abc' -ImageUri 'notaurl' } | Should -Throw
     }
 
-    It 'Γράφει Error όταν αποτυγχάνει η κλήση' {
+    It -Name 'Γράφει Error όταν αποτυγχάνει η κλήση' -Test {
         $script:BridgeImageBytesByUrl.Clear()
-        Mock Get-BridgeImageBuffer { return [byte[]]@(1, 2, 3) }
-        Mock Invoke-BridgeOCRRequest { 'Simulated OCR failure' }
+        Mock -CommandName Get-BridgeImageBuffer -MockWith { return [byte[]]@(1, 2, 3) }
+        Mock -CommandName Invoke-BridgeOCRRequest -MockWith { 'Simulated OCR failure' }
         $invokeOCRGoogleCloudSplat = @{
             ApiKey        = 'dummy'
             Configuration = $script:Config
@@ -134,10 +134,10 @@ Describe 'Invoke-BridgeOCRGoogleCloud' {
         { Invoke-BridgeOCRGoogleCloud @invokeOCRGoogleCloudSplat } 2>&1 | Out-Null
     }
 
-    It 'Γράφει Write-Error όταν αποτυγχάνει η κλήση' {
+    It -Name 'Γράφει Write-Error όταν αποτυγχάνει η κλήση' -Test {
         $script:BridgeImageBytesByUrl.Clear()
-        Mock Get-BridgeImageBuffer { return [byte[]]@(1, 2, 3) }
-        Mock Invoke-BridgeOCRRequest { throw 'Simulated OCR failure' }
-        { Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'dummy' -ImageUri 'https://image.jpg' -Verbose -ErrorAction SilentlyContinue } | Should -Throw 'Simulated OCR failure'
+        Mock -CommandName Get-BridgeImageBuffer -MockWith { return [byte[]]@(1, 2, 3) }
+        Mock -CommandName Invoke-BridgeOCRRequest -MockWith { throw 'Simulated OCR failure' }
+        { Invoke-BridgeOCRGoogleCloud -Configuration $script:Config -ApiKey 'dummy' -ImageUri 'https://image.jpg' -Verbose -ErrorAction SilentlyContinue } | Should -Throw -ExpectedMessage 'Simulated OCR failure'
     }
 }

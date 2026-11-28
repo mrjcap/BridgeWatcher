@@ -1,56 +1,56 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'Write-BridgeLog' {
-    BeforeAll {
+Describe -Name 'Write-BridgeLog' -Fixture {
+    BeforeAll -Scriptblock {
 
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         $script:Config = New-BridgeConfiguration
     }
 
-    BeforeEach {
-        Mock Write-Verbose
-        Mock Write-Debug
-        Mock Write-Warning
-        Mock Add-Content
-        Mock New-Item
-        Mock Test-Path { $false }
+    BeforeEach -Scriptblock {
+        Mock -CommandName Write-Verbose
+        Mock -CommandName Write-Debug
+        Mock -CommandName Write-Warning
+        Mock -CommandName Add-Content
+        Mock -CommandName New-Item
+        Mock -CommandName Test-Path -MockWith { $false }
     }
-    It 'Γράφει log με Verbose level και δημιουργεί τον φάκελο' {
+    It -Name 'Γράφει log με Verbose level και δημιουργεί τον φάκελο' -Test {
         Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'δοκιμή' -Level 'Verbose'
         Should -Invoke -CommandName Write-Verbose -Times 1 -Exactly
         Should -Invoke -CommandName Add-Content -Times 1 -Exactly
         Should -Invoke -CommandName New-Item -Times 1 -Exactly
     }
-    It 'Γράφει log με Debug level' {
+    It -Name 'Γράφει log με Debug level' -Test {
         Write-BridgeLog -Configuration $script:Config -Stage 'Απόφαση' -Message 'λογική' -Level 'Debug'
         Should -Invoke -CommandName Write-Debug -Times 1 -Exactly
     }
-    It 'Γράφει log με Warning level' {
+    It -Name 'Γράφει log με Warning level' -Test {
         Write-BridgeLog -Configuration $script:Config -Stage 'Σφάλμα' -Message 'κάτι πήγε στραβά' -Level 'Warning'
         Should -Invoke -CommandName Write-Warning -Times 1 -Exactly
     }
 
-    Context 'Parameter Validation' {
-        It 'Ρίχνει σφάλμα για άκυρο Stage' {
+    Context -Name 'Parameter Validation' -Fixture {
+        It -Name 'Ρίχνει σφάλμα για άκυρο Stage' -Test {
             { Write-BridgeLog -Configuration $script:Config -Stage 'InvalidStage' -Message 'test' -Level 'Verbose' } | Should -Throw
         }
 
-        It 'Ρίχνει σφάλμα για άκυρο Level' {
+        It -Name 'Ρίχνει σφάλμα για άκυρο Level' -Test {
             { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'test' -Level 'InvalidLevel' } | Should -Throw
         }
 
-        It 'Ρίχνει σφάλμα για κενό Message' {
+        It -Name 'Ρίχνει σφάλμα για κενό Message' -Test {
             { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message '' -Level 'Verbose' } | Should -Throw
         }
 
-        It 'Δέχεται όλα τα έγκυρα Stages' {
+        It -Name 'Δέχεται όλα τα έγκυρα Stages' -Test {
             $validStages = @('Ανάλυση', 'Απόφαση', 'Ειδοποίηση', 'Σφάλμα')
             foreach ($stage in $validStages) {
                 { Write-BridgeLog -Configuration $script:Config -Stage $stage -Message 'test' -Level 'Verbose' } | Should -Not -Throw
             }
         }
-        It 'Δέχεται όλα τα έγκυρα Levels' {
+        It -Name 'Δέχεται όλα τα έγκυρα Levels' -Test {
             $validLevels = @('Verbose', 'Debug', 'Warning')
             foreach ($level in $validLevels) {
                 { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'test' -Level $level } | Should -Not -Throw
@@ -58,21 +58,21 @@ Describe 'Write-BridgeLog' {
         }
     }
 
-    Context 'Error Handling για File Operations' {
-        It 'Γράφει Write-Warning όταν αποτυγχάνει το Add-Content' {
-            Mock Add-Content { throw [System.IO.IOException]::new('Access denied') }
-            Mock Write-Warning {}
+    Context -Name 'Error Handling για File Operations' -Fixture {
+        It -Name 'Γράφει Write-Warning όταν αποτυγχάνει το Add-Content' -Test {
+            Mock -CommandName Add-Content -MockWith { throw [System.IO.IOException]::new('Access denied') }
+            Mock -CommandName Write-Warning -MockWith {}
 
             { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'Test message' } | Should -Throw
 
-            Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter {
+            Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -ParameterFilter {
                 $Message -like '*Failed to write to log file*Access denied*'
             }
         }
     }
 
-    Context 'Legacy Encoding' {
-        It 'Χρησιμοποιεί utf8 σε Legacy PowerShell' {
+    Context -Name 'Legacy Encoding' -Fixture {
+        It -Name 'Χρησιμοποιεί utf8 σε Legacy PowerShell' -Test {
             $env:IsLegacyPowerShell = 'true'
             try {
                 { Write-BridgeLog -Configuration $script:Config -Stage 'Ανάλυση' -Message 'Legacy encoding test' } | Should -Not -Throw
@@ -84,19 +84,19 @@ Describe 'Write-BridgeLog' {
     }
 }
 
-Describe 'Write-BridgeLog Retention Pruning' {
-    BeforeAll {
+Describe -Name 'Write-BridgeLog Retention Pruning' -Fixture {
+    BeforeAll -Scriptblock {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
     }
 
-    It 'Διαγράφει BridgeWatcher-*.log αρχεία παλαιότερα από 7 ημέρες κατά τη δημιουργία νέου ημερήσιου log' {
-        $logDir = Join-Path $TestDrive 'retention-new'
+    It -Name 'Διαγράφει BridgeWatcher-*.log αρχεία παλαιότερα από 7 ημέρες κατά τη δημιουργία νέου ημερήσιου log' -Test {
+        $logDir = Join-Path -Path $TestDrive -ChildPath 'retention-new'
         New-Item -Path $logDir -ItemType Directory -Force | Out-Null
 
-        $expiredLog = Join-Path $logDir 'BridgeWatcher-2020-01-01.log'
-        $recentLog = Join-Path $logDir 'BridgeWatcher-2020-01-02.log'
-        $unrelatedFile = Join-Path $logDir 'custom-audit.log'
+        $expiredLog = Join-Path -Path $logDir -ChildPath 'BridgeWatcher-2020-01-01.log'
+        $recentLog = Join-Path -Path $logDir -ChildPath 'BridgeWatcher-2020-01-02.log'
+        $unrelatedFile = Join-Path -Path $logDir -ChildPath 'custom-audit.log'
 
         Set-Content -Path $expiredLog -Value 'expired log entry' -Encoding utf8
         (Get-Item -Path $expiredLog).LastWriteTime = (Get-Date).AddDays(-8)
@@ -111,7 +111,7 @@ Describe 'Write-BridgeLog Retention Pruning' {
         Write-BridgeLog -Configuration $cfg -Stage 'Ανάλυση' -Message 'First daily log entry'
 
         $todayStr = (Get-Date).ToString('yyyy-MM-dd')
-        $todayLog = Join-Path $logDir "BridgeWatcher-$todayStr.log"
+        $todayLog = Join-Path -Path $logDir -ChildPath "BridgeWatcher-$todayStr.log"
 
         $todayLog | Should -Exist
         $expiredLog | Should -Not -Exist
@@ -119,15 +119,15 @@ Describe 'Write-BridgeLog Retention Pruning' {
         $unrelatedFile | Should -Exist
     }
 
-    It 'Δεν εκτελεί εκκαθάριση όταν το ημερήσιο αρχείο καταγραφής υπάρχει ήδη' {
-        $logDir = Join-Path $TestDrive 'retention-existing'
+    It -Name 'Δεν εκτελεί εκκαθάριση όταν το ημερήσιο αρχείο καταγραφής υπάρχει ήδη' -Test {
+        $logDir = Join-Path -Path $TestDrive -ChildPath 'retention-existing'
         New-Item -Path $logDir -ItemType Directory -Force | Out-Null
 
         $todayStr = (Get-Date).ToString('yyyy-MM-dd')
-        $todayLog = Join-Path $logDir "BridgeWatcher-$todayStr.log"
+        $todayLog = Join-Path -Path $logDir -ChildPath "BridgeWatcher-$todayStr.log"
         Set-Content -Path $todayLog -Value 'existing entry' -Encoding utf8
 
-        $expiredLog = Join-Path $logDir 'BridgeWatcher-2020-01-01.log'
+        $expiredLog = Join-Path -Path $logDir -ChildPath 'BridgeWatcher-2020-01-01.log'
         Set-Content -Path $expiredLog -Value 'expired log entry' -Encoding utf8
         (Get-Item -Path $expiredLog).LastWriteTime = (Get-Date).AddDays(-10)
 
@@ -135,7 +135,7 @@ Describe 'Write-BridgeLog Retention Pruning' {
         Write-BridgeLog -Configuration $cfg -Stage 'Ανάλυση' -Message 'Second daily log entry'
 
         $expiredLog | Should -Exist
-        (Get-Content -Path $todayLog -Raw) | Should -Match 'Second daily log entry'
+        (Get-Content -Path $todayLog -Raw) | Should -Match -RegularExpression 'Second daily log entry'
     }
 }
 

@@ -1,11 +1,11 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'Send-Pushover' {
-    BeforeAll {
+Describe -Name 'Send-Pushover' -Fixture {
+    BeforeAll -Scriptblock {
         $script:Config = New-BridgeConfiguration
     }
 
-    It 'Καλεί helper functions και στέλνει μήνυμα' {
+    It -Name 'Καλεί helper functions και στέλνει μήνυμα' -Test {
         Mock -ModuleName BridgeWatcher -CommandName Send-BridgePushoverRequest -MockWith {
             return @{ status = 'ok' }
         }
@@ -21,7 +21,7 @@ Describe 'Send-Pushover' {
         }
     }
 
-    It 'Γράφει error log και ρίχνει terminating error όταν αποτυγχάνει η αποστολή' {
+    It -Name 'Γράφει error log και ρίχνει terminating error όταν αποτυγχάνει η αποστολή' -Test {
         Mock -ModuleName BridgeWatcher -CommandName Send-BridgePushoverRequest -MockWith { throw 'API Error' }
         Mock -ModuleName BridgeWatcher -CommandName Write-BridgeLog -MockWith { }
 
@@ -31,14 +31,14 @@ Describe 'Send-Pushover' {
             Message   = 'hello'
         }
 
-        { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Throw '*Αποτυχία αποστολής Pushover*'
+        { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Αποτυχία αποστολής Pushover*'
 
         Should -Invoke -ModuleName BridgeWatcher -CommandName Write-BridgeLog -ParameterFilter {
             $Stage -eq 'Σφάλμα' -and $Message -like '*Αποτυχία αποστολής Pushover*'
         } -Times 1 -Exactly -Scope It
     }
 
-    It 'Αποδέχεται έγκυρο URL με https' {
+    It -Name 'Αποδέχεται έγκυρο URL με https' -Test {
         Mock -ModuleName BridgeWatcher -CommandName Send-BridgePushoverRequest -MockWith { return @{ status = 'ok' } }
         Mock -ModuleName BridgeWatcher -CommandName Write-BridgeLog -MockWith { }
 
@@ -52,7 +52,7 @@ Describe 'Send-Pushover' {
         { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Not -Throw
     }
 
-    It 'Αποδέχεται έγκυρο URL με http' {
+    It -Name 'Αποδέχεται έγκυρο URL με http' -Test {
         Mock -ModuleName BridgeWatcher -CommandName Send-BridgePushoverRequest -MockWith { return @{ status = 'ok' } }
         Mock -ModuleName BridgeWatcher -CommandName Write-BridgeLog -MockWith { }
 
@@ -66,7 +66,7 @@ Describe 'Send-Pushover' {
         { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Not -Throw
     }
 
-    It 'Απορρίπτει άκυρο URL' {
+    It -Name 'Απορρίπτει άκυρο URL' -Test {
         $sendPushoverSplat = @{
             PoUserKey = 'U'
             PoApiKey  = 'T'
@@ -77,7 +77,7 @@ Describe 'Send-Pushover' {
         { Send-BridgePushover @sendPushoverSplat -Configuration $script:Config } | Should -Throw
     }
 
-    It 'Περνάει όλες τις προαιρετικές παραμέτρους στο payload' {
+    It -Name 'Περνάει όλες τις προαιρετικές παραμέτρους στο payload' -Test {
         Mock -ModuleName BridgeWatcher -CommandName Send-BridgePushoverRequest -MockWith {
             return @{ status = 'ok' }
         }
@@ -107,17 +107,17 @@ Describe 'Send-Pushover' {
         }
     }
 
-    It 'Απορρίπτει Priority 2 (Emergency) όταν λείπουν τα Retry και Expire' {
+    It -Name 'Απορρίπτει Priority 2 (Emergency) όταν λείπουν τα Retry και Expire' -Test {
         Mock -ModuleName BridgeWatcher -CommandName Send-BridgePushoverRequest -MockWith { return @{ status = 'ok' } }
         Mock -ModuleName BridgeWatcher -CommandName Write-BridgeLog -MockWith { }
 
-        { Send-BridgePushover -PoUserKey 'U' -PoApiKey 'T' -Message 'emergency' -Priority 2 -Configuration $script:Config } | Should -Throw '*Retry*Expire*'
-        { Send-BridgePushover -PoUserKey 'U' -PoApiKey 'T' -Message 'emergency' -Priority 2 -Retry 60 -Configuration $script:Config } | Should -Throw '*Retry*Expire*'
-        { Send-BridgePushover -PoUserKey 'U' -PoApiKey 'T' -Message 'emergency' -Priority 2 -Expire 3600 -Configuration $script:Config } | Should -Throw '*Retry*Expire*'
+        { Send-BridgePushover -PoUserKey 'U' -PoApiKey 'T' -Message 'emergency' -Priority 2 -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Retry*Expire*'
+        { Send-BridgePushover -PoUserKey 'U' -PoApiKey 'T' -Message 'emergency' -Priority 2 -Retry 60 -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Retry*Expire*'
+        { Send-BridgePushover -PoUserKey 'U' -PoApiKey 'T' -Message 'emergency' -Priority 2 -Expire 3600 -Configuration $script:Config } | Should -Throw -ExpectedMessage '*Retry*Expire*'
         Should -Not -Invoke -ModuleName BridgeWatcher -CommandName Send-BridgePushoverRequest -Scope It
     }
 
-    It 'Περνάει τα retry και expire στο payload όταν Priority είναι 2' {
+    It -Name 'Περνάει τα retry και expire στο payload όταν Priority είναι 2' -Test {
         Mock -ModuleName BridgeWatcher -CommandName Send-BridgePushoverRequest -MockWith {
             return @{ status = 'ok' }
         }

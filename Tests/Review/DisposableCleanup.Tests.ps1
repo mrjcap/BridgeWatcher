@@ -1,14 +1,20 @@
-﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "../../BridgeWatcher")
-$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1 | Where-Object {
+﻿$script:ModulePath = Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath "../../BridgeWatcher")
+$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1 | Where-Object -FilterScript {
     $_.FullName -match '[\\/](Public|Private)[\\/]'
 }
-$Psm1Path = Resolve-Path (Join-Path $script:ModulePath "BridgeWatcher.psm1")
+$Psm1Path = Resolve-Path -Path (Join-Path -Path $script:ModulePath -ChildPath "BridgeWatcher.psm1")
 
+<#
+.SYNOPSIS
+    Finds assignment variable for node.
+
+.DESCRIPTION
+Inspects the assignment target and returns its variable name when the target is a variable.
+
+.PARAMETER node
+The AST node to inspect or use as the starting point of the search.
+#>
 function global:Find-AssignmentVariable($node) {
-    <#
-    .SYNOPSIS
-        Finds assignment variable for node.
-    #>
     $parent = $node.Parent
     while ($parent) {
         if ($parent -is [System.Management.Automation.Language.AssignmentStatementAst]) {
@@ -19,12 +25,21 @@ function global:Find-AssignmentVariable($node) {
     return $null
 }
 
+<#
+.SYNOPSIS
+    Asserts a module-scoped variable is disposed in OnRemove.
+
+.DESCRIPTION
+Looks for disposal of the named module-scoped variable in the module removal handler.
+
+.PARAMETER varName
+The name of the variable being checked.
+
+.PARAMETER file
+The source file containing the assignment.
+#>
 function global:Assert-ModuleVariableIsDisposed($varName, $file) {
-    <#
-    .SYNOPSIS
-        Asserts a module-scoped variable is disposed in OnRemove.
-    #>
-    $psm1Path = Join-Path (Split-Path (Split-Path $file.FullName)) "BridgeWatcher.psm1"
+    $psm1Path = Join-Path -Path (Split-Path -Path (Split-Path -Path $file.FullName)) -ChildPath "BridgeWatcher.psm1"
     $psm1Ast = [System.Management.Automation.Language.Parser]::ParseFile($psm1Path, [ref]$null, [ref]$null)
     $onRemove = $psm1Ast.FindAll({
         param($n)
@@ -52,11 +67,20 @@ function global:Assert-ModuleVariableIsDisposed($varName, $file) {
     throw "Module-scoped variable '$varName' is not cleaned up in OnRemove block in module script."
 }
 
+<#
+.SYNOPSIS
+    Asserts a local variable is disposed in a finally block.
+
+.DESCRIPTION
+Searches the enclosing code for a finally block that disposes the variable.
+
+.PARAMETER varName
+The name of the variable being checked.
+
+.PARAMETER node
+The AST node to inspect or use as the starting point of the search.
+#>
 function global:Assert-LocalVariableIsDisposed($varName, $node) {
-    <#
-    .SYNOPSIS
-        Asserts a local variable is disposed in a finally block.
-    #>
     $parent = $node.Parent
     $tryAst = $null
     while ($parent) {
@@ -87,25 +111,37 @@ function global:Assert-LocalVariableIsDisposed($varName, $node) {
     }
 }
 
+<#
+.SYNOPSIS
+    Asserts a variable is disposed.
+
+.DESCRIPTION
+Chooses the cleanup assertion based on whether the assignment targets a module-scoped variable.
+
+.PARAMETER varName
+The name of the variable being checked.
+
+.PARAMETER node
+The AST node to inspect or use as the starting point of the search.
+
+.PARAMETER file
+The source file containing the assignment.
+#>
 function global:Assert-VariableIsDisposed($varName, $node, $file) {
-    <#
-    .SYNOPSIS
-        Asserts a variable is disposed.
-    #>
     if (-not $varName) {
         throw "Resource at line $($node.Extent.StartLineNumber) is not assigned to a variable (leak risk)."
     }
 
     if ($varName -like 'script:*' -or $varName -like 'global:*') {
-        Assert-ModuleVariableIsDisposed $varName $file
+        Assert-ModuleVariableIsDisposed -varName $varName -file $file
     } else {
-        Assert-LocalVariableIsDisposed $varName $node
+        Assert-LocalVariableIsDisposed -varName $varName -node $node
     }
 }
 
-Describe "Disposable Resource Cleanup Review" {
-    Context "Audit Source Files" {
-        It "Should properly dispose of audited IDisposable resources in <Name>" -ForEach $script:Files {
+Describe -Name "Disposable Resource Cleanup Review" -Fixture {
+    Context -Name "Audit Source Files" -Fixture {
+        It -Name "Should properly dispose of audited IDisposable resources in <Name>" -ForEach $script:Files -Test {
             $file = $_
             $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$null)
 
@@ -168,7 +204,7 @@ Describe "Disposable Resource Cleanup Review" {
             $targetNodes += $methodNodes
 
             foreach ($node in $targetNodes) {
-                $varName = Find-AssignmentVariable $node
+                $varName = Find-AssignmentVariable -node $node
                 Assert-VariableIsDisposed -varName $varName -node $node -file $file
             }
         }

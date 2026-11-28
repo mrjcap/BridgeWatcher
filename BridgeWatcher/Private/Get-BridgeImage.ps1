@@ -1,24 +1,27 @@
-﻿function Get-BridgeImage {
-    <#
-    .SYNOPSIS
-    Εξάγει όλους τους συνδέσμους εικόνων από HTML περιεχόμενο.
+﻿<#
+.SYNOPSIS
+Εξάγει όλους τους συνδέσμους εικόνων από HTML περιεχόμενο.
 
-    .DESCRIPTION
-    Η Get-BridgeImage αναλύει HTML δεδομένα και επιστρέφει αντικείμενα
-    με τους συνδέσμους εικόνων που σχετίζονται με την κατάσταση της γέφυρας.
+.DESCRIPTION
+Η Get-BridgeImage αναλύει HTML δεδομένα και επιστρέφει αντικείμενα
+με τους συνδέσμους εικόνων που σχετίζονται με την κατάσταση της γέφυρας.
 
-    .PARAMETER HtmlContent
-    Το HTML περιεχόμενο της σελίδας ως συμβολοσειρά (string).
+.PARAMETER HtmlContent
+Το HTML περιεχόμενο της σελίδας ως συμβολοσειρά (string).
 
-    .PARAMETER Location
-    Η τοποθεσία της γέφυρας ('poseidonia' ή 'isthmia').
+.PARAMETER Location
+Η τοποθεσία της γέφυρας ('poseidonia' ή 'isthmia').
 
-    .OUTPUTS
-    [System.Collections.ArrayList] - Λίστα από αντικείμενα εικόνων με την ιδιότητα 'src'.
+.OUTPUTS
+[System.Collections.ArrayList] - Λίστα από αντικείμενα εικόνων με την ιδιότητα 'src'.
 
-    .NOTES
-    Η ανάλυση βασίζεται σε κανονικές εκφράσεις (regex) για την εύρεση εικόνων.
-    #>
+.NOTES
+Η ανάλυση βασίζεται σε κανονικές εκφράσεις (regex) για την εύρεση εικόνων.
+
+.PARAMETER Configuration
+Η διαμόρφωση της BridgeWatcher που χρησιμοποιεί η συνάρτηση.
+#>
+function Get-BridgeImage {
     [CmdletBinding()]
     [OutputType([System.Collections.ArrayList])]
     param (
@@ -31,7 +34,7 @@
 
     $blocks = [regex]::Split($HtmlContent, '(?i)<div[^>]+class=["''][^"'']*panel-primary[^"'']*["''][^>]*>')
 
-    $block = $blocks | Where-Object { $_ -match "(?i)$bridgePattern" }
+    $block = $blocks | Where-Object -FilterScript { $_ -match "(?i)$bridgePattern" }
     if (-not $block) {
         $writeBridgeLogSplat = @{
             Stage   = 'Ανάλυση'

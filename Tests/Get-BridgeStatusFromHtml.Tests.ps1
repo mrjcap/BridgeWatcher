@@ -1,10 +1,10 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
 
 
-Describe 'Get-BridgeStatusFromHtml' {
+Describe -Name 'Get-BridgeStatusFromHtml' -Fixture {
 
-    BeforeAll {
+    BeforeAll -Scriptblock {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
 
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
@@ -22,12 +22,12 @@ Describe 'Get-BridgeStatusFromHtml' {
 
 
 
-    Context 'Όταν δεν βρίσκονται εικόνες' {
+    Context -Name 'Όταν δεν βρίσκονται εικόνες' -Fixture {
 
-        It 'Πετάει σφάλμα BridgeImagesNotFound όταν δεν επιστρέφονται εικόνες' {
+        It -Name 'Πετάει σφάλμα BridgeImagesNotFound όταν δεν επιστρέφονται εικόνες' -Test {
 
 
-            Mock Get-BridgeImage { $null }
+            Mock -CommandName Get-BridgeImage -MockWith { $null }
 
             $html = '<html><body>no images</body></html>'
 
@@ -36,17 +36,17 @@ Describe 'Get-BridgeStatusFromHtml' {
             $errs = @()
             Get-BridgeStatusFromHtml -Configuration $script:Config -Html $html -Timestamp $timestamp -ErrorVariable errs -ErrorAction SilentlyContinue
             $matchFound = [bool]($errs.FullyQualifiedErrorId -match 'BridgeImagesNotFound')
-            $matchFound | Should -Be $true
+            $matchFound | Should -Be -ExpectedValue $true
 
         }
 
-        It 'Πετάει σφάλμα BridgeStatusPatternNotFound όταν οι εικόνες δεν ταιριάζουν σε κανένα πρότυπο' {
-            Mock Get-BridgeImage {
+        It -Name 'Πετάει σφάλμα BridgeStatusPatternNotFound όταν οι εικόνες δεν ταιριάζουν σε κανένα πρότυπο' -Test {
+            Mock -CommandName Get-BridgeImage -MockWith {
                 return [System.Collections.ArrayList]@(
                     [pscustomobject]@{ src = 'unknown-banner.jpg' }
                 )
             }
-            Mock Write-BridgeLog { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             $html = '<html><body>unrecognized images</body></html>'
             $timestamp = '2025-04-18T08:00:00'
@@ -55,7 +55,7 @@ Describe 'Get-BridgeStatusFromHtml' {
             $result = Get-BridgeStatusFromHtml -Configuration $script:Config -Html $html -Timestamp $timestamp -ErrorVariable errs -ErrorAction SilentlyContinue
             $result | Should -BeNullOrEmpty
             $matchFound = [bool]($errs.FullyQualifiedErrorId -match 'BridgeStatusPatternNotFound')
-            $matchFound | Should -Be $true
+            $matchFound | Should -Be -ExpectedValue $true
             Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
                 $Message -like '*Η γέφυρα θα θεωρηθεί Ανοιχτή*'
             } -Times 0 -Exactly -Scope It
@@ -63,10 +63,10 @@ Describe 'Get-BridgeStatusFromHtml' {
 
     }
 
-    Context 'Όταν υπάρχει Open image με ή χωρίς info εικόνα' {
+    Context -Name 'Όταν υπάρχει Open image με ή χωρίς info εικόνα' -Fixture {
 
-        It 'Δεν καταγράφει προειδοποίηση info.php όταν υπάρχει εικόνα info.php?12345 στο HTML' {
-            Mock Write-BridgeLog { }
+        It -Name 'Δεν καταγράφει προειδοποίηση info.php όταν υπάρχει εικόνα info.php?12345 στο HTML' -Test {
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             $html = @'
 <div class="panel panel-primary">
@@ -84,16 +84,16 @@ Describe 'Get-BridgeStatusFromHtml' {
 
             $result = Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp -Configuration $script:Config
 
-            $result.Count | Should -Be 2
+            $result.Count | Should -Be -ExpectedValue 2
             Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
                 $Message -like '*Λείπει η εικόνα info.php*'
             } -Times 0 -Exactly -Scope It
         }
 
-        It 'Δημιουργεί προειδοποίηση για Open κατάσταση χωρίς info εικόνα' {
+        It -Name 'Δημιουργεί προειδοποίηση για Open κατάσταση χωρίς info εικόνα' -Test {
             $config = New-BridgeConfiguration
 
-            Mock Get-BridgeImage {
+            Mock -CommandName Get-BridgeImage -MockWith {
                 param($HtmlContent, $Location)
                 $null = $HtmlContent
                 if ($Location -eq 'poseidonia') {
@@ -106,14 +106,14 @@ Describe 'Get-BridgeStatusFromHtml' {
                 )
             }
 
-            Mock Write-BridgeLog { }
+            Mock -CommandName Write-BridgeLog -MockWith { }
 
             $html = '<html><body>dummy</body></html>'
             $timestamp = '2025-04-18T08:00:00'
 
             $result = Get-BridgeStatusFromHtml -Html $html -Timestamp $timestamp -Configuration $config
 
-            $result.Count | Should -Be 2
+            $result.Count | Should -Be -ExpectedValue 2
 
             Should -Invoke -CommandName Write-BridgeLog -ParameterFilter {
                 $Message -like '*Λείπει η εικόνα info.php*'

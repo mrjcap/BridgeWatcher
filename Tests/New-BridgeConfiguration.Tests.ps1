@@ -1,74 +1,74 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'New-BridgeConfiguration' {
-    BeforeAll {
+Describe -Name 'New-BridgeConfiguration' -Fixture {
+    BeforeAll -Scriptblock {
         $script:Config = New-BridgeConfiguration
     }
 
-    BeforeEach {
+    BeforeEach -Scriptblock {
         $script:SavedOutEnv = $Env:BRIDGEWATCHER_OUT
         $Env:BRIDGEWATCHER_OUT = $null
     }
 
-    AfterEach {
+    AfterEach -Scriptblock {
         $Env:BRIDGEWATCHER_OUT = $script:SavedOutEnv
     }
 
-    Context 'Default Instantiation' {
-        It 'Returns an object with the correct type name' {
+    Context -Name 'Default Instantiation' -Fixture {
+        It -Name 'Returns an object with the correct type name' -Test {
             $config = New-BridgeConfiguration
-            $config.PSObject.TypeNames | Should -Contain 'BridgeWatcher.Configuration'
+            $config.PSObject.TypeNames | Should -Contain -ExpectedValue 'BridgeWatcher.Configuration'
         }
 
-        It 'Has default intervals and iterations configured' {
+        It -Name 'Has default intervals and iterations configured' -Test {
             $config = New-BridgeConfiguration
-            $config.Defaults.IntervalSeconds | Should -Be 300
-            $config.Defaults.MaxIterations | Should -Be 100
+            $config.Defaults.IntervalSeconds | Should -Be -ExpectedValue 300
+            $config.Defaults.MaxIterations | Should -Be -ExpectedValue 100
         }
 
-        It 'Normalizes URLs' {
+        It -Name 'Normalizes URLs' -Test {
             $config = New-BridgeConfiguration -BaseUrl 'https://example.com'
-            $config.Urls.Source | Should -Be 'https://example.com/'
-            $config.Urls.BaseImage | Should -Be 'https://example.com'
+            $config.Urls.Source | Should -Be -ExpectedValue 'https://example.com/'
+            $config.Urls.BaseImage | Should -Be -ExpectedValue 'https://example.com'
         }
 
-        It 'Defaults LogDirectory to BRIDGEWATCHER_OUT when set' {
+        It -Name 'Defaults LogDirectory to BRIDGEWATCHER_OUT when set' -Test {
             $Env:BRIDGEWATCHER_OUT = '/app/logs'
             $config = New-BridgeConfiguration
-            $config.Defaults.LogDirectory | Should -Be '/app/logs'
+            $config.Defaults.LogDirectory | Should -Be -ExpectedValue '/app/logs'
         }
 
-        It 'Defaults LogDirectory to TestDrive:\logs when running in Pester' {
+        It -Name 'Defaults LogDirectory to TestDrive:\logs when running in Pester' -Test {
             $config = New-BridgeConfiguration
-            $config.Defaults.LogDirectory | Should -Be 'TestDrive:\logs'
+            $config.Defaults.LogDirectory | Should -Be -ExpectedValue 'TestDrive:\logs'
         }
 
-        It 'Χρησιμοποιεί το PSScriptRoot όταν δεν υπάρχει TestDrive' {
+        It -Name 'Χρησιμοποιεί το PSScriptRoot όταν δεν υπάρχει TestDrive' -Test {
             Mock -ModuleName BridgeWatcher -CommandName Test-Path -MockWith { return $false } -ParameterFilter { $Path -eq 'TestDrive:\' }
             $config = New-BridgeConfiguration
-            $config.Defaults.LogDirectory | Should -Match 'logs$'
+            $config.Defaults.LogDirectory | Should -Match -RegularExpression 'logs$'
         }
 
-        It 'Contains a unified Statuses dictionary with Greek translations' {
+        It -Name 'Contains a unified Statuses dictionary with Greek translations' -Test {
             $config = New-BridgeConfiguration
             $config.Statuses | Should -Not -BeNullOrEmpty
-            $config.Statuses.Open | Should -Be 'Ανοιχτή'
-            $config.Statuses.Closed | Should -Be 'Κλειστή'
-            $config.Statuses.ClosedForMaintenance | Should -Be 'Κλειστή για συντήρηση'
-            $config.Statuses.ClosedWithSchedule | Should -Be 'Κλειστή με πρόγραμμα'
-            $config.Statuses.PermanentlyClosed | Should -Be 'Μόνιμα κλειστή'
-            $config.Statuses.Unknown | Should -Be 'Άγνωστη'
+            $config.Statuses.Open | Should -Be -ExpectedValue 'Ανοιχτή'
+            $config.Statuses.Closed | Should -Be -ExpectedValue 'Κλειστή'
+            $config.Statuses.ClosedForMaintenance | Should -Be -ExpectedValue 'Κλειστή για συντήρηση'
+            $config.Statuses.ClosedWithSchedule | Should -Be -ExpectedValue 'Κλειστή με πρόγραμμα'
+            $config.Statuses.PermanentlyClosed | Should -Be -ExpectedValue 'Μόνιμα κλειστή'
+            $config.Statuses.Unknown | Should -Be -ExpectedValue 'Άγνωστη'
         }
 
-        It 'Defines only LoggingConfig stages and levels accepted by Write-BridgeLog ValidateSet' {
+        It -Name 'Defines only LoggingConfig stages and levels accepted by Write-BridgeLog ValidateSet' -Test {
             $config = New-BridgeConfiguration
-            $validSets = InModuleScope BridgeWatcher {
+            $validSets = InModuleScope -ModuleName BridgeWatcher -ScriptBlock {
                 $cmd = Get-Command -Name Write-BridgeLog -CommandType Function
                 $stageAttr = $cmd.Parameters['Stage'].Attributes |
-                    Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
+                    Where-Object -FilterScript { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
                     Select-Object -First 1
                 $levelAttr = $cmd.Parameters['Level'].Attributes |
-                    Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
+                    Where-Object -FilterScript { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
                     Select-Object -First 1
                 @{
                     Stages = @($stageAttr.ValidValues)
@@ -76,28 +76,28 @@ Describe 'New-BridgeConfiguration' {
                 }
             }
 
-            $stageKeys = @($config.LoggingConfig.Keys | Where-Object { $_ -like '*Stage' })
-            $levelKeys = @($config.LoggingConfig.Keys | Where-Object { $_ -like '*Level' })
+            $stageKeys = @($config.LoggingConfig.Keys | Where-Object -FilterScript { $_ -like '*Stage' })
+            $levelKeys = @($config.LoggingConfig.Keys | Where-Object -FilterScript { $_ -like '*Level' })
 
-            $stageKeys.Count | Should -BeGreaterThan 0
-            $levelKeys.Count | Should -BeGreaterThan 0
-            ($stageKeys.Count + $levelKeys.Count) | Should -Be $config.LoggingConfig.Keys.Count
+            $stageKeys.Count | Should -BeGreaterThan -ExpectedValue 0
+            $levelKeys.Count | Should -BeGreaterThan -ExpectedValue 0
+            ($stageKeys.Count + $levelKeys.Count) | Should -Be -ExpectedValue $config.LoggingConfig.Keys.Count
 
             foreach ($key in $stageKeys) {
-                $validSets.Stages | Should -Contain $config.LoggingConfig[$key]
+                $validSets.Stages | Should -Contain -ExpectedValue $config.LoggingConfig[$key]
             }
             foreach ($key in $levelKeys) {
-                $validSets.Levels | Should -Contain $config.LoggingConfig[$key]
+                $validSets.Levels | Should -Contain -ExpectedValue $config.LoggingConfig[$key]
             }
 
-            $config.LoggingConfig.Keys | Should -Not -Contain 'DebugStage'
-            $config.LoggingConfig.Keys | Should -Not -Contain 'ErrorLevel'
-            $config.LoggingConfig.Keys | Should -Not -Contain 'InfoLevel'
+            $config.LoggingConfig.Keys | Should -Not -Contain -ExpectedValue 'DebugStage'
+            $config.LoggingConfig.Keys | Should -Not -Contain -ExpectedValue 'ErrorLevel'
+            $config.LoggingConfig.Keys | Should -Not -Contain -ExpectedValue 'InfoLevel'
         }
     }
 
-    Context 'Optional ConfigurationPath parameter' {
-        It 'Loads and overlays settings when valid JSON path is provided' {
+    Context -Name 'Optional ConfigurationPath parameter' -Fixture {
+        It -Name 'Loads and overlays settings when valid JSON path is provided' -Test {
             $customConfigPath = 'TestDrive:\custom-config.json'
             $json = @'
 {
@@ -113,68 +113,68 @@ Describe 'New-BridgeConfiguration' {
 '@
             Set-Content -Path $customConfigPath -Value $json -Encoding utf8
             $config = New-BridgeConfiguration -ConfigurationPath $customConfigPath
-            $config.Urls.Source | Should -Be 'https://custom.example.com'
-            $config.Urls.CustomUrl | Should -Be 'https://custom.example.com/extra'
-            $config.Defaults.IntervalSeconds | Should -Be 60
-            $config.Defaults.CustomFlag | Should -Be $true
+            $config.Urls.Source | Should -Be -ExpectedValue 'https://custom.example.com'
+            $config.Urls.CustomUrl | Should -Be -ExpectedValue 'https://custom.example.com/extra'
+            $config.Defaults.IntervalSeconds | Should -Be -ExpectedValue 60
+            $config.Defaults.CustomFlag | Should -Be -ExpectedValue $true
         }
 
-        It 'Throws FileNotFoundException when configuration path does not exist' {
+        It -Name 'Throws FileNotFoundException when configuration path does not exist' -Test {
             { New-BridgeConfiguration -ConfigurationPath 'TestDrive:\missing.json' } | Should -Throw
         }
 
-        It 'Loads partial JSON override containing only Defaults without Urls under strict mode' {
+        It -Name 'Loads partial JSON override containing only Defaults without Urls under strict mode' -Test {
             $partialDefaultsPath = 'TestDrive:\partial-defaults.json'
             Set-Content -Path $partialDefaultsPath -Value '{"Defaults":{"IntervalSeconds":60}}' -Encoding utf8
             $config = New-BridgeConfiguration -ConfigurationPath $partialDefaultsPath
-            $config.Defaults.IntervalSeconds | Should -Be 60
-            $config.Urls.Source | Should -Be 'https://www.topvision.gr/dioriga/'
+            $config.Defaults.IntervalSeconds | Should -Be -ExpectedValue 60
+            $config.Urls.Source | Should -Be -ExpectedValue 'https://www.topvision.gr/dioriga/'
         }
 
-        It 'Loads partial JSON override containing only Urls without Defaults under strict mode' {
+        It -Name 'Loads partial JSON override containing only Urls without Defaults under strict mode' -Test {
             $partialUrlsPath = 'TestDrive:\partial-urls.json'
             Set-Content -Path $partialUrlsPath -Value '{"Urls":{"Source":"https://partial.example.com/"}}' -Encoding utf8
             $config = New-BridgeConfiguration -ConfigurationPath $partialUrlsPath
-            $config.Urls.Source | Should -Be 'https://partial.example.com/'
-            $config.Defaults.IntervalSeconds | Should -Be 300
+            $config.Urls.Source | Should -Be -ExpectedValue 'https://partial.example.com/'
+            $config.Defaults.IntervalSeconds | Should -Be -ExpectedValue 300
         }
     }
 
-    Context 'Parameter overrides' {
-        It 'Χρησιμοποιεί DefaultMaxIterations αν παρασχεθεί' {
+    Context -Name 'Parameter overrides' -Fixture {
+        It -Name 'Χρησιμοποιεί DefaultMaxIterations αν παρασχεθεί' -Test {
             $config = New-BridgeConfiguration -BaseUrl 'https://test.com' -OCRApiUrl 'https://ocr.com' -PushoverApiUrl 'https://po.com' -DefaultMaxIterations 500
-            $config.Defaults.MaxIterations | Should -Be 500
+            $config.Defaults.MaxIterations | Should -Be -ExpectedValue 500
         }
 
-        It 'Θέτει MaxConsecutiveFailures αν παρασχεθεί' {
+        It -Name 'Θέτει MaxConsecutiveFailures αν παρασχεθεί' -Test {
             $config = New-BridgeConfiguration -BaseUrl 'https://test.com' -OCRApiUrl 'https://ocr.com' -PushoverApiUrl 'https://po.com' -MaxConsecutiveFailures 20
-            $config.Defaults.MaxConsecutiveFailures | Should -Be 20
+            $config.Defaults.MaxConsecutiveFailures | Should -Be -ExpectedValue 20
         }
 
-        It 'Allows overriding default intervals and iterations' {
+        It -Name 'Allows overriding default intervals and iterations' -Test {
             $config = New-BridgeConfiguration -DefaultIntervalSeconds 120 -DefaultMaxIterations 50
-            $config.Defaults.IntervalSeconds | Should -Be 120
-            $config.Defaults.MaxIterations | Should -Be 50
+            $config.Defaults.IntervalSeconds | Should -Be -ExpectedValue 120
+            $config.Defaults.MaxIterations | Should -Be -ExpectedValue 50
         }
 
-        It 'Applies ValidateRange constraint on DefaultIntervalSeconds' {
+        It -Name 'Applies ValidateRange constraint on DefaultIntervalSeconds' -Test {
             { New-BridgeConfiguration -DefaultIntervalSeconds 0 } | Should -Throw
             { New-BridgeConfiguration -DefaultIntervalSeconds 3601 } | Should -Throw
         }
 
-        It 'Applies ValidateRange constraint on DefaultMaxIterations' {
+        It -Name 'Applies ValidateRange constraint on DefaultMaxIterations' -Test {
             { New-BridgeConfiguration -DefaultMaxIterations -1 } | Should -Throw
             { New-BridgeConfiguration -DefaultMaxIterations 1001 } | Should -Throw
         }
 
-        It 'Allows overriding PushoverApiUrl' {
+        It -Name 'Allows overriding PushoverApiUrl' -Test {
             $config = New-BridgeConfiguration -PushoverApiUrl 'https://custom.pushover.example/messages'
-            $config.Urls.PushoverApi | Should -Be 'https://custom.pushover.example/messages'
+            $config.Urls.PushoverApi | Should -Be -ExpectedValue 'https://custom.pushover.example/messages'
         }
 
-        It 'Uses default PushoverApiUrl when not specified' {
+        It -Name 'Uses default PushoverApiUrl when not specified' -Test {
             $config = New-BridgeConfiguration
-            $config.Urls.PushoverApi | Should -Be 'https://api.pushover.net/1/messages.json'
+            $config.Urls.PushoverApi | Should -Be -ExpectedValue 'https://api.pushover.net/1/messages.json'
         }
     }
 }

@@ -1,48 +1,66 @@
-﻿Import-Module "$PSScriptRoot/../../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-$script:PublicPath = Resolve-Path "$PSScriptRoot/../../BridgeWatcher/Public"
-$script:PrivatePath = Resolve-Path "$PSScriptRoot/../../BridgeWatcher/Private"
-$script:Files = Get-ChildItem -Path $script:PublicPath, $script:PrivatePath -Filter *.ps1 -Recurse | ForEach-Object {
+$script:PublicPath = Resolve-Path -Path "$PSScriptRoot/../../BridgeWatcher/Public"
+$script:PrivatePath = Resolve-Path -Path "$PSScriptRoot/../../BridgeWatcher/Private"
+$script:Files = Get-ChildItem -Path $script:PublicPath, $script:PrivatePath -Filter *.ps1 -Recurse | ForEach-Object -Process {
     [PSCustomObject]@{
         Name     = $_.Name
         FullName = $_.FullName
     }
 }
 
-Describe "Loop Failure Contract Review" {
-    BeforeAll {
+Describe -Name "Loop Failure Contract Review" -Fixture {
+    BeforeAll -Scriptblock {
+        <#
+        .SYNOPSIS
+        Checks if an AST node is a throw or ThrowTerminatingError invocation.
+
+        .DESCRIPTION
+        Recognizes both a throw statement and a call to ThrowTerminatingError.
+
+        .PARAMETER Node
+        The AST node to inspect or use as the starting point of the search.
+        #>
         function Test-AstNodeIsThrow {
-            <#
-            .SYNOPSIS
-            Checks if an AST node is a throw or ThrowTerminatingError invocation.
-            #>
             param($Node)
             if ($Node -is [System.Management.Automation.Language.ThrowStatementAst]) { return $true }
             if ($Node -is [System.Management.Automation.Language.CommandAst] -and $Node.GetCommandName() -like '*ThrowTerminatingError*') { return $true }
             return ($Node -is [System.Management.Automation.Language.MemberExpressionAst] -and $Node.Member.Extent.Text -eq 'ThrowTerminatingError')
         }
 
+        <#
+        .SYNOPSIS
+        Checks if a loop contains or is followed by a throw or terminating error.
+
+        .DESCRIPTION
+        Searches the loop and subsequent code for an explicit terminating failure path.
+
+        .PARAMETER Loop
+        The loop AST to inspect.
+        #>
         function Test-LoopHasFailureThrow {
-            <#
-            .SYNOPSIS
-            Checks if a loop contains or is followed by a throw or terminating error.
-            #>
             param($Loop)
-            $hasThrowInside = $Loop.FindAll({ param($node) Test-AstNodeIsThrow $node }, $true).Count -gt 0
+            $hasThrowInside = $Loop.FindAll({ param($node) Test-AstNodeIsThrow -Node $node }, $true).Count -gt 0
             if ($hasThrowInside) { return $true }
 
             if (-not $Loop.Parent) { return $false }
             return $Loop.Parent.FindAll({
                 param($node)
-                (Test-AstNodeIsThrow $node) -and ($node.Extent.StartOffset -gt $Loop.Extent.EndOffset)
+                (Test-AstNodeIsThrow -Node $node) -and ($node.Extent.StartOffset -gt $Loop.Extent.EndOffset)
             }, $true).Count -gt 0
         }
 
+        <#
+        .SYNOPSIS
+        Checks PowerShell code content for Loop Failure Contract violations.
+
+        .DESCRIPTION
+        Parses the supplied source and reports retry loops with no terminating failure path.
+
+        .PARAMETER Content
+        The source text to inspect.
+        #>
         function Get-LoopFailureContractViolation {
-            <#
-            .SYNOPSIS
-            Checks PowerShell code content for Loop Failure Contract violations.
-            #>
             param([string]$Content)
 
             $violations = [System.Collections.Generic.List[string]]::new()
@@ -78,7 +96,7 @@ Describe "Loop Failure Contract Review" {
                     $violations.Add("Loop at line $($loop.Extent.StartLineNumber) is a retry/polling loop but lacks failure/iteration tracking.")
                 }
 
-                if (-not (Test-LoopHasFailureThrow $loop)) {
+                if (-not (Test-LoopHasFailureThrow -Loop $loop)) {
                     $violations.Add("Loop at line $($loop.Extent.StartLineNumber) lacks a throw or terminating error when all iterations fail.")
                 }
             }
@@ -87,8 +105,8 @@ Describe "Loop Failure Contract Review" {
         }
     }
 
-    Context "Static Analysis Check (Codebase Loop Failure Contract)" {
-        It "Should follow Loop Failure Contract in <Name>" -ForEach $script:Files {
+    Context -Name "Static Analysis Check (Codebase Loop Failure Contract)" -Fixture {
+        It -Name "Should follow Loop Failure Contract in <Name>" -ForEach $script:Files -Test {
             $file = $_
             $content = Get-Content -Path $file.FullName -Raw
             $violations = @(Get-LoopFailureContractViolation -Content $content)
@@ -98,14 +116,14 @@ Describe "Loop Failure Contract Review" {
                 throw "File $($file.Name) violates the Loop Failure Contract: `n$err"
             }
 
-            $violations.Count | Should -Be 0
+            $violations.Count | Should -Be -ExpectedValue 0
         }
     }
 
-    Context "Behavioral Verification" {
-        BeforeAll {
-            $LocalPublicPath = Resolve-Path "$PSScriptRoot/../../BridgeWatcher/Public"
-            $LocalPrivatePath = Resolve-Path "$PSScriptRoot/../../BridgeWatcher/Private"
+    Context -Name "Behavioral Verification" -Fixture {
+        BeforeAll -Scriptblock {
+            $LocalPublicPath = Resolve-Path -Path "$PSScriptRoot/../../BridgeWatcher/Public"
+            $LocalPrivatePath = Resolve-Path -Path "$PSScriptRoot/../../BridgeWatcher/Private"
             . "$LocalPrivatePath\New-BridgeConfiguration.ps1"
             . "$LocalPrivatePath\Write-BridgeLog.ps1"
             . "$LocalPrivatePath\Get-BridgeHttpExceptionInfo.ps1"
@@ -116,18 +134,18 @@ Describe "Loop Failure Contract Review" {
             $script:Config = New-BridgeConfiguration
         }
 
-        It "Get-BridgeStatus: Throws terminating error when Invoke-WebRequest fails all retries" {
-            Mock Invoke-WebRequest { throw "Simulated Network Timeout" }
-            Mock Write-BridgeLog {}
-            Mock Start-Sleep {}
+        It -Name "Get-BridgeStatus: Throws terminating error when Invoke-WebRequest fails all retries" -Test {
+            Mock -CommandName Invoke-WebRequest -MockWith { throw "Simulated Network Timeout" }
+            Mock -CommandName Write-BridgeLog -MockWith {}
+            Mock -CommandName Start-Sleep -MockWith {}
 
-            { Get-BridgeStatus -Configuration $script:Config } | Should -Throw "*Simulated Network Timeout*"
+            { Get-BridgeStatus -Configuration $script:Config } | Should -Throw -ExpectedMessage "*Simulated Network Timeout*"
         }
 
-        It "Get-BridgeStatusMonitor: Throws terminating error when Update-BridgeStatus fails all iterations" {
-            Mock Update-BridgeStatus { throw "Simulated Monitor Action Failure" }
-            Mock Start-Sleep {}
-            Mock Write-BridgeLog {}
+        It -Name "Get-BridgeStatusMonitor: Throws terminating error when Update-BridgeStatus fails all iterations" -Test {
+            Mock -CommandName Update-BridgeStatus -MockWith { throw "Simulated Monitor Action Failure" }
+            Mock -CommandName Start-Sleep -MockWith {}
+            Mock -CommandName Write-BridgeLog -MockWith {}
 
             $monitorParams = @{
                 OutputFile    = 'dummy.json'
@@ -138,13 +156,13 @@ Describe "Loop Failure Contract Review" {
                 MaxIterations = 3
             }
 
-            { Get-BridgeStatusMonitor @monitorParams } | Should -Throw "*All monitoring iterations failed*"
+            { Get-BridgeStatusMonitor @monitorParams } | Should -Throw -ExpectedMessage "*All monitoring iterations failed*"
         }
 
-        It "Invoke-BridgeOCRRequest: Throws terminating error when Invoke-RestMethod fails all retries" {
-            Mock Invoke-RestMethod { throw "Simulated OCR API Failure" }
-            Mock Write-BridgeLog {}
-            Mock Start-Sleep {}
+        It -Name "Invoke-BridgeOCRRequest: Throws terminating error when Invoke-RestMethod fails all retries" -Test {
+            Mock -CommandName Invoke-RestMethod -MockWith { throw "Simulated OCR API Failure" }
+            Mock -CommandName Write-BridgeLog -MockWith {}
+            Mock -CommandName Start-Sleep -MockWith {}
 
             $ocrParams = @{
                 ApiKey        = 'dummy'
@@ -152,25 +170,25 @@ Describe "Loop Failure Contract Review" {
                 Configuration = $script:Config
             }
 
-            { Invoke-BridgeOCRRequest @ocrParams } | Should -Throw "*Αποτυχία OCR*"
+            { Invoke-BridgeOCRRequest @ocrParams } | Should -Throw -ExpectedMessage "*Αποτυχία OCR*"
         }
 
-        It "Send-BridgePushoverRequest: Throws terminating error when Invoke-RestMethod fails all retries" {
-            Mock Invoke-RestMethod { throw "Simulated Pushover API Failure" }
-            Mock Write-BridgeLog {}
-            Mock Start-Sleep {}
+        It -Name "Send-BridgePushoverRequest: Throws terminating error when Invoke-RestMethod fails all retries" -Test {
+            Mock -CommandName Invoke-RestMethod -MockWith { throw "Simulated Pushover API Failure" }
+            Mock -CommandName Write-BridgeLog -MockWith {}
+            Mock -CommandName Start-Sleep -MockWith {}
 
             $pushoverParams = @{
                 Payload       = @{ title = 'test'; message = 'test' }
                 Configuration = $script:Config
             }
 
-            { Send-BridgePushoverRequest @pushoverParams } | Should -Throw "*Simulated Pushover API Failure*"
+            { Send-BridgePushoverRequest @pushoverParams } | Should -Throw -ExpectedMessage "*Simulated Pushover API Failure*"
         }
     }
 
-    Context "Parser Validation (Adversarial Tests)" {
-        It "Fails on code that sleeps but never throws or reports failure" {
+    Context -Name "Parser Validation (Adversarial Tests)" -Fixture {
+        It -Name "Fails on code that sleeps but never throws or reports failure" -Test {
             $badCode = @"
 function Test-NonCompliant {
     for (`$i = 1; `$i -le 3; `$i++) {
@@ -183,11 +201,11 @@ function Test-NonCompliant {
 }
 "@
             $violations = @(Get-LoopFailureContractViolation -Content $badCode)
-            $violations.Count | Should -BeGreaterThan 0
-            $violations[0] | Should -Match "lacks a throw or terminating error"
+            $violations.Count | Should -BeGreaterThan -ExpectedValue 0
+            $violations[0] | Should -Match -RegularExpression "lacks a throw or terminating error"
         }
 
-        It "Fails on code that sleeps but has no iteration or failure tracking variable updates" {
+        It -Name "Fails on code that sleeps but has no iteration or failure tracking variable updates" -Test {
             $badCode = @"
 function Test-NonCompliant {
     while (`$true) {
@@ -200,10 +218,10 @@ function Test-NonCompliant {
 }
 "@
             $violations = @(Get-LoopFailureContractViolation -Content $badCode)
-            $violations.Count | Should -BeGreaterThan 0
+            $violations.Count | Should -BeGreaterThan -ExpectedValue 0
         }
 
-        It "Passes on compliant code (like Get-BridgeStatus pattern)" {
+        It -Name "Passes on compliant code (like Get-BridgeStatus pattern)" -Test {
             $goodCode = @"
 function Test-Compliant {
     for (`$i = 1; `$i -le 3; `$i++) {
@@ -220,7 +238,7 @@ function Test-Compliant {
 }
 "@
             $violations = @(Get-LoopFailureContractViolation -Content $goodCode)
-            $violations.Count | Should -Be 0
+            $violations.Count | Should -Be -ExpectedValue 0
         }
     }
 }

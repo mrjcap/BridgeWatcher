@@ -1,15 +1,15 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'Get-BridgeImage' {
-    BeforeAll {
+Describe -Name 'Get-BridgeImage' -Fixture {
+    BeforeAll -Scriptblock {
         . "$PSScriptRoot/../BridgeWatcher/Private/New-BridgeConfiguration.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Write-BridgeLog.ps1"
         . "$PSScriptRoot/../BridgeWatcher/Private/Get-BridgeImage.ps1"
         $script:Config = New-BridgeConfiguration
     }
 
-    Context 'Ισθμία' {
-        It 'Επιστρέφει εικόνες από valid HTML block' {
+    Context -Name 'Ισθμία' -Fixture {
+        It -Name 'Επιστρέφει εικόνες από valid HTML block' -Test {
             $html = @'
 <div class="panel panel-primary">
 <div class="panel-heading">
@@ -26,16 +26,16 @@ Describe 'Get-BridgeImage' {
 </div>
 '@
             $result = Get-BridgeImage -Configuration $script:Config -HtmlContent $html -Location 'isthmia'
-            $result.Count | Should -Be 2
-            $result[0].src | Should -Match 'no-schedule'
+            $result.Count | Should -Be -ExpectedValue 2
+            $result[0].src | Should -Match -RegularExpression 'no-schedule'
         }
-        It 'Επιστρέφει Exception αν δεν βρεθεί matching block' {
+        It -Name 'Επιστρέφει Exception αν δεν βρεθεί matching block' -Test {
             $html = '<div>Κάτι άλλο</div>'
-            { Get-BridgeImage -Configuration $script:Config -HtmlContent $html -Location 'isthmia' } | Should -Throw "Δεν βρέθηκε block για τη θέση isthmia."
+            { Get-BridgeImage -Configuration $script:Config -HtmlContent $html -Location 'isthmia' } | Should -Throw -ExpectedMessage "Δεν βρέθηκε block για τη θέση isthmia."
         }
 
 
-        It 'Επιστρέφει εικόνες όταν η HTML χρησιμοποιεί μονά εισαγωγικά, επιπλέον classes, ή lowercase tags' {
+        It -Name 'Επιστρέφει εικόνες όταν η HTML χρησιμοποιεί μονά εισαγωγικά, επιπλέον classes, ή lowercase tags' -Test {
             $html = @'
 <DIV class='panel panel-primary flex-row'>
 <div class="panel-heading">
@@ -47,11 +47,11 @@ Describe 'Get-BridgeImage' {
 </DIV>
 '@
             $result = Get-BridgeImage -Configuration $script:Config -HtmlContent $html -Location 'isthmia'
-            $result.Count | Should -Be 1
-            $result[0].src | Should -Be 'image-bridge-open-no-schedule.php?123456'
+            $result.Count | Should -Be -ExpectedValue 1
+            $result[0].src | Should -Be -ExpectedValue 'image-bridge-open-no-schedule.php?123456'
         }
 
-        It 'Διατηρεί την εικόνα info.php?12345 από πραγματικό HTML ανοιχτής γέφυρας' {
+        It -Name 'Διατηρεί την εικόνα info.php?12345 από πραγματικό HTML ανοιχτής γέφυρας' -Test {
             $html = @'
 <div class="panel panel-primary">
 <div class="panel-heading">
@@ -65,9 +65,9 @@ Describe 'Get-BridgeImage' {
 </div>
 '@
             $result = Get-BridgeImage -Configuration $script:Config -HtmlContent $html -Location 'isthmia'
-            $result.Count | Should -Be 2
-            $result[0].src | Should -Be 'image-bridge-open-no-schedule.php?12345'
-            $result[1].src | Should -Be 'info.php?12345'
+            $result.Count | Should -Be -ExpectedValue 2
+            $result[0].src | Should -Be -ExpectedValue 'image-bridge-open-no-schedule.php?12345'
+            $result[1].src | Should -Be -ExpectedValue 'info.php?12345'
         }
     }
 }

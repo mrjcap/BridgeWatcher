@@ -1,19 +1,19 @@
-﻿function Invoke-BridgeOCRRequest {
-    <#
-    .SYNOPSIS
-    Αποστέλλει OCR αίτημα σε υπηρεσία.
-    .DESCRIPTION
-    Η Invoke-BridgeOCRRequest στέλνει HTTP POST αίτημα με σώμα εικόνας
-    για OCR ανάλυση μέσω Google Vision API.
-    .PARAMETER ApiKey
-    Το API Key της υπηρεσίας OCR.
-    .PARAMETER RequestBody
-    Το JSON σώμα του αιτήματος.
-    .PARAMETER Configuration
-    Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
-    .OUTPUTS
-    [object] - Το αποτέλεσμα του OCR API.
-    #>
+﻿<#
+.SYNOPSIS
+Αποστέλλει OCR αίτημα σε υπηρεσία.
+.DESCRIPTION
+Η Invoke-BridgeOCRRequest στέλνει HTTP POST αίτημα με σώμα εικόνας
+για OCR ανάλυση μέσω Google Vision API.
+.PARAMETER ApiKey
+Το API Key της υπηρεσίας OCR.
+.PARAMETER RequestBody
+Το JSON σώμα του αιτήματος.
+.PARAMETER Configuration
+Το αντικείμενο διαμόρφωσης που περιέχει τις ρυθμίσεις.
+.OUTPUTS
+[object] - Το αποτέλεσμα του OCR API.
+#>
+function Invoke-BridgeOCRRequest {
     [CmdletBinding()]
     [OutputType([object])]
     param (
@@ -35,7 +35,7 @@
     $analysisStage = $Configuration.LoggingConfig.InfoStage
     $errorStage = $Configuration.LoggingConfig.ErrorStage
 
-    $timeout = @($Configuration.Defaults.HttpRequestTimeout, 60) | Where-Object { $_ -gt 0 } | Select-Object -First 1
+    $timeout = @($Configuration.Defaults.HttpRequestTimeout, 60) | Where-Object -FilterScript { $_ -gt 0 } | Select-Object -First 1
 
     try {
         $invokeRestMethodSplat = @{

@@ -1,11 +1,11 @@
-﻿Import-Module "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
+﻿Import-Module -Name "$PSScriptRoot/../BridgeWatcher/BridgeWatcher.psd1" -Force
 
-Describe 'Get-BridgePreviousStatus' {
-    BeforeAll {
+Describe -Name 'Get-BridgePreviousStatus' -Fixture {
+    BeforeAll -Scriptblock {
         $script:Config = New-BridgeConfiguration
     }
 
-    It 'Επιστρέφει αντικείμενα από έγκυρο JSON αρχείο' {
+    It -Name 'Επιστρέφει αντικείμενα από έγκυρο JSON αρχείο' -Test {
         $mockData = @(
             @{
                 GefyraName   = 'Ποσειδωνία'
@@ -21,21 +21,21 @@ Describe 'Get-BridgePreviousStatus' {
         $jsonPath = "TestDrive:\mock_previous_status.json"
         $mockData | ConvertTo-Json -Depth 3 | Set-Content -Path $jsonPath -Encoding UTF8
         $result = Get-BridgePreviousStatus -Configuration $script:Config -InputFile $jsonPath
-        $result.Count | Should -Be 2
-        $result[0].GefyraName | Should -Be 'Ποσειδωνία'
-        $result[1].GefyraStatus | Should -Be 'Ανοιχτή'
+        $result.Count | Should -Be -ExpectedValue 2
+        $result[0].GefyraName | Should -Be -ExpectedValue 'Ποσειδωνία'
+        $result[1].GefyraStatus | Should -Be -ExpectedValue 'Ανοιχτή'
     }
-    It 'Επιστρέφει κενό array αν το αρχείο δεν υπάρχει' {
+    It -Name 'Επιστρέφει κενό array αν το αρχείο δεν υπάρχει' -Test {
         $path = "TestDrive:\nonexistent.json"
         $result = Get-BridgePreviousStatus -Configuration $script:Config -InputFile $path
-        $result | Should -Be @()
+        $result | Should -Be -ExpectedValue @()
     }
-    It 'Ρίχνει σφάλμα αν το JSON είναι άκυρο' {
+    It -Name 'Ρίχνει σφάλμα αν το JSON είναι άκυρο' -Test {
         $badFile = "TestDrive:\invalid.json"
         '💩 not valid json' | Set-Content -Path $badFile -Encoding UTF8
         { Get-BridgePreviousStatus -Configuration $script:Config -InputFile $badFile } | Should -Throw
     }
-    It 'Backfills ImageHash as $null when property is missing from old state files' {
+    It -Name 'Backfills ImageHash as $null when property is missing from old state files' -Test {
         $legacyData = @(
             @{
                 GefyraName   = 'Ποσειδωνία'
@@ -47,9 +47,9 @@ Describe 'Get-BridgePreviousStatus' {
         $legacyData | ConvertTo-Json -Depth 3 | Set-Content -Path $jsonPath -Encoding UTF8
         $result = Get-BridgePreviousStatus -Configuration $script:Config -InputFile $jsonPath
         $result.ImageHash | Should -BeNullOrEmpty
-        $result.PSObject.Properties.Name | Should -Contain 'ImageHash'
+        $result.PSObject.Properties.Name | Should -Contain -ExpectedValue 'ImageHash'
     }
-    It 'Επιστρέφει κενό array αν το JSON είναι έγκυρο αλλά δεν περιέχει εγγραφές με GefyraName' {
+    It -Name 'Επιστρέφει κενό array αν το JSON είναι έγκυρο αλλά δεν περιέχει εγγραφές με GefyraName' -Test {
         $mockData = @(
             @{ foo = 'bar' },
             @{ something = 'else' }
@@ -57,10 +57,10 @@ Describe 'Get-BridgePreviousStatus' {
         $jsonPath = "TestDrive:\valid_but_no_gefyraname.json"
         $mockData | ConvertTo-Json -Depth 3 | Set-Content -Path $jsonPath -Encoding UTF8
         $result = Get-BridgePreviousStatus -Configuration $script:Config -InputFile $jsonPath
-        $result | Should -Be @()
+        $result | Should -Be -ExpectedValue @()
     }
 
-    It 'Χρησιμοποιεί συμβατές παραμέτρους ανάγνωσης JSON όταν IsLegacyPowerShell είναι true' {
+    It -Name 'Χρησιμοποιεί συμβατές παραμέτρους ανάγνωσης JSON όταν IsLegacyPowerShell είναι true' -Test {
         $savedLegacyEnv = $env:IsLegacyPowerShell
         try {
             $env:IsLegacyPowerShell = 'true'
@@ -74,14 +74,14 @@ Describe 'Get-BridgePreviousStatus' {
             $jsonPath = 'TestDrive:\legacy_ps51_branch.json'
             $mockData | ConvertTo-Json -Depth 3 | Set-Content -Path $jsonPath -Encoding utf8BOM
             $result = Get-BridgePreviousStatus -Configuration $script:Config -InputFile $jsonPath
-            $result.Count | Should -Be 1
-            $result[0].GefyraName | Should -Be 'Ισθμία'
+            $result.Count | Should -Be -ExpectedValue 1
+            $result[0].GefyraName | Should -Be -ExpectedValue 'Ισθμία'
         } finally {
             $env:IsLegacyPowerShell = $savedLegacyEnv
         }
     }
 
-    It 'Διαβάζει αποθηκευμένο snapshot επιτυχώς σε Windows PowerShell 5.1 (powershell.exe)' -Skip:(-not (Get-Command powershell.exe -ErrorAction SilentlyContinue)) {
+    It -Name 'Διαβάζει αποθηκευμένο snapshot επιτυχώς σε Windows PowerShell 5.1 (powershell.exe)' -Skip:(-not (Get-Command -Name powershell.exe -ErrorAction SilentlyContinue)) -Test {
         $realFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "bw-ps51-$([guid]::NewGuid().ToString('N')).json"
         $moduleManifest = [System.IO.Path]::GetFullPath((Join-Path -Path $PSScriptRoot -ChildPath '../BridgeWatcher/BridgeWatcher.psd1'))
         try {
@@ -98,8 +98,8 @@ Write-Output 'PS51_OK'
 "@
             $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($ps51Script))
             $output = & powershell.exe -NoProfile -NonInteractive -EncodedCommand $encoded 2>&1
-            $LASTEXITCODE | Should -Be 0 -Because ($output | Out-String)
-            ($output | Out-String) | Should -Match 'PS51_OK'
+            $LASTEXITCODE | Should -Be -ExpectedValue 0 -Because ($output | Out-String)
+            ($output | Out-String) | Should -Match -RegularExpression 'PS51_OK'
         } finally {
             if (Test-Path -Path $realFile) {
                 Remove-Item -Path $realFile -Force -ErrorAction SilentlyContinue

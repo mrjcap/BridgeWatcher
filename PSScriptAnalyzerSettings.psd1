@@ -6,9 +6,6 @@
         PSAvoidUsingWriteHost = @{
             Enable = $true
         }
-        PSUseBOMForUnicodeEncodedFile = @{
-            Enable = $false
-        }
         PSAvoidUsingConvertToSecureStringWithPlainText = @{
             Enable = $true
         }

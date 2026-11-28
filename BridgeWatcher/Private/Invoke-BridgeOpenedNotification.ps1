@@ -1,27 +1,30 @@
-﻿function Invoke-BridgeOpenedNotification {
-    <#
-    .SYNOPSIS
-    Στέλνει ειδοποίηση ότι η γέφυρα άνοιξε.
+﻿<#
+.SYNOPSIS
+Στέλνει ειδοποίηση ότι η γέφυρα άνοιξε.
 
-    .DESCRIPTION
-    Η Invoke-BridgeOpenedNotification αποστέλλει ειδοποίηση όταν ανιχνευτεί
-    ότι η γέφυρα έχει ανοίξει.
+.DESCRIPTION
+Η Invoke-BridgeOpenedNotification αποστέλλει ειδοποίηση όταν ανιχνευτεί
+ότι η γέφυρα έχει ανοίξει.
 
-    .PARAMETER CurrentState
-    Η λίστα καταστάσεων των γεφυρών.
+.PARAMETER CurrentState
+Η λίστα καταστάσεων των γεφυρών.
 
-    .PARAMETER PoUserKey
-    Το Pushover User Key του παραλήπτη.
+.PARAMETER PoUserKey
+Το Pushover User Key του παραλήπτη.
 
-    .PARAMETER PoApiKey
-    Το Pushover API Token της εφαρμογής.
+.PARAMETER PoApiKey
+Το Pushover API Token της εφαρμογής.
 
-    .PARAMETER NotificationProvider
-    Εναλλακτικός πάροχος ειδοποιήσεων.
+.PARAMETER NotificationProvider
+Εναλλακτικός πάροχος ειδοποιήσεων.
 
-    .OUTPUTS
-    None.
-    #>
+.OUTPUTS
+None.
+
+.PARAMETER Configuration
+Η διαμόρφωση της BridgeWatcher που χρησιμοποιεί η συνάρτηση.
+#>
+function Invoke-BridgeOpenedNotification {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoUserKey', Justification = 'Keys are provided securely from the environment, using SecureString here breaks backward compatibility.')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'PoApiKey', Justification = 'Keys are provided securely from the environment, using SecureString here breaks backward compatibility.')]
     [CmdletBinding(DefaultParameterSetName = 'Pushover')]

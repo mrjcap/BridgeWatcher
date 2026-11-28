@@ -48,17 +48,20 @@ param(
 
 Set-StrictMode -Version Latest
 
+<#
+.SYNOPSIS
+Converts an absolute file path to a forward-slash path relative to the repository root.
+
+.DESCRIPTION
+Builds a relative path using forward slashes for the comment inventory.
+
+.PARAMETER FullPath
+The absolute file path.
+
+.PARAMETER Root
+The absolute repository root path.
+#>
 function ConvertTo-NormalizedRelativePath {
-    <#
-    .SYNOPSIS
-    Converts an absolute file path to a forward-slash path relative to the repository root.
-
-    .PARAMETER FullPath
-    The absolute file path.
-
-    .PARAMETER Root
-    The absolute repository root path.
-    #>
     [CmdletBinding()]
     [OutputType([string])]
     param(
@@ -69,14 +72,17 @@ function ConvertTo-NormalizedRelativePath {
     return ([System.IO.Path]::GetRelativePath($Root, $FullPath) -replace '\\', '/')
 }
 
-function Test-IsExemptPowerShellComment {
-    <#
-    .SYNOPSIS
-    Returns true when a PowerShell comment token is comment-based help or an approved directive.
+<#
+.SYNOPSIS
+Returns true when a PowerShell comment token is comment-based help or an approved directive.
 
-    .PARAMETER CommentText
-    The raw PowerShell comment token text.
-    #>
+.DESCRIPTION
+Recognizes help headings and approved tool directives so they do not count as ordinary comments.
+
+.PARAMETER CommentText
+The raw PowerShell comment token text.
+#>
+function Test-IsExemptPowerShellComment {
     [CmdletBinding()]
     [OutputType([bool])]
     param(
@@ -98,14 +104,17 @@ function Test-IsExemptPowerShellComment {
     return $false
 }
 
-function Test-IsExemptHashDirectiveLine {
-    <#
-    .SYNOPSIS
-    Returns true when a hash-comment line in shell, Dockerfile, or YAML is a required tool directive.
+<#
+.SYNOPSIS
+Returns true when a hash-comment line in shell, Dockerfile, or YAML is a required tool directive.
 
-    .PARAMETER Line
-    The full source line text.
-    #>
+.DESCRIPTION
+Recognizes expected shebangs and tool directives without excluding unrelated hash comments.
+
+.PARAMETER Line
+The full source line text.
+#>
+function Test-IsExemptHashDirectiveLine {
     [CmdletBinding()]
     [OutputType([bool])]
     param(
@@ -129,17 +138,20 @@ function Test-IsExemptHashDirectiveLine {
     return $false
 }
 
+<#
+.SYNOPSIS
+Finds disallowed PowerShell comment tokens in an in-memory script string.
+
+.DESCRIPTION
+Uses PowerShell tokens to avoid counting comment markers inside strings.
+
+.PARAMETER Content
+PowerShell source text.
+
+.PARAMETER RelativePath
+Relative path label to include on returned findings.
+#>
 function Get-PowerShellCommentFindingsFromContent {
-    <#
-    .SYNOPSIS
-    Finds disallowed PowerShell comment tokens in an in-memory script string.
-
-    .PARAMETER Content
-    PowerShell source text.
-
-    .PARAMETER RelativePath
-    Relative path label to include on returned findings.
-    #>
     [CmdletBinding()]
     [OutputType([object[]])]
     param(
@@ -169,17 +181,20 @@ function Get-PowerShellCommentFindingsFromContent {
     return $findings.ToArray()
 }
 
+<#
+.SYNOPSIS
+Finds disallowed hash comments in shell, Dockerfile, or YAML text.
+
+.DESCRIPTION
+Checks hash-comment lines and excludes directives needed by the relevant tool.
+
+.PARAMETER Content
+File content text.
+
+.PARAMETER RelativePath
+Relative path label to include on returned findings.
+#>
 function Get-HashLineCommentFindingsFromContent {
-    <#
-    .SYNOPSIS
-    Finds disallowed hash comments in shell, Dockerfile, or YAML text.
-
-    .PARAMETER Content
-    File content text.
-
-    .PARAMETER RelativePath
-    Relative path label to include on returned findings.
-    #>
     [CmdletBinding()]
     [OutputType([object[]])]
     param(
@@ -214,14 +229,17 @@ function Get-HashLineCommentFindingsFromContent {
     return $findings.ToArray()
 }
 
-function Get-MarkupInitialMode {
-    <#
-    .SYNOPSIS
-    Returns the language mode a markup-family file starts in: Script for JavaScript, Style for CSS, otherwise Markup.
+<#
+.SYNOPSIS
+Returns the language mode a markup-family file starts in: Script for JavaScript, Style for CSS, otherwise Markup.
 
-    .PARAMETER RelativePath
-    Forward-slash path relative to the repository root.
-    #>
+.DESCRIPTION
+Chooses the initial tokenizer mode from the file type before scanning begins.
+
+.PARAMETER RelativePath
+Forward-slash path relative to the repository root.
+#>
+function Get-MarkupInitialMode {
     [CmdletBinding()]
     [OutputType([string])]
     param(
@@ -233,11 +251,14 @@ function Get-MarkupInitialMode {
     return 'Markup'
 }
 
+<#
+.SYNOPSIS
+Builds one tokenizer regex per language mode. Each matches the next string literal, comment opener, template delimiter, or mode switch.
+
+.DESCRIPTION
+Supplies patterns for switching between markup, code, and template regions without treating quoted text as comments.
+#>
 function Get-MarkupTokenRegexMap {
-    <#
-    .SYNOPSIS
-    Builds one tokenizer regex per language mode. Each matches the next string literal, comment opener, template delimiter, or mode switch.
-    #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param()
@@ -255,22 +276,22 @@ function Get-MarkupTokenRegexMap {
     }
 }
 
+<#
+.SYNOPSIS
+Updates brace depth and template-literal nesting after a script-mode or template-mode token.
+
+.DESCRIPTION
+A backtick opens or closes a template literal, "${" opens a substitution whose contents are ordinary script, and
+a closing brace at depth zero returns from a substitution to its template. Frames on the stack remember the mode
+and brace depth to resume.
+
+.PARAMETER State
+The scanner state hashtable with Mode, Embedded, Depth, and Stack entries. It is modified in place.
+
+.PARAMETER Text
+The token text.
+#>
 function Step-MarkupScriptState {
-    <#
-    .SYNOPSIS
-    Updates brace depth and template-literal nesting after a script-mode or template-mode token.
-
-    .DESCRIPTION
-    A backtick opens or closes a template literal, "${" opens a substitution whose contents are ordinary script, and
-    a closing brace at depth zero returns from a substitution to its template. Frames on the stack remember the mode
-    and brace depth to resume.
-
-    .PARAMETER State
-    The scanner state hashtable with Mode, Embedded, Depth, and Stack entries. It is modified in place.
-
-    .PARAMETER Text
-    The token text.
-    #>
     [CmdletBinding()]
     [OutputType([void])]
     param(
@@ -299,20 +320,23 @@ function Step-MarkupScriptState {
     }
 }
 
+<#
+.SYNOPSIS
+Interprets one tokenizer match, updates the scanner state, and reports where scanning resumes and the comment span if any.
+
+.DESCRIPTION
+Updates the tokenizer state and identifies the span to count when a comment is found.
+
+.PARAMETER Token
+The regex match produced by the tokenizer for the current mode.
+
+.PARAMETER State
+The scanner state hashtable with Mode, Embedded, Depth, and Stack entries. It is modified in place.
+
+.PARAMETER Content
+The full file text.
+#>
 function Resolve-MarkupToken {
-    <#
-    .SYNOPSIS
-    Interprets one tokenizer match, updates the scanner state, and reports where scanning resumes and the comment span if any.
-
-    .PARAMETER Token
-    The regex match produced by the tokenizer for the current mode.
-
-    .PARAMETER State
-    The scanner state hashtable with Mode, Embedded, Depth, and Stack entries. It is modified in place.
-
-    .PARAMETER Content
-    The full file text.
-    #>
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     param(
@@ -351,23 +375,23 @@ function Resolve-MarkupToken {
     return $result
 }
 
+<#
+.SYNOPSIS
+Finds disallowed comments in HTML, CSS, JavaScript, and XML text.
+
+.DESCRIPTION
+Tracks the language mode (markup, script, or style) and skips string literals, so comment openers inside strings
+such as "/*" or "https://example.com" are not reported. HTML and XML comments are recognised in markup mode,
+block comments in script and style modes, and line comments in script mode only. Template literal text is skipped
+while the code inside "${...}" substitutions is scanned. Regular expression literals in JavaScript are not parsed.
+
+.PARAMETER Content
+File content text.
+
+.PARAMETER RelativePath
+Relative path label to include on returned findings.
+#>
 function Get-MarkupCommentFindingsFromContent {
-    <#
-    .SYNOPSIS
-    Finds disallowed comments in HTML, CSS, JavaScript, and XML text.
-
-    .DESCRIPTION
-    Tracks the language mode (markup, script, or style) and skips string literals, so comment openers inside strings
-    such as "/*" or "https://example.com" are not reported. HTML and XML comments are recognised in markup mode,
-    block comments in script and style modes, and line comments in script mode only. Template literal text is skipped
-    while the code inside "${...}" substitutions is scanned. Regular expression literals in JavaScript are not parsed.
-
-    .PARAMETER Content
-    File content text.
-
-    .PARAMETER RelativePath
-    Relative path label to include on returned findings.
-    #>
     [CmdletBinding()]
     [OutputType([object[]])]
     param(
@@ -419,17 +443,20 @@ function Get-MarkupCommentFindingsFromContent {
     })
 }
 
+<#
+.SYNOPSIS
+Returns the zero-based line number that contains a character offset.
+
+.DESCRIPTION
+Looks up the nearest line start at or before the offset.
+
+.PARAMETER LineStarts
+Ascending character offsets at which each line begins.
+
+.PARAMETER Offset
+The character offset to locate.
+#>
 function Get-MarkupLineIndex {
-    <#
-    .SYNOPSIS
-    Returns the zero-based line number that contains a character offset.
-
-    .PARAMETER LineStarts
-    Ascending character offsets at which each line begins.
-
-    .PARAMETER Offset
-    The character offset to locate.
-    #>
     [CmdletBinding()]
     [OutputType([int])]
     param(
@@ -442,14 +469,17 @@ function Get-MarkupLineIndex {
     return (-bnot $found) - 1
 }
 
-function Get-RepoCommentFileKind {
-    <#
-    .SYNOPSIS
-    Maps a repository-relative path to the comment syntax family used to scan it, or $null when the file is out of scope.
+<#
+.SYNOPSIS
+Maps a repository-relative path to the comment syntax family used to scan it, or $null when the file is out of scope.
 
-    .PARAMETER RelativePath
-    Forward-slash path relative to the repository root.
-    #>
+.DESCRIPTION
+Classifies the path by extension or known configuration name before selecting a scanner.
+
+.PARAMETER RelativePath
+Forward-slash path relative to the repository root.
+#>
+function Get-RepoCommentFileKind {
     [CmdletBinding()]
     [OutputType([string])]
     param(
@@ -467,14 +497,17 @@ function Get-RepoCommentFileKind {
     return $null
 }
 
-function Get-RepoCandidatePath {
-    <#
-    .SYNOPSIS
-    Lists candidate repository-relative paths, preferring git (tracked plus untracked-but-not-ignored) and falling back to a directory walk.
+<#
+.SYNOPSIS
+Lists candidate repository-relative paths, preferring git (tracked plus untracked-but-not-ignored) and falling back to a directory walk.
 
-    .PARAMETER Root
-    The absolute repository root directory.
-    #>
+.DESCRIPTION
+Uses Git's inventory when possible so ignored files do not enter the audit.
+
+.PARAMETER Root
+The absolute repository root directory.
+#>
+function Get-RepoCandidatePath {
     [CmdletBinding()]
     [OutputType([string[]])]
     param(
@@ -485,24 +518,27 @@ function Get-RepoCandidatePath {
     if ($git -and (Test-Path -LiteralPath (Join-Path -Path $Root -ChildPath '.git'))) {
         $listed = & $git.Source -C $Root ls-files -z --cached --others --exclude-standard 2>$null
         if ($LASTEXITCODE -eq 0 -and $listed) {
-            return [string[]]@(($listed -split "`0") | Where-Object { $_ })
+            return [string[]]@(($listed -split "`0") | Where-Object -FilterScript { $_ })
         }
     }
 
     $excludedPattern = '(^|/)(?:\.git|node_modules|shard-output|shard-artifacts)(/|$)'
     return [string[]]@(Get-ChildItem -Path $Root -Recurse -File -Force -ErrorAction SilentlyContinue |
-        ForEach-Object { ConvertTo-NormalizedRelativePath -FullPath $_.FullName -Root $Root } |
-        Where-Object { $_ -notmatch $excludedPattern })
+        ForEach-Object -Process { ConvertTo-NormalizedRelativePath -FullPath $_.FullName -Root $Root } |
+        Where-Object -FilterScript { $_ -notmatch $excludedPattern })
 }
 
-function Get-RepoCommentAuditFile {
-    <#
-    .SYNOPSIS
-    Enumerates all repository code and config files subject to the comment ban.
+<#
+.SYNOPSIS
+Enumerates all repository code and config files subject to the comment ban.
 
-    .PARAMETER Root
-    The absolute repository root directory.
-    #>
+.DESCRIPTION
+Filters candidate paths to the formats supported by the comment scanners.
+
+.PARAMETER Root
+The absolute repository root directory.
+#>
+function Get-RepoCommentAuditFile {
     [CmdletBinding()]
     [OutputType([object[]])]
     param(
@@ -528,14 +564,17 @@ function Get-RepoCommentAuditFile {
     return @($results | Sort-Object -Property RelativePath)
 }
 
-function Get-RepoCommentInventory {
-    <#
-    .SYNOPSIS
-    Scans all audited repository files and returns findings and per-file counts.
+<#
+.SYNOPSIS
+Scans all audited repository files and returns findings and per-file counts.
 
-    .PARAMETER Root
-    The absolute repository root directory.
-    #>
+.DESCRIPTION
+Collects findings and per-file totals for comparison with the ratchet limits.
+
+.PARAMETER Root
+The absolute repository root directory.
+#>
+function Get-RepoCommentInventory {
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     param(
@@ -571,14 +610,17 @@ function Get-RepoCommentInventory {
     }
 }
 
-function ConvertTo-RatchetAllowanceMap {
-    <#
-    .SYNOPSIS
-    Converts a ratchet configuration object into a hashtable of per-file caps and their total sum.
+<#
+.SYNOPSIS
+Converts a ratchet configuration object into a hashtable of per-file caps and their total sum.
 
-    .PARAMETER Ratchet
-    The parsed ratchet JSON object containing a files property.
-    #>
+.DESCRIPTION
+Reads each stored allowance and tallies the total recorded comment budget.
+
+.PARAMETER Ratchet
+The parsed ratchet JSON object containing a files property.
+#>
+function ConvertTo-RatchetAllowanceMap {
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     param(
@@ -601,17 +643,20 @@ function ConvertTo-RatchetAllowanceMap {
     }
 }
 
+<#
+.SYNOPSIS
+Finds files whose current comment counts exceed their ratchet allowances.
+
+.DESCRIPTION
+Compares current counts with the per-file and total limits in the ratchet.
+
+.PARAMETER Inventory
+The output object from Get-RepoCommentInventory.
+
+.PARAMETER AllowedByFile
+Hashtable mapping normalized relative file paths to maximum allowed comment counts.
+#>
 function Find-RatchetCeilingViolation {
-    <#
-    .SYNOPSIS
-    Finds files whose current comment counts exceed their ratchet allowances.
-
-    .PARAMETER Inventory
-    The output object from Get-RepoCommentInventory.
-
-    .PARAMETER AllowedByFile
-    Hashtable mapping normalized relative file paths to maximum allowed comment counts.
-    #>
     [CmdletBinding()]
     [OutputType([string[]])]
     param(
@@ -627,7 +672,7 @@ function Find-RatchetCeilingViolation {
             continue
         }
 
-        $fileLines = @($Inventory.Findings | Where-Object { $_.File -eq $fileKey } | ForEach-Object { "L$($_.Line): $($_.Text)" })
+        $fileLines = @($Inventory.Findings | Where-Object -FilterScript { $_.File -eq $fileKey } | ForEach-Object -Process { "L$($_.Line): $($_.Text)" })
         $preview = ($fileLines | Select-Object -First 5) -join '; '
         $violations.Add("${fileKey}: found $actual comment(s), exceeds ratchet cap of $allowed ($preview)")
     }
@@ -635,17 +680,20 @@ function Find-RatchetCeilingViolation {
     return $violations.ToArray()
 }
 
+<#
+.SYNOPSIS
+Finds ratcheted files whose comment counts have dropped below their configured caps.
+
+.DESCRIPTION
+Reports allowances that can be lowered without rejecting the current source.
+
+.PARAMETER Inventory
+The output object from Get-RepoCommentInventory.
+
+.PARAMETER AllowedByFile
+Hashtable mapping normalized relative file paths to maximum allowed comment counts.
+#>
 function Find-RatchetSlackNotice {
-    <#
-    .SYNOPSIS
-    Finds ratcheted files whose comment counts have dropped below their configured caps.
-
-    .PARAMETER Inventory
-    The output object from Get-RepoCommentInventory.
-
-    .PARAMETER AllowedByFile
-    Hashtable mapping normalized relative file paths to maximum allowed comment counts.
-    #>
     [CmdletBinding()]
     [OutputType([string[]])]
     param(
@@ -665,20 +713,23 @@ function Find-RatchetSlackNotice {
     return $notices.ToArray()
 }
 
+<#
+.SYNOPSIS
+Evaluates a repository comment inventory against a ratchet baseline configuration.
+
+.DESCRIPTION
+Compares the scan with the stored baseline and produces violations and notices.
+
+.PARAMETER Inventory
+The output object from Get-RepoCommentInventory.
+
+.PARAMETER Ratchet
+The parsed ratchet JSON object containing total and files properties.
+
+.PARAMETER AllowSlack
+When set, does not treat reduced comment counts as ratchet-tightening violations.
+#>
 function Invoke-CommentRatchetEvaluation {
-    <#
-    .SYNOPSIS
-    Evaluates a repository comment inventory against a ratchet baseline configuration.
-
-    .PARAMETER Inventory
-    The output object from Get-RepoCommentInventory.
-
-    .PARAMETER Ratchet
-    The parsed ratchet JSON object containing total and files properties.
-
-    .PARAMETER AllowSlack
-    When set, does not treat reduced comment counts as ratchet-tightening violations.
-    #>
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     param(
@@ -723,17 +774,20 @@ function Invoke-CommentRatchetEvaluation {
     }
 }
 
+<#
+.SYNOPSIS
+Tightens a ratchet baseline file downward based on the current inventory.
+
+.DESCRIPTION
+Updates the baseline using current counts without increasing the allowed comment count.
+
+.PARAMETER RatchetFilePath
+Absolute path to the .comment-ratchet.json file.
+
+.PARAMETER Inventory
+The output object from Get-RepoCommentInventory.
+#>
 function Update-CommentRatchetFile {
-    <#
-    .SYNOPSIS
-    Tightens a ratchet baseline file downward based on the current inventory.
-
-    .PARAMETER RatchetFilePath
-    Absolute path to the .comment-ratchet.json file.
-
-    .PARAMETER Inventory
-    The output object from Get-RepoCommentInventory.
-    #>
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([PSCustomObject])]
     param(
@@ -800,7 +854,7 @@ $inventory = Get-RepoCommentInventory -Root $resolvedRoot
 
 if ($UpdateRatchet) {
     $updated = Update-CommentRatchetFile -RatchetFilePath $RatchetPath -Inventory $inventory
-    Write-Output "Updated comment ratchet '$RatchetPath': total=$($updated.total) across $($updated.files.Count) file(s)."
+    Write-Output -InputObject "Updated comment ratchet '$RatchetPath': total=$($updated.total) across $($updated.files.Count) file(s)."
     if ($PassThru) { return $updated }
     return
 }
@@ -817,4 +871,4 @@ if (-not $evaluation.Passed) {
     throw "Comment-ban ratchet failed ($($evaluation.Violations.Count) issue(s)):`n$detail"
 }
 
-Write-Output "Comment-ban ratchet passed: $($evaluation.TotalComments)/$($evaluation.RatchetTotal) ratcheted comment(s) across $($evaluation.ScannedFileCount) audited file(s)."
+Write-Output -InputObject "Comment-ban ratchet passed: $($evaluation.TotalComments)/$($evaluation.RatchetTotal) ratcheted comment(s) across $($evaluation.ScannedFileCount) audited file(s)."

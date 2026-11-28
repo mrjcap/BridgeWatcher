@@ -1,17 +1,17 @@
-﻿$script:ModulePath = Resolve-Path (Join-Path $PSScriptRoot "..\..\BridgeWatcher")
-$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1, *.psm1 | ForEach-Object {
+﻿$script:ModulePath = Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath "..\..\BridgeWatcher")
+$script:Files = Get-ChildItem -Path $script:ModulePath -Recurse -Include *.ps1, *.psm1 | ForEach-Object -Process {
     [PSCustomObject]@{
         Name     = $_.Name
         FullName = $_.FullName
     }
 }
 
-BeforeAll {
+BeforeAll -Scriptblock {
 }
 
-Describe "Hot Path Configuration Review" {
-    Context "New-BridgeConfiguration Calls in Hot Paths" {
-        It "Should not call New-BridgeConfiguration in <Name>" -ForEach $script:Files {
+Describe -Name "Hot Path Configuration Review" -Fixture {
+    Context -Name "New-BridgeConfiguration Calls in Hot Paths" -Fixture {
+        It -Name "Should not call New-BridgeConfiguration in <Name>" -ForEach $script:Files -Test {
             $file = $_
             if ($file.Name -eq 'New-BridgeConfiguration.ps1') {
                 return
@@ -29,10 +29,10 @@ Describe "Hot Path Configuration Review" {
                 throw "File $($file.Name) contains call to New-BridgeConfiguration. Configuration must be passed explicitly."
             }
 
-            $calls.Count | Should -Be 0
+            $calls.Count | Should -Be -ExpectedValue 0
         }
 
-        It "Should not call New-BridgeConfiguration inside loop bodies in <Name>" -ForEach $script:Files {
+        It -Name "Should not call New-BridgeConfiguration inside loop bodies in <Name>" -ForEach $script:Files -Test {
             $file = $_
             if ($file.Name -eq 'New-BridgeConfiguration.ps1') {
                 return
@@ -63,8 +63,8 @@ Describe "Hot Path Configuration Review" {
         }
     }
 
-    Context "PSCustomObject Configuration Construction in Frequently-Called Helpers and Loops" {
-        It "Should not build configuration objects via PSCustomObject inside <Name>" -ForEach $script:Files {
+    Context -Name "PSCustomObject Configuration Construction in Frequently-Called Helpers and Loops" -Fixture {
+        It -Name "Should not build configuration objects via PSCustomObject inside <Name>" -ForEach $script:Files -Test {
             $file = $_
             if ($file.Name -eq 'New-BridgeConfiguration.ps1') {
                 return
@@ -78,7 +78,7 @@ Describe "Hot Path Configuration Review" {
                  $node.Type.TypeName.FullName -eq 'pscustomobject') -or
                 ($node -is [System.Management.Automation.Language.CommandAst] -and
                  $node.GetCommandName() -eq 'New-Object' -and
-                 ($node.CommandElements | Where-Object { $_ -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $_.Value -eq 'PSCustomObject' }))
+                 ($node.CommandElements | Where-Object -FilterScript { $_ -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $_.Value -eq 'PSCustomObject' }))
             }, $true)
 
             $configKeys = @('Urls', 'Defaults', 'Statuses', 'BridgeNames', 'ErrorMessages', 'StatusMessages', 'LoggingConfig', 'ExportMessages', 'OCRMessages', 'PushoverMessages', 'AdviceMessages', 'LogDirectory')
@@ -93,7 +93,7 @@ Describe "Hot Path Configuration Review" {
                         }
                     }
 
-                    $matchingKeys = $keys | Where-Object { $configKeys -contains $_ }
+                    $matchingKeys = $keys | Where-Object -FilterScript { $configKeys -contains $_ }
 
                     $matchingCount = 0
                     if ($null -ne $matchingKeys) {
