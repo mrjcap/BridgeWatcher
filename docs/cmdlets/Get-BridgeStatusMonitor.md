@@ -13,10 +13,20 @@ schema: 2.0.0
 
 ## SYNTAX
 
+### DefaultAction (Default)
+
 ```powershell
-Get-BridgeStatusMonitor [-Configuration] <PSObject> [[-MaxIterations] <Int32>] [[-IntervalSeconds] <Int32>]
- [-OutputFile] <String> [[-ApiKey] <String>] [[-PoUserKey] <String>] [[-PoApiKey] <String>]
- [[-Action] <ScriptBlock>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-BridgeStatusMonitor -Configuration <PSObject> [-MaxIterations <Int32>] [-IntervalSeconds <Int32>]
+ -OutputFile <String> -ApiKey <String> -PoUserKey <String> -PoApiKey <String>
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### CustomAction
+
+```powershell
+Get-BridgeStatusMonitor -Configuration <PSObject> [-MaxIterations <Int32>] [-IntervalSeconds <Int32>]
+ -OutputFile <String> [-ApiKey <String>] [-PoUserKey <String>] [-PoApiKey <String>] -Action <ScriptBlock>
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -52,7 +62,6 @@ $config = New-BridgeConfiguration
 Get-BridgeStatusMonitor -Configuration $config -OutputFile 'C:\Logs\bridge.json' -Action {
     param($splat)
     Write-Verbose "Custom monitoring action running for $($splat.OutputFile)"
-    Update-BridgeStatus @splat
 }
 ```
 
@@ -68,7 +77,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 1
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -84,7 +93,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 2
+Position: Named
 Default value: 0
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -100,7 +109,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 3
+Position: Named
 Default value: 0
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -116,7 +125,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 4
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -128,11 +137,23 @@ Accept wildcard characters: False
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: DefaultAction
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: CustomAction
 Aliases:
 
 Required: False
-Position: 5
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -144,11 +165,23 @@ Accept wildcard characters: False
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: DefaultAction
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: CustomAction
 Aliases:
 
 Required: False
-Position: 6
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -160,11 +193,23 @@ Accept wildcard characters: False
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: DefaultAction
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: CustomAction
 Aliases:
 
 Required: False
-Position: 7
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -176,11 +221,11 @@ Accept wildcard characters: False
 
 ```yaml
 Type: ScriptBlock
-Parameter Sets: (All)
+Parameter Sets: CustomAction
 Aliases:
 
-Required: False
-Position: 8
+Required: True
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -188,7 +233,7 @@ Accept wildcard characters: False
 
 ### -ProgressAction
 
-Καθορίζει τον τρόπο χειρισμού ενημερώσεων προόδου από το PowerShell.
+{{ Fill ProgressAction Description }}
 
 ```yaml
 Type: ActionPreference
@@ -205,8 +250,8 @@ Accept wildcard characters: False
 ### CommonParameters
 
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
--InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
-For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,
+and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

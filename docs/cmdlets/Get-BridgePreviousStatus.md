@@ -28,8 +28,7 @@ Filters out any records that do not match the expected schema.
 ### EXAMPLE 1
 
 ```powershell
-$config = New-BridgeConfiguration
-Get-BridgePreviousStatus -InputFile 'C:\temp\status.json' -Configuration $config
+Get-BridgePreviousStatus -InputFile 'C:\temp\status.json' -Configuration $Config
 ```
 
 ## PARAMETERS
@@ -102,8 +101,8 @@ Accept wildcard characters: False
 ### CommonParameters
 
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
--InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
-For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,
+and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

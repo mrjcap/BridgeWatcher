@@ -15,7 +15,7 @@ schema: 2.0.0
 
 ```powershell
 Invoke-BridgeStatusComparison [[-PreviousState] <Object>] [-CurrentState] <Object> [-Configuration] <PSObject>
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [[-DeferredOpenings] <Hashtable>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -29,7 +29,6 @@ Invoke-BridgeStatusComparison [[-PreviousState] <Object>] [-CurrentState] <Objec
 ### EXAMPLE 1
 
 ```powershell
-$config = New-BridgeConfiguration
 Invoke-BridgeStatusComparison -PreviousState $prev -CurrentState $curr -Configuration $config
 ```
 
@@ -83,6 +82,22 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -DeferredOpenings
+
+Optional table populated with previous records for deferred openings, keyed by bridge name.
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 4
+Default value: @{}
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ProgressAction
 
 {{ Fill ProgressAction Description }}
@@ -102,8 +117,8 @@ Accept wildcard characters: False
 ### CommonParameters
 
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction,
--InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
-For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+-InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction,
+and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
@@ -113,6 +128,6 @@ For more information, see [about_CommonParameters](http://go.microsoft.com/fwlin
 
 ## NOTES
 
-Λειτουργεί ως pure transformation pipeline χωρίς εξωτερικές παρενέργειες.
+Reads the clock for scheduled openings and does not write a snapshot or send notifications.
 
 ## RELATED LINKS
