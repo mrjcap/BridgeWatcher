@@ -67,15 +67,6 @@
                 }
             }
         }
-
-        $writeBridgeLogSuccess = @{
-            Stage   = $Configuration.LoggingConfig.InfoStage
-            Message = "✅ Η ειδοποίηση Pushover στάλθηκε με επιτυχία!"
-            Level   = $Configuration.LoggingConfig.VerboseLevel
-        }
-        Write-BridgeLog @writeBridgeLogSuccess -Configuration $Configuration
-
-        return $result
     } catch {
         $writeBridgeLogSplat = @{
             Stage   = $errorStage
@@ -86,4 +77,20 @@
         $errorRecord = [System.Management.Automation.ErrorRecord]::new($_.Exception, 'PushoverSendFailure', [System.Management.Automation.ErrorCategory]::ConnectionError, $null)
         $PSCmdlet.ThrowTerminatingError($errorRecord)
     }
+
+    $appendFailure = $null
+    try {
+        $writeBridgeLogSuccess = @{
+            Stage   = $Configuration.LoggingConfig.InfoStage
+            Message = '✅ Η ειδοποίηση Pushover στάλθηκε με επιτυχία!'
+            Level   = $Configuration.LoggingConfig.VerboseLevel
+        }
+        Write-BridgeLog @writeBridgeLogSuccess -Configuration $Configuration -ErrorAction Stop
+    } catch {
+        $appendFailure = $_
+    }
+    if ($null -ne $appendFailure) {
+        Write-Warning -Message "Pushover accepted the notification, but writing its success log failed: $($appendFailure.Exception.Message)" -WarningAction Continue
+    }
+    return $result
 }

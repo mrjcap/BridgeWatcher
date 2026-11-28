@@ -19,7 +19,7 @@ InModuleScope BridgeWatcher {
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
     }
 
-    It 'Στέλνει το αίτημα HTTP πριν την εγγραφή στο αρχείο καταγραφής ώστε να μην μπλοκάρεται η ειδοποίηση' {
+    It 'Returns the accepted response and warns when logging fails' {
         Mock -CommandName Invoke-RestMethod -MockWith {
             return @{ status = 1; request = 'abcd' }
         }
@@ -27,9 +27,13 @@ InModuleScope BridgeWatcher {
             throw 'Read-only file system'
         }
 
+        Mock -CommandName Write-Warning -MockWith { }
         $payload = @{ message = 'crash alert' }
-        { Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config } | Should -Throw '*Read-only file system*'
+        $result = Send-BridgePushoverRequest -Payload $payload -Configuration $script:Config
+
+        $result.status | Should -Be 1
         Should -Invoke -CommandName Invoke-RestMethod -Times 1 -Exactly -Scope It
+        Should -Invoke -CommandName Write-Warning -Times 1 -Exactly -Scope It -ParameterFilter { $Message -like '*Read-only file system*' }
     }
 
     It 'Ρίχνει απευθείας terminating error σε HTTP 400 (Bad Request)' {

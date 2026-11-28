@@ -58,12 +58,7 @@
         for ($i = 1; $i -le $maxRetries; $i++) {
             try {
                 $result = Invoke-RestMethod @invokeRestMethodSplat
-                $writeBridgeLogSplat = @{
-                    Stage   = $analysisStage
-                    Message = "$successMessage (Αίτημα OCR)"
-                }
-                Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-                return $result
+                break
             } catch {
                 $errInfo = Get-BridgeHttpExceptionInfo -Exception $_.Exception -FatalStatusCodes @(400, 401, 413, 422)
                 $response = $errInfo.Response
@@ -93,4 +88,15 @@
         )
         $PSCmdlet.ThrowTerminatingError($errorRecord)
     }
+
+    $appendFailure = $null
+    try {
+        Write-BridgeLog -Stage $analysisStage -Message "$successMessage (Αίτημα OCR)" -Configuration $Configuration -ErrorAction Stop
+    } catch {
+        $appendFailure = $_
+    }
+    if ($null -ne $appendFailure) {
+        Write-Warning -Message "OCR request succeeded, but writing its success log failed: $($appendFailure.Exception.Message)" -WarningAction Continue
+    }
+    return $result
 }

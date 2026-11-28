@@ -43,6 +43,13 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
             }
         }
 
+        It 'Retains a usable schedule when an image also reports an error' {
+            Mock -CommandName Write-BridgeLog -MockWith {}
+            $response = ConvertFrom-Json -InputObject '{"responses":[{"error":{"code":14},"textAnnotations":[{"description":"15/01/2030 11:30 to 15/01/2030 12:00"}]}]}'
+            $result = ConvertFrom-BridgeOCRResult -Configuration $script:Config -ApiResponse $response
+            $result.To | Should -BeExactly '15/01/2030 12:00'
+        }
+
         It 'Πρέπει να επιστρέφει $null για κενό κείμενο OCR' {
             $mockApiResponse = @{
                 responses = @(
@@ -109,6 +116,19 @@ Describe 'Δοκιμές ConvertFrom-BridgeOCRResult' {
 
         $result | Should -Be @()
 
+    }
+
+    It 'Keeps a closure active with twenty seconds left' {
+        $config = New-BridgeConfiguration
+        $config.Defaults.TimezoneIds = @('UTC')
+        Mock -CommandName Get-Date -MockWith { [datetime]::new(2030, 1, 15, 11, 59, 40, [DateTimeKind]::Utc) }
+        Mock -CommandName Write-BridgeLog -MockWith {}
+        $response = @{ responses = @(@{ textAnnotations = @(@{ description = '15/01/2030 11:30 to 15/01/2030 12:00' }) }) }
+
+        $result = ConvertFrom-BridgeOCRResult -Configuration $config -ApiResponse $response
+
+        $result.ScheduleState | Should -BeExactly 'Active'
+        $result.Note1 | Should -BeExactly $config.AdviceMessages.Wait
     }
 
     It 'Returns Expired exactly at the scheduled reopening time' {

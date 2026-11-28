@@ -58,59 +58,33 @@ function ConvertFrom-BridgeOCRResult {
         [PSCustomObject]$ApiResponse
     )
 
-    $textAnnotations = $null
-    if ($null -ne $ApiResponse -and $null -ne $ApiResponse.responses -and $ApiResponse.responses.Count -gt 0) {
-        $firstResponse = $ApiResponse.responses[0]
-        if ($firstResponse -is [System.Collections.IDictionary]) {
-            $textAnnotations = $firstResponse['textAnnotations']
-        } elseif ($null -ne $firstResponse -and $firstResponse.PSObject.Properties['textAnnotations']) {
-            $textAnnotations = $firstResponse.textAnnotations
+    $textAnnotations = @()
+    $imageError = $null
+    $responses = @(Get-BridgeOptionalProperty -InputObject $ApiResponse -PropertyName 'responses')
+    if ($responses.Count -gt 0 -and $null -ne $responses[0]) {
+        $textAnnotations = @(Get-BridgeOptionalProperty -InputObject $responses[0] -PropertyName 'textAnnotations')
+        $imageError = Get-BridgeOptionalProperty -InputObject $responses[0] -PropertyName 'error'
+    }
+
+    $timeRange = $null
+    if ($textAnnotations.Count -eq 0 -or $null -eq $textAnnotations[0]) {
+        $warningMessage = 'Δεν βρέθηκαν αποτελέσματα (textAnnotations) στην απόκριση OCR.'
+    } else {
+        $ocrText = Get-BridgeOptionalProperty -InputObject $textAnnotations[0] -PropertyName 'description'
+        Write-BridgeLog -Stage 'Ανάλυση' -Message "Απόκριση OCR API: $ocrText" -Configuration $Configuration
+        if ([string]::IsNullOrWhiteSpace($ocrText)) {
+            $warningMessage = 'Δεν κατέστη δυνατή η ανάλυση του κειμένου.'
+        } else {
+            $timeRange = ConvertTo-BridgeTimeRange -Lines $ocrText
+            $warningMessage = 'Δεν κατέστη δυνατή η ανάλυση χρονικού διαστήματος.'
         }
     }
-
-    if ($null -eq $textAnnotations -or $textAnnotations.Count -eq 0) {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = 'Δεν βρέθηκαν αποτελέσματα (textAnnotations) στην απόκριση OCR.'
-            Level   = 'Warning'
-        }
-        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-        return $null
-    }
-
-    $ocrText = $textAnnotations[0].description
-
-    $writeBridgeLogSplat = @{
-        Stage   = 'Ανάλυση'
-        Message = "Απόκριση OCR API: $ocrText"
-    }
-    Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-
-    if ([string]::IsNullOrWhiteSpace($ocrText)) {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = 'Δεν κατέστη δυνατή η ανάλυση του κειμένου.'
-            Level   = 'Warning'
-        }
-        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-        return $null
-    }
-
-    $rawText = $ocrText
-    $Lines = $rawText
-
-    $convertToBridgeTimeRangeSplat = @{
-        Lines = $Lines
-    }
-    $timeRange = ConvertTo-BridgeTimeRange @convertToBridgeTimeRangeSplat
     if (-not $timeRange) {
-        $writeBridgeLogSplat = @{
-            Stage   = 'Σφάλμα'
-            Message = 'Δεν κατέστη δυνατή η ανάλυση χρονικού διαστήματος.'
-            Level   = 'Warning'
+        if ($null -ne $imageError) {
+            throw 'Google Vision reported an image error without a readable schedule.'
         }
-        Write-BridgeLog @writeBridgeLogSplat -Configuration $Configuration
-        return
+        Write-BridgeLog -Stage 'Σφάλμα' -Message $warningMessage -Level 'Warning' -Configuration $Configuration
+        return $null
     }
 
     $writeBridgeLogSplat = @{
@@ -125,9 +99,7 @@ function ConvertFrom-BridgeOCRResult {
 
     $athensNow = Get-BridgeScheduleLocalTime -TimezoneIds $Configuration.Defaults.TimezoneIds
 
-    $minutesLeft = [int]($to - $athensNow).TotalMinutes
-
-    if ($minutesLeft -le 0) {
+    if ($to -le $athensNow) {
         return [PSCustomObject]@{
             'ScheduleState' = 'Expired'
             'From'          = $from.ToString('dd/MM/yyyy HH:mm')
@@ -156,6 +128,7 @@ function ConvertFrom-BridgeOCRResult {
         }
     }
 
+    $minutesLeft = [Math]::Max(1, [int]($to - $athensNow).TotalMinutes)
     $getBridgeStatusAdviceSplat = @{
         MinutesUntilOpen = $minutesLeft
     }
