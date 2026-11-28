@@ -147,6 +147,25 @@
             $customLink = & $script:releaseNotesScript -Version '1.0.103' -Path $changelogPath -IncludeCompareLink -PreviousVersion 'v1.0.100' -RepositoryUrl 'https://github.com/example/repo/' -WarningAction Stop
             $customLink | Should -Match -RegularExpression '\*\*Πλήρες Αρχείο Αλλαγών\*\*: https://github\.com/example/repo/compare/v1\.0\.100\.\.\.v1\.0\.103'
         }
+        It -Name 'Does not append a compare link to a version section that has no release note body' -Test {
+            $changelogPath = Join-Path -Path $TestDrive -ChildPath 'CHANGELOG-empty-version.md'
+            $content = @(
+                '# Αρχείο Αλλαγών (Changelog)'
+                ''
+                '## [1.0.103] - 2026-12-01'
+                ''
+                '## [1.0.102] - 2026-11-28'
+                ''
+                '### 🐛 Διορθώσεις'
+                ''
+                '- Προηγούμενη έκδοση.'
+                ''
+            ) -join "`n"
+            [System.IO.File]::WriteAllText($changelogPath, $content, [System.Text.UTF8Encoding]::new($true))
+
+            $notes = & $script:releaseNotesScript -Version 'v1.0.103' -Path $changelogPath -IncludeCompareLink -WarningAction Stop
+            $notes | Should -Be -ExpectedValue '## [1.0.103] - 2026-12-01'
+        }
     }
 
     Context -Name 'Repository CHANGELOG.md and two-stage release workflows' -Fixture {
@@ -159,6 +178,7 @@
         }
 
         It -Name 'Configures prepare-release.yml to promote Unreleased, bump manifest, regenerate docs, and open a PR with RELEASE_TOKEN' -Test {
+            $script:prepareWorkflow | Should -Match -RegularExpression 'git tag --list "v\$next"'
             $script:prepareWorkflow | Should -Match -RegularExpression 'Promote-UnreleasedChangelog\.ps1'
             $script:prepareWorkflow | Should -Match -RegularExpression 'Update-ModuleVersion\.ps1'
             $script:prepareWorkflow | Should -Match -RegularExpression 'Format-PlatyPSMarkdown\.ps1'
@@ -174,10 +194,11 @@
             $script:releaseWorkflow | Should -Match -RegularExpression 'dry_run:\s*\$\{\{\s*inputs\.dry_run == true\s*\}\}'
         }
 
-        It -Name 'Publishes Greek-only GitHub Release notes without auto-appended English PR lists and skips no-op pushes' -Test {
+        It -Name 'Publishes Greek-only GitHub Release notes without auto-appended English PR lists and pins release target_commitish' -Test {
             $script:publishWorkflow | Should -Match -RegularExpression '(?s)Get-ReleaseNotes\.ps1.{0,200}-IncludeCompareLink'
             $script:publishWorkflow | Should -Match -RegularExpression 'generate_release_notes:\s*false'
-            $script:publishWorkflow | Should -Match -RegularExpression 'No version commit to push; origin/\$REF_NAME already matches HEAD\.'
+            $script:publishWorkflow | Should -Match -RegularExpression 'git fetch origin "\$REF_NAME"'
+            $script:publishWorkflow | Should -Match -RegularExpression 'target_commitish:\s*\$\{\{\s*steps\.push_changes\.outputs\.commit_sha\s*\}\}'
         }
     }
 }

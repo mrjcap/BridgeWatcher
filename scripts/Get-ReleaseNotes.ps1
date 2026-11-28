@@ -76,17 +76,20 @@ $section = $section -replace '### Ασφάλεια\b', '### 🔒 Ασφάλει�
 $section = $section -replace '### Υποψήφια προς απόσυρση\b', '### ⚠️ Υποψήφια προς απόσυρση'
 
 if ($IncludeCompareLink) {
-    $resolvedPrev = $PreviousVersion -replace '^v', ''
-    if ([string]::IsNullOrWhiteSpace($resolvedPrev)) {
-        $tail = $changelog.Substring($sectionMatch.Index + $sectionMatch.Length)
-        $prevMatch = [regex]::Match($tail, '(?m)^## \[(\d+\.\d+\.\d+)\]')
-        if ($prevMatch.Success) {
-            $resolvedPrev = $prevMatch.Groups[1].Value
+    $null, $sectionBody = $section -split '\r?\n', 2
+    if (-not [string]::IsNullOrWhiteSpace($sectionBody)) {
+        $resolvedPrev = $PreviousVersion -replace '^v', ''
+        if ([string]::IsNullOrWhiteSpace($resolvedPrev)) {
+            $tail = $changelog.Substring($sectionMatch.Index + $sectionMatch.Length)
+            $prevMatch = [regex]::Match($tail, '(?m)^## \[(\d+\.\d+\.\d+)\]')
+            if ($prevMatch.Success) {
+                $resolvedPrev = $prevMatch.Groups[1].Value
+            }
         }
-    }
-    if (-not [string]::IsNullOrWhiteSpace($resolvedPrev)) {
-        $baseRepo = $RepositoryUrl.TrimEnd('/')
-        $section = "$section`n`n**Πλήρες Αρχείο Αλλαγών**: $baseRepo/compare/v$resolvedPrev...v$normalizedVersion"
+        if (-not [string]::IsNullOrWhiteSpace($resolvedPrev)) {
+            $baseRepo = $RepositoryUrl.TrimEnd('/')
+            $section = "$section`n`n**Πλήρες Αρχείο Αλλαγών**: $baseRepo/compare/v$resolvedPrev...v$normalizedVersion"
+        }
     }
 }
 

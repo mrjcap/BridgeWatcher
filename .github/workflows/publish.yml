@@ -189,15 +189,20 @@ jobs:
 
       - name: Push changes
         if: ${{ !inputs.dry_run }}
+        id: push_changes
         env:
           REF_NAME: ${{ github.ref_name }}
         run: |
-          if [[ "$(git rev-parse HEAD)" == "$(git rev-parse "origin/$REF_NAME")" ]]; then
-            echo "No version commit to push; origin/$REF_NAME already matches HEAD."
-            exit 0
+          set -euo pipefail
+          git fetch origin "$REF_NAME"
+          AHEAD_COUNT=$(git rev-list --count "origin/$REF_NAME..HEAD")
+          if [[ "$AHEAD_COUNT" -eq 0 ]]; then
+            echo "No version commit to push; skipping push to origin/$REF_NAME."
+          else
+            git pull --rebase origin "$REF_NAME"
+            git push origin "HEAD:$REF_NAME"
           fi
-          git pull --rebase origin "$REF_NAME"
-          git push origin "HEAD:$REF_NAME"
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         id: create_release
@@ -205,6 +210,7 @@ jobs:
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: v${{ inputs.next_version }}
+          target_commitish: ${{ steps.push_changes.outputs.commit_sha }}
           name: Release v${{ inputs.next_version }}
           body: ${{ steps.release_notes.outputs.notes }}
           draft: ${{ inputs.dry_run }}

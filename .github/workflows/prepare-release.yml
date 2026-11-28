@@ -80,8 +80,11 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($next)) {
             throw 'Failed to compute next version.'
           }
-          $tagExists = git rev-parse -q --verify "refs/tags/v$next" 2>$null
-          if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($tagExists)) {
+          $tagExists = @(git tag --list "v$next")
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to query git tags for v$next."
+          }
+          if ($tagExists.Count -gt 0) {
             throw "Release tag v$next already exists."
           }
           "next_version=$next" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
