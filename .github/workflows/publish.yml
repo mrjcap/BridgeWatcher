@@ -150,7 +150,7 @@ jobs:
           NEXT_VERSION: ${{ inputs.next_version }}
         run: |
           $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v$env:NEXT_VERSION" `
-            -Path './.release-inputs/changelog/CHANGELOG.md' -WarningAction Stop -ErrorAction Stop
+            -Path './.release-inputs/changelog/CHANGELOG.md' -IncludeCompareLink -WarningAction Stop -ErrorAction Stop
           $heading, $body = $notes -split '\r?\n', 2
           $version = [regex]::Escape($env:NEXT_VERSION)
           if ($heading -cnotmatch "^## \[$version\](?:\s.*)?$" -or [string]::IsNullOrWhiteSpace($body)) {
@@ -192,6 +192,10 @@ jobs:
         env:
           REF_NAME: ${{ github.ref_name }}
         run: |
+          if [[ "$(git rev-parse HEAD)" == "$(git rev-parse "origin/$REF_NAME")" ]]; then
+            echo "No version commit to push; origin/$REF_NAME already matches HEAD."
+            exit 0
+          fi
           git pull --rebase origin "$REF_NAME"
           git push origin "HEAD:$REF_NAME"
 
@@ -205,7 +209,7 @@ jobs:
           body: ${{ steps.release_notes.outputs.notes }}
           draft: ${{ inputs.dry_run }}
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 

@@ -1,0 +1,192 @@
+name: Prepare Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      dry_run:
+        description: 'Preview release PR changes without pushing a branch or opening a PR'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  # renovate: datasource=github-releases depName=PowerShell/PowerShell
+  POWERSHELL_VERSION: '7.7.0'
+  # renovate: datasource=nuget depName=platyPS registryUrl=https://www.powershellgallery.com/api/v2
+  PLATYPS_VERSION: '0.14.2'
+
+jobs:
+  prepare-release:
+    name: Prepare Release Pull Request
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup PowerShell
+        uses: milliewalky/setup-pwsh@111b66da66b9e4c068052ed1ae34fcbeb9adcf36 # v1
+        with:
+          tag: 'v${{ env.POWERSHELL_VERSION }}'
+
+      - name: Restore platyPS module cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-${{ runner.arch }}-docs-v${{ env.POWERSHELL_VERSION }}-platyps-${{ env.PLATYPS_VERSION }}-pssa-1.23.0-v1
+
+      - name: Ensure pinned platyPS module is installed
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $found = Get-Module -ListAvailable -Name 'platyPS' | Where-Object -FilterScript { $_.Version -eq [version]$env:PLATYPS_VERSION }
+          if (-not $found) {
+            Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+            Install-Module -Name 'platyPS' -RequiredVersion $env:PLATYPS_VERSION -Force -Scope CurrentUser -AllowClobber -ErrorAction Stop
+          }
+
+      - name: Calculate next version
+        id: version
+        shell: pwsh
+        env:
+          VERSION_BUMP_TYPE: ${{ inputs.version_bump_type }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $next = (& ./scripts/Get-PotentialNextVersion.ps1 -BumpType $env:VERSION_BUMP_TYPE).Trim()
+          if ([string]::IsNullOrWhiteSpace($next)) {
+            throw 'Failed to compute next version.'
+          }
+          $tagExists = git rev-parse -q --verify "refs/tags/v$next" 2>$null
+          if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($tagExists)) {
+            throw "Release tag v$next already exists."
+          }
+          "next_version=$next" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Output "Preparing release v$next"
+
+      - name: Promote Unreleased changelog entries
+        shell: pwsh
+        env:
+          NEXT_VERSION: ${{ steps.version.outputs.next_version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $result = & ./scripts/Promote-UnreleasedChangelog.ps1 -Version $env:NEXT_VERSION -ChangelogPath './CHANGELOG.md'
+          Write-Output "Changelog promoted for v$($result.Version) (Updated=$($result.Updated), AlreadyPresent=$($result.AlreadyPresent), Bullets=$($result.BulletCount))"
+
+      - name: Bump module manifest version
+        shell: pwsh
+        env:
+          NEXT_VERSION: ${{ steps.version.outputs.next_version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $null = & ./scripts/Update-ModuleVersion.ps1 -Version $env:NEXT_VERSION -Path './BridgeWatcher/BridgeWatcher.psd1'
+          $manifest = Test-ModuleManifest -Path './BridgeWatcher/BridgeWatcher.psd1' -ErrorAction Stop
+          if ($manifest.Version.ToString() -ne $env:NEXT_VERSION) {
+            throw "Expected manifest version $env:NEXT_VERSION, got $($manifest.Version)."
+          }
+          Write-Output "Validated manifest $($manifest.Name) v$($manifest.Version)"
+
+      - name: Regenerate cmdlet documentation
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $docsPath = 'docs/cmdlets'
+          New-Item -ItemType Directory -Path $docsPath -Force | Out-Null
+          Import-Module -Name './BridgeWatcher/BridgeWatcher.psd1' -Force -Verbose:$false
+          if (Get-ChildItem -Path $docsPath -Filter '*.md' -ErrorAction SilentlyContinue) {
+            Update-MarkdownHelp -Path $docsPath -Force -Verbose:$false | Out-Null
+          }
+          New-MarkdownHelp -Module 'BridgeWatcher' -OutputFolder $docsPath -Force -Verbose:$false | Out-Null
+          $modulePagePath = Join-Path -Path $docsPath -ChildPath 'about_BridgeWatcher.md'
+          if (-not (Test-Path -LiteralPath $modulePagePath)) {
+            New-MarkdownAboutHelp -OutputFolder $docsPath -AboutName 'about_BridgeWatcher.md' | Out-Null
+          }
+          & ./scripts/Format-PlatyPSMarkdown.ps1 -Path $docsPath
+
+      - name: Validate Greek release notes and build PR body
+        shell: pwsh
+        env:
+          NEXT_VERSION: ${{ steps.version.outputs.next_version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v$env:NEXT_VERSION" -Path './CHANGELOG.md' -IncludeCompareLink -WarningAction Stop -ErrorAction Stop
+          $heading, $body = $notes -split '\r?\n', 2
+          $escaped = [regex]::Escape($env:NEXT_VERSION)
+          if ($heading -cnotmatch "^## \[$escaped\](?:\s.*)?$" -or [string]::IsNullOrWhiteSpace($body)) {
+            throw "Extracted release notes for v$env:NEXT_VERSION are invalid."
+          }
+          $prBody = @(
+            "## Summary"
+            ""
+            "- Promote ``## [Unreleased]`` entries in ``CHANGELOG.md`` to ``## [$env:NEXT_VERSION]``."
+            "- Bump ``BridgeWatcher/BridgeWatcher.psd1`` to ``$env:NEXT_VERSION``."
+            "- Sync generated ``docs/cmdlets/*.md``."
+            ""
+            "Merging this PR into ``main`` automatically triggers ``Release Orchestrator`` to tag ``v$env:NEXT_VERSION``, create the Greek GitHub Release, publish to PowerShell Gallery, and build/E2E-test/push the Docker image."
+            ""
+            "## Release Notes Preview"
+            ""
+            $notes
+          ) -join "`n"
+          Set-Content -LiteralPath '/tmp/release-pr-body.md' -Value $prBody -Encoding utf8
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value $prBody
+
+      - name: Push release branch and open or update PR
+        if: ${{ !inputs.dry_run }}
+        env:
+          NEXT_VERSION: ${{ steps.version.outputs.next_version }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          RELEASE_BRANCH="release/v${NEXT_VERSION}"
+          ENCODED_TOKEN=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)
+          git config --local http.https://github.com/.extraheader "AUTHORIZATION: basic $ENCODED_TOKEN"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$RELEASE_BRANCH"
+          git add CHANGELOG.md BridgeWatcher/BridgeWatcher.psd1 docs/cmdlets/*.md
+          if git diff --cached --quiet; then
+            echo "No release preparation changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore(release): prepare v${NEXT_VERSION}"
+          git fetch origin "$RELEASE_BRANCH" 2>/dev/null || true
+          git push --force-with-lease origin "HEAD:$RELEASE_BRANCH"
+
+          EXISTING_PR=$(gh pr list --base main --head "$RELEASE_BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [[ -n "$EXISTING_PR" ]]; then
+            gh pr edit "$EXISTING_PR" --title "chore(release): prepare v${NEXT_VERSION}" --body-file /tmp/release-pr-body.md
+            echo "Updated existing release PR #${EXISTING_PR}"
+          else
+            gh pr create --base main --head "$RELEASE_BRANCH" --title "chore(release): prepare v${NEXT_VERSION}" --body-file /tmp/release-pr-body.md
+          fi
+
+      - name: Clear temporary git auth header
+        if: always()
+        run: |
+          git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
