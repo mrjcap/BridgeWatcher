@@ -5,6 +5,16 @@
 Η μορφή βασίζεται στο [Keep a Changelog](https://keepachangelog.com/el/1.1.0/),
 και το έργο αυτό ακολουθεί το [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### ✨ Χαρακτηριστικά
+
+### 🐛 Διορθώσεις
+
+### 🔒 Ασφάλεια
+
+### 🔄 Αλλαγές
+
 ## [1.0.102] - 2026-11-28
 
 ### ✨ Χαρακτηριστικά

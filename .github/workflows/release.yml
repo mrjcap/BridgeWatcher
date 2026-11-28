@@ -1,6 +1,10 @@
 name: Release Orchestrator
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'BridgeWatcher/BridgeWatcher.psd1'
   workflow_dispatch:
     inputs:
       version_bump_type:
@@ -22,6 +26,10 @@ on:
         required: false
         type: boolean
         default: false
+
+concurrency:
+  group: release-orchestrator
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -45,7 +53,8 @@ jobs:
         id: validation
         shell: bash
         env:
-          FORCE_RELEASE: ${{ inputs.force_release }}
+          EVENT_NAME: ${{ github.event_name }}
+          FORCE_RELEASE: ${{ inputs.force_release == true }}
         run: |
           echo " Validating release conditions..."
 
@@ -62,6 +71,32 @@ jobs:
             echo "can_proceed=false" >> $GITHUB_OUTPUT
             echo "summary=Not on main branch" >> $GITHUB_OUTPUT
             exit 1
+          fi
+
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            MANIFEST_VERSION=$(grep -E "^\s*ModuleVersion\s*=" BridgeWatcher/BridgeWatcher.psd1 | head -n 1 | tr -d '\r' | sed -E "s/.*=[[:space:]]*['\"]([^'\"]+)['\"].*/\1/")
+            if [[ -z "$MANIFEST_VERSION" ]]; then
+              echo " Could not read ModuleVersion from BridgeWatcher.psd1"
+              echo "can_proceed=false" >> $GITHUB_OUTPUT
+              echo "summary=Missing ModuleVersion" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            if git rev-parse -q --verify "refs/tags/v${MANIFEST_VERSION}" >/dev/null 2>&1; then
+              echo " Tag v${MANIFEST_VERSION} already exists; skipping automatic release."
+              echo "can_proceed=false" >> $GITHUB_OUTPUT
+              echo "summary=Tag v${MANIFEST_VERSION} already exists" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            if ! grep -qF "## [${MANIFEST_VERSION}]" CHANGELOG.md 2>/dev/null; then
+              echo " No curated CHANGELOG.md section found for [${MANIFEST_VERSION}]; skipping automatic release."
+              echo "can_proceed=false" >> $GITHUB_OUTPUT
+              echo "summary=No changelog entry for v${MANIFEST_VERSION}" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            echo " Prepared release v${MANIFEST_VERSION} detected on main"
+            echo "can_proceed=true" >> $GITHUB_OUTPUT
+            echo "summary=Prepared release v${MANIFEST_VERSION} ready" >> $GITHUB_OUTPUT
+            exit 0
           fi
 
           if [[ "$FORCE_RELEASE" != "true" ]]; then
@@ -117,11 +152,21 @@ jobs:
         id: determine_version
         shell: pwsh
         env:
-          VERSION_BUMP_TYPE: ${{ inputs.version_bump_type }}
+          EVENT_NAME: ${{ github.event_name }}
+          VERSION_BUMP_TYPE: ${{ inputs.version_bump_type || 'patch' }}
         run: |
           Write-Verbose "Calculating next version..."
 
-          if (Test-Path "./scripts/Get-PotentialNextVersion.ps1") {
+          if ($env:EVENT_NAME -eq 'push') {
+            $manifest = Import-PowerShellDataFile -Path './BridgeWatcher/BridgeWatcher.psd1'
+            $version = [string]$manifest.ModuleVersion
+            if ([string]::IsNullOrWhiteSpace($version)) {
+              Write-Error " Failed to read ModuleVersion from BridgeWatcher.psd1"
+              exit 1
+            }
+            Write-Verbose " Using manifest version from release PR: $version"
+            echo "version=$version" >> $env:GITHUB_OUTPUT
+          } elseif (Test-Path "./scripts/Get-PotentialNextVersion.ps1") {
             try {
               $version = & ./scripts/Get-PotentialNextVersion.ps1 -BumpType $env:VERSION_BUMP_TYPE -Verbose
               Write-Verbose " Calculated version: $version"
@@ -182,7 +227,7 @@ jobs:
         id: decide
         env:
           CHANGELOG_UPDATED: ${{ steps.changelog_check.outputs.updated }}
-          FORCE_RELEASE: ${{ inputs.force_release }}
+          FORCE_RELEASE: ${{ inputs.force_release == true }}
           NEXT_VERSION: ${{ steps.determine_version.outputs.version }}
         run: |
           UNTAGGED_ENTRY="false"
@@ -205,7 +250,7 @@ jobs:
       contents: write
     uses: ./.github/workflows/powershell-docs.yml
     with:
-      dry_run: ${{ inputs.dry_run }}
+      dry_run: ${{ inputs.dry_run == true }}
     secrets:
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
@@ -223,7 +268,7 @@ jobs:
     uses: ./.github/workflows/publish.yml
     with:
       next_version: ${{ needs.gatekeeper.outputs.next_version }}
-      dry_run: ${{ inputs.dry_run }}
+      dry_run: ${{ inputs.dry_run == true }}
     secrets:
       PSGALLERYAPIKEY: ${{ secrets.PSGALLERYAPIKEY }}
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -241,7 +286,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       version: ${{ needs.gatekeeper.outputs.next_version }}
-      dry_run: ${{ inputs.dry_run }}
+      dry_run: ${{ inputs.dry_run == true }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -256,9 +301,9 @@ jobs:
         shell: bash
         env:
           VERSION: ${{ needs.gatekeeper.outputs.next_version }}
-          VERSION_BUMP: ${{ inputs.version_bump_type }}
-          DRY_RUN: ${{ inputs.dry_run }}
-          FORCE_RELEASE: ${{ inputs.force_release }}
+          VERSION_BUMP: ${{ inputs.version_bump_type || 'manifest' }}
+          DRY_RUN: ${{ inputs.dry_run == true }}
+          FORCE_RELEASE: ${{ inputs.force_release == true }}
           GATEKEEPER_RESULT: ${{ needs.gatekeeper.result }}
           PROCEED_WITH_RELEASE: ${{ needs.gatekeeper.outputs.proceed_with_release }}
           MODULE_PUBLISH_RESULT: ${{ needs.publish-module.result }}

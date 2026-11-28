@@ -150,7 +150,7 @@ jobs:
           NEXT_VERSION: ${{ inputs.next_version }}
         run: |
           $notes = & ./scripts/Get-ReleaseNotes.ps1 -Version "v$env:NEXT_VERSION" `
-            -Path './.release-inputs/changelog/CHANGELOG.md' -WarningAction Stop -ErrorAction Stop
+            -Path './.release-inputs/changelog/CHANGELOG.md' -IncludeCompareLink -WarningAction Stop -ErrorAction Stop
           $heading, $body = $notes -split '\r?\n', 2
           $version = [regex]::Escape($env:NEXT_VERSION)
           if ($heading -cnotmatch "^## \[$version\](?:\s.*)?$" -or [string]::IsNullOrWhiteSpace($body)) {
@@ -189,11 +189,20 @@ jobs:
 
       - name: Push changes
         if: ${{ !inputs.dry_run }}
+        id: push_changes
         env:
           REF_NAME: ${{ github.ref_name }}
         run: |
-          git pull --rebase origin "$REF_NAME"
-          git push origin "HEAD:$REF_NAME"
+          set -euo pipefail
+          git fetch origin "$REF_NAME"
+          AHEAD_COUNT=$(git rev-list --count "origin/$REF_NAME..HEAD")
+          if [[ "$AHEAD_COUNT" -eq 0 ]]; then
+            echo "No version commit to push; skipping push to origin/$REF_NAME."
+          else
+            git pull --rebase origin "$REF_NAME"
+            git push origin "HEAD:$REF_NAME"
+          fi
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         id: create_release
@@ -201,11 +210,13 @@ jobs:
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: v${{ inputs.next_version }}
+          target_commitish: ${{ steps.push_changes.outputs.commit_sha }}
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           name: Release v${{ inputs.next_version }}
           body: ${{ steps.release_notes.outputs.notes }}
           draft: ${{ inputs.dry_run }}
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 

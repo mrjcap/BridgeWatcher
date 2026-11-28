@@ -104,7 +104,7 @@
 
     It -Name 'Gates git push and GitHub Release creation steps on !inputs.dry_run across release workflows' -Test {
         $script:releaseContent | Should -Match -RegularExpression "(?s)-\s*name:\s*Commit and Push Changelog\s+if:\s*steps\.changelog_check\.outputs\.updated\s*==\s*'true'\s*&&\s*!inputs\.dry_run"
-        $script:releaseContent | Should -Match -RegularExpression "(?s)uses:\s*\./\.github/workflows/powershell-docs\.yml\s+with:\s+dry_run:\s*\$\{\{\s*inputs\.dry_run\s*\}\}"
+        $script:releaseContent | Should -Match -RegularExpression "(?s)uses:\s*\./\.github/workflows/powershell-docs\.yml\s+with:\s+dry_run:\s*\$\{\{\s*inputs\.dry_run(?:\s*==\s*true)?\s*\}\}"
         $script:docsContent | Should -Match -RegularExpression "(?s)workflow_call:\s+inputs:\s+dry_run:.*?type:\s*boolean\s+default:\s*false"
         $script:docsContent | Should -Match -RegularExpression "(?s)-\s*name:\s*Configure git credentials for documentation push\s+if:\s*steps\.docs_changes\.outputs\.changes_detected\s*==\s*'true'\s*&&\s*github\.event_name\s*!=\s*'pull_request'\s*&&\s*!inputs\.dry_run"
         $script:docsContent | Should -Match -RegularExpression "(?s)-\s*name:\s*Commit and push documentation changes\s+if:\s*steps\.docs_changes\.outputs\.changes_detected\s*==\s*'true'\s*&&\s*github\.event_name\s*!=\s*'pull_request'\s*&&\s*!inputs\.dry_run"

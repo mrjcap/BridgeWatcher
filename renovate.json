@@ -44,7 +44,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^\\.github/workflows/powershell-docs\\.yml$/"
+        "/^\\.github/workflows/(?:powershell-docs|prepare-release)\\.yml$/"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>nuget) depName=(?<depName>platyPS) registryUrl=(?<registryUrl>\\S+)\\s+PLATYPS_VERSION:\\s*'(?<currentValue>[^']+)'",
